@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.da.itdaing.domain.user.api.AuthControllerTest" tests="3" skipped="1" failures="1" errors="0" timestamp="2025-11-01T14:49:55.654Z" hostname="JangJu.local" time="0.169">
+  <properties/>
+  <testcase name="회원가입 실패 - 나이대가 10의 배수가 아니면 400" classname="com.da.itdaing.domain.user.api.AuthControllerTest" time="0.119"/>
+  <testcase name="회원가입 실패 - 이메일 중복(409, 코드 매칭)" classname="com.da.itdaing.domain.user.api.AuthControllerTest" time="0.016">
+    <failure message="java.lang.AssertionError: Status expected:&lt;409&gt; but was:&lt;400&gt;" type="java.lang.AssertionError">java.lang.AssertionError: Status expected:&lt;409&gt; but was:&lt;400&gt;
+	at org.springframework.test.util.AssertionErrors.fail(AssertionErrors.java:61)
+	at org.springframework.test.util.AssertionErrors.assertEquals(AssertionErrors.java:128)
+	at org.springframework.test.web.servlet.result.StatusResultMatchers.lambda$matcher$9(StatusResultMatchers.java:640)
+	at org.springframework.test.web.servlet.MockMvc$1.andExpect(MockMvc.java:214)
+	at com.da.itdaing.domain.user.api.AuthControllerTest.signup_Failure_DuplicateEmail(AuthControllerTest.java:187)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+</failure>
+  </testcase>
+  <testcase name="로그인 실패 - 자격 증명 오류" classname="com.da.itdaing.domain.user.api.AuthControllerTest" time="0.032">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[23:49:54.244 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.da.itdaing.domain.user.api.AuthControllerTest]: AuthControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+23:49:54.345 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.da.itdaing.ItdaingServerApplication for test class com.da.itdaing.domain.user.api.AuthControllerTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.6)
+
+2025-11-01T23:49:54.540+09:00  INFO 72781 --- [    Test worker] c.d.i.d.user.api.AuthControllerTest      : Starting AuthControllerTest using Java 21.0.8 with PID 72781 (started by j_jchani in /Users/j_jchani/Desktop/인공지능사관학교/다잇다잉/itdaing-server)
+2025-11-01T23:49:54.540+09:00  INFO 72781 --- [    Test worker] c.d.i.d.user.api.AuthControllerTest      : No active profile set, falling back to 1 default profile: "default"
+2025-11-01T23:49:55.571+09:00  WARN 72781 --- [    Test worker] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 8cbfcadf-717e-4bda-9f87-faf37a5c06c5
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-11-01T23:49:55.575+09:00  INFO 72781 --- [    Test worker] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-11-01T23:49:55.637+09:00  INFO 72781 --- [    Test worker] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2025-11-01T23:49:55.637+09:00  INFO 72781 --- [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2025-11-01T23:49:55.638+09:00  INFO 72781 --- [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2025-11-01T23:49:55.650+09:00  INFO 72781 --- [    Test worker] c.d.i.d.user.api.AuthControllerTest      : Started AuthControllerTest in 1.271 seconds (process running for 1.785)
+2025-11-01T23:49:55.754+09:00  WARN 72781 --- [    Test worker] c.d.i.g.error.GlobalExceptionHandler     : MethodArgumentNotValidException: Validation failed for argument [0] in public org.springframework.http.ResponseEntity<com.da.itdaing.global.web.ApiResponse<com.da.itdaing.domain.user.dto.AuthDto$SignupResponse>> com.da.itdaing.domain.user.api.AuthController.signupConsumer(com.da.itdaing.domain.user.dto.AuthDto$SignupConsumerRequest) with 6 errors: [Field error in object 'signupConsumerRequest' on field 'ageGroupTens': rejected value [false]; codes [AssertTrue.signupConsumerRequest.ageGroupTens,AssertTrue.ageGroupTens,AssertTrue.boolean,AssertTrue]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupConsumerRequest.ageGroupTens,ageGroupTens]; arguments []; default message [ageGroupTens]]; default message [나이대는 10,20,30,... 형식(10의 배수)이어야 합니다]] [Field error in object 'signupConsumerRequest' on field 'regionIds': rejected value [null]; codes [NotEmpty.signupConsumerRequest.regionIds,NotEmpty.regionIds,NotEmpty.java.util.List,NotEmpty]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupConsumerRequest.regionIds,regionIds]; arguments []; default message [regionIds]]; default message [지역은 최소 1개 이상 선택해야 합니다]] [Field error in object 'signupConsumerRequest' on field 'styleIds': rejected value [null]; codes [NotEmpty.signupConsumerRequest.styleIds,NotEmpty.styleIds,NotEmpty.java.util.List,NotEmpty]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupConsumerRequest.styleIds,styleIds]; arguments []; default message [styleIds]]; default message [스타일은 최소 1개 이상 선택해야 합니다]] [Field error in object 'signupConsumerRequest' on field 'passwordConfirm': rejected value [null]; codes [NotBlank.signupConsumerRequest.passwordConfirm,NotBlank.passwordConfirm,NotBlank.java.lang.String,NotBlank]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupConsumerRequest.passwordConfirm,passwordConfirm]; arguments []; default message [passwordConfirm]]; default message [비밀번호 확인은 필수입니다]] [Field error in object 'signupConsumerRequest' on field 'interestCategoryIds': rejected value [null]; codes [NotEmpty.signupConsumerRequest.interestCategoryIds,NotEmpty.interestCategoryIds,NotEmpty.java.util.List,NotEmpty]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupConsumerRequest.interestCategoryIds,interestCategoryIds]; arguments []; default message [interestCategoryIds]]; default message [관심 카테고리는 최소 1개 이상 선택해야 합니다]] [Field error in object 'signupConsumerRequest' on field 'passwordConfirmed': rejected value [false]; codes [AssertTrue.signupConsumerRequest.passwordConfirmed,AssertTrue.passwordConfirmed,AssertTrue.boolean,AssertTrue]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupConsumerRequest.passwordConfirmed,passwordConfirmed]; arguments []; default message [passwordConfirmed]]; default message [비밀번호와 비밀번호 확인이 일치하지 않습니다]] 
+
+MockHttpServletRequest:
+      HTTP Method = POST
+      Request URI = /api/auth/signup/consumer
+       Parameters = {_csrf=[_-hk2BzNsPIywsS2t7QP16brdSRVVfKTHeVvM-EcYdHKFWCCytlS4Xn9hcof9_WOgpk77sPcWEVlbJO-LdBdAtAoVeXzdFXm]}
+          Headers = [Content-Type:"application/json", Content-Length:"251"]
+             Body = <no character encoding set>
+    Session Attrs = {}
+
+Handler:
+             Type = com.da.itdaing.domain.user.api.AuthController
+           Method = com.da.itdaing.domain.user.api.AuthController#signupConsumer(SignupConsumerRequest)
+
+Async:
+    Async started = false
+     Async result = null
+
+Resolved Exception:
+             Type = org.springframework.web.bind.MethodArgumentNotValidException
+
+ModelAndView:
+        View name = null
+             View = null
+            Model = null
+
+FlashMap:
+       Attributes = null
+
+MockHttpServletResponse:
+           Status = 400
+    Error message = null
+          Headers = [Content-Type:"application/json"]
+     Content type = application/json
+             Body = {"success":false,"error":{"status":400,"code":"E001","message":"입력값이 올바르지 않습니다","fieldErrors":[{"field":"ageGroupTens","value":"false","reason":"나이대는 10,20,30,... 형식(10의 배수)이어야 합니다"},{"field":"regionIds","value":null,"reason":"지역은 최소 1개 이상 선택해야 합니다"},{"field":"styleIds","value":null,"reason":"스타일은 최소 1개 이상 선택해야 합니다"},{"field":"passwordConfirm","value":null,"reason":"비밀번호 확인은 필수입니다"},{"field":"interestCategoryIds","value":null,"reason":"관심 카테고리는 최소 1개 이상 선택해야 합니다"},{"field":"passwordConfirmed","value":"false","reason":"비밀번호와 비밀번호 확인이 일치하지 않습니다"}]}}
+    Forwarded URL = null
+   Redirected URL = null
+          Cookies = []
+2025-11-01T23:49:55.785+09:00  WARN 72781 --- [    Test worker] c.d.i.g.error.GlobalExceptionHandler     : MethodArgumentNotValidException: Validation failed for argument [0] in public org.springframework.http.ResponseEntity<com.da.itdaing.global.web.ApiResponse<com.da.itdaing.domain.user.dto.AuthDto$SignupResponse>> com.da.itdaing.domain.user.api.AuthController.signupConsumer(com.da.itdaing.domain.user.dto.AuthDto$SignupConsumerRequest) with 5 errors: [Field error in object 'signupConsumerRequest' on field 'regionIds': rejected value [null]; codes [NotEmpty.signupConsumerRequest.regionIds,NotEmpty.regionIds,NotEmpty.java.util.List,NotEmpty]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupConsumerRequest.regionIds,regionIds]; arguments []; default message [regionIds]]; default message [지역은 최소 1개 이상 선택해야 합니다]] [Field error in object 'signupConsumerRequest' on field 'styleIds': rejected value [null]; codes [NotEmpty.signupConsumerRequest.styleIds,NotEmpty.styleIds,NotEmpty.java.util.List,NotEmpty]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupConsumerRequest.styleIds,styleIds]; arguments []; default message [styleIds]]; default message [스타일은 최소 1개 이상 선택해야 합니다]] [Field error in object 'signupConsumerRequest' on field 'passwordConfirm': rejected value [null]; codes [NotBlank.signupConsumerRequest.passwordConfirm,NotBlank.passwordConfirm,NotBlank.java.lang.String,NotBlank]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupConsumerRequest.passwordConfirm,passwordConfirm]; arguments []; default message [passwordConfirm]]; default message [비밀번호 확인은 필수입니다]] [Field error in object 'signupConsumerRequest' on field 'interestCategoryIds': rejected value [null]; codes [NotEmpty.signupConsumerRequest.interestCategoryIds,NotEmpty.interestCategoryIds,NotEmpty.java.util.List,NotEmpty]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupConsumerRequest.interestCategoryIds,interestCategoryIds]; arguments []; default message [interestCategoryIds]]; default message [관심 카테고리는 최소 1개 이상 선택해야 합니다]] [Field error in object 'signupConsumerRequest' on field 'passwordConfirmed': rejected value [false]; codes [AssertTrue.signupConsumerRequest.passwordConfirmed,AssertTrue.passwordConfirmed,AssertTrue.boolean,AssertTrue]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupConsumerRequest.passwordConfirmed,passwordConfirmed]; arguments []; default message [passwordConfirmed]]; default message [비밀번호와 비밀번호 확인이 일치하지 않습니다]] 
+
+MockHttpServletRequest:
+      HTTP Method = POST
+      Request URI = /api/auth/signup/consumer
+       Parameters = {_csrf=[mYJg5BJkoR8kMowcabxCW9NzwVINCSJfulN-a_Kuizb-opTH_-ZS1XdcxXoJA7QqWpF2P-QQ7GprOEBy3GBJCcLKswGfkqTw]}
+          Headers = [Content-Type:"application/json", Content-Length:"266"]
+             Body = <no character encoding set>
+    Session Attrs = {}
+
+Handler:
+             Type = com.da.itdaing.domain.user.api.AuthController
+           Method = com.da.itdaing.domain.user.api.AuthController#signupConsumer(SignupConsumerRequest)
+
+Async:
+    Async started = false
+     Async result = null
+
+Resolved Exception:
+             Type = org.springframework.web.bind.MethodArgumentNotValidException
+
+ModelAndView:
+        View name = null
+             View = null
+            Model = null
+
+FlashMap:
+       Attributes = null
+
+MockHttpServletResponse:
+           Status = 400
+    Error message = null
+          Headers = [Content-Type:"application/json"]
+     Content type = application/json
+             Body = {"success":false,"error":{"status":400,"code":"E001","message":"입력값이 올바르지 않습니다","fieldErrors":[{"field":"regionIds","value":null,"reason":"지역은 최소 1개 이상 선택해야 합니다"},{"field":"styleIds","value":null,"reason":"스타일은 최소 1개 이상 선택해야 합니다"},{"field":"passwordConfirm","value":null,"reason":"비밀번호 확인은 필수입니다"},{"field":"interestCategoryIds","value":null,"reason":"관심 카테고리는 최소 1개 이상 선택해야 합니다"},{"field":"passwordConfirmed","value":"false","reason":"비밀번호와 비밀번호 확인이 일치하지 않습니다"}]}}
+    Forwarded URL = null
+   Redirected URL = null
+          Cookies = []
+
+MockHttpServletRequest:
+      HTTP Method = POST
+      Request URI = /api/auth/signup/consumer
+       Parameters = {_csrf=[mYJg5BJkoR8kMowcabxCW9NzwVINCSJfulN-a_Kuizb-opTH_-ZS1XdcxXoJA7QqWpF2P-QQ7GprOEBy3GBJCcLKswGfkqTw]}
+          Headers = [Content-Type:"application/json", Content-Length:"266"]
+             Body = <no character encoding set>
+    Session Attrs = {}
+
+Handler:
+             Type = com.da.itdaing.domain.user.api.AuthController
+           Method = com.da.itdaing.domain.user.api.AuthController#signupConsumer(SignupConsumerRequest)
+
+Async:
+    Async started = false
+     Async result = null
+
+Resolved Exception:
+             Type = org.springframework.web.bind.MethodArgumentNotValidException
+
+ModelAndView:
+        View name = null
+             View = null
+            Model = null
+
+FlashMap:
+       Attributes = null
+
+MockHttpServletResponse:
+           Status = 400
+    Error message = null
+          Headers = [Content-Type:"application/json"]
+     Content type = application/json
+             Body = {"success":false,"error":{"status":400,"code":"E001","message":"입력값이 올바르지 않습니다","fieldErrors":[{"field":"regionIds","value":null,"reason":"지역은 최소 1개 이상 선택해야 합니다"},{"field":"styleIds","value":null,"reason":"스타일은 최소 1개 이상 선택해야 합니다"},{"field":"passwordConfirm","value":null,"reason":"비밀번호 확인은 필수입니다"},{"field":"interestCategoryIds","value":null,"reason":"관심 카테고리는 최소 1개 이상 선택해야 합니다"},{"field":"passwordConfirmed","value":"false","reason":"비밀번호와 비밀번호 확인이 일치하지 않습니다"}]}}
+    Forwarded URL = null
+   Redirected URL = null
+          Cookies = []
+2025-11-01T23:49:55.796+09:00  WARN 72781 --- [    Test worker] c.d.i.g.error.GlobalExceptionHandler     : AuthException: 이메일 또는 비밀번호가 올바르지 않습니다
+
+MockHttpServletRequest:
+      HTTP Method = POST
+      Request URI = /api/auth/login
+       Parameters = {_csrf=[aeMz0btV3PTtXAZtZKH48DAYjhPPc5Ibmynytn2evtbSCuB7XNpRst9luJHAOGcOXIzMlFN6oyr9Fas2qh3C0h6vjOa2PoZP]}
+          Headers = [Content-Type:"application/json", Content-Length:"48"]
+]]></system-out>
+  <system-err><![CDATA[Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (/Users/j_jchani/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.17.7/fbf3d6d649ed37fc9e9c59480a05be0a26e3c2da/byte-buddy-agent-1.17.7.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>
