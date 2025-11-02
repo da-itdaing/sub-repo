@@ -44,7 +44,7 @@ export default function Home() {
       </div>
 
       {/* 3. 구 단위 필터 + 팝업 카드 */}
-      <SectionHeader title="올 동네에 이런 팝업 있다잉!" to="/consumer/popups" style={{marginTop: 24}} />
+  <SectionHeader title="올 동네에 이런 플리마켓 있다잉!" to="/consumer/popups" style={{marginTop: 24}} />
       <Chips items={chips} value={district} onChange={setDistrict} />
       <div className="grid">
         {filteredPopups.map(p => (

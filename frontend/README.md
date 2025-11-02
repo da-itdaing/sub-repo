@@ -60,9 +60,9 @@ npm run preview
 
 Docker 이미지도 프로파일링 빌드로 만들고 싶다면, 빌드 단계에서 환경변수를 넣어 빌드하세요(간단 방법):
 
-```dockerfile
-# Dockerfile 의 빌드 단계에서
-RUN VITE_REACT_PROFILE=true npm run build
+```bash
+# 프로파일링 빌드 이미지 (React Profiler 활성화된 프로덕션 번들)
+docker build --build-arg VITE_REACT_PROFILE=true -t final-frontend:profile .
 ```
 
 참고: 프로파일링 빌드는 성능/사이즈 상의 페널티가 있으니, 문제 진단 시에만 사용하고 일반 배포에는 개발 서버 또는 일반 프로덕션 빌드를 사용하세요.
@@ -74,6 +74,28 @@ This app ships three role-specific sections besides the common Home page:
 - Manager: `/manager/*`
 
 All data is mocked in `src/common/data/dummy.ts` and exposed through `src/common/services/api.ts`.
+
+### Use real backend APIs (optional)
+
+This project now supports talking to the real backend per the provided API spec. By default, the app uses the mock API. To enable real HTTP calls:
+
+1) Provide a base URL via environment variable and toggle the flag
+
+```bash
+# .env.local (or pass as build args)
+VITE_API_BASE_URL=https://your-backend.example.com
+VITE_USE_REAL_API=true
+```
+
+2) Start the dev server or build as usual. The app will:
+
+- Use JWT from login response and attach it as `Authorization: Bearer <token>`
+- Call endpoints like `/api/public/auth/login`, `/api/v1/me`, `/api/v1/popups/{id}`
+- Fall back to mock data for still-unspecified endpoints
+
+Notes:
+- For logout using cookie strategy, also set `VITE_API_WITH_CREDENTIALS=true` if needed.
+- The facade maps server responses to the existing UI types; some fields are best-effort until BE stabilizes.
 
 ## Scripts
 

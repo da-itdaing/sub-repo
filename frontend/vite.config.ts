@@ -8,10 +8,12 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     resolve: {
+      // Important: don't alias 'react-dom/client' or createRoot will be missing.
+      // Alias only the core 'react-dom' entry to the profiling build.
       alias: enableProdProfiling
         ? [
-            { find: 'react-dom/client', replacement: 'react-dom/profiling' },
-            { find: 'react-dom', replacement: 'react-dom/profiling' },
+            { find: /^react-dom$/, replacement: 'react-dom/profiling' },
+            { find: 'scheduler/tracing', replacement: 'scheduler/tracing-profiling' },
           ]
         : [],
     },

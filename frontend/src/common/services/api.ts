@@ -1,4 +1,5 @@
 import { events, popups, products, orders, reports, reviews as seedReviews, profiles as seedProfiles, calendar as seedCalendar } from '../data/dummy'
+import { realApi } from './realApi'
 import type { Popup, Review, Profile, CalendarItem } from '../../types'
 
 // Simulate async APIs with small delays
@@ -43,7 +44,9 @@ const savePopups = (arr: Popup[]) => {
 let popupStore: Popup[] = loadPopups()
 let calendarStore: CalendarItem[] = [...seedCalendar]
 
-export const api = {
+const USE_REAL = ((import.meta as any)?.env?.VITE_USE_REAL_API || '').toString() === 'true'
+
+const mockApi = {
   async listEvents() {
     await delay();
     return events
@@ -164,3 +167,154 @@ export const api = {
     return calendarStore
   }
 }
+
+// Facade: prefer real API when enabled, fall back to mock for parts not yet specified
+export const api = USE_REAL ? {
+  // Events/home feed not fully specified yet → keep mock
+  listEvents: mockApi.listEvents,
+  getEvent: mockApi.getEvent,
+  // Popups
+  listPopups: async () => {
+    // Try home feed trending as a lightweight replacement; fallback mock on failure
+    try {
+      const data: any = await realApi.homeFeed(6)
+      const items = data?.trending?.items || []
+      // Map to Popup type (best-effort)
+      const mapped: Popup[] = items.map((it: any) => ({
+        id: String(it.id),
+        title: it.title,
+        district: it.district || '',
+        dateRange: `${it.startDate} - ${it.endDate}`,
+        image: it.thumbnailUrl || '',
+        address: it.addressShort,
+      }))
+      return mapped
+    } catch { return mockApi.listPopups() }
+  },
+  listPopupsByDistrict: async (district: string) => {
+    try {
+      const data: any = await realApi.listPopupsByDistrict(district)
+      const mapped: Popup[] = (data.items || []).map((it: any) => ({
+        id: String(it.id),
+        title: it.title,
+        district: data.district || district,
+        dateRange: `${it.startDate} - ${it.endDate}`,
+        image: it.thumbnailUrl || '',
+      }))
+      return mapped
+    } catch { return mockApi.listPopupsByDistrict(district) }
+  },
+  getPopup: async (id: string) => {
+    try {
+      const d: any = await realApi.getPopup(id)
+      // Map to our simplified Popup type for existing UI
+      const pr: Popup = {
+        id: String(d.id),
+        title: d.title,
+        district: d.location?.district || '',
+        dateRange: d.period ? `${d.period.startDate} - ${d.period.endDate}` : '',
+        image: d.thumbnailUrl || '',
+        images: d.images,
+        address: d.location?.address,
+        lat: d.location?.lat,
+        lng: d.location?.lng,
+        categories: d.tags,
+        description: d.description,
+      }
+      return pr
+    } catch { return mockApi.getPopup(id) }
+  },
+  createPopup: mockApi.createPopup,
+  updatePopup: mockApi.updatePopup,
+  listProducts: mockApi.listProducts,
+  listOrders: mockApi.listOrders,
+  listReports: mockApi.listReports,
+  // Favorites: use real endpoints (token-based); ignore userId param
+  listFavorites: async (_userId: string) => {
+    try {
+      const r = await realApi.listFavorites()
+      const mapped: Popup[] = (r.items || []).map((it: any) => ({
+        id: String(it.id),
+        title: it.title,
+        district: it.district || '',
+        dateRange: `${it.startDate} - ${it.endDate}`,
+        image: it.thumbnailUrl || '',
+        address: it.addressShort,
+        views: it.viewCount,
+      }))
+      return mapped
+    } catch { return mockApi.listFavorites(_userId) }
+  },
+  toggleFavorite: async (_userId: string, popupId: string) => {
+    try {
+      // Optimistically toggle based on current state would require a read; here we just POST and read result
+      const now = await realApi.toggleFavorite(popupId, true).catch(async (e) => {
+        // If already favorited, try delete
+        return realApi.toggleFavorite(popupId, false)
+      })
+      return now
+    } catch { return mockApi.toggleFavorite(_userId, popupId) }
+  },
+  isFavorite: async (_userId: string, popupId: string) => {
+    try {
+      // Not directly specified; approximate by fetching favorites first page and checking
+      const r = await realApi.listFavorites({ limit: 100 })
+      return (r.items || []).some((it: any) => String(it.id) === String(popupId))
+    } catch { return mockApi.isFavorite(_userId, popupId) }
+  },
+  // Reviews
+  listReviews: async (popupId: string) => {
+    try {
+      const r = await realApi.listReviews(popupId, { limit: 50 })
+      const items = r.items || []
+      // Map server item to our Review type for display
+      const mapped: Review[] = items.map((it: any) => ({
+        id: String(it.id),
+        popupId: String(popupId),
+        userName: it.user?.nickname || `user:${it.user?.id ?? ''}`,
+        rating: it.rating,
+        date: (it.createdAt || '').slice(0, 10),
+        text: it.content,
+        images: it.photosUrl || [],
+      }))
+      return mapped
+    } catch { return mockApi.listReviews(popupId) }
+  },
+  addReview: async (popupId: string, userName: string, rating: number, text: string, images: string[] = []) => {
+    try {
+      const r = await realApi.addReview(popupId, { rating, content: text, tags: [], photos: images })
+      // After creating, fetch list and return the first matching; fallback to mock shape
+      return { id: String(r as any), popupId, userName, rating, date: new Date().toISOString().slice(0,10), text, images }
+    } catch { return mockApi.addReview(popupId, userName, rating, text, images) }
+  },
+  deleteReview: async (reviewId: string) => {
+    try { await realApi.deleteMyReview(reviewId); return true } catch { return mockApi.deleteReview(reviewId) }
+  },
+  averageRating: mockApi.averageRating, // compute client-side for now
+  listMyReviews: async (_userName: string) => {
+    try {
+      const r = await realApi.listMyReviews({ limit: 100 })
+      const mapped: Review[] = (r.items || []).map((it: any) => ({
+        id: String(it.id), popupId: String(it.popup?.id ?? ''), userName: it.user?.nickname || '', rating: it.rating,
+        date: (it.updatedAt || it.createdAt || '').slice(0,10), text: it.content, images: it.photosUrl || [],
+      }))
+      return mapped
+    } catch { return mockApi.listMyReviews(_userName) }
+  },
+  // Profile (token-based)
+  getProfile: async (_userId: string) => {
+    try { return await realApi.getProfile() as unknown as Profile } catch { return mockApi.getProfile(_userId) }
+  },
+  updateProfile: async (_userId: string, data: Partial<Profile>) => {
+    try { await realApi.updateProfile(data); return await realApi.getProfile() as unknown as Profile } catch { return mockApi.updateProfile(_userId, data) }
+  },
+  // Calendar
+  listCalendar: async (_userId: string) => {
+    try {
+      const r = await realApi.listCalendarFavorites()
+      // Map to CalendarItem[] best-effort
+      const mapped: CalendarItem[] = (r.events || []).map((e: any, i: number) => ({ id: `c${i}`, popupId: String(e.popupId), title: e.title, date: e.startDate, type: 'start' }))
+      return mapped
+    } catch { return mockApi.listCalendar(_userId) }
+  },
+} : mockApi
