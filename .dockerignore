@@ -1,0 +1,28 @@
+# VCS and IDE
+.git
+.gitignore
+.idea
+*.iml
+.vscode
+
+# OS and tooling
+.DS_Store
+
+# Build outputs
+build/
+out/
+target/
+.gradle/
+
+# Node/Frontend (backend Docker build doesn't need this context)
+frontend/
+node_modules/
+
+# Logs and temp
+*.log
+tmp/
+
+# Environment files (keep example only)
+.env
+.env.*
+!.env.example

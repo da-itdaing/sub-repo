@@ -1,0 +1,43 @@
+services:
+  backend:
+    build:
+      context: .
+    image: itdaing-backend:latest
+    container_name: itdaing-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      # Optional: mount configs to /config, Spring Boot will prefer /config over classpath
+      - ./src/main/resources:/config:ro
+    restart: unless-stopped
+
+  # Enable this profile to run with in-memory H2 (for quick testing)
+  backend-h2:
+    build:
+      context: .
+    image: itdaing-backend:latest
+    container_name: itdaing-backend-h2
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_USE_H2: "true"
+      SPRING_PROFILES_ACTIVE: local
+      # Optionally mount configs
+    volumes:
+      - ./src/main/resources:/config:ro
+    profiles: ["h2"]
+    restart: unless-stopped
+
+  # Optional: frontend container (uncomment to use)
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #   image: itdaing-frontend:latest
+  #   container_name: itdaing-frontend
+  #   ports:
+  #     - "8081:80"
+  #   depends_on:
+  #     - backend
+  #   restart: unless-stopped
