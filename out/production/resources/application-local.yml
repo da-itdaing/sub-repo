@@ -1,35 +1,34 @@
+# --- DB: H2 임베디드 ---
 spring:
     datasource:
-        url: jdbc:h2:tcp://localhost/~/itdaing;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        driver-class-name: org.h2.Driver
+        url: jdbc:h2:mem:itdaing;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
         username: sa
         password:
-        driver-class-name: org.h2.Driver
-
     jpa:
         hibernate:
-            ddl-auto: create-drop
-        show-sql: true
-        open-in-view: false
+            ddl-auto: create-drop   # 초기 개발 단계면 update/ create-drop 중 선택
         properties:
             hibernate:
                 format_sql: true
-                use_sql_comments: true
-
     h2:
         console:
             enabled: true
             path: /h2-console
-
+    # flyway를 아직 안 쓰면 비활성화(선택)
     flyway:
         enabled: false
 
-# JWT 설정
-jwt:
-    secret: itdaing-secret-key-for-hs256-minimum-256-bits-required-for-security-purposes
-    issuer: itdaing-server
-    access-token-expiration: 86400000  # 24시간 (밀리초)
+server:
+    port: 8080
 
-# 로깅 설정
+# --- JWT (환경변수 우선, 기본값은 로컬 전용 더미) ---
+jwt:
+    secret: ${JWT_SECRET}
+    issuer: itdaing-server
+    access-token-expiration: ${JWT_ACCESS_EXP_MS:86400000}  # 24h
+
+# --- 로깅 ---
 logging:
     level:
         com.da.itdaing: DEBUG
