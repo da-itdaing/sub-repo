@@ -1,4 +1,3 @@
-# src/main/resources/application-openapi.yml
 server:
     port: 8080
 
@@ -16,6 +15,10 @@ spring:
                 dialect: org.hibernate.dialect.H2Dialect
     main:
         allow-bean-definition-overriding: true
+
+    # --- 이 부분이 추가되었습니다 ---
+    flyway:
+        enabled: false
 
 springdoc:
     api-docs:
