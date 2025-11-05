@@ -30,11 +30,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         log.warn("MethodArgumentNotValidException: {}", e.getMessage());
-
         ApiError apiError = ApiError.of(ErrorCode.INVALID_INPUT_VALUE, e.getBindingResult());
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(apiError));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(apiError));
     }
 
     /**
@@ -43,11 +40,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BindException.class)
     protected ResponseEntity<ApiResponse<Void>> handleBindException(BindException e) {
         log.warn("BindException: {}", e.getMessage());
-
         ApiError apiError = ApiError.of(ErrorCode.INVALID_INPUT_VALUE, e.getBindingResult());
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(apiError));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(apiError));
     }
 
     /**
@@ -56,54 +50,42 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     protected ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(ConstraintViolationException e) {
         log.warn("ConstraintViolationException: {}", e.getMessage());
-
         String errors = e.getConstraintViolations().stream()
-                .map(ConstraintViolation::getMessage)
-                .collect(Collectors.joining(", "));
-
+            .map(ConstraintViolation::getMessage)
+            .collect(Collectors.joining(", "));
         ApiError apiError = ApiError.of(ErrorCode.INVALID_INPUT_VALUE, errors);
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(apiError));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(apiError));
     }
 
     /**
-     * 엔티티를 찾을 수 없는 경우
+     * 엔티티를 찾을 수 없는 경우(404) - 상세 메시지 그대로 노출 (옵션 A)
      */
     @ExceptionHandler(EntityNotFoundException.class)
     protected ResponseEntity<ApiResponse<Void>> handleEntityNotFoundException(EntityNotFoundException e) {
         log.warn("EntityNotFoundException: {}", e.getMessage());
-
-        ApiError apiError = ApiError.of(e.getErrorCode());
-        return ResponseEntity
-                .status(e.getErrorCode().getStatus())
-                .body(ApiResponse.error(apiError));
+        // ❗핵심: 에러코드 기본메시지 대신, 예외가 가진 상세 메시지를 내려준다.
+        ApiError apiError = ApiError.of(e.getErrorCode(), e.getMessage());
+        return ResponseEntity.status(e.getErrorCode().getStatus()).body(ApiResponse.error(apiError));
     }
 
     /**
-     * 리소스 중복
+     * 리소스 중복(409)
      */
     @ExceptionHandler(DuplicateResourceException.class)
     protected ResponseEntity<ApiResponse<Void>> handleDuplicateResourceException(DuplicateResourceException e) {
         log.warn("DuplicateResourceException: {}", e.getMessage());
-
         ApiError apiError = ApiError.of(e.getErrorCode());
-        return ResponseEntity
-                .status(e.getErrorCode().getStatus())
-                .body(ApiResponse.error(apiError));
+        return ResponseEntity.status(e.getErrorCode().getStatus()).body(ApiResponse.error(apiError));
     }
 
     /**
-     * 인증 예외
+     * 인증/인가 예외
      */
     @ExceptionHandler(AuthException.class)
     protected ResponseEntity<ApiResponse<Void>> handleAuthException(AuthException e) {
         log.warn("AuthException: {}", e.getMessage());
-
         ApiError apiError = ApiError.of(e.getErrorCode());
-        return ResponseEntity
-                .status(e.getErrorCode().getStatus())
-                .body(ApiResponse.error(apiError));
+        return ResponseEntity.status(e.getErrorCode().getStatus()).body(ApiResponse.error(apiError));
     }
 
     /**
@@ -112,24 +94,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     protected ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
         log.warn("DataIntegrityViolationException: {}", e.getMessage());
-
-        // 중복 키 등 DB 제약조건 위반은 409 Conflict로 처리
+        // 중복 키 등은 409로 처리 (케이스에 맞게 ErrorCode 매핑 확장 가능)
         ApiError apiError = ApiError.of(ErrorCode.DUPLICATE_EMAIL);
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error(apiError));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(apiError));
     }
 
     /**
-     * 그 외 모든 예외
+     * 그 외 모든 예외(500)
      */
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
         log.error("Unexpected exception occurred", e);
-
         ApiError apiError = ApiError.of(ErrorCode.INTERNAL_SERVER_ERROR);
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(apiError));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(apiError));
     }
 }

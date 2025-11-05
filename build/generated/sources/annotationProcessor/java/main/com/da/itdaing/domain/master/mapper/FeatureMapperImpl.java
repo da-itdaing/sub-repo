@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-11-01T23:49:52+0900",
-    comments = "version: 1.6.3, compiler: IncrementalProcessingEnvironment from gradle-language-java-8.14.3.jar, environment: Java 21.0.8 (Eclipse Adoptium)"
+    date = "2025-11-04T16:40:45+0900",
+    comments = "version: 1.6.3, compiler: IncrementalProcessingEnvironment from gradle-language-java-8.10.2.jar, environment: Java 21.0.8 (Eclipse Adoptium)"
 )
 @Component
 public class FeatureMapperImpl implements FeatureMapper {
@@ -21,9 +21,12 @@ public class FeatureMapperImpl implements FeatureMapper {
             return null;
         }
 
-        FeatureResponse featureResponse = new FeatureResponse();
+        FeatureResponse.FeatureResponseBuilder featureResponse = FeatureResponse.builder();
 
-        return featureResponse;
+        featureResponse.id( feature.getId() );
+        featureResponse.name( feature.getName() );
+
+        return featureResponse.build();
     }
 
     @Override

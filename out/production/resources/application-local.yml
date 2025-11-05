@@ -27,6 +27,7 @@ jwt:
     secret: ${JWT_SECRET}
     issuer: itdaing-server
     access-token-expiration: ${JWT_ACCESS_EXP_MS:86400000}  # 24h
+    refresh-token-expiration: 1209600000 # 14일(ms)
 
 # --- 로깅 ---
 logging:

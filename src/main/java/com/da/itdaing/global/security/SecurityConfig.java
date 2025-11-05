@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -95,24 +94,6 @@ public class SecurityConfig {
             // JWT 필터
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
-}
-
-/* ============ OpenAPI 스펙 생성 전용 (spring.profiles.active=openapi) ============ */
-@Profile("openapi")
-@Configuration
-@EnableWebSecurity
-class SecurityConfigOpenApi {
-
-    /** 스펙 생성 시 전부 허용 */
-    @Bean
-    @Order(0)
-    SecurityFilterChain openApiChain(HttpSecurity http) throws Exception {
-        http
-            .cors(cors -> {})
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         return http.build();
     }
 }

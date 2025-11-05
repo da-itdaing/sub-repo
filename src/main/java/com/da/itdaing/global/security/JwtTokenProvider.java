@@ -21,15 +21,18 @@ public class JwtTokenProvider {
     private final SecretKey secretKey;
     private final String issuer;
     private final long accessTokenExpiration;
+    private final long refreshTokenExpiration;
 
     public JwtTokenProvider(
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.issuer}") String issuer,
-            @Value("${jwt.access-token-expiration}") long accessTokenExpiration
+            @Value("${jwt.access-token-expiration}") long accessTokenExpiration,
+            @Value("${jwt.refresh-token-expiration:1209600000}") long refreshTokenExpiration
     ) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.issuer = issuer;
         this.accessTokenExpiration = accessTokenExpiration;
+        this.refreshTokenExpiration = refreshTokenExpiration;
     }
 
     /**
@@ -39,17 +42,57 @@ public class JwtTokenProvider {
      * @return JWT Access Token
      */
     public String createAccessToken(Long userId, String role) {
-        Date now = new Date();
-        Date expiration = new Date(now.getTime() + accessTokenExpiration);
+        return buildToken(userId, role, accessTokenExpiration);
+    }
 
+    public String createRefreshToken(Long userId, String role) {
+        return buildToken(userId, role, refreshTokenExpiration);
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            validateAndGetClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    public Long getUserId(String token) {
+        return getUserIdFromToken(token);
+    }
+
+    public String getRole(String token) {
+        return getRoleFromToken(token);
+    }
+
+    /**
+     * 토큰에서 발급 시각 추출
+     */
+    public Date getIssuedAt(String token) {
+        Claims claims = validateAndGetClaims(token);
+        return claims.getIssuedAt();
+    }
+
+    /**
+     * 토큰에서 만료 시각 추출
+     */
+    public Date getExpiration(String token) {
+        Claims claims = validateAndGetClaims(token);
+        return claims.getExpiration();
+    }
+
+    private String buildToken(Long userId, String role, long ttlMillis) {
+        Date now = new Date();
+        Date exp = new Date(now.getTime() + ttlMillis);
         return Jwts.builder()
-                .subject(String.valueOf(userId))
-                .claim("role", role)
-                .issuer(issuer)
-                .issuedAt(now)
-                .expiration(expiration)
-                .signWith(secretKey, Jwts.SIG.HS256)
-                .compact();
+            .subject(String.valueOf(userId))
+            .claim("role", role)
+            .issuer(issuer)
+            .issuedAt(now)
+            .expiration(exp)
+            .signWith(secretKey, Jwts.SIG.HS256)
+            .compact();
     }
 
     /**

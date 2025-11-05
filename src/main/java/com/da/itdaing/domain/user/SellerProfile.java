@@ -26,16 +26,16 @@ public class SellerProfile extends BaseTimeEntity {
     @JoinColumn(name = "user_id")
     private Users user;
 
-    @Column(name = "profile_image_url", length = 500)
+    @Column(name = "profile_image_url", length = 512)
     private String profileImageUrl;
 
-    @Column(name = "introduction", length = 200)
+    @Column(name = "introduction", length = 1000)
     private String introduction;
 
-    @Column(name = "activity_region", length = 100)
+    @Column(name = "activity_region", length = 255)
     private String activityRegion;
 
-    @Column(name = "sns_url", length = 200)
+    @Column(name = "sns_url", length = 512)
     private String snsUrl;
 
     @Builder

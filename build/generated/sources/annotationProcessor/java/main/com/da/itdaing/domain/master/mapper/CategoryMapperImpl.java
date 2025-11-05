@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-11-01T23:49:52+0900",
-    comments = "version: 1.6.3, compiler: IncrementalProcessingEnvironment from gradle-language-java-8.14.3.jar, environment: Java 21.0.8 (Eclipse Adoptium)"
+    date = "2025-11-04T16:40:45+0900",
+    comments = "version: 1.6.3, compiler: IncrementalProcessingEnvironment from gradle-language-java-8.10.2.jar, environment: Java 21.0.8 (Eclipse Adoptium)"
 )
 @Component
 public class CategoryMapperImpl implements CategoryMapper {
@@ -21,9 +21,13 @@ public class CategoryMapperImpl implements CategoryMapper {
             return null;
         }
 
-        CategoryResponse categoryResponse = new CategoryResponse();
+        CategoryResponse.CategoryResponseBuilder categoryResponse = CategoryResponse.builder();
 
-        return categoryResponse;
+        categoryResponse.id( category.getId() );
+        categoryResponse.name( category.getName() );
+        categoryResponse.type( category.getType() );
+
+        return categoryResponse.build();
     }
 
     @Override

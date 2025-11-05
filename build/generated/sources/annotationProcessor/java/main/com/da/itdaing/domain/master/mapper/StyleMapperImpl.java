@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-11-01T23:49:52+0900",
-    comments = "version: 1.6.3, compiler: IncrementalProcessingEnvironment from gradle-language-java-8.14.3.jar, environment: Java 21.0.8 (Eclipse Adoptium)"
+    date = "2025-11-04T16:40:45+0900",
+    comments = "version: 1.6.3, compiler: IncrementalProcessingEnvironment from gradle-language-java-8.10.2.jar, environment: Java 21.0.8 (Eclipse Adoptium)"
 )
 @Component
 public class StyleMapperImpl implements StyleMapper {
@@ -21,9 +21,12 @@ public class StyleMapperImpl implements StyleMapper {
             return null;
         }
 
-        StyleResponse styleResponse = new StyleResponse();
+        StyleResponse.StyleResponseBuilder styleResponse = StyleResponse.builder();
 
-        return styleResponse;
+        styleResponse.id( style.getId() );
+        styleResponse.name( style.getName() );
+
+        return styleResponse.build();
     }
 
     @Override

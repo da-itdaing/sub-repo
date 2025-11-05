@@ -28,6 +28,16 @@ public class ApiResponse<T> {
         this.error = error;
     }
 
+
+
+    public static ApiResponse<Void> ok() {
+        return new ApiResponse<>(true, null, null);
+    }
+
+    public static ApiResponse<Void> failure(ApiError error) {
+        return new ApiResponse<>(false, null, error);
+    }
+
     /**
      * 성공 응답 (데이터 포함)
      */

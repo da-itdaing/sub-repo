@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 @Component
-@Profile("dev")
+@Profile({"local","dev"})
 @RequiredArgsConstructor
 public class DevDataSeed implements CommandLineRunner {
 
@@ -29,6 +30,7 @@ public class DevDataSeed implements CommandLineRunner {
     private final UserRepository userRepository;
     private final ConsumerProfileRepository consumerProfileRepository;
     private final SellerProfileRepository sellerProfileRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -106,7 +108,7 @@ public class DevDataSeed implements CommandLineRunner {
             // 일반 소비자 사용자
             Users consumer = Users.builder()
                     .loginId("consumer1")
-                    .password("password123") // 실제로는 암호화 필요
+                    .password(passwordEncoder.encode("password123"))
                     .name("김소비")
                     .nickname("소비왕")
                     .email("consumer@example.com")
@@ -123,7 +125,7 @@ public class DevDataSeed implements CommandLineRunner {
             // 판매자 사용자
             Users seller = Users.builder()
                     .loginId("seller1")
-                    .password("password123") // 실제로는 암호화 필요
+                   .password(passwordEncoder.encode("password123"))
                     .name("박판매")
                     .nickname("팝업왕")
                     .email("seller@example.com")

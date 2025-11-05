@@ -116,12 +116,12 @@ public class AuthDto {
         @Email(message = "이메일 형식이 올바르지 않습니다")
         private String email;
 
-        @Schema(description = "비밀번호 (8-20자)", example = "password123", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "비밀번호 (8-20자)", example = "P@ssw0rd1!", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "비밀번호는 필수입니다")
         @Size(min = 8, max = 20, message = "비밀번호는 8자 이상 20자 이하여야 합니다")
         private String password;
 
-        @Schema(description = "비밀번호 확인", example = "password123", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "비밀번호 확인", example = "P@ssw0rd1!", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "비밀번호 확인은 필수입니다")
         private String passwordConfirm;
 
@@ -139,6 +139,25 @@ public class AuthDto {
         @Schema(description = "닉네임", example = "팝업왕")
         @Size(max = 100, message = "닉네임은 100자 이하여야 합니다")
         private String nickname;
+
+        // ===== 판매자 프로필 관련 필드 =====
+
+        @Schema(description = "활동 지역 (필수)", example = "광주/남구", requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotBlank(message = "활동 지역은 필수입니다")
+        @Size(max = 255, message = "활동 지역은 255자 이하여야 합니다")
+        private String activityRegion;
+
+        @Schema(description = "SNS URL (선택)", example = "https://instagram.com/popup_seller")
+        @Pattern(regexp = "^https?://.+", message = "유효한 URL 형식이어야 합니다")
+        private String snsUrl;
+
+        @Schema(description = "프로필 이미지 URL (선택)", example = "https://cdn.example.com/profiles/popup_seller.png")
+        @Size(max = 512, message = "프로필 이미지 URL은 512자 이하여야 합니다")
+        private String profileImageUrl;
+
+        @Schema(description = "소개 (선택)", example = "팝업 운영 3년차, 굿즈 위주")
+        @Size(max = 1000, message = "소개는 1000자 이하여야 합니다")
+        private String introduction;
 
         @AssertTrue(message = "비밀번호와 비밀번호 확인이 일치하지 않습니다")
         @Schema(hidden = true)
@@ -174,13 +193,26 @@ public class AuthDto {
         private String password;
     }
 
+    // =============
+    // 로그인 응답
+    // =============
     @Getter @Builder
     @NoArgsConstructor @AllArgsConstructor
     @Schema(description = "로그인 응답")
     public static class LoginResponse {
-        @Schema(description = "JWT 액세스 토큰 (Bearer 토큰으로 사용)",
-            example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6IlJPTEVfQ09OU1VNRVIiLCJpc3MiOiJpdGRhaW5nLXNlcnZlciIsImlhdCI6MTczMDQxOTIwMCwiZXhwIjoxNzMwNTA1NjAwfQ.signature")
+
+        @Schema(description = "사용자 ID", example = "1")
+        private Long userId;
+
+        @Schema(description = "사용자 역할", example = "CONSUMER",
+            allowableValues = {"CONSUMER","SELLER","ADMIN"})
+        private UserRole role;
+
+        @Schema(description = "JWT 액세스 토큰 (Bearer)", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
         private String accessToken;
+
+        @Schema(description = "JWT 리프레시 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+        private String refreshToken;
     }
 
     // ==========
@@ -199,6 +231,26 @@ public class AuthDto {
         @Schema(description = "사용자 역할", example = "CONSUMER",
             allowableValues = {"CONSUMER", "SELLER", "ADMIN"})
         private UserRole role;
+
+        @Schema(description = "판매자 프로필 정보 (판매자 회원가입 시에만 포함)")
+        private SellerProfileInfo profile;
+    }
+
+    @Getter @Builder
+    @NoArgsConstructor @AllArgsConstructor
+    @Schema(description = "판매자 프로필 정보")
+    public static class SellerProfileInfo {
+        @Schema(description = "활동 지역", example = "광주/남구")
+        private String activityRegion;
+
+        @Schema(description = "SNS URL", example = "https://instagram.com/popup_seller")
+        private String snsUrl;
+
+        @Schema(description = "프로필 이미지 URL", example = "https://cdn.example.com/profiles/popup_seller.png")
+        private String profileImageUrl;
+
+        @Schema(description = "소개", example = "팝업 운영 3년차, 굿즈 위주")
+        private String introduction;
     }
 
     @Getter @Builder
@@ -230,5 +282,23 @@ public class AuthDto {
                 .role(user.getRole())
                 .build();
         }
+    }
+
+    @Getter @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class TokenRefreshRequest {
+        @NotBlank(message = "리프레시 토큰은 필수입니다")
+        private String refreshToken;
+    }
+
+    @Getter @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class TokenPair {
+        private String accessToken;
+        private String refreshToken;
+    }
+
+    @Getter @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class LogoutRequest {
+        // 선택: 리프레시 토큰도 함께 무효화하고 싶다면 사용
+        private String refreshToken;
     }
 }

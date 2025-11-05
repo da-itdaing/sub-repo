@@ -1,19 +1,22 @@
 package com.da.itdaing.domain.audit;
 
+import com.da.itdaing.domain.common.enums.ApprovalTargetType;
 import com.da.itdaing.domain.common.enums.DecisionType;
 import com.da.itdaing.domain.common.enums.UserRole;
 import com.da.itdaing.domain.user.Users;
 import com.da.itdaing.domain.user.UserRepository;
+import com.da.itdaing.support.MvcNoSecurityTest;
 import com.da.itdaing.testsupport.JpaSliceTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import static com.da.itdaing.domain.common.enums.ApprovalTargetType.POPUP;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @JpaSliceTest
-class ApprovalRecordRepositoryTest {
+class ApprovalRecordRepositoryTest extends MvcNoSecurityTest {
 
     @Autowired
     private ApprovalRecordRepository approvalRecordRepository;
@@ -33,6 +36,7 @@ class ApprovalRecordRepositoryTest {
         userRepository.save(admin);
 
         ApprovalRecord record = ApprovalRecord.builder()
+                .targetType(POPUP)
                 .targetId(123L)
                 .decision(DecisionType.APPROVE)
                 .reason("모든 조건을 충족함")
@@ -44,7 +48,7 @@ class ApprovalRecordRepositoryTest {
         ApprovalRecord found = approvalRecordRepository.findById(saved.getId()).orElseThrow();
 
         // then
-        assertThat(found.getTargetType()).isEqualTo("POPUP");
+        assertThat(found.getTargetType()).isEqualTo(POPUP);
         assertThat(found.getTargetId()).isEqualTo(123L);
         assertThat(found.getDecision()).isEqualTo(DecisionType.APPROVE);
         assertThat(found.getReason()).isEqualTo("모든 조건을 충족함");

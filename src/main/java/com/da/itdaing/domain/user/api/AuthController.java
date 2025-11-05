@@ -1,11 +1,14 @@
 package com.da.itdaing.domain.user.api;
 
 import com.da.itdaing.domain.user.dto.AuthDto;
+import com.da.itdaing.domain.user.exception.AuthException;
 import com.da.itdaing.domain.user.service.AuthService;
+import com.da.itdaing.global.error.ErrorCode;
 import com.da.itdaing.global.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,9 +41,38 @@ public class AuthController {
                     - 리뷰 작성 및 조회
                     - 소비자 선호 정보 설정
 
+                    회원가입 시 선호 정보를 함께 등록합니다:
+                    - 관심 카테고리: 1~4개 (필수)
+                    - 팝업 스타일: 1~4개 (필수)
+                    - 선호 지역: 1~2개 (필수)
+
+                    모든 선호 정보는 마스터 데이터에 존재하는 ID여야 하며, 중복은 자동으로 제거됩니다.
+
                     로그인 시 JWT 토큰의 role 클레임에는 "ROLE_CONSUMER"가 설정됩니다.
                     """,
-            security = {}
+            security = {},
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "소비자 회원가입 요청 예시",
+                                    value = """
+                                            {
+                                                "email": "consumer1@example.com",
+                                                "password": "P@ssw0rd1!",
+                                                "passwordConfirm": "P@ssw0rd1!",
+                                                "loginId": "consumer1",
+                                                "name": "김소비",
+                                                "nickname": "소비왕",
+                                                "ageGroup": 20,
+                                                "interestCategoryIds": [101, 105],
+                                                "styleIds": [12, 15, 19],
+                                                "regionIds": [2]
+                                            }
+                                            """
+                            )
+                    )
+            )
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -62,16 +94,51 @@ public class AuthController {
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
-                    description = "입력값 검증 실패",
+                    description = "입력값 검증 실패 (선호 정보 개수 초과 등)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "선호 개수 초과",
+                                            value = """
+                                                    {
+                                                        "success": false,
+                                                        "error": {
+                                                            "status": 400,
+                                                            "code": "E001",
+                                                            "message": "스타일 개수는 1~4개여야 합니다"
+                                                        }
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "비밀번호 불일치",
+                                            value = """
+                                                    {
+                                                        "success": false,
+                                                        "error": {
+                                                            "status": 400,
+                                                            "code": "E001",
+                                                            "message": "입력값이 올바르지 않습니다"
+                                                        }
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "마스터 데이터 ID 불일치",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(value = """
                                     {
                                         "success": false,
                                         "error": {
-                                            "status": 400,
-                                            "code": "COMMON-001",
-                                            "message": "입력값이 올바르지 않습니다"
+                                            "status": 404,
+                                            "code": "E101",
+                                            "message": "존재하지 않는 스타일이 포함되어 있습니다"
                                         }
                                     }
                                     """)
@@ -79,7 +146,7 @@ public class AuthController {
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409",
-                    description = "이메일 중복",
+                    description = "이메일 또는 로그인ID 중복",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(value = """
@@ -87,7 +154,7 @@ public class AuthController {
                                         "success": false,
                                         "error": {
                                             "status": 409,
-                                            "code": "COMMON-409",
+                                            "code": "E202",
                                             "message": "이미 사용 중인 이메일입니다"
                                         }
                                     }
@@ -113,13 +180,18 @@ public class AuthController {
                     - 팝업스토어 승인 요청
                     - 고객 리뷰 조회
 
+                    판매자 프로필 정보(활동 지역, SNS URL, 프로필 이미지, 소개)도 함께 등록됩니다.
+                    - 활동 지역은 필수 입력 항목입니다.
+                    - SNS URL은 선택 항목이며, 입력 시 유효한 URL 형식이어야 합니다.
+                    - 프로필 이미지 URL과 소개는 선택 항목입니다.
+
                     로그인 시 JWT 토큰의 role 클레임에는 "ROLE_SELLER"가 설정됩니다.
                     """,
             security = {}
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
+                    responseCode = "201",
                     description = "회원가입 성공",
                     content = @Content(
                             mediaType = "application/json",
@@ -127,9 +199,15 @@ public class AuthController {
                                     {
                                         "success": true,
                                         "data": {
-                                            "userId": 2,
-                                            "email": "seller@example.com",
-                                            "role": "SELLER"
+                                            "userId": 12,
+                                            "email": "seller1@example.com",
+                                            "role": "SELLER",
+                                            "profile": {
+                                                "activityRegion": "광주/남구",
+                                                "snsUrl": "https://instagram.com/popup_seller",
+                                                "profileImageUrl": "https://cdn.example.com/profiles/popup_seller.png",
+                                                "introduction": "팝업 운영 3년차, 굿즈 위주"
+                                            }
                                         }
                                     }
                                     """)
@@ -145,7 +223,7 @@ public class AuthController {
                                         "success": false,
                                         "error": {
                                             "status": 400,
-                                            "code": "COMMON-001",
+                                            "code": "E001",
                                             "message": "입력값이 올바르지 않습니다"
                                         }
                                     }
@@ -154,7 +232,7 @@ public class AuthController {
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409",
-                    description = "이메일 중복",
+                    description = "이메일 또는 로그인ID 중복",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(value = """
@@ -162,7 +240,7 @@ public class AuthController {
                                         "success": false,
                                         "error": {
                                             "status": 409,
-                                            "code": "COMMON-409",
+                                            "code": "E202",
                                             "message": "이미 사용 중인 이메일입니다"
                                         }
                                     }
@@ -342,6 +420,126 @@ public class AuthController {
         Long userId = (Long) authentication.getPrincipal();
         AuthDto.UserProfileResponse response = authService.getProfile(userId);
         return ApiResponse.success(response);
+    }
+
+    @Operation(
+        summary = "액세스 토큰 재발급 (Refresh Token)",
+        description = """
+            만료되었거나 곧 만료될 Access Token을 **Refresh Token**으로 갱신합니다.
+            - 본 API는 Authorization 헤더가 필요없고, **refreshToken**을 본문으로 받습니다.
+            - 서버가 새 Access/Refresh 토큰 쌍을 반환합니다.
+            """,
+        security = {} // refresh는 인증 헤더 없이 요청
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "재발급 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "success": true,
+                      "data": {
+                        "accessToken": "new.access.jwt.token",
+                        "refreshToken": "new.refresh.jwt.token"
+                      }
+                    }
+                    """)
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "인증 실패 - 리프레시 토큰이 유효하지 않음/만료됨",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "success": false,
+                      "error": {
+                        "status": 401,
+                        "code": "AUTH-402",
+                        "message": "유효하지 않은 토큰입니다"
+                      }
+                    }
+                    """)
+            )
+        )
+    })
+    @PostMapping("/auth/token/refresh")
+    public ResponseEntity<ApiResponse<AuthDto.TokenPair>> refresh(
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            description = "리프레시 토큰을 담아 요청합니다.",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = AuthDto.TokenRefreshRequest.class),
+                examples = @ExampleObject(value = "{ \"refreshToken\": \"existing.refresh.jwt.token\" }")
+            )
+        )
+        @Valid @org.springframework.web.bind.annotation.RequestBody AuthDto.TokenRefreshRequest req
+    ) {
+        var pair = authService.refresh(req.getRefreshToken());
+        return ResponseEntity.ok(ApiResponse.success(pair));
+    }
+
+    @Operation(
+        summary = "로그아웃",
+        description = """
+            현재 로그인 세션을 종료합니다.
+            - **Authorization: Bearer {accessToken}** 헤더가 필요합니다.
+            - 선택적으로 본문에 **refreshToken**을 함께 전달할 수 있습니다(서버에 저장/블랙리스트 전략에 따라 무효화).
+            - 성공 시 본문 없이 **204 No Content**를 반환합니다.
+            """,
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "로그아웃 성공 (본문 없음)"
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "인증 실패 - Authorization 헤더 없음/형식 오류/토큰 무효",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "success": false,
+                      "error": {
+                        "status": 401,
+                        "code": "AUTH-401",
+                        "message": "인증이 필요합니다"
+                      }
+                    }
+                    """)
+            )
+        )
+    })
+    @PostMapping("/auth/logout")
+    public ResponseEntity<Void> logout(
+        @RequestHeader(value = "Authorization", required = false) String authorization,
+        @RequestBody(required = false)
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "선택적으로 refreshToken을 본문에 포함",
+            required = false,
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    { "refreshToken": "existing.refresh.jwt.token" }
+                    """)
+            )
+        )
+        AuthDto.LogoutRequest body
+    ) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            throw new AuthException(ErrorCode.UNAUTHENTICATED, "인증이 필요합니다");
+        }
+        String accessToken = authorization.substring("Bearer ".length());
+        String refreshToken = (body != null) ? body.getRefreshToken() : null;
+
+        authService.logout(accessToken, refreshToken);
+        return ResponseEntity.noContent().build(); // 204
     }
 }
 

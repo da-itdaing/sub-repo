@@ -34,7 +34,7 @@ public class QApprovalRecord extends EntityPathBase<ApprovalRecord> {
 
     public final NumberPath<Long> targetId = createNumber("targetId", Long.class);
 
-    public final StringPath targetType = createString("targetType");
+    public final EnumPath<com.da.itdaing.domain.common.enums.ApprovalTargetType> targetType = createEnum("targetType", com.da.itdaing.domain.common.enums.ApprovalTargetType.class);
 
     public QApprovalRecord(String variable) {
         this(ApprovalRecord.class, forVariable(variable), INITS);

@@ -100,9 +100,7 @@ sourceSets {
     }
 }
 
-tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
-    // 리플렉션/레코드 매핑 등에 유용 (선택)
+tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("-parameters")
 }
 

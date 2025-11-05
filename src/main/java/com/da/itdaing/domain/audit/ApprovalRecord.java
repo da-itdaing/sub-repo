@@ -1,5 +1,6 @@
 package com.da.itdaing.domain.audit;
 
+import com.da.itdaing.domain.common.enums.ApprovalTargetType;
 import com.da.itdaing.domain.common.enums.DecisionType;
 import com.da.itdaing.domain.user.Users;
 import jakarta.persistence.*;
@@ -30,8 +31,9 @@ public class ApprovalRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "target_type", length = 20, nullable = false)
-    private String targetType;
+    private ApprovalTargetType targetType;
 
     @Column(name = "target_id", nullable = false)
     private Long targetId;
@@ -52,12 +54,22 @@ public class ApprovalRecord {
     private LocalDateTime createdAt;
 
     @Builder
-    public ApprovalRecord(String targetType, Long targetId, DecisionType decision, String reason, Users admin) {
+    public ApprovalRecord(ApprovalTargetType targetType, Long targetId, DecisionType decision, String reason, Users admin) {
         this.targetType = targetType;
         this.targetId = targetId;
         this.decision = decision;
         this.reason = reason;
         this.admin = admin;
+    }
+
+    public static ApprovalRecord forPopup(Long popupId, DecisionType decision, String reason, Users admin) {
+        return ApprovalRecord.builder()
+            .targetType(ApprovalTargetType.POPUP)
+            .targetId(popupId)
+            .decision(decision)
+            .reason(reason)
+            .admin(admin)
+            .build();
     }
 }
 
