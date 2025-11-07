@@ -6,30 +6,29 @@ on:
   workflow_dispatch:
 
 jobs:
-    build-and-publish:
-        runs-on: ubuntu-latest
+  build-and-publish:
+    runs-on: ubuntu-latest
     env:
       HAS_DEPLOY_KEY: ${{ secrets.GH_PAGES_DEPLOY_KEY != '' }}
-
-    # App runtime env for generating OpenAPI
-            SPRING_PROFILES_ACTIVE: openapi
-            SERVER_PORT: 8080
+      # App runtime env for generating OpenAPI
+      SPRING_PROFILES_ACTIVE: openapi
+      SERVER_PORT: 8080
       JWT_SECRET: ci-test-secret-please-replace-0123456789-abcdefghijklmnopqrstuvwxyz-long-key
-            JWT_ISSUER: itdaing-server
+      JWT_ISSUER: itdaing-server
       # JwtTokenProvider expects millis (long). 15m and 7d respectively.
       JWT_ACCESS_TOKEN_EXPIRATION: "900000"
       JWT_REFRESH_TOKEN_EXPIRATION: "604800000"
 
-        steps:
+    steps:
             - name: Checkout
               uses: actions/checkout@v4
               with:
                   lfs: true
 
-            -   name: Inspect wrapper files
-                run: |
-                    ls -lah gradle/wrapper
-                    xxd -l 4 gradle/wrapper/gradle-wrapper.jar || true
+            - name: Inspect wrapper files
+              run: |
+                ls -lah gradle/wrapper
+                xxd -l 4 gradle/wrapper/gradle-wrapper.jar || true
 
             - name: Set up JDK 21
               uses: actions/setup-java@v4
