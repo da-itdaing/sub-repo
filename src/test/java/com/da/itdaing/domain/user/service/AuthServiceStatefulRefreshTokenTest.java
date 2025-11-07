@@ -1,10 +1,10 @@
 package com.da.itdaing.domain.user.service;
 
 import com.da.itdaing.domain.common.enums.UserRole;
-import com.da.itdaing.domain.user.RefreshToken;
-import com.da.itdaing.domain.user.RefreshTokenRepository;
-import com.da.itdaing.domain.user.UserRepository;
-import com.da.itdaing.domain.user.Users;
+import com.da.itdaing.domain.user.entity.RefreshToken;
+import com.da.itdaing.domain.user.repository.RefreshTokenRepository;
+import com.da.itdaing.domain.user.repository.UserRepository;
+import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.domain.user.dto.AuthDto;
 import com.da.itdaing.domain.user.exception.AuthException;
 import com.da.itdaing.global.error.ErrorCode;

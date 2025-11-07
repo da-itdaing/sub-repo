@@ -41,7 +41,7 @@ public class QPopup extends EntityPathBase<Popup> {
 
     public final StringPath rejectionReason = createString("rejectionReason");
 
-    public final com.da.itdaing.domain.user.QUsers seller;
+    public final com.da.itdaing.domain.user.entity.QUsers seller;
 
     public final DatePath<java.time.LocalDate> startDate = createDate("startDate", java.time.LocalDate.class);
 
@@ -70,7 +70,7 @@ public class QPopup extends EntityPathBase<Popup> {
 
     public QPopup(Class<? extends Popup> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.seller = inits.isInitialized("seller") ? new com.da.itdaing.domain.user.QUsers(forProperty("seller")) : null;
+        this.seller = inits.isInitialized("seller") ? new com.da.itdaing.domain.user.entity.QUsers(forProperty("seller")) : null;
         this.zoneCell = inits.isInitialized("zoneCell") ? new com.da.itdaing.domain.geo.QZoneCell(forProperty("zoneCell"), inits.get("zoneCell")) : null;
     }
 

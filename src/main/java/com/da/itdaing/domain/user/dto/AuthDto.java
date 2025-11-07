@@ -1,7 +1,7 @@
 package com.da.itdaing.domain.user.dto;
 
 import com.da.itdaing.domain.common.enums.UserRole;
-import com.da.itdaing.domain.user.Users;
+import com.da.itdaing.domain.user.entity.Users;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -59,6 +59,10 @@ public class AuthDto {
         @Max(value = 90, message = "나이대는 90 이하여야 합니다")
         private Integer ageGroup;
 
+        @Schema(description = "MBTI", example = "ENFP")
+        @Size(max = 4, message = "mbti는 E/I, S/N, T/F, J/P 조합으로 최대 4자 이하여야 합니다")
+        private String mbti;
+
         // 선호(마스터 ID 리스트로 받는 것을 권장)
         @Schema(description = "관심 카테고리 ID 목록(소비자용, 1~4개)", example = "[101,105]")
         @NotEmpty(message = "관심 카테고리는 최소 1개 이상 선택해야 합니다")
@@ -70,10 +74,14 @@ public class AuthDto {
         @Size(min = 1, max = 4, message = "스타일은 1~4개 선택해야 합니다")
         private List<Long> styleIds;
 
-        @Schema(description = "선호 지역 ID 목록(1~2개)", example = "[2]")
+        @Schema(description = "선호 지역 ID 목록(1~4개)", example = "[2]")
         @NotEmpty(message = "지역은 최소 1개 이상 선택해야 합니다")
-        @Size(min = 1, max = 2, message = "지역은 1~2개 선택해야 합니다")
+        @Size(min = 1, max = 4, message = "지역은 1~4개 선택해야 합니다")
         private List<Long> regionIds;
+
+        @Schema(description = "선호 특징 ID 목록(1~4개)", example = "[2]")
+        @NotEmpty(message = "특징은 최소 1개 이상 선택해야 합니다") @Size(min = 1, max = 4)
+        private List<@NotNull Long> featureIds;
 
         // 비밀번호 = 확인 일치 검증
         @AssertTrue(message = "비밀번호와 비밀번호 확인이 일치하지 않습니다")
@@ -98,6 +106,7 @@ public class AuthDto {
                 .name(name)
                 .nickname(nickname)
                 .ageGroup(ageGroup)
+                .mbti(mbti)
                 .role(UserRole.CONSUMER)
                 .build();
         }
@@ -142,8 +151,7 @@ public class AuthDto {
 
         // ===== 판매자 프로필 관련 필드 =====
 
-        @Schema(description = "활동 지역 (필수)", example = "광주/남구", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank(message = "활동 지역은 필수입니다")
+        @Schema(description = "활동 지역 (선택)", example = "광주/남구")
         @Size(max = 255, message = "활동 지역은 255자 이하여야 합니다")
         private String activityRegion;
 

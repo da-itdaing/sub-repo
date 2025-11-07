@@ -100,6 +100,11 @@ sourceSets {
     }
 }
 
+// build.gradle.kts
+tasks.named("clean") {
+    delete("src/main/generated")
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("-parameters")
 }

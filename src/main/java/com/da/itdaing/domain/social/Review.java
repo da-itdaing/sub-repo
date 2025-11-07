@@ -1,7 +1,7 @@
 package com.da.itdaing.domain.social;
 
 import com.da.itdaing.domain.popup.Popup;
-import com.da.itdaing.domain.user.Users;
+import com.da.itdaing.domain.user.entity.Users;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

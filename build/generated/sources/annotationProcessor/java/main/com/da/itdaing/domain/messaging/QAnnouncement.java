@@ -24,7 +24,7 @@ public class QAnnouncement extends EntityPathBase<Announcement> {
 
     public final EnumPath<com.da.itdaing.domain.common.enums.AnnouncementAudience> audience = createEnum("audience", com.da.itdaing.domain.common.enums.AnnouncementAudience.class);
 
-    public final com.da.itdaing.domain.user.QUsers author;
+    public final com.da.itdaing.domain.user.entity.QUsers author;
 
     public final StringPath content = createString("content");
 
@@ -54,7 +54,7 @@ public class QAnnouncement extends EntityPathBase<Announcement> {
 
     public QAnnouncement(Class<? extends Announcement> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.author = inits.isInitialized("author") ? new com.da.itdaing.domain.user.QUsers(forProperty("author")) : null;
+        this.author = inits.isInitialized("author") ? new com.da.itdaing.domain.user.entity.QUsers(forProperty("author")) : null;
         this.popup = inits.isInitialized("popup") ? new com.da.itdaing.domain.popup.QPopup(forProperty("popup"), inits.get("popup")) : null;
     }
 

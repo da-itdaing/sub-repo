@@ -1,7 +1,7 @@
 package com.da.itdaing.domain.reco;
 
 import com.da.itdaing.domain.geo.ZoneArea;
-import com.da.itdaing.domain.user.Users;
+import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.global.jpa.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

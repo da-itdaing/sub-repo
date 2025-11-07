@@ -30,7 +30,7 @@ public class QEventLog extends EntityPathBase<EventLog> {
 
     public final com.da.itdaing.domain.popup.QPopup popup;
 
-    public final com.da.itdaing.domain.user.QUsers user;
+    public final com.da.itdaing.domain.user.entity.QUsers user;
 
     public final com.da.itdaing.domain.geo.QZoneCell zoneCell;
 
@@ -53,7 +53,7 @@ public class QEventLog extends EntityPathBase<EventLog> {
     public QEventLog(Class<? extends EventLog> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.popup = inits.isInitialized("popup") ? new com.da.itdaing.domain.popup.QPopup(forProperty("popup"), inits.get("popup")) : null;
-        this.user = inits.isInitialized("user") ? new com.da.itdaing.domain.user.QUsers(forProperty("user")) : null;
+        this.user = inits.isInitialized("user") ? new com.da.itdaing.domain.user.entity.QUsers(forProperty("user")) : null;
         this.zoneCell = inits.isInitialized("zoneCell") ? new com.da.itdaing.domain.geo.QZoneCell(forProperty("zoneCell"), inits.get("zoneCell")) : null;
     }
 

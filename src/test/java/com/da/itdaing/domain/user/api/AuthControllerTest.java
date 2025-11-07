@@ -22,6 +22,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -108,9 +110,14 @@ class AuthControllerTest {
             .loginId("juchan01")
             .email("newconsumer@example.com")
             .password("password123")
+            .passwordConfirm("password123")
             .name("김소비")
             .nickname("소비왕")
             .ageGroup(20)
+            .interestCategoryIds(List.of(1L))
+            .styleIds(List.of(1L))
+            .regionIds(List.of(1L))
+            .featureIds(List.of(1L))
             .build();
 
         AuthDto.SignupResponse response = AuthDto.SignupResponse.builder()
@@ -142,6 +149,7 @@ class AuthControllerTest {
             .loginId("seller01")
             .email("newseller@example.com")
             .password("password123")
+            .passwordConfirm("password123")
             .name("박판매")
             .nickname("팝업왕")
             .build();
@@ -175,9 +183,14 @@ class AuthControllerTest {
             .loginId("dup01")
             .email("existing@example.com")
             .password("password123")
+            .passwordConfirm("password123")
             .name("테스트")
             .nickname("중복테스트")
             .ageGroup(30)
+            .interestCategoryIds(List.of(1L))
+            .styleIds(List.of(1L))
+            .regionIds(List.of(1L))
+            .featureIds(List.of(1L))
             .build();
 
         given(authService.signupConsumer(any(AuthDto.SignupConsumerRequest.class)))
@@ -203,9 +216,14 @@ class AuthControllerTest {
             .loginId("validId")
             .email("invalid-email")
             .password("password123")
+            .passwordConfirm("password123")
             .name("테스트")
             .nickname("유효성검증")
             .ageGroup(20)
+            .interestCategoryIds(List.of(1L))
+            .styleIds(List.of(1L))
+            .regionIds(List.of(1L))
+            .featureIds(List.of(1L))
             .build();
 
         // when & then
@@ -226,9 +244,14 @@ class AuthControllerTest {
             .loginId("ageBad01")
             .email("a@b.com")
             .password("password123")
+            .passwordConfirm("password123")
             .name("홍길동")
             .nickname("길동이")
             .ageGroup(25) // 잘못된 값
+            .interestCategoryIds(List.of(1L))
+            .styleIds(List.of(1L))
+            .regionIds(List.of(1L))
+            .featureIds(List.of(1L))
             .build();
 
         mockMvc.perform(post("/api/auth/signup/consumer")

@@ -1,14 +1,12 @@
 package com.da.itdaing.domain.user.service;
 
-import com.da.itdaing.domain.master.Category;
-import com.da.itdaing.domain.master.CategoryRepository;
-import com.da.itdaing.domain.master.Region;
-import com.da.itdaing.domain.master.RegionRepository;
-import com.da.itdaing.domain.master.Style;
-import com.da.itdaing.domain.master.StyleRepository;
-import com.da.itdaing.domain.user.*;
+import com.da.itdaing.domain.master.*;
+import com.da.itdaing.domain.seller.entity.SellerProfile;
+import com.da.itdaing.domain.seller.repository.SellerProfileRepository;
 import com.da.itdaing.domain.user.dto.AuthDto;
+import com.da.itdaing.domain.user.entity.*;
 import com.da.itdaing.domain.user.exception.AuthException;
+import com.da.itdaing.domain.user.repository.*;
 import com.da.itdaing.global.error.ErrorCode;
 import com.da.itdaing.global.error.exception.EntityNotFoundException;
 import com.da.itdaing.global.security.JwtTokenProvider;
@@ -41,11 +39,13 @@ public class AuthService {
     private final CategoryRepository categoryRepository;
     private final StyleRepository styleRepository;
     private final RegionRepository regionRepository;
+    private final FeatureRepository featureRepository;
 
     // 사용자 선호 Repository
     private final UserPrefCategoryRepository userPrefCategoryRepository;
     private final UserPrefStyleRepository userPrefStyleRepository;
     private final UserPrefRegionRepository userPrefRegionRepository;
+    private final UserPrefFeatureRepository userPrefFeatureRepository;
 
     /**
      * 소비자 회원가입
@@ -67,10 +67,12 @@ public class AuthService {
         List<Long> categoryIds = request.getInterestCategoryIds().stream().distinct().toList();
         List<Long> styleIds = request.getStyleIds().stream().distinct().toList();
         List<Long> regionIds = request.getRegionIds().stream().distinct().toList();
+        List<Long> featureIds  = request.getFeatureIds().stream().distinct().toList();
 
         validatePrefCount(categoryIds, 1, 4, "카테고리");
         validatePrefCount(styleIds, 1, 4, "스타일");
-        validatePrefCount(regionIds, 1, 2, "지역");
+        validatePrefCount(regionIds, 1, 4, "지역");
+        validatePrefCount(featureIds,  1, 4, "편의사항");
 
         // 마스터 데이터 존재 여부 검증
         List<Category> categories = categoryRepository.findAllById(categoryIds);
@@ -86,6 +88,11 @@ public class AuthService {
         List<Region> regions = regionRepository.findAllById(regionIds);
         if (regions.size() != regionIds.size()) {
             throw new EntityNotFoundException(ErrorCode.ENTITY_NOT_FOUND, "존재하지 않는 지역이 포함되어 있습니다");
+        }
+
+        List<Feature> features = featureRepository.findAllById(featureIds); // ← 추가
+        if (features.size() != featureIds.size()) {
+            throw new EntityNotFoundException(ErrorCode.ENTITY_NOT_FOUND, "존재하지 않는 편의사항이 포함되어 있습니다");
         }
 
         // 비밀번호 암호화
@@ -119,8 +126,16 @@ public class AuthService {
                 .toList();
         userPrefRegionRepository.saveAll(userPrefRegions);
 
-        log.info("Consumer signed up with preferences: userId={}, email={}, categories={}, styles={}, regions={}",
-                user.getId(), user.getEmail(), categoryIds.size(), styleIds.size(), regionIds.size());
+        List<UserPrefFeature> userPrefFeatures = features.stream()
+            .map(feature -> UserPrefFeature.builder()
+                .user(user)
+                .feature(feature)
+                .build())
+            .toList();
+        userPrefFeatureRepository.saveAll(userPrefFeatures);
+
+        log.info("Consumer signed up with preferences: userId={}, email={}, categories={}, styles={}, regions={}, features={}",
+                user.getId(), user.getEmail(), categoryIds.size(), styleIds.size(), regionIds.size(), features.size());
 
         return AuthDto.SignupResponse.builder()
                 .userId(user.getId())
@@ -167,7 +182,7 @@ public class AuthService {
         // 판매자 프로필 생성 및 저장
         SellerProfile profile = SellerProfile.builder()
                 .user(user)
-                .activityRegion(request.getActivityRegion().trim())
+                .activityRegion(StringUtils.hasText(request.getActivityRegion()) ? request.getActivityRegion().trim() : null)
                 .snsUrl(StringUtils.hasText(request.getSnsUrl()) ? request.getSnsUrl().trim() : null)
                 .profileImageUrl(StringUtils.hasText(request.getProfileImageUrl()) ? request.getProfileImageUrl().trim() : null)
                 .introduction(StringUtils.hasText(request.getIntroduction()) ? request.getIntroduction().trim() : null)

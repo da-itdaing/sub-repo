@@ -37,7 +37,7 @@ public class QDailySellerRecommendation extends EntityPathBase<DailySellerRecomm
 
     public final NumberPath<java.math.BigDecimal> score = createNumber("score", java.math.BigDecimal.class);
 
-    public final com.da.itdaing.domain.user.QUsers seller;
+    public final com.da.itdaing.domain.user.entity.QUsers seller;
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
@@ -62,7 +62,7 @@ public class QDailySellerRecommendation extends EntityPathBase<DailySellerRecomm
 
     public QDailySellerRecommendation(Class<? extends DailySellerRecommendation> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.seller = inits.isInitialized("seller") ? new com.da.itdaing.domain.user.QUsers(forProperty("seller")) : null;
+        this.seller = inits.isInitialized("seller") ? new com.da.itdaing.domain.user.entity.QUsers(forProperty("seller")) : null;
         this.zoneArea = inits.isInitialized("zoneArea") ? new com.da.itdaing.domain.geo.QZoneArea(forProperty("zoneArea"), inits.get("zoneArea")) : null;
     }
 

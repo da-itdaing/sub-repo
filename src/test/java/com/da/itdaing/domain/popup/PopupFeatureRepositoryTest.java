@@ -9,13 +9,11 @@ import com.da.itdaing.domain.master.Feature;
 import com.da.itdaing.domain.master.FeatureRepository;
 import com.da.itdaing.domain.master.Region;
 import com.da.itdaing.domain.master.RegionRepository;
-import com.da.itdaing.domain.user.Users;
-import com.da.itdaing.domain.user.UserRepository;
+import com.da.itdaing.domain.user.entity.Users;
+import com.da.itdaing.domain.user.repository.UserRepository;
 import com.da.itdaing.testsupport.JpaSliceTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

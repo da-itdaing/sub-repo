@@ -2,7 +2,7 @@ package com.da.itdaing.domain.popup;
 
 import com.da.itdaing.domain.common.enums.ApprovalStatus;
 import com.da.itdaing.domain.geo.ZoneCell;
-import com.da.itdaing.domain.user.Users;
+import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.global.jpa.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

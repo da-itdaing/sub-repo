@@ -28,9 +28,9 @@ public class QMessage extends EntityPathBase<Message> {
 
     public final DateTimePath<java.time.LocalDateTime> readAt = createDateTime("readAt", java.time.LocalDateTime.class);
 
-    public final com.da.itdaing.domain.user.QUsers receiver;
+    public final com.da.itdaing.domain.user.entity.QUsers receiver;
 
-    public final com.da.itdaing.domain.user.QUsers sender;
+    public final com.da.itdaing.domain.user.entity.QUsers sender;
 
     public final DateTimePath<java.time.LocalDateTime> sentAt = createDateTime("sentAt", java.time.LocalDateTime.class);
 
@@ -54,8 +54,8 @@ public class QMessage extends EntityPathBase<Message> {
 
     public QMessage(Class<? extends Message> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.receiver = inits.isInitialized("receiver") ? new com.da.itdaing.domain.user.QUsers(forProperty("receiver")) : null;
-        this.sender = inits.isInitialized("sender") ? new com.da.itdaing.domain.user.QUsers(forProperty("sender")) : null;
+        this.receiver = inits.isInitialized("receiver") ? new com.da.itdaing.domain.user.entity.QUsers(forProperty("receiver")) : null;
+        this.sender = inits.isInitialized("sender") ? new com.da.itdaing.domain.user.entity.QUsers(forProperty("sender")) : null;
     }
 
 }

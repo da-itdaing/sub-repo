@@ -22,7 +22,7 @@ public class QUserRecoDissmissal extends EntityPathBase<UserRecoDissmissal> {
 
     public static final QUserRecoDissmissal userRecoDissmissal = new QUserRecoDissmissal("userRecoDissmissal");
 
-    public final com.da.itdaing.domain.user.QUsers consumer;
+    public final com.da.itdaing.domain.user.entity.QUsers consumer;
 
     public final DatePath<java.time.LocalDate> date = createDate("date", java.time.LocalDate.class);
 
@@ -50,7 +50,7 @@ public class QUserRecoDissmissal extends EntityPathBase<UserRecoDissmissal> {
 
     public QUserRecoDissmissal(Class<? extends UserRecoDissmissal> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.consumer = inits.isInitialized("consumer") ? new com.da.itdaing.domain.user.QUsers(forProperty("consumer")) : null;
+        this.consumer = inits.isInitialized("consumer") ? new com.da.itdaing.domain.user.entity.QUsers(forProperty("consumer")) : null;
         this.popup = inits.isInitialized("popup") ? new com.da.itdaing.domain.popup.QPopup(forProperty("popup"), inits.get("popup")) : null;
     }
 

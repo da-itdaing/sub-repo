@@ -8,6 +8,6 @@ package com.da.itdaing.domain.common.enums;
  */
 public enum AnnouncementAudience {
     ALL,
-    VENDOR,
-    USER
+    SELLER,
+    CONSUMER
 }

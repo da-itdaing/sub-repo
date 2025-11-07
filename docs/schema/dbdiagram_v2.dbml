@@ -2,8 +2,8 @@
 // Enums
 // =========================
 Enum UserRole {
-  USER
-  VENDOR
+  CONSUMER
+  SELLER
   ADMIN
 }
 
@@ -20,8 +20,8 @@ Enum ApprovalStatus {
 
 Enum AnnouncementAudience {
   ALL
-  VENDOR
-  USER
+  SELLER     // 통일: VENDOR -> SELLER
+  CONSUMER   // 통일: USER -> CONSUMER
 }
 
 Enum EventAction {
@@ -36,8 +36,12 @@ Enum DecisionType {
   REJECT
 }
 
+Enum ApprovalTargetType {
+  POPUP
+}
+
 // =========================
-/* Master */
+// Users & Profiles
 // =========================
 Table users {
   id               bigint [pk, increment]
@@ -46,28 +50,27 @@ Table users {
   name             varchar(100)
   nickname         varchar(100)
   email            varchar(255) [not null, unique]
-  role             varchar(20) [not null, note: 'UserRole']
+  role             varchar(20)  [not null, note: 'UserRole']
+  age_group        int          // CHANGED: consumer_profile 제거 후 이관 (10,20,30...)
   created_at       datetime [default: `CURRENT_TIMESTAMP`]
   updated_at       datetime [default: `CURRENT_TIMESTAMP`]
 }
 
-Table consumer_profile {
-  user_id          bigint [pk, ref: > users.id]
-  age_group        int        // 10,20,30...
-  created_at       datetime [default: `CURRENT_TIMESTAMP`]
-  updated_at       datetime [default: `CURRENT_TIMESTAMP`]
-}
+// (REMOVED) Table consumer_profile
 
 Table seller_profile {
   user_id           bigint [pk, ref: > users.id]
   profile_image_url varchar(500)
-  introduction      varchar(200)
+  introduction      varchar(500)  // 길이 통일
   activity_region   varchar(100)
   sns_url           varchar(200)
   created_at        datetime [default: `CURRENT_TIMESTAMP`]
   updated_at        datetime [default: `CURRENT_TIMESTAMP`]
 }
 
+// =========================
+// Master
+// =========================
 Table category {
   id               bigint [pk, increment]
   name             varchar(100) [not null]
@@ -95,19 +98,19 @@ Table region {
 
 Table feature {
   id               bigint [pk, increment]
-  name             varchar(100) [not null, unique] // 무료 주차/애견 동반/특별 할인...
+  name             varchar(100) [not null, unique]  // 무료주차/무료입장/예약가능/굿즈판매
   created_at       datetime [default: `CURRENT_TIMESTAMP`]
   updated_at       datetime [default: `CURRENT_TIMESTAMP`]
 }
 
 // =========================
-/* Geo (Zone / Cell / Availability) */
+// Geo (ZoneArea / ZoneCell / Availability)
 // =========================
 Table zone_area {
   id               bigint [pk, increment]
   region_id        bigint [not null, ref: > region.id]
   name             varchar(100) [not null]
-  geometry_data    text        // GeoJSON/WKT
+  geometry_data    text                         // GeoJSON/WKT
   created_at       datetime [default: `CURRENT_TIMESTAMP`]
   updated_at       datetime [default: `CURRENT_TIMESTAMP`]
   Indexes {
@@ -118,7 +121,7 @@ Table zone_area {
 Table zone_cell {
   id               bigint [pk, increment]
   zone_area_id     bigint [not null, ref: > zone_area.id]
-  label            varchar(100) // 셀 라벨
+  label            varchar(100)                 // 셀 라벨
   detailed_address varchar(255)
   lat              double
   lng              double
@@ -145,7 +148,7 @@ Table zone_availability {
 }
 
 // =========================
-/* Popup */
+// Popup
 // =========================
 Table popup {
   id               bigint [pk, increment]
@@ -158,7 +161,7 @@ Table popup {
   operating_time   varchar(50)
   approval_status  varchar(20) [not null, default: 'PENDING', note: 'ApprovalStatus']
   rejection_reason varchar(500)
-  view_count       bigint [not null, default: 0] // 캐시/스냅샷
+  view_count       bigint [not null, default: 0]
   created_at       datetime [default: `CURRENT_TIMESTAMP`]
   updated_at       datetime [default: `CURRENT_TIMESTAMP`]
   Indexes {
@@ -181,7 +184,7 @@ Table popup_image {
 }
 
 // =========================
-/* Preferences (M:N via join tables) */
+// Preferences (M:N)
 // =========================
 Table user_pref_category {
   id               bigint [pk, increment]
@@ -213,8 +216,19 @@ Table user_pref_region {
   }
 }
 
+// ✅ 추가: 소비자 편의 선호
+Table user_pref_feature {
+  id               bigint [pk, increment]
+  user_id          bigint [not null, ref: > users.id]
+  feature_id       bigint [not null, ref: > feature.id]
+  created_at       datetime [default: `CURRENT_TIMESTAMP`]
+  Indexes {
+    (user_id, feature_id) [unique, name: "uk_user_feature"]
+  }
+}
+
 // =========================
-/* Popup M:N (via join tables) */
+// Popup M:N (join tables)
 // =========================
 Table popup_category {
   id               bigint [pk, increment]
@@ -235,8 +249,18 @@ Table popup_feature {
   }
 }
 
+// ✅ 추가: 팝업 스타일 태그
+Table popup_style {
+  id               bigint [pk, increment]
+  popup_id         bigint [not null, ref: > popup.id]
+  style_id         bigint [not null, ref: > style.id]
+  Indexes {
+    (popup_id, style_id) [unique, name: "uk_popup_style"]
+  }
+}
+
 // =========================
-/* Social */
+// Social
 // =========================
 Table wishlist {
   id               bigint [pk, increment]
@@ -272,7 +296,7 @@ Table review_image {
 }
 
 // =========================
-/* Messaging & Announcement */
+// Messaging & Announcement
 // =========================
 Table message {
   id               bigint [pk, increment]
@@ -297,8 +321,8 @@ Table message_attachment {
 Table announcement {
   id               bigint [pk, increment]
   author_id        bigint [not null, ref: > users.id] // 관리자 또는 판매자
-  audience         varchar(20) [not null, note: 'AnnouncementAudience'] // ALL/VENDOR/USER
-  popup_id         bigint [ref: > popup.id] // 고객 공지인 경우 지정, 일반 공지는 null
+  audience         varchar(20) [not null, note: 'AnnouncementAudience'] // ALL/SELLER/CONSUMER
+  popup_id         bigint [ref: > popup.id] // 고객 공지인 경우 지정 가능
   title            varchar(200) [not null]
   content          text
   created_at       datetime [default: `CURRENT_TIMESTAMP`]
@@ -308,7 +332,7 @@ Table announcement {
 }
 
 // =========================
-/* AI Recommendation */
+// AI Recommendation
 // =========================
 Table daily_consumer_recommendation {
   id                    bigint [pk, increment]
@@ -348,7 +372,7 @@ Table daily_seller_recommendation {
 }
 
 // =========================
-/* Events & Metrics */
+// Events & Metrics
 // =========================
 Table event_log {
   id               bigint [pk, increment]
@@ -399,13 +423,13 @@ Table metric_daily_category {
 }
 
 // =========================
-/* Audit (optional but useful) */
+// Approval Audit
 // =========================
 Table approval_record {
   id               bigint [pk, increment]
-  target_type      varchar(20) [not null] // 'POPUP'
+  target_type      varchar(20) [not null, note: 'ApprovalTargetType'] // 'POPUP'
   target_id        bigint [not null]
-  decision         varchar(20) [not null, note: 'DecisionType']
+  decision         varchar(20) [not null, note: 'DecisionType']       // APPROVE/REJECT
   reason           varchar(1000)
   admin_id         bigint [not null, ref: > users.id]
   created_at       datetime [default: `CURRENT_TIMESTAMP`]

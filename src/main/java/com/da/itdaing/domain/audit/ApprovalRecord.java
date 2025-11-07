@@ -2,7 +2,7 @@ package com.da.itdaing.domain.audit;
 
 import com.da.itdaing.domain.common.enums.ApprovalTargetType;
 import com.da.itdaing.domain.common.enums.DecisionType;
-import com.da.itdaing.domain.user.Users;
+import com.da.itdaing.domain.user.entity.Users;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

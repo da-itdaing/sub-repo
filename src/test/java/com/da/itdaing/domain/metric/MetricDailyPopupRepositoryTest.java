@@ -9,14 +9,12 @@ import com.da.itdaing.domain.master.Region;
 import com.da.itdaing.domain.master.RegionRepository;
 import com.da.itdaing.domain.popup.Popup;
 import com.da.itdaing.domain.popup.PopupRepository;
-import com.da.itdaing.domain.user.Users;
-import com.da.itdaing.domain.user.UserRepository;
+import com.da.itdaing.domain.user.entity.Users;
+import com.da.itdaing.domain.user.repository.UserRepository;
 import com.da.itdaing.testsupport.JpaSliceTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
 

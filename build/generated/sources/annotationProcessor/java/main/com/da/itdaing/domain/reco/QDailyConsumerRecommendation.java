@@ -24,7 +24,7 @@ public class QDailyConsumerRecommendation extends EntityPathBase<DailyConsumerRe
 
     public final com.da.itdaing.global.jpa.QBaseTimeEntity _super = new com.da.itdaing.global.jpa.QBaseTimeEntity(this);
 
-    public final com.da.itdaing.domain.user.QUsers consumer;
+    public final com.da.itdaing.domain.user.entity.QUsers consumer;
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
@@ -62,7 +62,7 @@ public class QDailyConsumerRecommendation extends EntityPathBase<DailyConsumerRe
 
     public QDailyConsumerRecommendation(Class<? extends DailyConsumerRecommendation> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.consumer = inits.isInitialized("consumer") ? new com.da.itdaing.domain.user.QUsers(forProperty("consumer")) : null;
+        this.consumer = inits.isInitialized("consumer") ? new com.da.itdaing.domain.user.entity.QUsers(forProperty("consumer")) : null;
         this.popup = inits.isInitialized("popup") ? new com.da.itdaing.domain.popup.QPopup(forProperty("popup"), inits.get("popup")) : null;
     }
 

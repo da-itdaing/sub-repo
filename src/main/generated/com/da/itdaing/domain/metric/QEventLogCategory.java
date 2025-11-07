@@ -30,7 +30,7 @@ public class QEventLogCategory extends EntityPathBase<EventLogCategory> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    public final com.da.itdaing.domain.user.QUsers user;
+    public final com.da.itdaing.domain.user.entity.QUsers user;
 
     public QEventLogCategory(String variable) {
         this(EventLogCategory.class, forVariable(variable), INITS);
@@ -51,7 +51,7 @@ public class QEventLogCategory extends EntityPathBase<EventLogCategory> {
     public QEventLogCategory(Class<? extends EventLogCategory> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.category = inits.isInitialized("category") ? new com.da.itdaing.domain.master.QCategory(forProperty("category")) : null;
-        this.user = inits.isInitialized("user") ? new com.da.itdaing.domain.user.QUsers(forProperty("user")) : null;
+        this.user = inits.isInitialized("user") ? new com.da.itdaing.domain.user.entity.QUsers(forProperty("user")) : null;
     }
 
 }

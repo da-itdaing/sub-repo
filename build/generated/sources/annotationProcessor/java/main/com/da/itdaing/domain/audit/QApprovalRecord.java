@@ -22,7 +22,7 @@ public class QApprovalRecord extends EntityPathBase<ApprovalRecord> {
 
     public static final QApprovalRecord approvalRecord = new QApprovalRecord("approvalRecord");
 
-    public final com.da.itdaing.domain.user.QUsers admin;
+    public final com.da.itdaing.domain.user.entity.QUsers admin;
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
@@ -54,7 +54,7 @@ public class QApprovalRecord extends EntityPathBase<ApprovalRecord> {
 
     public QApprovalRecord(Class<? extends ApprovalRecord> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.admin = inits.isInitialized("admin") ? new com.da.itdaing.domain.user.QUsers(forProperty("admin")) : null;
+        this.admin = inits.isInitialized("admin") ? new com.da.itdaing.domain.user.entity.QUsers(forProperty("admin")) : null;
     }
 
 }

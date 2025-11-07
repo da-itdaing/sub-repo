@@ -22,7 +22,7 @@ public class QReview extends EntityPathBase<Review> {
 
     public static final QReview review = new QReview("review");
 
-    public final com.da.itdaing.domain.user.QUsers consumer;
+    public final com.da.itdaing.domain.user.entity.QUsers consumer;
 
     public final StringPath content = createString("content");
 
@@ -52,7 +52,7 @@ public class QReview extends EntityPathBase<Review> {
 
     public QReview(Class<? extends Review> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.consumer = inits.isInitialized("consumer") ? new com.da.itdaing.domain.user.QUsers(forProperty("consumer")) : null;
+        this.consumer = inits.isInitialized("consumer") ? new com.da.itdaing.domain.user.entity.QUsers(forProperty("consumer")) : null;
         this.popup = inits.isInitialized("popup") ? new com.da.itdaing.domain.popup.QPopup(forProperty("popup"), inits.get("popup")) : null;
     }
 

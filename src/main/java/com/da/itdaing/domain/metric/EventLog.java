@@ -3,7 +3,7 @@ package com.da.itdaing.domain.metric;
 import com.da.itdaing.domain.common.enums.EventAction;
 import com.da.itdaing.domain.geo.ZoneCell;
 import com.da.itdaing.domain.popup.Popup;
-import com.da.itdaing.domain.user.Users;
+import com.da.itdaing.domain.user.entity.Users;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

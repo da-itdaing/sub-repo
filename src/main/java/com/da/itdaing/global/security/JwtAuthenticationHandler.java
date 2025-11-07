@@ -22,7 +22,6 @@ import java.nio.charset.StandardCharsets;
  * Spring Security 인증/인가 예외 처리
  */
 @Slf4j
-@Component
 @RequiredArgsConstructor
 public class JwtAuthenticationHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
 
