@@ -74,6 +74,7 @@ src/main/resources/application-*.yml
 !src/main/resources/application.yml                 # 기본 템플릿은 유지(비밀 제거 필수)
 !src/main/resources/application-*.example.yml       # 샘플은 허용
 !src/main/resources/application-openapi.yml
+prod.env
 .env
 .env.*
 **/*.keystore

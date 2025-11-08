@@ -2,6 +2,6 @@ spring:
     profiles:
         default: local
     config:
-        import: optional:file:.env[.properties]
+        import: optional:file:.env[.properties],optional:file:prod.env[.properties]
 server:
     port: 8080
