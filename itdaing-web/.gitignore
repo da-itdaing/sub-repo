@@ -12,11 +12,29 @@ dist
 dist-ssr
 *.local
 
+# Vite/Preview local cache
+.vite
+.cache
+
+# Service worker build outputs / web manifests (runtime-generated)
+public/*.webp
+public/*.map
+
+# PWA dev artifacts (if any tools add these)
+workbox-*.
+sw.*.js
+sw.*.map
+*service-worker*.js
+*.cache
+
+# OS
+.DS_Store
+Thumbs.db
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj

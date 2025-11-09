@@ -92,3 +92,20 @@ gh-pages.pub
 uploads/
 tmp/
 temp/
+
+### Frontend build / caches (itdaing-web)
+itdaing-web/node_modules/
+itdaing-web/dist/
+itdaing-web/dist-ssr/
+itdaing-web/.vite/
+itdaing-web/.cache/
+itdaing-web/**/*.map
+
+### PWA transient artifacts (if generated during experiments)
+itdaing-web/public/sw.*.map
+itdaing-web/public/workbox-*.*
+
+### Editor / OS (frontend duplicates handled here for safety)
+itdaing-web/.DS_Store
+itdaing-web/Thumbs.db
+
