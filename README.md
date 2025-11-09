@@ -120,3 +120,30 @@ ssh-keygen -t ed25519 -C "gh-pages deploy" -f gh-pages -N ""
 ## 라이선스
 
 사내/프로젝트 정책에 따릅니다.
+
+## CI (GitHub Actions)
+
+[![CI](https://github.com/da-itdaing/final-project/actions/workflows/ci.yml/badge.svg?branch=dev/integration)](https://github.com/da-itdaing/final-project/actions/workflows/ci.yml)
+
+- 트리거: `dev/integration` 브랜치로의 push, 해당 브랜치 대상 PR, 수동 실행(workflow_dispatch)
+- 작업:
+	- Backend: JDK 21, Gradle `bootJar -x test` (테스트는 기본 스킵) → 산출물 업로드
+	- Frontend: Node 20, `itdaing-web`에서 `npm ci && npm run build` → `dist/` 업로드
+
+필요 시 테스트를 CI에 포함하려면 `ci.yml`의 Gradle 명령에서 `-x test`를 제거하세요.
+
+### gitmoji 커밋 컨벤션
+
+- 커밋 메시지 앞에 gitmoji 사용 권장(예: ✨, 🐛, 🔧 등). 예시:
+	- ✨ feat: 캐러셀 반응형 개선
+	- 🐛 fix: 모바일 우측 overflow 수정
+	- 🧹 refactor: 컴포넌트 분리
+	- 📝 docs: README CI 배지 추가
+
+간편 입력 도구:
+
+```bash
+npx gitmoji -c
+```
+
+직접 이모지 코드로도 가능: `git commit -m ":sparkles: feat: adjust breakpoints for hero carousel"`
