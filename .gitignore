@@ -109,3 +109,6 @@ itdaing-web/public/workbox-*.*
 itdaing-web/.DS_Store
 itdaing-web/Thumbs.db
 
+### Local backup folders (do not commit)
+itdaing-web_backup_*/
+
