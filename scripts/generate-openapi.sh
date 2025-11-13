@@ -2,6 +2,7 @@
 set -euo pipefail
 
 # Usage:
+#   chmod+x ./scripts/generate-openapi.sh
 #   ./scripts/generate-openapi.sh
 # Output:
 #   build/openapi/openapi.yaml
