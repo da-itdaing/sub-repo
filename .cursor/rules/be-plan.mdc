@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Backend 개발 계획 참조
 
-이 규칙은 백엔드 개발 시 항상 `plan/BE-plan.md` 파일을 참조해야 함을 명시합니다.
+이 규칙은 백엔드 개발 시 항상 `docs/plan/BE-plan.md` 파일을 참조해야 함을 명시합니다.
 
 ## 중요 참조 문서
 
