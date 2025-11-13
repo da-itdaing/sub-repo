@@ -23,9 +23,18 @@ public class StorageAutoConfig {
     @Bean
     @ConditionalOnProperty(name = "storage.provider", havingValue = "s3")
     public S3Client s3Client(StorageProps props) {
-        return S3Client.builder()
-            .region(Region.of(props.getS3().getRegion()))
-            .build();
+        var builder = S3Client.builder()
+            .region(Region.of(props.getS3().getRegion()));
+        
+        // LocalStack 사용 시 endpoint override
+        String endpointUrl = System.getenv("AWS_ENDPOINT_URL");
+        if (endpointUrl != null && !endpointUrl.isEmpty()) {
+            builder.endpointOverride(java.net.URI.create(endpointUrl));
+            // LocalStack은 path-style access 사용
+            builder.forcePathStyle(true);
+        }
+        
+        return builder.build();
     }
 
     @Bean

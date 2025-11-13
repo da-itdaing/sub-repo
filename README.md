@@ -49,20 +49,46 @@ final-project/
 
 - **Java 21** (macOS는 Homebrew의 `openjdk@21` 권장)
 - **Node.js 20+**
-- **Docker** (MySQL 컨테이너용)
+- **Docker** (MySQL, PostgreSQL, LocalStack 컨테이너용)
 - **Gradle** (프로젝트에 포함된 wrapper 사용)
+- **AWS CLI** (LocalStack 사용 시, 선택사항)
 
-### 1. 데이터베이스 시작
+### 1. 환경 변수 설정
 
 ```bash
-# MySQL Docker 컨테이너 시작
-docker-compose up -d mysql
+# 환경 변수 예시 파일 복사
+cp env.example .env
 
-# 컨테이너 상태 확인
-docker ps | grep itdaing-mysql
+# 필요시 .env 파일 수정
 ```
 
-### 2. 백엔드 서버 시작
+### 2. Docker 서비스 시작
+
+```bash
+# MySQL만 시작 (기본)
+docker-compose up -d mysql
+
+# MySQL + LocalStack 시작 (S3 모킹)
+docker-compose up -d mysql localstack
+
+# PostgreSQL 포함 시작 (챗봇 개발 시)
+docker-compose --profile chatbot up -d
+
+# 컨테이너 상태 확인
+docker ps | grep itdaing
+```
+
+### 3. LocalStack S3 버킷 생성 (LocalStack 사용 시)
+
+```bash
+# LocalStack 초기 설정 스크립트 실행
+./scripts/setup-localstack.sh
+
+# 또는 수동으로
+aws --endpoint-url=http://localhost:4566 s3 mb s3://itdaing-local
+```
+
+### 4. 백엔드 서버 시작
 
 ```bash
 # 프로젝트 루트에서 실행
@@ -76,7 +102,7 @@ SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 - **헬스 체크**: http://localhost:8080/actuator/health
 - **API 문서**: http://localhost:8080/v3/api-docs
 
-### 3. 프론트엔드 서버 시작
+### 5. 프론트엔드 서버 시작
 
 ```bash
 # itdaing-web 디렉토리로 이동
@@ -114,13 +140,31 @@ cd itdaing-web && npm run dev -- --host
 
 ### 백엔드 프로파일
 
-- **`local`** (기본): MySQL Docker 컨테이너 사용, Swagger UI 활성화, 개발용
+- **`local`** (기본): MySQL Docker 컨테이너 사용, LocalStack S3 또는 Local Storage 선택 가능, Swagger UI 활성화, 개발용
 - **`dev`**: IDE에서 RDS/S3 등 외부 리소스와 연동하는 개발용 (환경변수 주입)
 - **`prod`**: EC2 배포용 (포트 80, 환경변수 기반). 운영 키/비밀번호는 절대 커밋하지 않음
+- **`chatbot`**: PostgreSQL + pgvector 사용 (향후 챗봇 기능용)
 
 프로파일 활성화 방법:
 ```bash
-SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
+# 기본 (local)
+./gradlew bootRun
+
+# LocalStack S3 사용
+STORAGE_PROVIDER=s3 ./gradlew bootRun
+
+# 챗봇 프로파일 포함
+SPRING_PROFILES_ACTIVE=chatbot,local ./gradlew bootRun
+```
+
+### Storage Provider 선택
+
+- **`local`**: 로컬 파일 시스템에 저장 (기본)
+- **`s3`**: AWS S3 또는 LocalStack S3 사용
+
+환경 변수로 제어:
+```bash
+STORAGE_PROVIDER=s3 ./gradlew bootRun
 ```
 
 ## 📝 API 엔드포인트
@@ -186,6 +230,19 @@ SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 
 - **백엔드**: `plan/BE-plan.md` 참조
 - **프론트엔드**: `plan/FE-plan.md` 참조
+
+### 로컬 개발 환경 설정
+
+- **로컬 개발 가이드**: `docs/LOCAL_DEVELOPMENT.md` 참조
+  - LocalStack 설정 및 사용법
+  - PostgreSQL + pgvector 설정 (챗봇용)
+  - AWS 환경과의 차이점
+
+### 데이터베이스 마이그레이션
+
+- **마이그레이션 가이드**: `docs/DATABASE_MIGRATION.md` 참조
+  - MySQL Flyway 마이그레이션
+  - PostgreSQL + pgvector 설정 (향후)
 
 ### Cursor IDE 명령어
 

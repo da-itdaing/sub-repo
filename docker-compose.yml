@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # MySQL 8.0 - 현재 사용 중인 데이터베이스
+  mysql:
+    image: mysql:8.0
+    container_name: itdaing-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: itdaing
+      MYSQL_USER: itdaing
+      MYSQL_PASSWORD: password
+      TZ: Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - itdaing-network
+
+  # PostgreSQL 15 + pgvector - 챗봇용 (향후 사용)
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: itdaing-postgres
+    environment:
+      POSTGRES_DB: itdaing_chatbot
+      POSTGRES_USER: itdaing
+      POSTGRES_PASSWORD: password
+      TZ: Asia/Seoul
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U itdaing"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - itdaing-network
+    profiles:
+      - chatbot  # 기본적으로는 실행되지 않음 (--profile chatbot 옵션으로 실행)
+
+  # LocalStack - AWS 서비스 로컬 모킹 (S3, SQS, SNS 등)
+  localstack:
+    image: localstack/localstack:latest
+    container_name: itdaing-localstack
+    ports:
+      - "4566:4566"            # LocalStack 게이트웨이
+      - "4510-4559:4510-4559"  # 외부 서비스 포트 범위
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=ap-northeast-2
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - itdaing-network
+
+volumes:
+  mysql_data:
+    driver: local
+  postgres_data:
+    driver: local
+  localstack_data:
+    driver: local
+
+networks:
+  itdaing-network:
+    driver: bridge
+
