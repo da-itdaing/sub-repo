@@ -15,7 +15,7 @@
 │   ├── project-rules.md              # 프로젝트 전반 규칙
 │   ├── commands-rules.md             # 명령어 사용 규칙
 │   ├── development-workflow.md       # 개발 워크플로우
-│   ├── docker-rules.md               # Docker 사용 규칙
+│   ├── private-ec2-access.mdc       # Private EC2 접근 및 작업 규칙
 │   ├── be-plan.mdc                   # 백엔드 개발 계획 참조 규칙
 │   ├── fe-plan.mdc                   # 프론트엔드 개발 계획 참조 규칙
 │   ├── frontend-browser-testing.mdc  # 프론트엔드 브라우저 테스트 규칙
@@ -66,12 +66,12 @@ Rules는 프로젝트 개발 시 따라야 할 규칙과 가이드라인입니�
    - 배포 전 체크리스트
    - 문제 해결 가이드
 
-4. **docker-rules.md**
-   - MySQL 컨테이너 관리
-   - 데이터베이스 백업/복원
-   - 볼륨 관리
-   - 성능 모니터링
-   - 문제 해결
+4. **private-ec2-access.mdc**
+   - Private EC2 접근 방법
+   - 환경 변수 로드
+   - 백엔드 서버 관리
+   - Git 작업
+   - S3 및 데이터베이스 작업
 
 5. **be-plan.mdc** / **fe-plan.mdc**
    - 백엔드/프론트엔드 개발 계획서 참조 규칙

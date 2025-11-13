@@ -44,129 +44,56 @@ final-project/
 └── .cursor/             # Cursor IDE 설정
 ```
 
-## 🚀 빠른 시작
+## 🚀 개발 환경
 
-### 필수 요구사항
+### Private EC2 접근
 
-- **Java 21** (macOS는 Homebrew의 `openjdk@21` 권장)
-- **Node.js 20+**
-- **Docker** (PostgreSQL + pgvector, LocalStack 컨테이너용)
-- **Gradle** (프로젝트에 포함된 wrapper 사용)
-- **AWS CLI** (LocalStack 사용 시, 선택사항)
-
-### 1. 환경 변수 설정
+모든 개발 및 테스트는 Private EC2에서 수행됩니다.
 
 ```bash
-# 환경 변수 예시 파일 복사
-cp env.example .env
+# SSH 접속
+ssh private-ec2
 
-# 필요시 .env 파일 수정
+# 프로젝트 디렉토리로 이동
+cd ~/itdaing
+
+# 환경 변수 로드
+source prod.env
 ```
 
-### 2. Docker 서비스 시작
+자세한 내용은 [Private EC2 접근 가이드](docs/deployment/PRIVATE_EC2_ACCESS.md)를 참고하세요.
+
+### 백엔드 서버 시작
 
 ```bash
-# PostgreSQL 시작 (기본)
-docker-compose up -d postgres
-
-# PostgreSQL + LocalStack 시작 (S3 모킹)
-docker-compose up -d postgres localstack
-
-# PostgreSQL 포함 시작 (챗봇 개발 시)
-docker-compose --profile chatbot up -d
-
-# 컨테이너 상태 확인
-docker ps | grep itdaing
+ssh private-ec2 "cd ~/itdaing && source prod.env && ./gradlew bootRun"
 ```
 
-### 3. LocalStack S3 버킷 생성 (LocalStack 사용 시)
+### 프론트엔드 빌드 및 배포
 
 ```bash
-# LocalStack 초기 설정 스크립트 실행
-./scripts/setup-localstack.sh
-
-# 또는 수동으로
-aws --endpoint-url=http://localhost:4566 s3 mb s3://itdaing-local
-```
-
-### 4. 백엔드 서버 시작
-
-```bash
-# 프로젝트 루트에서 실행
-./gradlew bootRun
-
-# 또는 특정 프로파일 지정
-SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
-```
-
-- **Swagger UI**: http://localhost:8080/swagger-ui/index.html
-- **헬스 체크**: http://localhost:8080/actuator/health
-- **API 문서**: http://localhost:8080/v3/api-docs
-
-### 5. 프론트엔드 서버 시작
-
-```bash
-# itdaing-web 디렉토리로 이동
-cd itdaing-web
-
-# 의존성 설치 (최초 1회)
-npm install
-
-# 개발 서버 시작
-npm run dev
-```
-
-- **프론트엔드**: http://localhost:5173
-
-### 전체 서버 동시 실행
-
-Cursor IDE 명령어 사용:
-```
-/start-all
-```
-
-또는 수동으로:
-```bash
-# 터미널 1: PostgreSQL
-docker-compose up -d postgres
-
-# 터미널 2: 백엔드
-./gradlew bootRun
-
-# 터미널 3: 프론트엔드
-cd itdaing-web && npm run dev -- --host
+ssh private-ec2 "cd ~/itdaing/itdaing-web && npm install && npm run build"
 ```
 
 ## 🔧 프로파일 개요
 
 ### 백엔드 프로파일
 
-- **`local`** (기본): PostgreSQL + pgvector Docker 컨테이너 사용, LocalStack S3 또는 Local Storage 선택 가능, Swagger UI 활성화, 개발용
-- **`dev`**: IDE에서 RDS/S3 등 외부 리소스와 연동하는 개발용 (환경변수 주입)
-- **`prod`**: EC2 배포용 (포트 80, 환경변수 기반). 운영 키/비밀번호는 절대 커밋하지 않음
-- **`chatbot`**: PostgreSQL + pgvector 사용 (향후 챗봇 기능용)
+- **`prod`**: 프로덕션 환경 (AWS RDS PostgreSQL + AWS S3 사용)
+- **`dev`**: 개발 환경 (환경변수 주입)
+- **`chatbot`**: 챗봇 기능용 (PostgreSQL + pgvector)
 
-프로파일 활성화 방법:
+프로파일 활성화:
 ```bash
-# 기본 (local)
+# Private EC2에서
+cd ~/itdaing
+source prod.env  # SPRING_PROFILES_ACTIVE=prod
 ./gradlew bootRun
-
-# LocalStack S3 사용
-STORAGE_PROVIDER=s3 ./gradlew bootRun
-
-# 챗봇 프로파일 포함
-SPRING_PROFILES_ACTIVE=chatbot,local ./gradlew bootRun
 ```
 
-### Storage Provider 선택
+### Storage Provider
 
-- **`local`**: 로컬 파일 시스템에 저장 (기본)
-- **`s3`**: AWS S3 또는 LocalStack S3 사용
-
-환경 변수로 제어:
-```bash
-STORAGE_PROVIDER=s3 ./gradlew bootRun
-```
+프로덕션 환경에서는 항상 **AWS S3**를 사용합니다.
 
 ## 📝 API 엔드포인트
 
@@ -225,58 +152,26 @@ STORAGE_PROVIDER=s3 ./gradlew bootRun
 - `.env` 파일은 Git에 커밋하지 않습니다.
 - 프로덕션 환경 변수는 `prod.env` 파일로 관리합니다 (서버에만 존재).
 
-## 📚 개발 가이드
+## 📚 개발 계획 및 문서
 
-### 개발 계획서
+프로젝트 개발 시 다음 문서를 참고하세요:
 
-- **백엔드**: [`docs/plan/BE-plan.md`](docs/plan/BE-plan.md) 참조
-- **프론트엔드**: [`docs/plan/FE-plan.md`](docs/plan/FE-plan.md) 참조
-
-### 문서 목차
+- **백엔드 계획**: [`docs/plan/BE-plan.md`](docs/plan/BE-plan.md)
+- **프론트엔드 계획**: [`docs/plan/FE-plan.md`](docs/plan/FE-plan.md)
+- **Private EC2 접근**: [`docs/deployment/PRIVATE_EC2_ACCESS.md`](docs/deployment/PRIVATE_EC2_ACCESS.md)
+- **배포 가이드**: [`docs/deployment/DEPLOY_TO_PRIVATE_EC2.md`](docs/deployment/DEPLOY_TO_PRIVATE_EC2.md)
+- **환경 설정**: [`docs/deployment/PRIVATE_EC2_ENV_SETUP.md`](docs/deployment/PRIVATE_EC2_ENV_SETUP.md)
+- **S3 버킷 정책**: [`docs/deployment/S3_BUCKET_POLICY.md`](docs/deployment/S3_BUCKET_POLICY.md)
 
 모든 문서는 [`docs/README.md`](docs/README.md)에서 확인할 수 있습니다.
 
-#### 주요 문서
-
-- **로컬 개발 환경 설정**: [`docs/setup/LOCAL_DEVELOPMENT.md`](docs/setup/LOCAL_DEVELOPMENT.md)
-  - LocalStack 설정 및 사용법
-  - PostgreSQL + pgvector 설정
-  - AWS 환경과의 차이점
-
-- **IDE 설정**: [`docs/setup/IDE_SETUP.md`](docs/setup/IDE_SETUP.md)
-  - IntelliJ / Eclipse 설정 가이드
-
-- **배포 가이드**: [`docs/deployment/DEPLOY_EC2.md`](docs/deployment/DEPLOY_EC2.md)
-  - AWS EC2 배포 방법
-
-- **데이터베이스 마이그레이션**: [`docs/database/DATABASE_MIGRATION.md`](docs/database/DATABASE_MIGRATION.md)
-  - PostgreSQL + pgvector Flyway 마이그레이션
-
-- **API 문서**: [`docs/api/REST_API_문서.md`](docs/api/REST_API_문서.md)
-  - REST API 엔드포인트 문서
-
-- **프론트엔드**: [`docs/frontend/README.md`](docs/frontend/README.md)
-  - 프론트엔드 프로젝트 개요 및 라우팅 구조
-
-### Cursor IDE 명령어
-
-- `/front-dev` - 프론트엔드 개발 서버 실행
-- `/back-dev` - 백엔드 개발 서버 실행
-- `/start-all` - 모든 서버 실행
-- `/stop-all` - 모든 서버 중지
-
-자세한 내용은 `.cursor/README.md` 참조
-
 ## 🚢 배포
 
-### EC2 배포 (Docker 없이)
+### Private EC2 배포
 
-- 문서: `docs/DEPLOY_EC2.md` 참조
+- 문서: [`docs/deployment/DEPLOY_TO_PRIVATE_EC2.md`](docs/deployment/DEPLOY_TO_PRIVATE_EC2.md) 참조
 - 핵심: `application-prod.yml` + 환경변수 기반 구성, systemd로 서비스 관리
-
-### IDE 실행 가이드
-
-- 문서: `docs/IDE_SETUP.md` 참조 (IntelliJ / Eclipse 세팅, ProxyJump, 원격 디버그)
+- 초기 설정: [`docs/deployment/SETUP_PRIVATE_EC2.md`](docs/deployment/SETUP_PRIVATE_EC2.md) 참조
 
 ## 📖 OpenAPI/Swagger 문서
 

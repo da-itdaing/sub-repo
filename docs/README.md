@@ -10,11 +10,15 @@
 
 ### ⚙️ 설정 가이드 (`setup/`)
 - [IDE_SETUP.md](setup/IDE_SETUP.md) - IDE 설정 가이드 (IntelliJ / Eclipse)
-- [LOCAL_DEVELOPMENT.md](setup/LOCAL_DEVELOPMENT.md) - 로컬 개발 환경 설정 가이드
-- [AWS_LOCALSTACK_SETUP.md](setup/AWS_LOCALSTACK_SETUP.md) - AWS LocalStack 로컬 개발 환경 설정
 
 ### 🚀 배포 가이드 (`deployment/`)
-- [DEPLOY_EC2.md](deployment/DEPLOY_EC2.md) - AWS EC2 배포 가이드
+- [PRIVATE_EC2_ACCESS.md](deployment/PRIVATE_EC2_ACCESS.md) - Private EC2 접근 가이드
+- [SETUP_PRIVATE_EC2.md](deployment/SETUP_PRIVATE_EC2.md) - Private EC2 초기 설정
+- [PRIVATE_EC2_ENV_SETUP.md](deployment/PRIVATE_EC2_ENV_SETUP.md) - Private EC2 환경 설정 완료 보고서
+- [DEPLOY_TO_PRIVATE_EC2.md](deployment/DEPLOY_TO_PRIVATE_EC2.md) - Private EC2 배포 가이드
+- [EC2_ARCHITECTURE.md](deployment/EC2_ARCHITECTURE.md) - EC2 아키텍처 설명
+- [S3_BUCKET_POLICY.md](deployment/S3_BUCKET_POLICY.md) - S3 버킷 정책 설정 가이드
+- [S3_UPLOAD_FLOW.md](deployment/S3_UPLOAD_FLOW.md) - S3 이미지 업로드 및 읽기 흐름
 
 ### 💻 개발 가이드 (`development/`)
 - (향후 추가 예정)
@@ -40,7 +44,7 @@
 ## 🔍 빠른 찾기
 
 ### 개발 시작하기
-1. [로컬 개발 환경 설정](setup/LOCAL_DEVELOPMENT.md)
+1. [Private EC2 접근 가이드](deployment/PRIVATE_EC2_ACCESS.md)
 2. [IDE 설정](setup/IDE_SETUP.md)
 3. [프론트엔드 README](frontend/README.md)
 
