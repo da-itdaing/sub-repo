@@ -1,5 +1,6 @@
 package com.da.itdaing.domain.popup.repository;
 
+import com.da.itdaing.domain.popup.entity.Popup;
 import com.da.itdaing.domain.popup.entity.PopupFeature;
 import java.util.Collection;
 import java.util.List;
@@ -10,4 +11,6 @@ public interface PopupFeatureRepository extends JpaRepository<PopupFeature, Long
     List<PopupFeature> findByPopupIdIn(Collection<Long> popupIds);
 
     List<PopupFeature> findByPopupId(Long popupId);
+
+    void deleteByPopup(Popup popup);
 }

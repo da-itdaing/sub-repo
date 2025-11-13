@@ -56,16 +56,24 @@ export interface UserProfile {
 export const authService = {
   // 로그인
   async login(request: LoginRequest): Promise<LoginResponse> {
-    const response = await apiClient.post<ApiResponse<LoginResponse>>('/auth/login', request);
-    if (response.data.success && response.data.data) {
-      // 토큰 저장
-      localStorage.setItem('accessToken', response.data.data.accessToken);
-      if (response.data.data.refreshToken) {
-        localStorage.setItem('refreshToken', response.data.data.refreshToken);
+    // removed debug log
+    try {
+      const response = await apiClient.post<ApiResponse<LoginResponse>>('/auth/login', request);
+      // removed debug log
+      if (response.data.success && response.data.data) {
+        // 토큰 저장
+        localStorage.setItem('accessToken', response.data.data.accessToken);
+        if (response.data.data.refreshToken) {
+          localStorage.setItem('refreshToken', response.data.data.refreshToken);
+        }
+        return response.data.data;
       }
-      return response.data.data;
+      throw new Error(response.data.error?.message || '로그인에 실패했습니다.');
+    } catch (error: any) {
+      console.error('authService.login error:', error);
+      console.error('Error response:', error.response?.data);
+      throw error;
     }
-    throw new Error(response.data.error?.message || '로그인에 실패했습니다.');
   },
 
   // 소비자 회원가입

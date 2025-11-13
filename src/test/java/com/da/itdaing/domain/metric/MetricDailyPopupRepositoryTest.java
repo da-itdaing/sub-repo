@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,47 +48,47 @@ class MetricDailyPopupRepositoryTest {
     @Test
     void 팝업_일일_메트릭을_저장하고_조회할_수_있다() {
         // given
-        Users seller = Users.builder()
+        Users seller = Objects.requireNonNull(Users.builder()
                 .loginId("seller1")
                 .password("pass")
                 .email("seller1@example.com")
                 .role(UserRole.SELLER)
-                .build();
+                .build());
         userRepository.save(seller);
 
-        Region region = Region.builder().name("남구").build();
+        Region region = Objects.requireNonNull(Region.builder().name("남구").build());
         regionRepository.save(region);
 
-        ZoneArea zoneArea = ZoneArea.builder()
+        ZoneArea zoneArea = Objects.requireNonNull(ZoneArea.builder()
                 .region(region)
                 .name("송암동 상권")
-                .build();
+                .build());
         zoneAreaRepository.save(zoneArea);
 
-        ZoneCell zoneCell = ZoneCell.builder()
+        ZoneCell zoneCell = Objects.requireNonNull(ZoneCell.builder()
                 .zoneArea(zoneArea)
                 .owner(seller)
                 .label("A-1")
                 .lat(35.0101)
                 .lng(126.9711)
-                .build();
+                .build());
         zoneCellRepository.save(zoneCell);
 
-        Popup popup = Popup.builder()
+        Popup popup = Objects.requireNonNull(Popup.builder()
                 .seller(seller)
                 .zoneCell(zoneCell)
                 .name("팝업")
-                .build();
+                .build());
         popupRepository.save(popup);
 
-        MetricDailyPopup metric = MetricDailyPopup.builder()
+        MetricDailyPopup metric = Objects.requireNonNull(MetricDailyPopup.builder()
                 .popup(popup)
                 .date(LocalDate.of(2025, 11, 1))
                 .views(100)
                 .uniqueUsers(50)
                 .favorites(10)
                 .reviews(5)
-                .build();
+                .build());
 
         // when
         MetricDailyPopup saved = metricDailyPopupRepository.save(metric);
@@ -105,53 +106,53 @@ class MetricDailyPopupRepositoryTest {
     @Test
     void 동일한_팝업과_날짜_조합은_중복_저장할_수_없다() {
         // given
-        Users seller = Users.builder()
+        Users seller = Objects.requireNonNull(Users.builder()
                 .loginId("seller2")
                 .password("pass")
                 .email("seller2@example.com")
                 .role(UserRole.SELLER)
-                .build();
+                .build());
         userRepository.save(seller);
 
-        Region region = Region.builder().name("동구").build();
+        Region region = Objects.requireNonNull(Region.builder().name("동구").build());
         regionRepository.save(region);
 
-        ZoneArea zoneArea = ZoneArea.builder()
+        ZoneArea zoneArea = Objects.requireNonNull(ZoneArea.builder()
                 .region(region)
                 .name("충장로 상권")
-                .build();
+                .build());
         zoneAreaRepository.save(zoneArea);
 
-        ZoneCell zoneCell = ZoneCell.builder()
+        ZoneCell zoneCell = Objects.requireNonNull(ZoneCell.builder()
                 .zoneArea(zoneArea)
                 .owner(seller)
                 .label("B-1")
                 .lat(35.0202)
                 .lng(126.9822)
-                .build();
+                .build());
         zoneCellRepository.save(zoneCell);
 
-        Popup popup = Popup.builder()
+        Popup popup = Objects.requireNonNull(Popup.builder()
                 .seller(seller)
                 .zoneCell(zoneCell)
                 .name("팝업2")
-                .build();
+                .build());
         popupRepository.save(popup);
 
         LocalDate date = LocalDate.of(2025, 11, 2);
 
-        MetricDailyPopup metric1 = MetricDailyPopup.builder()
+        MetricDailyPopup metric1 = Objects.requireNonNull(MetricDailyPopup.builder()
                 .popup(popup)
                 .date(date)
                 .views(50)
-                .build();
+                .build());
         metricDailyPopupRepository.save(metric1);
 
-        MetricDailyPopup metric2 = MetricDailyPopup.builder()
+        MetricDailyPopup metric2 = Objects.requireNonNull(MetricDailyPopup.builder()
                 .popup(popup)
                 .date(date)
                 .views(100)
-                .build();
+                .build());
 
         // when & then
         assertThatThrownBy(() -> {

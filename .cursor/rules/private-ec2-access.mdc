@@ -4,40 +4,24 @@ alwaysApply: true
 
 # Private EC2 접근 및 작업 규칙
 
-이 규칙은 Cursor에서 Private EC2에 직접 접근하여 작업할 때 따라야 할 가이드라인입니다.
+이 규칙은 Private EC2에서 직접 작업할 때 따라야 할 가이드라인입니다.
 
-## SSH 접속 정보
+**현재 상태**: Private EC2에서 직접 작업 중입니다. SSH 접속 없이 명령어를 직접 실행하세요.
 
-- **호스트**: `private-ec2` (SSH config에 설정됨)
+## 작업 환경 정보
+
+- **서버**: Private EC2
 - **사용자**: `ubuntu`
-- **프록시**: Bastion EC2를 통한 접속
 - **프로젝트 디렉토리**: `/home/ubuntu/itdaing`
+- **환경**: 프로덕션 환경 (AWS RDS PostgreSQL + AWS S3)
 
-## SSH 접속 방법
+## 환경 변수 로드 (필수)
 
-```bash
-ssh private-ec2
-```
-
-또는 직접 명령 실행:
-
-```bash
-ssh private-ec2 "명령어"
-```
-
-## 환경 변수
-
-Private EC2에서 작업 시 항상 환경 변수를 로드해야 합니다:
+Private EC2에서 작업 시작 전 항상 환경 변수를 로드해야 합니다:
 
 ```bash
 cd ~/itdaing
 source prod.env
-```
-
-또는 SSH로 원격 실행 시:
-
-```bash
-ssh private-ec2 "cd ~/itdaing && source prod.env && 명령어"
 ```
 
 ## 주요 작업 디렉토리
@@ -51,43 +35,53 @@ ssh private-ec2 "cd ~/itdaing && source prod.env && 명령어"
 
 ### 환경 확인
 ```bash
-ssh private-ec2 "cd ~/itdaing && source prod.env && echo 'Bucket: $STORAGE_S3_BUCKET' && echo 'DB: $SPRING_DATASOURCE_URL'"
+cd ~/itdaing
+source prod.env
+echo "Bucket: $STORAGE_S3_BUCKET"
+echo "DB: $SPRING_DATASOURCE_URL"
 ```
 
 ### 백엔드 서버 상태 확인
 ```bash
-ssh private-ec2 "lsof -ti:8080 && echo '백엔드 실행 중' || echo '백엔드 미실행'"
+lsof -ti:8080 && echo '백엔드 실행 중' || echo '백엔드 미실행'
 ```
 
 ### 백엔드 서버 시작
 ```bash
-ssh private-ec2 "cd ~/itdaing && source prod.env && ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &"
+cd ~/itdaing
+source prod.env
+nohup ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &
 ```
 
 ### 백엔드 서버 중지
 ```bash
-ssh private-ec2 "kill \$(lsof -ti:8080) || echo '프로세스 없음'"
+kill $(lsof -ti:8080) || echo '프로세스 없음'
 ```
 
 ### 로그 확인
 ```bash
-ssh private-ec2 "tail -f /tmp/itdaing-boot.log"
+tail -f /tmp/itdaing-boot.log
 ```
 
 ### Git 작업
 ```bash
-ssh private-ec2 "cd ~/itdaing && git status"
-ssh private-ec2 "cd ~/itdaing && git pull origin main"
+cd ~/itdaing
+git status
+git pull origin main
 ```
 
 ### S3 테스트
 ```bash
-ssh private-ec2 "cd ~/itdaing && source prod.env && AWS_ACCESS_KEY_ID=\$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=\$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=\$AWS_REGION aws s3 ls s3://\$STORAGE_S3_BUCKET"
+cd ~/itdaing
+source prod.env
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=$AWS_REGION aws s3 ls s3://$STORAGE_S3_BUCKET
 ```
 
 ### 데이터베이스 연결 테스트
 ```bash
-ssh private-ec2 "cd ~/itdaing && source prod.env && PGPASSWORD=\$SPRING_DATASOURCE_PASSWORD psql -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com -U itdaing_admin -d itdaing-db -c 'SELECT version();'"
+cd ~/itdaing
+source prod.env
+PGPASSWORD=$SPRING_DATASOURCE_PASSWORD psql -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com -U itdaing_admin -d itdaing-db -c 'SELECT version();'
 ```
 
 ## 주의사항
@@ -102,11 +96,12 @@ ssh private-ec2 "cd ~/itdaing && source prod.env && PGPASSWORD=\$SPRING_DATASOUR
    - 로그는 `/tmp/itdaing-boot.log`에 저장
    - 서버 중지 시 `kill` 명령어 사용
 
-3. **파일 업로드**
-   - 로컬 파일을 Private EC2로 업로드: `scp 파일 private-ec2:/tmp/`
-   - Private EC2에서 로컬로 다운로드: `scp private-ec2:~/itdaing/파일 .`
+3. **파일 관리**
+   - 파일 복사: `cp /tmp/file.txt ~/itdaing/`
+   - 디렉토리 복사: `cp -r /tmp/directory ~/itdaing/`
 
 4. **프로덕션 환경**
+   - 현재 Private EC2에서 직접 작업 중
    - 모든 작업은 프로덕션 환경에서 수행됨
    - 데이터베이스는 AWS RDS PostgreSQL 사용
    - 스토리지는 AWS S3 사용

@@ -16,7 +16,7 @@ alwaysApply: true
 ### 2. 브라우저 확인 절차
 1. **프론트엔드 개발 서버 실행 확인**
    - `npm run dev` 또는 `/front-dev` 명령어로 서버가 실행 중인지 확인
-   - 기본 URL: http://localhost:5173
+   - 기본 URL: http://localhost:3000
 
 2. **브라우저에서 해당 페이지 접속**
    - 구현/수정한 페이지의 URL로 직접 접속

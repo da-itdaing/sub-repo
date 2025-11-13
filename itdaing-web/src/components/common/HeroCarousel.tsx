@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { ChevronLeft, ChevronRight, MapPin, Heart } from "lucide-react";
 import { motion, PanInfo } from "motion/react";
+import { ImageWithFallback } from "./ImageWithFallback";
 
 interface HeroCarouselProps {
   items?: Array<{
@@ -25,14 +26,16 @@ export function HeroCarousel({ items, onPopupClick, isLoggedIn, onLoginClick }: 
 
   const carouselItems = useMemo(() => {
     const source = items ?? [];
-    return source.map((item, index) => ({
-      id: item.id,
-      rank: item.rank ?? index + 1,
-      image: item.image,
-      title: item.title,
-      date: item.date,
-      location: item.location
-    }));
+    return source
+      .filter((item) => Boolean(item.title))
+      .map((item, index) => ({
+        id: item.id,
+        rank: item.rank ?? index + 1,
+        image: item.image || "",
+        title: item.title || "",
+        date: item.date || "",
+        location: item.location || "",
+      }));
   }, [items]);
 
   // Unified responsive config for desktop + mobile
@@ -60,10 +63,10 @@ export function HeroCarousel({ items, onPopupClick, isLoggedIn, onLoginClick }: 
   }
 
   return (
-    <div className="relative mt-0 mb-3 md:mb-12">
-  <div ref={containerRef} className="relative rounded-lg bg-white md:bg-transparent overflow-hidden md:overflow-x-visible md:overflow-y-hidden" onMouseEnter={()=>setIsPaused(true)} onMouseLeave={()=>setIsPaused(false)}>
+  <div className="relative z-20 mt-0 mb-8 md:mb-16">
+  <div ref={containerRef} className="relative rounded-lg bg-white md:bg-transparent overflow-hidden md:overflow-x-visible md:overflow-y-hidden pb-12 md:pb-16" onMouseEnter={()=>setIsPaused(true)} onMouseLeave={()=>setIsPaused(false)}>
     {/* Mobile version */}
-    <div className="block md:hidden py-8" style={{minHeight: Math.max(300, Math.round(config.mobile.cardH + 80))}}>
+    <div className="block md:hidden pt-8 pb-12" style={{minHeight: Math.max(300, Math.round(config.mobile.cardH + 96))}}>
       <div className="relative mx-auto px-4" style={{height: config.mobile.trackH, maxWidth: '100%'}}>
         {/* Drag layer */}
         <motion.div
@@ -115,12 +118,17 @@ export function HeroCarousel({ items, onPopupClick, isLoggedIn, onLoginClick }: 
                   }}
                 >
                   <div className="relative w-full h-full">
-                    <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40" />
+                    <ImageWithFallback
+                      src={item.image}
+                      fallbackKey={item.id}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className={`absolute inset-0 z-10 ${isCentered ? 'bg-black/40' : 'bg-black/55 blur-[1px]'}`} />
                     <motion.button
                       type="button"
                       onClick={(event) => handleFavoriteToggle(event, item.id)}
-                      className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full shadow-md"
+                      className="absolute top-2 right-2 p-1.5 bg-white/95 rounded-full shadow-md z-30"
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       aria-label="관심 팝업에 추가"
@@ -131,7 +139,7 @@ export function HeroCarousel({ items, onPopupClick, isLoggedIn, onLoginClick }: 
                         color={isFavorite ? "#eb0000" : "#414141"}
                       />
                     </motion.button>
-                    <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
+                    <div className="absolute bottom-0 left-0 right-0 p-2 text-white z-20">
                       {item.rank && position === 0 && (
                         <div className="mb-1">
                           <span className="text-lg font-['Black_Han_Sans:Regular',sans-serif]">- {item.rank} -</span>
@@ -168,7 +176,7 @@ export function HeroCarousel({ items, onPopupClick, isLoggedIn, onLoginClick }: 
     </div>
     {/* Desktop version */}
     <div className="hidden md:block py-12" style={{minHeight: Math.max(520, config.desktop.cardH + 160)}}>
-      <div className="w-full mx-auto relative px-16" style={{maxWidth: config.desktop.containerMaxW, height: config.desktop.trackH}}>
+      <div className="w-full mx-auto relative px-6 lg:px-10" style={{maxWidth: 1089, height: config.desktop.trackH}}>
         {/* Slides */}
         <div className="absolute inset-0 flex items-center justify-center">
           {carouselItems.map((item, idx) => {
@@ -205,12 +213,22 @@ export function HeroCarousel({ items, onPopupClick, isLoggedIn, onLoginClick }: 
                 }}
               >
                 <div className="relative w-full h-full">
-                  <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+                  <ImageWithFallback
+                    src={item.image}
+                    fallbackKey={item.id}
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Center 카드와 사이드 카드의 가독성을 위한 투명도/블러 조절 */}
+                  {pos === 0 ? (
+                    <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+                  ) : (
+                    <div className="absolute inset-0 z-10 bg-black/45 blur-[1px]" />
+                  )}
                   <button
                     type="button"
                     onClick={(event) => handleFavoriteToggle(event, item.id)}
-                    className="absolute top-4 right-4 p-2 bg-white/95 rounded-full shadow-md hover:scale-105 transition-transform"
+                    className="absolute top-4 right-4 p-2 bg-white/95 rounded-full shadow-md hover:scale-105 transition-transform z-30"
                     aria-label="관심 팝업에 추가"
                   >
                     <Heart
@@ -219,7 +237,7 @@ export function HeroCarousel({ items, onPopupClick, isLoggedIn, onLoginClick }: 
                       color={isFavorite ? "#eb0000" : "#414141"}
                     />
                   </button>
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white z-20">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-semibold tracking-wide bg-[#eb0000] px-2 py-0.5 rounded-full shadow">{item.rank}위</span>
                       {pos===0 && (
@@ -244,8 +262,8 @@ export function HeroCarousel({ items, onPopupClick, isLoggedIn, onLoginClick }: 
         {/* Navigation arrows */}
   <button aria-label="Previous" onClick={handlePrev} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full shadow p-3 backdrop-blur-sm z-20"><ChevronLeft className="w-6 h-6" /></button>
   <button aria-label="Next" onClick={handleNext} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full shadow p-3 backdrop-blur-sm z-20"><ChevronRight className="w-6 h-6" /></button>
-        {/* Indicators */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+        {/* Indicators - under cards but above banner */}
+        <div className="absolute -bottom-6 left-0 right-0 flex justify-center gap-2 z-[15] pointer-events-auto drop-shadow">
           {carouselItems.map((_, idx) => (
             <button
               key={idx}
@@ -296,8 +314,8 @@ function useResponsiveCarouselConfig(){
       cardH: mCenterH,
       trackH: Math.round(mCenterH + 40),
       step,
-      scale: {0:1, 1:0.89, 2:0.81, 3:0.75} as Record<number, number>,
-      opacity: {0:1, 1:0.7, 2:0.5, 3:0.3} as Record<number, number>,
+      scale: {0:1, 1:0.88, 2:0.8, 3:0.74} as Record<number, number>,
+      opacity: {0:1, 1:0.65, 2:0.45, 3:0.28} as Record<number, number>,
     } as const;
 
     const desktopPreset = presets.find(p => w >= p.breakpoint) ?? presets[presets.length-1];
@@ -309,7 +327,7 @@ function useResponsiveCarouselConfig(){
       containerMaxW: desktopPreset.containerMaxW,
       trackH: desktopPreset.cardH + 40,
       scaleMap: {0:1, 1:0.88, 2:0.78, 3:0.7} as Record<number, number>,
-      opacityMap: {0:1, 1:0.85, 2:0.55, 3:0.4} as Record<number, number>,
+      opacityMap: {0:1, 1:0.7, 2:0.45, 3:0.3} as Record<number, number>,
     };
 
     return { isMobile, mobile, desktop };

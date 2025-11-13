@@ -1,0 +1,65 @@
+다음 스니펫을 복사해서 터미널에서 직접 실행하거나, 별도 스크립트 파일로 저장해두면 편합니다.
+
+1) 백엔드/프론트 동시 개발 서버 시작
+```bash
+# 백엔드
+cd /home/ubuntu/itdaing && set -a && source prod.env && set +a && ./gradlew bootRun --console plain > backend.log 2>&1 &
+echo "backend log: /home/ubuntu/itdaing/backend.log"
+
+# 프론트
+cd /home/ubuntu/itdaing/itdaing-web && npm run dev -- --host 0.0.0.0 --port 3000
+```
+
+2) 전체 종료/정리 스크립트(파일로 저장하여 사용 권장: ~/off_all.sh)
+```bash
+cat > ~/off_all.sh << 'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[cleanup] stopping frontend (port 3000)"
+if lsof -ti:3000 >/dev/null 2>&1; then
+  kill $(lsof -ti:3000)
+else
+  echo "  no process on port 3000"
+fi
+
+echo "[cleanup] stopping backend (port 8080)"
+if lsof -ti:8080 >/dev/null 2>&1; then
+  kill $(lsof -ti:8080)
+else
+  echo "  no process on port 8080"
+fi
+
+echo "[cleanup] removing backend log"
+rm -f /home/ubuntu/itdaing/backend.log
+
+echo "[cleanup] done"
+EOF
+chmod +x ~/off_all.sh
+~/off_all.sh
+```
+
+3) OpenAPI 문서 생성(Gradle)
+```bash
+cd /home/ubuntu/itdaing
+./scripts/generate-openapi.sh
+```
+
+4) 로컬 Swagger UI로 문서 보기 (http://localhost:8081)
+```bash
+cd /home/ubuntu/itdaing
+./scripts/serve-openapi-local.sh 8081
+```
+
+5) Git 작업(새 브랜치 생성 후 푸시; 원격 인증 필요)
+```bash
+cd /home/ubuntu/itdaing
+BRANCH="feat/docs-swagger-and-scripts"
+git checkout -b "$BRANCH"
+git add -A
+git commit -m "📝 docs: add FE/BE overviews and local Swagger scripts"
+git remote add subrepo https://github.com/da-itdaing/sub-repo.git || true
+git push -u subrepo "$BRANCH"
+```
+
+

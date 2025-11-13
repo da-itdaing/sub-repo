@@ -8,13 +8,6 @@ const ADMIN_NOTICES = [
     publishedAt: "2025-10-25",
     author: "관리자 김하늘",
     summary: "11월 1주차 존 점검 일정과 필수 점검 항목을 공유드립니다."
-  },
-  {
-    id: 2,
-    title: "카카오맵 API 키 갱신 공지",
-    publishedAt: "2025-10-18",
-    author: "시스템",
-    summary: "11월 30일까지 운영 콘솔에 신규 API 키를 등록해주세요."
   }
 ];
 

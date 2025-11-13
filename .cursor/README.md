@@ -10,7 +10,8 @@
 │   ├── front-dev.md   # 프론트엔드 개발 서버 실행
 │   ├── back-dev.md    # 백엔드 개발 서버 실행
 │   ├── start-all.md   # 전체 서버 실행
-│   └── stop-all.md    # 전체 서버 중지
+│   ├── stop-all.md    # 전체 서버 중지
+│   └── mock-db-reset.md  # Mock 데이터베이스 초기화
 ├── rules/             # 개발 규칙 및 가이드
 │   ├── project-rules.md              # 프로젝트 전반 규칙
 │   ├── commands-rules.md             # 명령어 사용 규칙
@@ -31,8 +32,9 @@ Cursor IDE에서 `/` 명령어로 사용할 수 있는 단축키들입니다.
 
 - `/front-dev` - 프론트엔드 개발 서버 실행
 - `/back-dev` - 백엔드 개발 서버 실행
-- `/start-all` - 모든 개발 서버 실행 (MySQL, 백엔드, 프론트엔드)
-- `/stop-all` - 모든 개발 서버 중지
+- `/start-all` - 백엔드 서버 실행 (Private EC2)
+- `/stop-all` - 백엔드 서버 중지
+- `/mock-db-reset` - Mock 데이터베이스 초기화 (RDS 스키마 리셋 및 시딩)
 
 ### 명령어 추가 방법
 
@@ -53,10 +55,11 @@ Rules는 프로젝트 개발 시 따라야 할 규칙과 가이드라인입니�
    - Mock 데이터 규칙
 
 2. **commands-rules.md**
-   - Docker 명령어
    - Gradle 명령어 (백엔드)
    - npm 명령어 (프론트엔드)
-   - 통합 개발 환경 실행 방법
+   - PostgreSQL RDS 명령어
+   - AWS S3 명령어
+   - Private EC2 서버 관리
    - 로그 확인 및 프로세스 관리
 
 3. **development-workflow.md**
@@ -75,7 +78,7 @@ Rules는 프로젝트 개발 시 따라야 할 규칙과 가이드라인입니�
 
 5. **be-plan.mdc** / **fe-plan.mdc**
    - 백엔드/프론트엔드 개발 계획서 참조 규칙
-   - 각각 `plan/BE-plan.md`, `plan/FE-plan.md`를 항상 참조하도록 설정
+   - 각각 `docs/plan/BE-plan.md`, `docs/plan/FE-plan.md`를 항상 참조하도록 설정
 
 6. **frontend-browser-testing.mdc**
    - 프론트엔드 화면 구현 시 브라우저 테스트 필수 규칙

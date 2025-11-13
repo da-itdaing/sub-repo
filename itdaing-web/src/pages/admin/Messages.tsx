@@ -1,24 +1,39 @@
-import React from "react";
-import { MessageSquare, AlertTriangle, Send } from "lucide-react";
-
-const ADMIN_MESSAGES = [
-  {
-    id: 1,
-    title: "광주 동구청 담당자",
-    summary: "다잇다잉 야시장 안전 점검 일정 조율",
-    updatedAt: "2025-10-26",
-    unread: 2
-  },
-  {
-    id: 2,
-    title: "문화재단 협력팀",
-    summary: "11월 공동 홍보 콘텐츠 초안 전달",
-    updatedAt: "2025-10-24",
-    unread: 0
-  }
-];
+import React, { useState } from "react";
+import { Send, AlertTriangle } from "lucide-react";
+import { useMessageThreads } from "../../hooks/useMessageThreads";
+import { useMessageThread } from "../../hooks/useMessageThread";
+import { MessageThreadList } from "../../components/messages/MessageThreadList";
+import { MessageThreadDetail } from "../../components/messages/MessageThreadDetail";
+import { MessageComposer } from "../../components/messages/MessageComposer";
+import { messageService } from "../../services/messageService";
+import { ReplyRequest } from "../../types/message";
+import { useAuth } from "../../context/AuthContext";
 
 export default function AdminMessagesPage() {
+  const { user } = useAuth();
+  const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
+
+  const { threads, loading, error, refetch } = useMessageThreads({
+    role: "ADMIN",
+    autoRefresh: true,
+  });
+
+  const { thread, messages, loading: detailLoading, refetch: refetchThread, loadMore } = useMessageThread({
+    threadId: selectedThreadId || 0,
+    role: "ADMIN",
+  });
+
+  const handleThreadClick = (threadId: number) => {
+    setSelectedThreadId(threadId);
+  };
+
+  const handleReply = async (request: ReplyRequest) => {
+    if (!selectedThreadId) return;
+    await messageService.reply(selectedThreadId, request);
+    await refetchThread();
+    await refetch();
+  };
+
   return (
     <div className="space-y-6">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -26,39 +41,45 @@ export default function AdminMessagesPage() {
           <h1 className="text-2xl font-semibold text-gray-900">운영 메시지</h1>
           <p className="text-sm text-gray-500">자치구 · 협력 기관과 주고받은 메시지를 확인하세요.</p>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-full bg-[#2563eb] text-white px-4 py-2 text-sm font-semibold hover:bg-[#1d4ed8] transition">
-          <Send className="size-4" />
-          새 메시지
-        </button>
       </header>
-      <section className="bg-white rounded-2xl border border-gray-200 shadow-sm divide-y divide-gray-100">
-        {ADMIN_MESSAGES.map(message => (
-          <article key={message.id} className="px-6 py-4 flex items-center justify-between">
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
+          {error.message}
+        </div>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* 스레드 목록 */}
             <div>
-              <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <MessageSquare className="size-4 text-[#ef4444]" />
-                {message.title}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">{message.summary}</p>
+          <MessageThreadList
+            threads={threads}
+            loading={loading}
+            onThreadClick={handleThreadClick}
+            emptyMessage="현재 대기 중인 메시지가 없습니다."
+          />
+        </div>
+
+        {/* 스레드 상세 및 작성 */}
+        <div className="space-y-4">
+          {selectedThreadId ? (
+            <>
+              <MessageThreadDetail
+                messages={messages}
+                loading={detailLoading}
+                currentUserId={user?.id}
+                hasMore={thread ? thread.currentPage < thread.totalPages - 1 : false}
+                onLoadMore={loadMore}
+              />
+              <MessageComposer onSubmit={handleReply} placeholder="답장을 입력하세요..." />
+            </>
+          ) : (
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8 text-center text-sm text-gray-500">
+              왼쪽에서 대화를 선택하세요.
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400">{message.updatedAt}</span>
-              {message.unread > 0 && (
-                <span className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-[#ef4444]/10 text-[#ef4444] text-xs font-semibold">
-                  {message.unread}
-                </span>
               )}
             </div>
-          </article>
-        ))}
-        {ADMIN_MESSAGES.length === 0 && (
-          <div className="px-6 py-5 text-sm text-gray-500 flex items-center gap-2">
-            <AlertTriangle className="size-4 text-[#f97316]" />
-            현재 대기 중인 메시지가 없습니다.
           </div>
-        )}
-      </section>
     </div>
   );
 }
-

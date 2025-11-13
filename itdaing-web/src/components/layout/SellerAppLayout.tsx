@@ -55,15 +55,25 @@ export default function SellerAppLayout() {
         </div>
       </aside>
       <div className="flex-1 flex flex-col">
-        <header className="lg:hidden sticky top-0 z-20 bg-white border-b border-gray-200">
-          <div className="px-4 py-3 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400 uppercase">Seller Console</p>
-              <h1 className="text-lg font-semibold text-gray-900">팝업 운영센터</h1>
+        <header className="sticky top-0 z-20 bg-white border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="font-display text-[#eb0000] text-xl font-bold">DA - IT DAING</span>
             </div>
-            <button className="p-2 rounded-xl border border-gray-200">
-              <Menu className="size-5 text-gray-500" />
+            <div className="flex items-center gap-4">
+              <span className="hidden sm:inline-flex text-sm text-gray-700 font-medium">
+                {user?.name || user?.nickname || "판매자"} 님
+              </span>
+              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
+                <MessageSquare className="size-5 text-gray-600" />
+                <span className="absolute top-0 right-0 size-2 bg-red-500 rounded-full"></span>
+              </button>
+              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <svg className="size-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
             </button>
+            </div>
           </div>
         </header>
         <main className="flex-1 p-4 lg:p-8">

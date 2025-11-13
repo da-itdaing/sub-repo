@@ -3,7 +3,7 @@
  * 인증이 필요한 페이지를 보호합니다
  */
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

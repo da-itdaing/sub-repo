@@ -26,6 +26,9 @@ interface EventSectionProps {
   isLoggedIn?: boolean;
   onLoginClick?: () => void;
   items?: ExternalEventItem[];
+  userPreferences?: string[]; // 소비자 선호 카테고리
+  totalCountOverride?: number; // '전체' 개수 강제 동기화용
+  maxItems?: number; // 섹션당 최대 노출 수 제한 (기본 20)
 }
 
 export function EventSection({
@@ -38,12 +41,15 @@ export function EventSection({
   isLoggedIn,
   onLoginClick,
   items,
+  userPreferences,
+  totalCountOverride,
+  maxItems = 20,
 }: EventSectionProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const prevLengthRef = useRef<number>(0);
-  const [locationFilter, setLocationFilter] = useState("동구");
+  const [locationFilter, setLocationFilter] = useState("전체");
   const [categoryFilter, setCategoryFilter] = useState("전체");
   const [currentCardIndex, setCurrentCardIndex] = useState(1);
   const [visibleCount, setVisibleCount] = useState(4);
@@ -65,8 +71,9 @@ export function EventSection({
       : events;
 
   const displayedEvents = showAll
-    ? filteredEvents
-    : filteredEvents.slice(0, visibleCount);
+    ? (maxItems ? filteredEvents.slice(0, maxItems) : filteredEvents)
+    : (maxItems ? filteredEvents.slice(0, Math.min(visibleCount, maxItems)) : filteredEvents.slice(0, visibleCount));
+  const totalCount = typeof totalCountOverride === "number" ? totalCountOverride : filteredEvents.length;
 
   useEffect(() => {
     setVisibleCount(4);
@@ -96,7 +103,7 @@ export function EventSection({
       }
     };
 
-    const currentLength = filteredEvents.length;
+    const currentLength = maxItems ? Math.min(filteredEvents.length, maxItems) : filteredEvents.length;
     if (prevLengthRef.current !== currentLength) {
       c.scrollLeft = 0;
       prevLengthRef.current = currentLength;
@@ -139,6 +146,7 @@ export function EventSection({
         <CommunityFilterButtons
           activeFilter={categoryFilter}
           onFilterChange={setCategoryFilter}
+          userPreferences={userPreferences}
         />
       )}
 
@@ -150,32 +158,23 @@ export function EventSection({
             onClick={() => onPopupClick(e.id)}
             isLoggedIn={isLoggedIn}
             onLoginClick={onLoginClick}
+            fallbackKey={e.id}
           />
         ))}
       </div>
 
-      {filteredEvents.length > 4 && (
+      {(maxItems ? Math.min(filteredEvents.length, maxItems) : filteredEvents.length) > 4 && !showAll && (
         <div className="hidden sm:flex flex-col items-center gap-3 mt-4 md:mt-6">
           <p className="text-sm md:text-base text-[#4d4d4d] font-[\x27Pretendard:Medium\x27,sans-serif]">
-            {displayedEvents.length} / {filteredEvents.length}
+            {displayedEvents.length} / {totalCount}
           </p>
-          {showAll || visibleCount >= filteredEvents.length ? (
-            <button
-              onClick={() => {
-                if (showAll) onToggleShowAll();
-                setVisibleCount(4);
-              }}
-              className="flex items-center gap-1.5 px-6 py-2.5 bg-[#eb0000] text-white rounded-full hover:bg-[#cc0000] transition-colors font-[\x27Pretendard:Medium\x27,sans-serif] text-sm md:text-base"
-            >
-              접기 <ChevronDown className="w-4 h-4 md:w-5 md:h-5 rotate-180" />
-            </button>
-          ) : visibleCount > 4 ? (
+          {visibleCount >= filteredEvents.length ? null : (
             <div className="flex items-center gap-3">
               {visibleCount < filteredEvents.length && (
                 <button
                   onClick={() =>
                     setVisibleCount((prev) =>
-                      Math.min(prev + 4, filteredEvents.length)
+                      Math.min(prev + 4, maxItems ? Math.min(filteredEvents.length, maxItems) : filteredEvents.length)
                     )
                   }
                   className="flex items-center gap-1.5 px-6 py-2.5 bg-gray-200 text-[#4d4d4d] rounded-full hover:bg-gray-300 transition-colors font-[\x27Pretendard:Medium\x27,sans-serif] text-sm md:text-base"
@@ -184,25 +183,6 @@ export function EventSection({
                 </button>
               )}
               <button
-                onClick={() => setVisibleCount(4)}
-                className="flex items-center gap-1.5 px-6 py-2.5 bg-[#eb0000] text-white rounded-full hover:bg-[#cc0000] transition-colors font-[\x27Pretendard:Medium\x27,sans-serif] text-sm md:text-base"
-              >
-                접기 <ChevronDown className="w-4 h-4 md:w-5 md:h-5 rotate-180" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() =>
-                  setVisibleCount((prev) =>
-                    Math.min(prev + 4, filteredEvents.length)
-                  )
-                }
-                className="flex items-center gap-1.5 px-6 py-2.5 bg-gray-200 text-[#4d4d4d] rounded-full hover:bg-gray-300 transition-colors font-[\x27Pretendard:Medium\x27,sans-serif] text-sm md:text-base"
-              >
-                더보기 <ChevronDown className="w-4 h-4 md:w-5 md:h-5" />
-              </button>
-              <button
                 onClick={onToggleShowAll}
                 className="flex items-center gap-1.5 px-6 py-2.5 bg-[#eb0000] text-white rounded-full hover:bg-[#cc0000] transition-colors font-[\x27Pretendard:Medium\x27,sans-serif] text-sm md:text-base"
               >
@@ -210,6 +190,19 @@ export function EventSection({
               </button>
             </div>
           )}
+        </div>
+      )}
+      {showAll && filteredEvents.length > 4 && (
+        <div className="hidden sm:flex flex-col items-center gap-3 mt-4 md:mt-6">
+          <button
+            onClick={() => {
+              onToggleShowAll();
+              setVisibleCount(4);
+            }}
+            className="flex items-center gap-1.5 px-6 py-2.5 bg-[#eb0000] text-white rounded-full hover:bg-[#cc0000] transition-colors font-[\x27Pretendard:Medium\x27,sans-serif] text-sm md:text-base"
+          >
+            접기 <ChevronDown className="w-4 h-4 md:w-5 md:h-5 rotate-180" />
+          </button>
         </div>
       )}
 
@@ -237,7 +230,7 @@ export function EventSection({
             ref={scrollContainerRef}
             className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide scroll-smooth snap-x snap-mandatory"
           >
-            {filteredEvents.map((e, index) => (
+            {(maxItems ? filteredEvents.slice(0, maxItems) : filteredEvents).map((e, index) => (
               <div
                 key={e.id}
                 data-card-index={index}
@@ -248,13 +241,14 @@ export function EventSection({
                   onClick={() => onPopupClick(e.id)}
                   isLoggedIn={isLoggedIn}
                   onLoginClick={onLoginClick}
+                  fallbackKey={e.id}
                 />
               </div>
             ))}
           </div>
           <div className="mt-3 flex items-center justify-center px-1">
             <p className="text-xs text-[#4d4d4d] font-[\x27Pretendard:Medium\x27,sans-serif]">
-              {currentCardIndex} / {filteredEvents.length}
+              {currentCardIndex} / {totalCount}
             </p>
           </div>
         </div>

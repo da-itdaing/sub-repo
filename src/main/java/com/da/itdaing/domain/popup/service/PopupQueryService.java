@@ -4,12 +4,15 @@ import com.da.itdaing.domain.popup.dto.PopupOperatingHourResponse;
 import com.da.itdaing.domain.popup.dto.PopupReviewAuthorResponse;
 import com.da.itdaing.domain.popup.dto.PopupReviewResponse;
 import com.da.itdaing.domain.popup.dto.PopupReviewSummaryResponse;
+import com.da.itdaing.domain.popup.dto.PopupSearchRequest;
 import com.da.itdaing.domain.popup.dto.PopupSummaryResponse;
 import com.da.itdaing.domain.popup.entity.Popup;
 import com.da.itdaing.domain.popup.entity.PopupCategory;
 import com.da.itdaing.domain.popup.entity.PopupFeature;
 import com.da.itdaing.domain.popup.entity.PopupImage;
 import com.da.itdaing.domain.popup.entity.PopupStyle;
+import com.da.itdaing.domain.popup.entity.QPopup;
+import com.da.itdaing.domain.popup.entity.QPopupCategory;
 import com.da.itdaing.domain.popup.exception.PopupNotFoundException;
 import com.da.itdaing.domain.popup.repository.PopupCategoryRepository;
 import com.da.itdaing.domain.popup.repository.PopupFeatureRepository;
@@ -21,6 +24,9 @@ import com.da.itdaing.domain.social.entity.ReviewImage;
 import com.da.itdaing.domain.social.repository.ReviewImageRepository;
 import com.da.itdaing.domain.social.repository.ReviewRepository;
 import com.da.itdaing.domain.user.entity.Users;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -28,8 +34,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @Transactional(readOnly = true)
@@ -45,9 +56,15 @@ public class PopupQueryService {
     private final PopupStyleRepository popupStyleRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewImageRepository reviewImageRepository;
+    private final EntityManager entityManager;
 
     public List<PopupSummaryResponse> getPopups() {
         List<Popup> popups = popupRepository.findAllWithZoneAndSeller();
+        return mapToSummaryResponses(popups);
+    }
+
+    public List<PopupSummaryResponse> getPopupsBySeller(Long sellerId) {
+        List<Popup> popups = popupRepository.findAllBySellerIdWithZoneAndSeller(sellerId);
         return mapToSummaryResponses(popups);
     }
 
@@ -68,6 +85,76 @@ public class PopupQueryService {
         popupRepository.findById(popupId).orElseThrow(() -> new PopupNotFoundException(popupId));
         List<Review> reviews = reviewRepository.findByPopupId(popupId);
         return mapToReviewResponses(reviews);
+    }
+
+    public Page<PopupSummaryResponse> searchPopups(PopupSearchRequest request) {
+        JPAQueryFactory queryFactory = new JPAQueryFactory(entityManager);
+        QPopup popup = QPopup.popup;
+        QPopupCategory popupCategory = QPopupCategory.popupCategory;
+
+        BooleanBuilder builder = new BooleanBuilder();
+
+        // 키워드 검색 (제목 또는 설명)
+        if (StringUtils.hasText(request.getKeyword())) {
+            String keyword = "%" + request.getKeyword().toLowerCase() + "%";
+            builder.and(
+                popup.name.lower().like(keyword)
+                    .or(popup.description.lower().like(keyword))
+            );
+        }
+
+        // 승인 상태 필터
+        if (request.getApprovalStatus() != null) {
+            builder.and(popup.approvalStatus.eq(request.getApprovalStatus()));
+        }
+
+        // 날짜 필터
+        if (request.getStartDate() != null) {
+            builder.and(popup.startDate.goe(request.getStartDate()));
+        }
+        if (request.getEndDate() != null) {
+            builder.and(popup.endDate.loe(request.getEndDate()));
+        }
+
+        // 지역 필터 (ZoneArea ID)
+        if (request.getRegionId() != null) {
+            builder.and(popup.zoneCell.zoneArea.id.eq(request.getRegionId()));
+        }
+
+        // 카테고리 필터
+        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
+            builder.and(
+                popup.id.in(
+                    queryFactory.select(popupCategory.popup.id)
+                        .from(popupCategory)
+                        .where(popupCategory.category.id.in(request.getCategoryIds()))
+                        .distinct()
+                )
+            );
+        }
+
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
+        
+        // 카운트 쿼리
+        Long totalCount = queryFactory.select(popup.count())
+            .from(popup)
+            .where(builder)
+            .fetchOne();
+        long total = totalCount != null ? totalCount : 0L;
+
+        // 데이터 쿼리
+        List<Popup> popups = queryFactory.selectFrom(popup)
+            .leftJoin(popup.zoneCell).fetchJoin()
+            .leftJoin(popup.zoneCell.zoneArea).fetchJoin()
+            .leftJoin(popup.seller).fetchJoin()
+            .where(builder)
+            .orderBy(popup.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        List<PopupSummaryResponse> responses = mapToSummaryResponses(popups);
+        return new PageImpl<>(responses, pageable, total);
     }
 
     private List<PopupSummaryResponse> mapToSummaryResponses(List<Popup> popups) {

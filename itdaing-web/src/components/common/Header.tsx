@@ -1,5 +1,6 @@
 import { User, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePopups, useSellers } from "../../hooks/usePopups";
 
 interface HeaderProps {
@@ -30,6 +31,7 @@ export function Header({
   onPopupClick,
   onSellerClick
 }: HeaderProps) {
+  const navigate = useNavigate();
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAutocomplete, setShowAutocomplete] = useState(false);
@@ -105,6 +107,12 @@ export function Header({
       e.preventDefault();
       if (selectedIndex >= 0 && searchResults[selectedIndex]) {
         handleResultClick(searchResults[selectedIndex]);
+      } else if (searchQuery.trim()) {
+        // 검색어가 있으면 검색 페이지로 이동
+        navigate(`/search?keyword=${encodeURIComponent(searchQuery.trim())}`);
+        setSearchQuery("");
+        setShowAutocomplete(false);
+        setShowMobileSearch(false);
       }
     } else if (e.key === "Escape") {
       setShowAutocomplete(false);
@@ -113,7 +121,7 @@ export function Header({
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-gray-50 border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-[600] bg-gray-50 border-b border-gray-200 shadow-sm">
       <div className="max-w-[1089px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 h-12 xs:h-14 sm:h-16 md:h-16 lg:h-20">
         <div className="flex items-center justify-between h-full gap-2 sm:gap-4 md:gap-4">
           <div 
@@ -122,10 +130,10 @@ export function Header({
             onDoubleClick={onLogoDoubleClick}
             title="클릭하여 메인화면으로 이동 / 더블클릭하여 추천 팝업 리셋"
           >
-            <span className="font-['Luckiest_Guy:Regular',sans-serif] text-[#eb0000] text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl whitespace-nowrap leading-none flex items-center">DA-ITDAING</span>
+            <span className="font-display text-[#eb0000] text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl whitespace-nowrap leading-none flex items-center">DA-ITDAING</span>
           </div>
           <div className="hidden md:flex flex-1 items-center justify-center max-w-[400px] mx-auto h-full">
-            <div className="relative w-full" ref={searchRef}>
+            <div className="relative w-full z-[700]" ref={searchRef}>
               <input
                 type="text"
                 placeholder="팝업명 또는 판매자명 검색"
@@ -135,11 +143,22 @@ export function Header({
                 onFocus={() => { if (searchResults.length > 0) setShowAutocomplete(true); }}
                 className="w-full h-8 sm:h-9 md:h-10 lg:h-12 px-3 sm:px-4 md:px-5 pr-8 sm:pr-9 md:pr-10 lg:pr-12 rounded-full border border-[#ccc6c6] focus:outline-none focus:border-[#eb0000] transition-colors text-xs sm:text-sm md:text-base"
               />
-              <button className="absolute right-2 sm:right-2.5 md:right-3 top-1/2 -translate-y-1/2 p-0.5" aria-label="Search">
+              <button 
+                type="button"
+                onClick={() => {
+                  if (searchQuery.trim()) {
+                    navigate(`/search?keyword=${encodeURIComponent(searchQuery.trim())}`);
+                    setSearchQuery("");
+                    setShowAutocomplete(false);
+                  }
+                }}
+                className="absolute right-2 sm:right-2.5 md:right-3 top-1/2 -translate-y-1/2 p-0.5 hover:opacity-70 transition-opacity" 
+                aria-label="Search"
+              >
                 <Search className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-[#CCC6C6]" />
               </button>
               {showAutocomplete && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden z-50 max-h-[400px] overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden z-[800] max-h-[400px] overflow-y-auto">
                   {searchResults.map((result, index) => (
                     <button
                       key={`${result.type}-${result.id}`}
@@ -208,10 +227,10 @@ export function Header({
       {showMobileSearch && (
         <>
           <div 
-            className="md:hidden fixed inset-0 bg-black/30 z-40"
+            className="md:hidden fixed inset-0 bg-black/30 z-[650]"
             onClick={() => setShowMobileSearch(false)}
           />
-          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-200 shadow-lg animate-in slide-in-from-top duration-200 z-50">
+          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-200 shadow-lg animate-in slide-in-from-top duration-200 z-[800]">
             <div className="max-w-[1089px] mx-auto px-3 sm:px-4 py-4">
               <div className="relative w-full" ref={mobileSearchRef}>
                 <input
@@ -227,7 +246,16 @@ export function Header({
                 <button 
                   className="absolute right-12 top-1/2 -translate-y-1/2 p-2" 
                   aria-label="Search"
-                  onClick={() => { if (selectedIndex >= 0 && searchResults[selectedIndex]) handleResultClick(searchResults[selectedIndex]); }}
+                  onClick={() => {
+                    if (selectedIndex >= 0 && searchResults[selectedIndex]) {
+                      handleResultClick(searchResults[selectedIndex]);
+                    } else if (searchQuery.trim()) {
+                      navigate(`/search?keyword=${encodeURIComponent(searchQuery.trim())}`);
+                      setSearchQuery("");
+                      setShowAutocomplete(false);
+                      setShowMobileSearch(false);
+                    }
+                  }}
                 >
                   <Search className="w-6 h-6 text-[#eb0000]" />
                 </button>

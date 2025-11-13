@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 
@@ -26,6 +27,7 @@ import java.time.LocalDate;
     }
 )
 @Getter
+@Setter(AccessLevel.PRIVATE) // Only for internal updates
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Popup extends BaseTimeEntity {
 
@@ -81,5 +83,20 @@ public class Popup extends BaseTimeEntity {
         this.rejectionReason = rejectionReason;
         this.viewCount = viewCount != null ? viewCount : 0L;
     }
-}
 
+    public void update(ZoneCell zoneCell, String name, String description,
+                       LocalDate startDate, LocalDate endDate, String operatingTime) {
+        this.zoneCell = zoneCell;
+        this.name = name;
+        this.description = description;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.operatingTime = operatingTime;
+    }
+
+    /** 승인 상태 변경 (관리자용) */
+    public void updateApprovalStatus(ApprovalStatus status, String rejectionReason) {
+        this.approvalStatus = status;
+        this.rejectionReason = rejectionReason;
+    }
+}

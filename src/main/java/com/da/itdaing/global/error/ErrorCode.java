@@ -25,7 +25,7 @@ public enum ErrorCode {
     UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, "AUTH-401", "인증이 필요합니다"),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH-402", "유효하지 않은 토큰입니다"),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH-403", "만료된 토큰입니다"),
-    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH-404", "이메일 또는 비밀번호가 올바르지 않습니다"),
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH-404", "로그인ID 또는 비밀번호가 올바르지 않습니다"),
     REFRESH_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH-405", "리프레시 토큰이 존재하지 않거나 만료/삭제되었습니다"),
     REFRESH_REVOKED(HttpStatus.UNAUTHORIZED, "AUTH-406", "이미 철회된 리프레시 토큰입니다"),
     REFRESH_REUSED(HttpStatus.UNAUTHORIZED, "AUTH-407", "재사용된 리프레시 토큰입니다"),

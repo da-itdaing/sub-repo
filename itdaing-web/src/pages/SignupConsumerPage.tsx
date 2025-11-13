@@ -2,12 +2,13 @@
  * 소비자 회원가입 페이지
  */
 import { useNavigate } from 'react-router-dom';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { SignupPage1 } from '../components/auth/SignupPage1';
-import { SignupPage2 } from '../components/auth/SignupPage2';
+import { SignupPage2 } from '../components/common/SignupPage2';
 import { useState } from 'react';
 import { signupConsumer } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
+import { masterService } from '../services/masterService';
 
 export function SignupConsumerPage() {
   const navigate = useNavigate();
@@ -15,18 +16,43 @@ export function SignupConsumerPage() {
   const [step, setStep] = useState(1);
   const [signupData, setSignupData] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [styles, setStyles] = useState<any[]>([]);
+  const [features, setFeatures] = useState<any[]>([]);
+  const [regions, setRegions] = useState<any[]>([]);
+
+  useEffect(() => {
+    // 선호도 선택용 마스터 데이터 로드
+    masterService.getCategories().then(setCategories).catch(() => setCategories([]));
+    masterService.getStyles().then(setStyles).catch(() => setStyles([]));
+    masterService.getFeatures().then(setFeatures).catch(() => setFeatures([]));
+    masterService.getRegions().then(setRegions).catch(() => setRegions([]));
+  }, []);
 
   const handleNext = (data: any) => {
     setSignupData(data);
     setStep(2);
   };
 
-  const handleComplete = async (preferences: any) => {
+  const handleComplete = async (preferences: { interests?: string[]; activities?: string[]; popups?: string[] } = {}) => {
     if (!signupData) return;
 
     setIsSubmitting(true);
     try {
-      // TODO: preferences 데이터를 백엔드 형식에 맞게 변환
+      // preferences 데이터를 백엔드 형식에 맞게 변환 (이름 → ID 매핑)
+      const interestCategoryIds =
+        (preferences.interests || [])
+          .map((name) => categories.find((c) => c.name === name)?.id)
+          .filter((id): id is number => typeof id === 'number') || [];
+      const styleIds =
+        (preferences.activities || [])
+          .map((name) => styles.find((s) => s.name === name)?.id)
+          .filter((id): id is number => typeof id === 'number') || [];
+      const regionIds =
+        (preferences.popups || [])
+          .map((name) => regions.find((r) => r.name === name)?.id)
+          .filter((id): id is number => typeof id === 'number') || [];
+
       const requestData = {
         email: signupData.email,
         password: signupData.password,
@@ -35,9 +61,9 @@ export function SignupConsumerPage() {
         name: signupData.name,
         nickname: signupData.nickname,
         ageGroup: parseInt(signupData.ageGroup) || 20,
-        interestCategoryIds: preferences.selectedInterests?.map((i: string) => parseInt(i)) || [],
-        styleIds: preferences.selectedActivities?.map((a: string) => parseInt(a)) || [],
-        regionIds: preferences.selectedPopups?.map((r: string) => parseInt(r)) || [],
+        interestCategoryIds,
+        styleIds,
+        regionIds,
       };
 
       const response = await signupConsumer(requestData);
@@ -75,10 +101,9 @@ export function SignupConsumerPage() {
         <Suspense fallback={<div className="p-8 text-center">로딩 중…</div>}>
           <SignupPage2
             onComplete={handleComplete}
-            onClose={() => navigate('/login')}
+            onBackToLogin={() => setStep(1)}
             userData={signupData}
-            onGoHome={() => navigate('/')}
-            onLoginClick={() => navigate('/login')}
+            onHomeClick={() => navigate('/')}
           />
         </Suspense>
       )}

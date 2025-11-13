@@ -21,13 +21,15 @@ public class GeoZoneController {
 
     private final GeoZoneService zoneService;
 
-    @PreAuthorize("hasRole('SELLER')")
-    @Operation(summary = "존 생성 (판매자)")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "존 생성 (관리자)")
     @PostMapping
-    public ApiResponse<ZoneResponse> createZone(Principal principal,
-                                                @RequestBody CreateZoneRequest req) {
-        Long sellerId = Long.valueOf(principal.getName()); // 기존 패턴 유지
-        return ApiResponse.success(zoneService.createZone(sellerId, req));
+    public ApiResponse<ZoneResponse> createZone(@RequestBody CreateZoneRequest req) {
+        // 관리자가 판매자 ID를 요청 본문에서 받아서 Zone 생성
+        if (req.getOwnerId() == null) {
+            throw new IllegalArgumentException("소유자 ID(ownerId)는 필수입니다.");
+        }
+        return ApiResponse.success(zoneService.createZone(req.getOwnerId(), req));
     }
 
     @PreAuthorize("hasRole('SELLER')")

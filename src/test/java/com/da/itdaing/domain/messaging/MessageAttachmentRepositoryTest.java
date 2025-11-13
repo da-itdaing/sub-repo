@@ -20,6 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Constructor;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -95,8 +96,8 @@ class MessageAttachmentRepositoryTest {
         // --- then ---
         assertThat(att.getId()).isNotNull();
         MessageAttachment found = attachmentRepository.findById(att.getId()).orElseThrow();
-        Message linked = (Message) ReflectionTestUtils.getField(found, "message");
-        assertThat(linked.getId()).isEqualTo(msg.getId());
+        Message linked = Objects.requireNonNull((Message) ReflectionTestUtils.getField(found, "message"));
+        assertThat(linked.getId()).isEqualTo(Objects.requireNonNull(msg.getId()));
 
         // fileUrl이 실제로 저장되었는지 확인 (리플렉션 접근)
         assertThat((String) ReflectionTestUtils.getField(found, "fileUrl"))

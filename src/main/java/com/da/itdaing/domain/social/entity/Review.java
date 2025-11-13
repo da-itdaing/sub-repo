@@ -58,5 +58,10 @@ public class Review {
         this.rating = rating;
         this.content = content;
     }
+
+    public void update(Byte rating, String content) {
+        this.rating = rating;
+        this.content = content;
+    }
 }
 

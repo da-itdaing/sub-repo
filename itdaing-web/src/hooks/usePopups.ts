@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { PopupSummary, ReviewItem, Seller, mockApi } from "../services/mockDataService";
+import { PopupSummary, Seller } from "../services/mockDataService";
+import { ReviewItem } from "../services/reviewService";
+import { popupService } from "../services/popupService";
+import { reviewService } from "../services/reviewService";
+import { sellerService } from "../services/sellerService";
 
 let cachedPopups: PopupSummary[] | null = null;
 let popupsInflight: Promise<PopupSummary[]> | null = null;
@@ -15,10 +19,14 @@ async function loadPopups(): Promise<PopupSummary[]> {
     return cachedPopups;
   }
   if (!popupsInflight) {
-    popupsInflight = mockApi.popups().then(result => {
+    popupsInflight = popupService.getPopups().then(result => {
       cachedPopups = result;
       popupsInflight = null;
       return result;
+    }).catch(error => {
+      popupsInflight = null;
+      console.error("Failed to load popups:", error);
+      throw error;
     });
   }
   return popupsInflight;
@@ -27,10 +35,14 @@ async function loadPopups(): Promise<PopupSummary[]> {
 async function loadSellers(): Promise<Seller[]> {
   if (cachedSellers) return cachedSellers;
   if (!sellersInflight) {
-    sellersInflight = mockApi.sellers().then(result => {
+    sellersInflight = sellerService.getSellers().then(result => {
       cachedSellers = result;
       sellersInflight = null;
       return result;
+    }).catch(error => {
+      sellersInflight = null;
+      console.error("Failed to load sellers:", error);
+      throw error;
     });
   }
   return sellersInflight;
@@ -39,10 +51,14 @@ async function loadSellers(): Promise<Seller[]> {
 async function loadReviews(): Promise<ReviewItem[]> {
   if (cachedReviews) return cachedReviews;
   if (!reviewsInflight) {
-    reviewsInflight = mockApi.reviews().then(result => {
+    reviewsInflight = reviewService.getAllReviews().then(result => {
       cachedReviews = result;
       reviewsInflight = null;
       return result;
+    }).catch(error => {
+      reviewsInflight = null;
+      console.error("Failed to load reviews:", error);
+      throw error;
     });
   }
   return reviewsInflight;
@@ -91,8 +107,35 @@ export function usePopups() {
 }
 
 export function usePopupById(id: number) {
-  const { data, loading, error } = usePopups();
-  const popup = data?.find(item => item.id === id) ?? null;
+  const [popup, setPopup] = useState<PopupSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    popupService.getPopupById(id)
+      .then(result => {
+        if (mounted) {
+          setPopup(result);
+          setError(null);
+        }
+      })
+      .catch(err => {
+        if (mounted) {
+          setError(err instanceof Error ? err : new Error(String(err)));
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
   return { popup, loading, error };
 }
 
@@ -101,20 +144,26 @@ export function getCachedPopupById(id: number) {
 }
 
 export function useSellerById(id: number) {
-  if (id <= 0) {
-    return { seller: null as Seller | null, loading: false, error: null as Error | null };
-  }
-  const [seller, setSeller] = useState<Seller | null>(cachedSellers?.find(s => s.id === id) ?? null);
-  const [loading, setLoading] = useState(!seller);
+  const [seller, setSeller] = useState<Seller | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    loadSellers()
-      .then(list => {
+    if (id <= 0) {
+      // reset state for invalid id without changing hook order
+      setSeller(null);
+      setLoading(false);
+      setError(null);
+      return () => {
+        mounted = false;
+      };
+    }
+    setLoading(true);
+    sellerService.getSellerById(id)
+      .then(result => {
         if (!mounted) return;
-        const found = list.find(s => s.id === id) ?? null;
-        setSeller(found);
+        setSeller(result);
         setError(null);
       })
       .catch(err => {
@@ -167,26 +216,33 @@ export function useSellers() {
 }
 
 export function useReviewsByPopupId(popupId: number) {
-  if (popupId <= 0) {
-    return { reviews: [] as ReviewItem[], loading: false, error: null as Error | null, average: 0 };
-  }
-  const [reviews, setReviews] = useState<ReviewItem[]>(
-    cachedReviews?.filter(r => r.popupId === popupId) ?? []
-  );
-  const [loading, setLoading] = useState(!cachedReviews);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    loadReviews()
+    if (popupId <= 0) {
+      setReviews([]);
+      setLoading(false);
+      setError(null);
+      return () => {
+        mounted = false;
+      };
+    }
+    setLoading(true);
+    reviewService.getReviewsByPopupId(popupId)
       .then(list => {
         if (!mounted) return;
-        setReviews(list.filter(r => r.popupId === popupId));
+        // list가 null이나 undefined인 경우 빈 배열로 설정
+        setReviews(Array.isArray(list) ? list : []);
         setError(null);
       })
       .catch(err => {
         if (!mounted) return;
         setError(err instanceof Error ? err : new Error(String(err)));
+        // 에러 발생 시에도 빈 배열로 설정하여 크래시 방지
+        setReviews([]);
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -196,10 +252,12 @@ export function useReviewsByPopupId(popupId: number) {
     };
   }, [popupId]);
 
+  // reviews가 null이나 undefined인 경우를 대비하여 안전하게 처리
+  const safeReviews = Array.isArray(reviews) ? reviews : [];
   const average =
-    reviews.length > 0 ? reviews.reduce((acc, cur) => acc + cur.rating, 0) / reviews.length : 0;
+    safeReviews.length > 0 ? safeReviews.reduce((acc, cur) => acc + cur.rating, 0) / safeReviews.length : 0;
 
-  return { reviews, loading, error, average };
+  return { reviews: safeReviews, loading, error, average };
 }
 
 export function useAllReviews(popupIds?: number[]) {

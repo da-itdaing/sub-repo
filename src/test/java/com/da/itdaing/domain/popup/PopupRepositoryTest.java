@@ -227,5 +227,78 @@ class PopupRepositoryTest {
         assertThat(foundImage.getIsThumbnail()).isTrue();
         assertThat(foundImage.getCreatedAt()).isNotNull();
     }
+    @Test
+    void 판매자_ID로_팝업을_조회할_수_있다() {
+        Users sellerA = Users.builder()
+            .loginId("seller-main")
+            .password("pass")
+            .email("seller-main@example.com")
+            .role(UserRole.SELLER)
+            .build();
+        userRepository.save(sellerA);
+
+        Users sellerB = Users.builder()
+            .loginId("seller-sub")
+            .password("pass")
+            .email("seller-sub@example.com")
+            .role(UserRole.SELLER)
+            .build();
+        userRepository.save(sellerB);
+
+        Region region = Region.builder().name("광주 전역").build();
+        regionRepository.save(region);
+
+        ZoneArea zoneArea = ZoneArea.builder()
+            .region(region)
+            .name("상무지구")
+            .build();
+        zoneAreaRepository.save(zoneArea);
+
+        ZoneCell cellA = ZoneCell.builder()
+            .zoneArea(zoneArea)
+            .owner(sellerA)
+            .label("C-1")
+            .lat(35.15)
+            .lng(126.85)
+            .build();
+        zoneCellRepository.save(cellA);
+
+        ZoneCell cellB = ZoneCell.builder()
+            .zoneArea(zoneArea)
+            .owner(sellerB)
+            .label("C-2")
+            .lat(35.16)
+            .lng(126.86)
+            .build();
+        zoneCellRepository.save(cellB);
+
+        Popup popupA = Popup.builder()
+            .seller(sellerA)
+            .zoneCell(cellA)
+            .name("셀러A의 팝업")
+            .description("셀러 A 전용 팝업")
+            .approvalStatus(ApprovalStatus.APPROVED)
+            .build();
+        popupRepository.save(popupA);
+
+        Popup popupB = Popup.builder()
+            .seller(sellerB)
+            .zoneCell(cellB)
+            .name("셀러B의 팝업")
+            .description("셀러 B 전용 팝업")
+            .approvalStatus(ApprovalStatus.APPROVED)
+            .build();
+        popupRepository.save(popupB);
+
+        // when
+        var results = popupRepository.findAllBySellerIdWithZoneAndSeller(sellerA.getId());
+
+        // then
+        assertThat(results).hasSize(1);
+        Popup onlyPopup = results.getFirst();
+        assertThat(onlyPopup.getSeller().getId()).isEqualTo(sellerA.getId());
+        assertThat(onlyPopup.getZoneCell().getZoneArea().getName()).isEqualTo("상무지구");
+    }
+
 }
 

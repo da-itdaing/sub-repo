@@ -14,6 +14,24 @@ NC='\033[0m'
 PRIVATE_EC2_HOST=${PRIVATE_EC2_HOST:-private-ec2}
 PRIVATE_EC2_USER=${PRIVATE_EC2_USER:-ubuntu}
 
+# 실행 모드 결정: 기본적으로 Private EC2에서 로컬 실행
+RUN_LOCAL=${RUN_LOCAL:-}
+if [ -z "$RUN_LOCAL" ]; then
+    if [ "$(whoami)" = "ubuntu" ] && [ -d "/home/ubuntu/itdaing" ]; then
+        RUN_LOCAL=1
+    else
+        RUN_LOCAL=0
+    fi
+fi
+
+if [ "$RUN_LOCAL" = "1" ]; then
+    EXEC_PREFIX="bash -s"
+    echo -e "${YELLOW}실행 모드: 로컬 (현재 인스턴스에서 직접 점검)${NC}"
+else
+    EXEC_PREFIX="ssh ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST} bash -s"
+    echo -e "${YELLOW}실행 모드: SSH (${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST})${NC}"
+fi
+
 echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
 echo -e "${BLUE}  Private EC2 환경 점검${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
@@ -21,7 +39,7 @@ echo ""
 
 # 1. 시스템 정보
 echo -e "${YELLOW}1. 시스템 정보${NC}"
-ssh ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST} << 'ENDSSH'
+${EXEC_PREFIX} << 'ENDSSH'
     echo "호스트명: $(hostname)"
     echo "OS: $(uname -a)"
     echo "디스크 사용량:"
@@ -33,7 +51,7 @@ echo ""
 
 # 2. 프로젝트 디렉토리 확인
 echo -e "${YELLOW}2. 프로젝트 디렉토리${NC}"
-ssh ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST} << 'ENDSSH'
+${EXEC_PREFIX} << 'ENDSSH'
     cd ~/itdaing 2>/dev/null || { echo "❌ ~/itdaing 디렉토리가 없습니다"; exit 1; }
     echo "✅ 프로젝트 디렉토리: $(pwd)"
     echo "디렉토리 크기: $(du -sh . | cut -f1)"
@@ -45,7 +63,7 @@ echo ""
 
 # 3. 환경 변수 확인
 echo -e "${YELLOW}3. 환경 변수 파일 (prod.env)${NC}"
-ssh ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST} << 'ENDSSH'
+${EXEC_PREFIX} << 'ENDSSH'
     cd ~/itdaing
     if [ -f "prod.env" ]; then
         echo "✅ prod.env 파일 존재"
@@ -61,7 +79,7 @@ echo ""
 
 # 4. PostgreSQL RDS 연결 확인
 echo -e "${YELLOW}4. PostgreSQL RDS 연결${NC}"
-ssh ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST} << 'ENDSSH'
+${EXEC_PREFIX} << 'ENDSSH'
     cd ~/itdaing
     source prod.env 2>/dev/null || true
     
@@ -94,7 +112,7 @@ echo ""
 
 # 5. AWS S3 연결 확인
 echo -e "${YELLOW}5. AWS S3 연결${NC}"
-ssh ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST} << 'ENDSSH'
+${EXEC_PREFIX} << 'ENDSSH'
     cd ~/itdaing
     source prod.env 2>/dev/null || true
     
@@ -129,7 +147,7 @@ echo ""
 
 # 6. nginx 확인
 echo -e "${YELLOW}6. nginx 설정${NC}"
-ssh ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST} << 'ENDSSH'
+${EXEC_PREFIX} << 'ENDSSH'
     # nginx 설치 확인
     if command -v nginx &> /dev/null; then
         echo "✅ nginx 설치됨: $(nginx -v 2>&1)"
@@ -167,7 +185,7 @@ echo ""
 
 # 7. Java 및 Gradle 확인
 echo -e "${YELLOW}7. Java 및 Gradle${NC}"
-ssh ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST} << 'ENDSSH'
+${EXEC_PREFIX} << 'ENDSSH'
     cd ~/itdaing
     
     # Java 확인
@@ -191,7 +209,7 @@ echo ""
 
 # 8. 포트 확인
 echo -e "${YELLOW}8. 포트 사용 현황${NC}"
-ssh ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST} << 'ENDSSH'
+${EXEC_PREFIX} << 'ENDSSH'
     echo "주요 포트 확인:"
     echo "  8080 (Spring Boot): $(sudo netstat -tlnp 2>/dev/null | grep ':8080' || echo '사용 안 함')"
     echo "  80 (HTTP): $(sudo netstat -tlnp 2>/dev/null | grep ':80 ' || echo '사용 안 함')"

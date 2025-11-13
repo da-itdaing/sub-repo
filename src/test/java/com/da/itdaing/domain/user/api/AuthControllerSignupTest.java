@@ -25,6 +25,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Objects;
+
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,8 +102,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/consumer")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isCreated())
@@ -134,8 +136,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/consumer")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isBadRequest())
@@ -165,8 +167,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/consumer")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isBadRequest())
@@ -228,8 +230,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/consumer")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isConflict())
@@ -258,8 +260,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/consumer")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isBadRequest())
@@ -288,8 +290,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/consumer")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isBadRequest())
@@ -321,8 +323,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/consumer")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isNotFound())
@@ -355,8 +357,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/consumer")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isNotFound())
@@ -440,8 +442,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/seller")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isCreated())
@@ -483,8 +485,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/seller")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isBadRequest())
@@ -508,8 +510,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/seller")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isBadRequest())
@@ -533,8 +535,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/seller")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isBadRequest())
@@ -587,8 +589,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/seller")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isConflict())
@@ -614,8 +616,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/seller")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isBadRequest())
@@ -640,8 +642,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/seller")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isBadRequest())
@@ -710,8 +712,8 @@ class AuthControllerSignupTest {
 
         // when & then
         mockMvc.perform(post("/api/auth/signup/seller")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isCreated())

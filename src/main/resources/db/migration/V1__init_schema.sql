@@ -35,7 +35,7 @@ CREATE TABLE refresh_tokens (
     token_hash   VARCHAR(128) NOT NULL,
     issued_at    TIMESTAMP(6) NOT NULL,
     expires_at   TIMESTAMP(6) NOT NULL,
-    revoked      BOOLEAN NOT NULL DEFAULT 0,
+    revoked      BOOLEAN NOT NULL DEFAULT false,
     replaced_by  VARCHAR(128),
     device_id    VARCHAR(255),
     user_agent   VARCHAR(512),
@@ -104,8 +104,8 @@ CREATE TABLE zone_cell (
     owner_id         BIGINT NOT NULL,
     label            VARCHAR(100),
     detailed_address VARCHAR(255),
-    lat              DOUBLE PRECISION PRECISION PRECISION NOT NULL,
-    lng              DOUBLE PRECISION PRECISION PRECISION NOT NULL,
+    lat              DOUBLE PRECISION NOT NULL,
+    lng              DOUBLE PRECISION NOT NULL,
     status           VARCHAR(20) NOT NULL,
     max_capacity     INT,
     notice           VARCHAR(1000),
@@ -164,7 +164,7 @@ CREATE TABLE popup_image (
     id            BIGSERIAL PRIMARY KEY,
     popup_id      BIGINT NOT NULL,
     image_url     VARCHAR(500) NOT NULL,
-    is_thumbnail  BOOLEAN NOT NULL DEFAULT 0,
+    is_thumbnail  BOOLEAN NOT NULL DEFAULT false,
     created_at    TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     CONSTRAINT fk_popup_image_popup FOREIGN KEY (popup_id) REFERENCES popup(id) ON DELETE CASCADE
 );
@@ -454,6 +454,15 @@ CREATE TABLE approval_record (
 CREATE INDEX idx_approval_target ON approval_record(target_type, target_id, created_at);
 
 
+
+-- updated_at 자동 업데이트 함수 생성
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP(6);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 -- updated_at 자동 업데이트 트리거 생성
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users

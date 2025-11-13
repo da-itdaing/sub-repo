@@ -41,7 +41,7 @@ async function fetchApi<T>(path: string, fallback?: string): Promise<T> {
     return body as T;
   } catch (error) {
     if (fallback) {
-      console.warn(`[mockDataService] API 요청 실패(${url}), 정적 JSON으로 대체합니다.`, error);
+      console.error(`[mockDataService] API 요청 실패(${url}), 정적 JSON으로 대체합니다.`, error);
       return fetchJson<T>(fallback);
     }
     throw error instanceof Error ? error : new Error(String(error));

@@ -221,7 +221,7 @@ public class AuthService {
      */
     @Transactional
     public AuthDto.LoginResponse login(AuthDto.LoginRequest request) {
-        // 이메일로 사용자 조회
+        // 로그인 ID로 사용자 조회
         Users user = userRepository.findByLoginId(request.getLoginId())
                 .orElseThrow(() -> new AuthException(ErrorCode.INVALID_CREDENTIALS));
 

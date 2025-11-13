@@ -56,18 +56,21 @@ export default function AdminAppLayout() {
       <div className="flex-1 flex flex-col">
         <header className="sticky top-0 z-20 bg-white border-b border-gray-200">
           <div className="px-4 sm:px-6 py-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400 uppercase">Admin Console</p>
-              <h2 className="text-lg font-semibold text-gray-900">운영 대시보드</h2>
+            <div className="flex items-center gap-2">
+              <span className="font-display text-[#eb0000] text-xl font-bold">DA - IT DAING</span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="hidden sm:inline-flex text-sm text-gray-500">{user?.email}</span>
-              <button
-                onClick={() => void logout()}
-                className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-300"
-              >
-                <LogOut className="size-4" />
-                로그아웃
+              <span className="hidden sm:inline-flex text-sm text-gray-700 font-medium">
+                {user?.name || user?.nickname || "관리자"} 님
+              </span>
+              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
+                <MessageSquare className="size-5 text-gray-600" />
+                <span className="absolute top-0 right-0 size-2 bg-red-500 rounded-full"></span>
+              </button>
+              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <svg className="size-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </button>
             </div>
           </div>

@@ -4,59 +4,34 @@
 
 ## 📁 문서 구조
 
+현재 `docs/` 디렉토리에는 다음 문서가 존재합니다.
+
 ### 📋 계획서 (`plan/`)
-- [BE-plan.md](plan/BE-plan.md) - 백엔드 개발 계획서
-- [FE-plan.md](plan/FE-plan.md) - 프론트엔드 개발 계획서
+- [BE-plan.md](plan/BE-plan.md) — 백엔드 개발 계획서
+- [FE-plan.md](plan/FE-plan.md) — 프론트엔드 개발 계획서
+- [integration-plan.md](plan/integration-plan.md) — 프론트엔드-백엔드 통합 계획서
+- [INTEGRATION_WORK_INSTRUCTION.md](plan/INTEGRATION_WORK_INSTRUCTION.md) — 현재 이터레이션 작업 지침
+- [SECURITY.md](plan/SECURITY.md) — 보안 가이드 및 정책
+- [ROLE_PERMISSIONS.md](plan/ROLE_PERMISSIONS.md) — 역할 및 권한 매핑
+- [SESSION_SUMMARY.md](plan/SESSION_SUMMARY.md) — 세션/작업 요약
 
-### ⚙️ 설정 가이드 (`setup/`)
-- [IDE_SETUP.md](setup/IDE_SETUP.md) - IDE 설정 가이드 (IntelliJ / Eclipse)
+### 📖 문서 아티팩트
+- [index.html](index.html) — 정적 문서/미리보기 진입점(있을 경우)
+- [openapi.json](openapi.json) — OpenAPI 산출물(있을 경우)
 
-### 🚀 배포 가이드 (`deployment/`)
-- [PRIVATE_EC2_ACCESS.md](deployment/PRIVATE_EC2_ACCESS.md) - Private EC2 접근 가이드
-- [SETUP_PRIVATE_EC2.md](deployment/SETUP_PRIVATE_EC2.md) - Private EC2 초기 설정
-- [PRIVATE_EC2_ENV_SETUP.md](deployment/PRIVATE_EC2_ENV_SETUP.md) - Private EC2 환경 설정 완료 보고서
-- [DEPLOY_TO_PRIVATE_EC2.md](deployment/DEPLOY_TO_PRIVATE_EC2.md) - Private EC2 배포 가이드
-- [EC2_ARCHITECTURE.md](deployment/EC2_ARCHITECTURE.md) - EC2 아키텍처 설명
-- [S3_BUCKET_POLICY.md](deployment/S3_BUCKET_POLICY.md) - S3 버킷 정책 설정 가이드
-- [S3_UPLOAD_FLOW.md](deployment/S3_UPLOAD_FLOW.md) - S3 이미지 업로드 및 읽기 흐름
-
-### 💻 개발 가이드 (`development/`)
-- (향후 추가 예정)
-
-### 🗄️ 데이터베이스 (`database/`)
-- [DATABASE_MIGRATION.md](database/DATABASE_MIGRATION.md) - 데이터베이스 마이그레이션 가이드
-
-### 🌐 API 문서 (`api/`)
-- [REST_API_문서.md](api/REST_API_문서.md) - REST API 문서
-- [REST_API_문서_Frontend.md](api/REST_API_문서_Frontend.md) - 프론트엔드 API 문서
-
-### 🎨 프론트엔드 (`frontend/`)
-- [README.md](frontend/README.md) - 프론트엔드 프로젝트 개요
-- [ROUTING.md](frontend/ROUTING.md) - 라우팅 구조 문서
-
-### 📊 리포트 (`reports/`)
-- [AUTH_SWAGGER_UPDATE_SUMMARY.md](reports/AUTH_SWAGGER_UPDATE_SUMMARY.md) - 인증 Swagger 업데이트 요약
-- [AUTHCONTROLLER_RECOVERY_REPORT.md](reports/AUTHCONTROLLER_RECOVERY_REPORT.md) - AuthController 복구 리포트
-- [CONTROLLER_AUDIT_EMPTY_BODY_REPORT.md](reports/CONTROLLER_AUDIT_EMPTY_BODY_REPORT.md) - Controller 빈 바디 감사 리포트
-- [JWT_AUTH_IMPLEMENTATION_SUMMARY.md](reports/JWT_AUTH_IMPLEMENTATION_SUMMARY.md) - JWT 인증 구현 요약
-- [DOMAIN_TESTS.md](reports/DOMAIN_TESTS.md) - 도메인별 테스트 실행 가이드
+### 🧰 스크립트 (`scripts/`)
+- [check-private-ec2-env.sh](../scripts/check-private-ec2-env.sh) — Private EC2 환경 점검 (로컬 모드 기본)
+- [deploy-frontend.sh](../scripts/deploy-frontend.sh) — 프론트엔드 정적 배포
+- [start-backend.sh](../scripts/start-backend.sh) — 백엔드 시작 (nohup + 로그)
+- [stop-backend.sh](../scripts/stop-backend.sh) — 백엔드 중지
+- [tail-backend-log.sh](../scripts/tail-backend-log.sh) — 백엔드 로그 팔로우
 
 ## 🔍 빠른 찾기
 
-### 개발 시작하기
-1. [Private EC2 접근 가이드](deployment/PRIVATE_EC2_ACCESS.md)
-2. [IDE 설정](setup/IDE_SETUP.md)
-3. [프론트엔드 README](frontend/README.md)
-
-### 배포하기
-1. [EC2 배포 가이드](deployment/DEPLOY_EC2.md)
-
-### API 개발
-1. [REST API 문서](api/REST_API_문서.md)
-2. [프론트엔드 라우팅](frontend/ROUTING.md)
-
-### 데이터베이스
-1. [데이터베이스 마이그레이션](database/DATABASE_MIGRATION.md)
+### 계획/통합 문서
+1. [백엔드 계획](plan/BE-plan.md)
+2. [프론트엔드 계획](plan/FE-plan.md)
+3. [통합 계획](plan/integration-plan.md)
 
 ## 📝 문서 작성 가이드
 

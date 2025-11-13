@@ -48,17 +48,14 @@ final-project/
 
 ### Private EC2 접근
 
-모든 개발 및 테스트는 Private EC2에서 수행됩니다.
+모든 개발 및 테스트는 Private EC2에서 수행됩니다. 이 인스턴스 내에서 제공되는 스크립트를 사용하세요.
 
 ```bash
-# SSH 접속
-ssh private-ec2
-
-# 프로젝트 디렉토리로 이동
+# 프로젝트 디렉토리
 cd ~/itdaing
 
-# 환경 변수 로드
-source prod.env
+# 환경 점검 (로컬 모드 자동)
+./scripts/check-private-ec2-env.sh
 ```
 
 자세한 내용은 [Private EC2 접근 가이드](docs/deployment/PRIVATE_EC2_ACCESS.md)를 참고하세요.
@@ -66,13 +63,21 @@ source prod.env
 ### 백엔드 서버 시작
 
 ```bash
-ssh private-ec2 "cd ~/itdaing && source prod.env && ./gradlew bootRun"
+# 시작
+./scripts/start-backend.sh
+
+# 로그 확인
+./scripts/tail-backend-log.sh
+
+# 중지
+./scripts/stop-backend.sh
 ```
 
 ### 프론트엔드 빌드 및 배포
 
 ```bash
-ssh private-ec2 "cd ~/itdaing/itdaing-web && npm install && npm run build"
+# 프론트엔드 정적 배포 (nginx 사용 시 /var/www/itdaing)
+./scripts/deploy-frontend.sh
 ```
 
 ## 🔧 프로파일 개요
@@ -158,6 +163,8 @@ source prod.env  # SPRING_PROFILES_ACTIVE=prod
 
 - **백엔드 계획**: [`docs/plan/BE-plan.md`](docs/plan/BE-plan.md)
 - **프론트엔드 계획**: [`docs/plan/FE-plan.md`](docs/plan/FE-plan.md)
+- **통합 계획**: [`docs/plan/integration-plan.md`](docs/plan/integration-plan.md)
+- **현재 작업 지침**: [`docs/plan/INTEGRATION_WORK_INSTRUCTION.md`](docs/plan/INTEGRATION_WORK_INSTRUCTION.md)
 - **Private EC2 접근**: [`docs/deployment/PRIVATE_EC2_ACCESS.md`](docs/deployment/PRIVATE_EC2_ACCESS.md)
 - **배포 가이드**: [`docs/deployment/DEPLOY_TO_PRIVATE_EC2.md`](docs/deployment/DEPLOY_TO_PRIVATE_EC2.md)
 - **환경 설정**: [`docs/deployment/PRIVATE_EC2_ENV_SETUP.md`](docs/deployment/PRIVATE_EC2_ENV_SETUP.md)

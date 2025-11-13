@@ -11,6 +11,7 @@ import lombok.*;
 @Table(name = "zone_area",
     indexes = @Index(name = "idx_zone_area_region", columnList = "region_id"))
 @Getter
+@Setter(AccessLevel.PRIVATE) // Only for internal updates
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ZoneArea extends BaseTimeEntity {
 
@@ -48,5 +49,28 @@ public class ZoneArea extends BaseTimeEntity {
         this.status = status != null ? status : AreaStatus.AVAILABLE;
         this.maxCapacity = maxCapacity;
         this.notice = notice;
+    }
+
+    /** 구역 정보 업데이트 (관리자용) */
+    public void update(String name, String polygonGeoJson, AreaStatus status,
+                     Integer maxCapacity, String notice, Region region) {
+        if (name != null) {
+            this.name = name;
+        }
+        if (polygonGeoJson != null) {
+            this.polygonGeoJson = polygonGeoJson;
+        }
+        if (status != null) {
+            this.status = status;
+        }
+        if (maxCapacity != null) {
+            this.maxCapacity = maxCapacity;
+        }
+        if (notice != null) {
+            this.notice = notice;
+        }
+        if (region != null) {
+            this.region = region;
+        }
     }
 }

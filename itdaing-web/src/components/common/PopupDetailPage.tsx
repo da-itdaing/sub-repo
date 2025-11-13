@@ -11,6 +11,12 @@ import { ReviewWritePage } from "../consumer/ReviewWritePage";
 import { SellerInfoPage } from "../seller/SellerInfoPage";
 import { LoginConfirmDialog } from "../auth/LoginConfirmDialog";
 import { usePopupById, useReviewsByPopupId, useSellerById } from "../../hooks/usePopups";
+import { reviewService } from "../../services/reviewService";
+import { useAuth } from "../../context/AuthContext";
+import { geoService, CellResponse } from "../../services/geoService";
+import { KakaoMapCellSelector } from "../admin/KakaoMapCellSelector";
+import { Trash2, Edit2 } from "lucide-react";
+import { ImageWithFallback } from "./ImageWithFallback";
 
 interface PopupDetailPageProps {
   onClose: () => void;
@@ -29,19 +35,52 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
   const [likesCount, setLikesCount] = useState(0);
   const [sortOrder, setSortOrder] = useState("최신순");
   const [showReviewWrite, setShowReviewWrite] = useState(showReviewWriteOnMount);
+  const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
   const [showSellerInfo, setShowSellerInfo] = useState(false);
   const [showLoginConfirm, setShowLoginConfirm] = useState(false);
   const [showReviewLoginConfirm, setShowReviewLoginConfirm] = useState(false);
+  const [deletingReviewId, setDeletingReviewId] = useState<number | null>(null);
   const { popup, loading: popupLoading, error: popupError } = usePopupById(popupId);
   const sellerId = popup?.sellerId ?? 0;
   const { seller, loading: sellerLoading, error: sellerError } = useSellerById(sellerId);
   const { reviews, loading: reviewsLoading, error: reviewsError, average } = useReviewsByPopupId(popupId);
+  const { user } = useAuth();
+  const [cell, setCell] = useState<CellResponse | null>(null);
+  const [areas, setAreas] = useState<any[]>([]);
+  const [loadingCell, setLoadingCell] = useState(false);
 
   useEffect(() => {
     if (popup) {
       setLikesCount(popup.favoriteCount ?? 0);
+      // Cell 정보 로드
+      if (popup.cellId > 0) {
+        setLoadingCell(true);
+        Promise.all([
+          geoService.getCellById(popup.cellId),
+          geoService.getAreas(undefined, 0, 100),
+        ]).then(([cellData, areasResp]) => {
+          setCell(cellData);
+          setAreas(areasResp.items);
+        }).catch(err => {
+          console.error('Failed to load cell data:', err);
+        }).finally(() => {
+          setLoadingCell(false);
+        });
+      }
     }
   }, [popup]);
+
+  const handleDeleteReview = async (reviewId: number) => {
+    try {
+      setDeletingReviewId(reviewId);
+      await reviewService.deleteReview(reviewId);
+      // Refresh reviews by reloading the page or refetching
+      window.location.reload();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '리뷰 삭제에 실패했습니다.');
+      setDeletingReviewId(null);
+    }
+  };
   const handleShare = async () => {
     try {
       const shareData = {
@@ -79,6 +118,8 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
     return { label: `${score}점`, percentage };
   });
 
+  // Note: Hooks must be declared before any early return to keep hook order stable.
+
   if (popupLoading || sellerLoading || reviewsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen text-gray-500">
@@ -112,7 +153,7 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
   }
 
   if (reviewsError) {
-    console.warn(reviewsError);
+    console.error(reviewsError);
   }
 
   // Robust date parsing for format YYYY.MM.DD
@@ -122,6 +163,10 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
     const [, y, mo, d] = m;
     return new Date(Number(y), Number(mo) - 1, Number(d)).getTime();
   };
+
+  // DB에 저장된 S3 경로를 사용한 대표 이미지/판매자 이미지 선택
+  const primaryImageUrl: string | undefined = popup.thumbnail || ((popup as any).gallery?.[0] as string | undefined);
+  const sellerImageUrl: string | undefined = seller.profileImage ?? undefined;
 
   // 정렬된 후기
   const sortedReviews = [...reviews].sort((a, b) => {
@@ -136,12 +181,6 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
   const operatingHoursLabel =
     popup.operatingHours?.map(item => `${item.day} ${item.time}`).join(" / ") ?? "운영 시간 정보 없음";
 
-  const defaultSellerImage = useMemo(
-    () =>
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop",
-    []
-  );
-
   const popupData = {
     id: popup.id,
     title: popup.title,
@@ -151,18 +190,40 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
     tags: popup.styleTags.map(tag => `# ${tag}`),
     likes: likesCount,
     views: popup.viewCount,
-    imageUrl: popup.thumbnail || "https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=800&h=600&fit=crop",
+    imageUrl: primaryImageUrl,
     sellerName: seller.name,
-    sellerImage: seller.profileImage ?? defaultSellerImage,
+    sellerImage: sellerImageUrl,
     content: {
       title: seller.category ?? seller.name,
       description: popup.description,
     },
   };
 
-  // 후기 작성 페이지 표시
-  if (showReviewWrite) {
-    return <ReviewWritePage onBack={() => setShowReviewWrite(false)} onMyPageClick={onMyPageClick} onNearbyExploreClick={onNearbyExploreClick} onClose={onClose} />;
+  // 후기 작성/수정 페이지 표시
+  if (showReviewWrite || editingReviewId !== null) {
+    const reviewToEdit = editingReviewId ? reviews.find(r => r.id === editingReviewId) : null;
+    return (
+      <ReviewWritePage
+        popupId={popupId}
+        reviewId={editingReviewId ?? undefined}
+        initialRating={reviewToEdit?.rating}
+        initialContent={reviewToEdit?.content}
+        initialImages={reviewToEdit?.images}
+        onBack={() => {
+          setShowReviewWrite(false);
+          setEditingReviewId(null);
+        }}
+        onMyPageClick={onMyPageClick}
+        onNearbyExploreClick={onNearbyExploreClick}
+        onClose={onClose}
+        onSuccess={() => {
+          setShowReviewWrite(false);
+          setEditingReviewId(null);
+          // Refresh reviews
+          window.location.reload();
+        }}
+      />
+    );
   }
 
   // 판매자 정보 페이지 표시
@@ -190,11 +251,18 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
           {/* 썸네일 */}
           <div className="relative mb-3 sm:mb-4 lg:mb-[18px]">
             <div className="h-56 sm:h-80 lg:h-[469px] rounded-[10px] lg:rounded-[5px] overflow-hidden mx-auto max-w-full lg:max-w-[515px] shadow-sm">
-              <img
-                alt={popupData.title}
-                className="w-full h-full object-cover"
-                src={popupData.imageUrl}
-              />
+              {popupData.imageUrl ? (
+                <ImageWithFallback
+                  alt={popupData.title}
+                  className="w-full h-full object-cover"
+                  src={popupData.imageUrl}
+                  fallbackKey={popupData.id}
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                  이미지 없음
+                </div>
+              )}
             </div>
           </div>
 
@@ -333,11 +401,18 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
                   className="flex flex-col items-center flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
                 >
                   <div className="size-20 lg:size-[100px] mb-2">
-                    <img
-                      alt={popupData.sellerName}
-                      className="w-full h-full rounded-full object-cover"
-                      src={popupData.sellerImage}
-                    />
+                    {popupData.sellerImage ? (
+                      <ImageWithFallback
+                        alt={popupData.sellerName}
+                        className="w-full h-full rounded-full object-cover"
+                        src={popupData.sellerImage}
+                        fallbackKey={`seller-${popupData.sellerName ?? popupData.id}`}
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                        {popupData.sellerName?.charAt(0) ?? "?"}
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col font-['Pretendard:Bold',sans-serif] justify-center leading-[0] not-italic text-xs text-black text-center">
                     <p className="leading-[normal]">{popupData.sellerName}</p>
@@ -425,28 +500,58 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
                 <MapPin className="size-5 lg:size-[23px] flex-shrink-0 mt-1 lg:mt-0" />
                 <div className="flex flex-col font-['Pretendard:Regular',sans-serif] justify-center leading-[0] not-italic text-sm lg:text-xl text-black">
                   <p className="leading-[30px]">{popupData.location}</p>
+                  {cell && (
+                    <p className="leading-[20px] text-xs lg:text-sm text-gray-500 mt-1">
+                      {cell.detailedAddress || `좌표: ${cell.lat.toFixed(6)}, ${cell.lng.toFixed(6)}`}
+                    </p>
+                  )}
                 </div>
                 <MapPin className="size-5 lg:size-[22px] flex-shrink-0 mt-1 lg:mt-0 hidden sm:block" />
               </div>
 
-              {/* 지도 이미지 */}
-              <div className="h-64 sm:h-80 lg:h-[455px] w-full lg:w-[911px] mx-auto mb-8 lg:mb-[60px] bg-gradient-to-br from-green-50 to-blue-50 rounded-lg relative overflow-hidden">
-                <div className="absolute inset-0 w-full h-full">
-                  <svg className="w-full h-full opacity-30" viewBox="0 0 911 455">
-                    <defs>
-                      <pattern id="grid2" width="50" height="50" patternUnits="userSpaceOnUse">
-                        <path d="M 50 0 L 0 0 0 50" fill="none" stroke="gray" strokeWidth="0.5"/>
-                      </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#grid2)" />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <svg className="w-16 h-16 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              {/* 지도 */}
+              {loadingCell ? (
+                <div className="h-64 sm:h-80 lg:h-[455px] w-full lg:w-[911px] mx-auto mb-8 lg:mb-[60px] bg-gray-100 rounded-lg flex items-center justify-center">
+                  <p className="text-gray-500">위치 정보를 불러오는 중...</p>
+                </div>
+              ) : cell ? (
+                <div className="h-64 sm:h-80 lg:h-[455px] w-full lg:w-[911px] mx-auto mb-8 lg:mb-[60px] rounded-lg overflow-hidden border border-gray-300">
+                  <KakaoMapCellSelector
+                    areas={areas}
+                    cells={[{
+                      id: cell.id,
+                      lat: cell.lat,
+                      lng: cell.lng,
+                      label: cell.label,
+                      status: cell.status,
+                    }]}
+                    selectedAreaId={cell.areaId}
+                    center={{ lat: cell.lat, lng: cell.lng }}
+                    height="100%"
+                  />
+                </div>
+              ) : (
+                <div className="h-64 sm:h-80 lg:h-[455px] w-full lg:w-[911px] mx-auto mb-8 lg:mb-[60px] bg-gradient-to-br from-green-50 to-blue-50 rounded-lg relative overflow-hidden">
+                  <div className="absolute inset-0 w-full h-full">
+                    <svg className="w-full h-full opacity-30" viewBox="0 0 911 455">
+                      <defs>
+                        <pattern id="grid2" width="50" height="50" patternUnits="userSpaceOnUse">
+                          <path d="M 50 0 L 0 0 0 50" fill="none" stroke="gray" strokeWidth="0.5"/>
+                        </pattern>
+                      </defs>
+                      <rect width="100%" height="100%" fill="url(#grid2)" />
                     </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <svg className="w-16 h-16 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <p className="text-gray-500">위치 정보가 없습니다.</p>
                   </div>
                 </div>
-              </div>
+              )}
             </>
           )}
 
@@ -534,24 +639,51 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
                     <img
                       alt=""
                       className="size-16 lg:size-[120px] rounded-full object-cover flex-shrink-0"
-                      src={review.userImage}
+                      src={review.author.avatar || "https://via.placeholder.com/120"}
                     />
-                    <div>
-                      <p className="font-['JejuGothic:Regular',sans-serif] text-base lg:text-lg text-black mb-1 lg:mb-2">
-                        {review.userName}
-                      </p>
-                      <p className="font-['JejuGothic:Regular',sans-serif] text-xs lg:text-sm text-[#4d4d4d] mb-2">
-                        {review.date}
-                      </p>
-                      <div className="h-5 lg:h-[30px] w-20 lg:w-[134px] flex items-center justify-start gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star 
-                            key={star} 
-                            className="w-[18%] h-full" 
-                            fill={star <= review.rating ? "#EB0000" : "none"} 
-                            stroke="#EB0000" 
-                          />
-                        ))}
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-['JejuGothic:Regular',sans-serif] text-base lg:text-lg text-black mb-1 lg:mb-2">
+                            {review.author.name}
+                          </p>
+                          <p className="font-['JejuGothic:Regular',sans-serif] text-xs lg:text-sm text-[#4d4d4d] mb-2">
+                            {review.date}
+                          </p>
+                          <div className="h-5 lg:h-[30px] w-20 lg:w-[134px] flex items-center justify-start gap-0.5">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star 
+                                key={star} 
+                                className="w-[18%] h-full" 
+                                fill={star <= review.rating ? "#EB0000" : "none"} 
+                                stroke="#EB0000" 
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        {isLoggedIn && user && review.author.id === user.id && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setEditingReviewId(review.id)}
+                              className="p-2 text-gray-600 hover:text-[#eb0000] transition"
+                              title="수정"
+                            >
+                              <Edit2 className="size-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm('정말 이 리뷰를 삭제하시겠습니까?')) {
+                                  handleDeleteReview(review.id);
+                                }
+                              }}
+                              disabled={deletingReviewId === review.id}
+                              className="p-2 text-gray-600 hover:text-red-600 transition disabled:opacity-50"
+                              title="삭제"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -564,10 +696,11 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
                   </div>
                   {review.images && review.images.length > 0 && (
                     <div className="w-full max-w-[260px]">
-                      <img
+                      <ImageWithFallback
                         alt=""
                         className="w-full h-auto object-cover rounded-lg"
                         src={review.images[0]}
+                        fallbackKey={`review-${review.id}`}
                       />
                     </div>
                   )}

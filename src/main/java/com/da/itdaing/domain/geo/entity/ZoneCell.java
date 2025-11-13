@@ -15,6 +15,7 @@ import lombok.*;
     })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter(AccessLevel.PRIVATE) // Only for internal updates via update() method
 public class ZoneCell extends BaseTimeEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -72,5 +73,36 @@ public class ZoneCell extends BaseTimeEntity {
     /** 운영 중 상태 변경(관리자 승인/반려 등) */
     public void changeStatus(ZoneStatus status) {
         this.status = status;
+    }
+
+    /** 셀 정보 업데이트 (관리자용) - null이 아닌 값만 업데이트 */
+    public void update(ZoneArea zoneArea, Users owner, String label, String detailedAddress,
+                      Double lat, Double lng, ZoneStatus status, Integer maxCapacity, String notice) {
+        // zoneArea와 owner는 항상 설정 (null 체크는 서비스에서)
+        this.zoneArea = zoneArea;
+        this.owner = owner;
+        
+        // 나머지는 null이 아닐 때만 업데이트
+        if (label != null) {
+            this.label = label;
+        }
+        if (detailedAddress != null) {
+            this.detailedAddress = detailedAddress;
+        }
+        if (lat != null) {
+            this.lat = lat;
+        }
+        if (lng != null) {
+            this.lng = lng;
+        }
+        if (status != null) {
+            this.status = status;
+        }
+        if (maxCapacity != null) {
+            this.maxCapacity = maxCapacity;
+        }
+        if (notice != null) {
+            this.notice = notice;
+        }
     }
 }

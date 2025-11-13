@@ -7,7 +7,7 @@ export function Footer() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 mb-6 md:mb-8">
           <div className="col-span-2 lg:col-span-1 text-center">
             <div className="mb-3 md:mb-4">
-              <span className="font-['Luckiest_Guy:Regular',sans-serif] text-[#eb0000] text-lg md:text-xl">DA-IT DAING</span>
+              <span className="font-display text-[#eb0000] text-lg md:text-xl">DA-IT DAING</span>
             </div>
             <p className="font-['Pretendard:Regular',sans-serif] text-xs sm:text-sm md:text-[14px] text-gray-300 leading-relaxed">
               사람과 공간, 그리고 마음을 잇다

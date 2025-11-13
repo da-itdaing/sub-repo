@@ -11,8 +11,9 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "allowSyntheticDefaultImports": true,
-  "types": ["node", "react", "react-dom", "vite/client"],
+    "types": ["node", "react", "react-dom", "vite/client"],
     "noEmit": true,
+    "sourceMap": true,
     "baseUrl": "./src"
   },
   "include": ["src"],

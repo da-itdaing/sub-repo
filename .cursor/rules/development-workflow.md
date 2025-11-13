@@ -1,261 +1,282 @@
-# 개발 워크플로우 규칙
+# 개발 워크플로우
 
-## 개발 환경
-
-**중요**: 모든 개발 및 테스트는 **Private EC2**에서 수행됩니다. 로컬 개발 환경은 사용하지 않습니다.
+이 문서는 Itdaing 프로젝트 개발 시 따라야 할 워크플로우와 체크리스트를 설명합니다.
 
 ## 개발 시작 전 체크리스트
 
-### 1. Private EC2 접속 확인
-- [ ] SSH 접속 테스트: `ssh private-ec2`
-- [ ] 프로젝트 디렉토리 확인: `ssh private-ec2 "cd ~/itdaing && pwd"`
-- [ ] 환경 변수 파일 확인: `ssh private-ec2 "ls -l ~/itdaing/prod.env"`
+### 1. 환경 확인
+- [ ] 현재 Private EC2에서 작업 중인지 확인 (SSH 접속 불필요)
+- [ ] `prod.env` 파일 존재 확인 및 환경 변수 로드 (`cd ~/itdaing && source prod.env`)
+- [ ] PostgreSQL RDS 연결 확인
+- [ ] AWS S3 접근 권한 확인
+- [ ] Java 21 및 Gradle 설치 확인
+- [ ] Node.js 20+ 설치 확인 (프론트엔드 작업 시)
 
-### 2. 환경 확인
-- [ ] Java 21 설치 확인: `ssh private-ec2 "java -version"`
-- [ ] Gradle 확인: `ssh private-ec2 "cd ~/itdaing && ./gradlew --version"`
-- [ ] Git 확인: `ssh private-ec2 "cd ~/itdaing && git status"`
-- [ ] PostgreSQL RDS 연결 확인: `ssh private-ec2 "cd ~/itdaing && source prod.env && PGPASSWORD=\$SPRING_DATASOURCE_PASSWORD psql -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com -U itdaing_admin -d itdaing-db -c 'SELECT version();'"`
+### 2. 코드 동기화
+- [ ] 최신 코드 가져오기 (`git pull origin main`)
+- [ ] 브랜치 전략 확인 (기능 개발 시 `feature/{description}` 브랜치 사용)
 
-### 3. 서버 시작 순서
-1. **백엔드 서버 시작**
-   ```bash
-   ssh private-ec2 "cd ~/itdaing && source prod.env && nohup ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &"
-   ```
-   - 확인: `ssh private-ec2 "curl http://localhost:8080/actuator/health"`
-   - Swagger: Private EC2의 공개 IP를 통해 접근
+### 3. 데이터베이스 상태 확인
+- [ ] 데이터베이스 마이그레이션 상태 확인 (`./gradlew flywayInfo`)
+- [ ] Mock 데이터 필요 시 `/mock-db-reset` 실행 (주의: 파괴적 작업)
 
-2. **프론트엔드 빌드 및 배포**
-   ```bash
-   ssh private-ec2 "cd ~/itdaing/itdaing-web && npm install && npm run build"
-   ssh private-ec2 "sudo cp -r ~/itdaing/itdaing-web/dist/* /var/www/itdaing/ && sudo chown -R www-data:www-data /var/www/itdaing"
-   ```
+## 백엔드 개발 워크플로우
 
-## 개발 중 워크플로우
+### 1. 기능 개발 시작
+1. **계획서 확인**: `docs/plan/BE-plan.md`에서 작업 항목 확인
+2. **브랜치 생성**: `git checkout -b feature/{description}`
+3. **개발 환경 설정**: Private EC2에서 환경 변수 로드
 
-### 백엔드 개발
+### 2. 개발 단계
+1. **엔티티 설계** (필요 시)
+   - JPA 엔티티 작성
+   - Flyway 마이그레이션 파일 작성 (`V{version}__{description}.sql`)
+   - PostgreSQL 문법 사용
 
-#### 새 기능 추가 시
-1. **도메인 설계**
-   - Entity 클래스 작성 (`src/main/java/com/da/itdaing/domain/{domain}/entity/`)
-   - Repository 인터페이스 작성 (`.../repository/`)
-   - DTO 클래스 작성 (`.../dto/`)
+2. **Repository 구현**
+   - JPA Repository 인터페이스 작성
+   - QueryDSL 사용 (복잡한 쿼리 시)
 
-2. **API 개발**
-   - Service 클래스 작성 (`.../service/`)
-   - Controller 클래스 작성 (`.../api/`)
+3. **Service 구현**
+   - 비즈니스 로직 작성
+   - DTO 매핑 (MapStruct 사용)
+
+4. **Controller 구현**
+   - REST API 엔드포인트 작성
    - Swagger 어노테이션 추가 (`@Operation`, `@Schema`)
+   - 인증/인가 설정 확인
 
-3. **테스트 작성**
-   - Repository 테스트 (`.../repository/*RepositoryTest.java`)
-   - Service 테스트 (`.../service/*ServiceTest.java`)
-   - Controller 테스트 (`.../api/*ControllerTest.java`)
+5. **예외 처리**
+   - 커스텀 예외 클래스 작성 (필요 시)
+   - `GlobalExceptionHandler`에 처리 로직 추가
 
-4. **마이그레이션 작성** (필요 시)
-   - `src/main/resources/db/migration/V{version}__{description}.sql`
+### 3. 테스트 작성
+1. **Repository 테스트**
+   - `@DataJpaTest` 사용
+   - 도메인별 테스트 태스크 실행 (`./gradlew testMaster`, `testUser` 등)
 
-#### 코드 수정 후
+2. **Service 테스트**
+   - Mock 사용
+   - 비즈니스 로직 검증
+
+3. **Controller 테스트**
+   - `@WebMvcTest` 또는 `@SpringBootTest` 사용
+   - API 엔드포인트 검증
+
+### 4. 코드 리뷰 및 커밋
+1. **코드 검토**
+   - 코딩 규칙 준수 확인 (`docs/.cursor/rules/project-rules.md`)
+   - API 문서 업데이트 확인
+
+2. **커밋**
+   - gitmoji 사용 (`✨ feat:`, `🐛 fix:`, `🔧 chore:`)
+   - 명확한 커밋 메시지 작성
+
+3. **푸시 및 PR**
+   - 원격 저장소에 푸시
+   - Pull Request 생성 (필요 시)
+
+### 5. 배포 전 확인
+- [ ] 모든 테스트 통과
+- [ ] Swagger 문서 업데이트 확인
+- [ ] `docs/plan/BE-plan.md` 업데이트 (완료된 작업 표시)
+
+## 프론트엔드 개발 워크플로우
+
+### 1. 기능 개발 시작
+1. **계획서 확인**: `docs/plan/FE-plan.md`에서 작업 항목 확인
+2. **브랜치 생성**: `git checkout -b feature/{description}`
+3. **API 문서 확인**: 백엔드 API 엔드포인트 확인
+
+### 2. 개발 단계
+1. **컴포넌트 설계**
+   - 컴포넌트 구조 설계
+   - Props 인터페이스 정의
+
+2. **UI 컴포넌트 구현**
+   - Radix UI 컴포넌트 활용
+   - Tailwind CSS 스타일링
+   - 반응형 디자인 적용
+
+3. **상태 관리**
+   - Context API 사용 (AuthContext, UserContext)
+   - 로컬 상태는 useState 사용
+
+4. **API 연동**
+   - `src/services/` 디렉토리의 서비스 함수 사용
+   - 에러 처리 구현
+   - 로딩 상태 관리
+
+5. **라우팅**
+   - `src/routes/index.tsx`에 라우트 추가
+   - Protected Route 적용 (필요 시)
+
+### 3. 테스트 및 검증
+1. **브라우저 테스트**
+   - 실제 브라우저에서 기능 확인
+   - 반응형 디자인 확인 (모바일/태블릿/데스크톱)
+   - 브라우저 콘솔 에러 확인
+
+2. **API 연동 테스트**
+   - 백엔드 API와 실제 통신 확인
+   - 에러 케이스 테스트
+
+3. **사용자 흐름 테스트**
+   - 샘플 계정으로 전체 플로우 테스트
+   - 소비자: `consumer1` / `pass!1234`
+   - 판매자: `seller1` / `pass!1234`
+   - 관리자: `admin1` / `pass!1234`
+
+### 4. 코드 리뷰 및 커밋
+1. **코드 검토**
+   - TypeScript 타입 체크 (`npx tsc --noEmit`)
+   - 컴포넌트 구조 확인
+
+2. **커밋**
+   - gitmoji 사용
+   - 명확한 커밋 메시지 작성
+
+3. **빌드 확인**
+   - 프로덕션 빌드 성공 확인 (`npm run build`)
+
+### 5. 배포 전 확인
+- [ ] 브라우저 테스트 완료
+- [ ] 반응형 디자인 확인
+- [ ] `docs/plan/FE-plan.md` 업데이트 (완료된 작업 표시)
+
+## 통합 개발 워크플로우
+
+### 프론트엔드와 백엔드 동시 개발 시
+
+1. **API 우선 설계**
+   - 백엔드 API 엔드포인트 먼저 설계
+   - Swagger 문서 작성
+   - 프론트엔드에서 API 스펙 확인
+
+2. **데이터 구조 일관성**
+   - DTO와 프론트엔드 타입 일치 확인
+   - API 응답 형식 통일 (`ApiResponse<T>`)
+
+3. **Mock 데이터 활용**
+   - 백엔드 개발 중 프론트엔드는 Mock 데이터 사용
+   - 백엔드 완료 후 실제 API로 전환
+
+## 테스트 방법
+
+### 백엔드 테스트
+
+#### 도메인별 테스트 실행
 ```bash
-# Private EC2에서 서버 재시작
-ssh private-ec2 "kill \$(lsof -ti:8080)"
-ssh private-ec2 "cd ~/itdaing && source prod.env && nohup ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &"
+./gradlew testMaster      # 마스터 데이터
+./gradlew testUser        # 사용자 도메인
+./gradlew testGeo         # 지리 정보
+./gradlew testPopup       # 팝업 도메인
+./gradlew testSocial      # 소셜 기능
+./gradlew testMsg         # 메시지
+```
 
-# 테스트 실행 (로컬에서)
+#### 전체 테스트 실행
+```bash
 ./gradlew test
 ```
 
-### 프론트엔드 개발
-
-#### 새 페이지/컴포넌트 추가 시
-1. **라우트 추가**
-   - `itdaing-web/src/router/index.tsx`에 라우트 정의
-   - 필요 시 ProtectedRoute 적용
-
-2. **컴포넌트 작성**
-   - 페이지 컴포넌트: `itdaing-web/src/pages/`
-   - 공통 컴포넌트: `itdaing-web/src/components/`
-   - TypeScript 타입 정의 포함
-
-3. **API 연동**
-   - `itdaing-web/src/services/api.ts`에 API 함수 추가
-   - 컴포넌트에서 `useEffect`, `useState`로 데이터 로딩
-
-4. **스타일링**
-   - Tailwind CSS 클래스 사용
-   - 반응형 디자인 고려 (모바일 우선)
-
-#### 코드 수정 후
-- 변경사항을 Private EC2에 업로드
-- 프론트엔드 재빌드 및 배포
-- 브라우저에서 확인
-
-## 테스트 워크플로우
-
-### 백엔드 테스트
+#### 특정 클래스 테스트
 ```bash
-# 로컬에서 테스트 실행
-./gradlew test
-
-# 특정 도메인 테스트
-./gradlew testUser
-./gradlew testPopup
-
-# 특정 테스트 클래스
+./gradlew test --tests '*RepositoryTest'
 ./gradlew test --tests 'AuthControllerTest'
-
-# 테스트 리포트 확인
-open build/reports/tests/test/index.html
 ```
 
 ### 프론트엔드 테스트
-- 현재 미구현 (추후 Vitest + React Testing Library 예정)
 
-### 통합 테스트
-1. **브라우저에서 수동 테스트**
-   - Private EC2의 공개 IP를 통해 접근
-   - 소비자 플로우: 로그인 → 팝업 탐색 → 리뷰 작성
-   - 판매자 플로우: 로그인 → 팝업 관리 → 대시보드 확인
-   - 관리자 플로우: 로그인 → 존 관리 → 사용자 관리
+#### TypeScript 타입 체크
+```bash
+cd itdaing-web
+npx tsc --noEmit
+```
 
-2. **API 테스트**
-   - Swagger UI 사용: Private EC2의 Swagger UI 접근
-   - Postman/Insomnia 사용
+#### 브라우저 테스트
+- 개발 서버 실행: `npm run dev`
+- 실제 브라우저에서 기능 확인
+- 브라우저 개발자 도구 콘솔 확인
 
-## 디버깅 워크플로우
+## 디버깅 방법
 
 ### 백엔드 디버깅
 1. **로그 확인**
    ```bash
-   # 실시간 로그
-   ssh private-ec2 "tail -f /tmp/itdaing-boot.log"
+   tail -f /tmp/itdaing-boot.log
    ```
 
-2. **브레이크포인트 설정**
-   - IDE에서 원격 디버깅 설정 (SSH 터널링)
-   - Private EC2의 8080 포트를 로컬로 포워딩
-
-3. **데이터베이스 확인**
+2. **에러 로그 필터링**
    ```bash
-   ssh private-ec2 "cd ~/itdaing && source prod.env && PGPASSWORD=\$SPRING_DATASOURCE_PASSWORD psql -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com -U itdaing_admin -d itdaing-db"
+   grep -i error /tmp/itdaing-boot.log | tail -20
    ```
+
+3. **데이터베이스 쿼리 확인**
+   - `application.yml`에서 `logging.level.org.hibernate.SQL=DEBUG` 설정
+   - 또는 `DataSourceLogConfig` 확인
 
 ### 프론트엔드 디버깅
-1. **브라우저 DevTools**
-   - Console 탭: JavaScript 에러 확인
+1. **브라우저 개발자 도구**
+   - 콘솔 탭: JavaScript 에러 확인
    - Network 탭: API 요청/응답 확인
    - React DevTools: 컴포넌트 상태 확인
 
-2. **타입 체크**
-   ```bash
-   cd itdaing-web
-   npx tsc --noEmit
-   ```
+2. **API 에러 확인**
+   - Network 탭에서 실패한 요청 확인
+   - 응답 본문 확인
+   - 백엔드 로그 확인
 
-## 데이터 관리 워크플로우
+## 문제 해결 가이드
 
-### 초기 데이터 시딩
-- Private EC2에서 `DevDataSeed`가 자동 실행됨 (프로덕션 프로파일에서 비활성화 가능)
+### 백엔드 서버가 시작되지 않을 때
+1. 포트 8080 사용 확인: `lsof -ti:8080`
+2. 환경 변수 로드 확인: `cd ~/itdaing && source prod.env`
+3. 데이터베이스 연결 확인
+4. 로그 확인: `tail -f /tmp/itdaing-boot.log`
 
-### 샘플 계정 사용
-- **소비자**: `consumer1` ~ `consumer10` / `pass!1234`
-- **판매자**: `seller1` ~ `seller50` / `pass!1234`
-- **관리자**: `admin1` ~ `admin3` / `pass!1234`
+### 데이터베이스 마이그레이션 실패 시
+1. 마이그레이션 상태 확인: `./gradlew flywayInfo`
+2. 마이그레이션 파일 문법 확인 (PostgreSQL 문법)
+3. 필요 시 수동으로 SQL 실행
+
+### 프론트엔드 빌드 실패 시
+1. `node_modules` 삭제 후 재설치: `rm -rf node_modules && npm install`
+2. TypeScript 타입 에러 확인: `npx tsc --noEmit`
+3. 의존성 버전 확인: `package.json`
+
+### API 연동 실패 시
+1. 백엔드 서버 실행 확인
+2. CORS 설정 확인
+3. 인증 토큰 확인
+4. Network 탭에서 요청/응답 확인
 
 ## 배포 전 체크리스트
 
 ### 백엔드
-- [ ] 모든 테스트 통과: `./gradlew test`
-- [ ] 빌드 성공: `./gradlew clean build`
-- [ ] Swagger 문서 확인
-- [ ] 환경 변수 설정 확인 (`prod.env`)
+- [ ] 모든 테스트 통과
+- [ ] Swagger 문서 업데이트
+- [ ] 환경 변수 확인 (`prod.env`)
+- [ ] 데이터베이스 마이그레이션 확인
+- [ ] 로그 레벨 확인
 
 ### 프론트엔드
-- [ ] 빌드 성공: `npm run build`
-- [ ] 타입 체크 통과: `npx tsc --noEmit`
-- [ ] 반응형 디자인 확인 (모바일/태블릿/데스크톱)
+- [ ] 프로덕션 빌드 성공 (`npm run build`)
+- [ ] 브라우저 테스트 완료
+- [ ] 반응형 디자인 확인
+- [ ] API 연동 확인
+- [ ] 환경 변수 확인 (`.env`)
 
-## 문제 해결 워크플로우
+### 통합
+- [ ] 프론트엔드와 백엔드 통합 테스트
+- [ ] 샘플 계정으로 전체 플로우 테스트
+- [ ] 성능 확인 (로딩 시간, 응답 시간)
 
-### 서버가 시작되지 않을 때
-1. **포트 확인**
-   ```bash
-   ssh private-ec2 "lsof -ti:8080"
-   ```
+## 관련 문서
 
-2. **프로세스 종료 후 재시작**
-   ```bash
-   ssh private-ec2 "kill \$(lsof -ti:8080)"
-   ssh private-ec2 "cd ~/itdaing && source prod.env && nohup ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &"
-   ```
+- [프로젝트 규칙](project-rules.md)
+- [명령어 규칙](commands-rules.md)
+- [백엔드 개발 계획](../docs/plan/BE-plan.md)
+- [프론트엔드 개발 계획](../docs/plan/FE-plan.md)
+- [Private EC2 접근 가이드](private-ec2-access.mdc)
 
-3. **로그 확인**
-   ```bash
-   ssh private-ec2 "tail -n 100 /tmp/itdaing-boot.log"
-   ```
-
-### 데이터베이스 연결 실패 시
-1. **RDS 연결 상태 확인**
-   ```bash
-   ssh private-ec2 "cd ~/itdaing && source prod.env && PGPASSWORD=\$SPRING_DATASOURCE_PASSWORD psql -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com -U itdaing_admin -d itdaing-db -c 'SELECT 1;'"
-   ```
-
-2. **환경 변수 확인**
-   ```bash
-   ssh private-ec2 "cd ~/itdaing && source prod.env && echo \$SPRING_DATASOURCE_URL"
-   ```
-
-### 빌드 실패 시
-1. **의존성 재설치**
-   ```bash
-   # 백엔드
-   ./gradlew clean
-   ./gradlew build --refresh-dependencies
-   
-   # 프론트엔드
-   cd itdaing-web
-   rm -rf node_modules package-lock.json
-   npm install
-   ```
-
-2. **캐시 정리**
-   ```bash
-   # Gradle 캐시
-   ./gradlew clean
-   rm -rf .gradle
-   
-   # npm 캐시
-   npm cache clean --force
-   ```
-
-## 코드 리뷰 전 체크리스트
-
-- [ ] 코드 포맷팅 확인 (자동 포맷터 적용)
-- [ ] 타입 안정성 확인 (TypeScript/Java)
-- [ ] 테스트 작성 및 통과 확인
-- [ ] Swagger 문서 업데이트 (API 변경 시)
-- [ ] 불필요한 주석/코드 제거
-- [ ] 커밋 메시지 gitmoji 사용
-
-## 일일 개발 종료 시
-
-1. **변경사항 커밋 및 푸시**
-   ```bash
-   git add .
-   git commit -m "✨ feat: 작업 내용"
-   git push origin main
-   ```
-
-2. **Private EC2에 변경사항 반영**
-   ```bash
-   ssh private-ec2 "cd ~/itdaing && git pull origin main"
-   ```
-
-3. **서버 재시작** (필요 시)
-   ```bash
-   ssh private-ec2 "kill \$(lsof -ti:8080)"
-   ssh private-ec2 "cd ~/itdaing && source prod.env && nohup ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &"
-   ```
-
-4. **다음 작업 메모**
-   - 진행 중인 작업 내용 기록
-   - 다음에 해야 할 작업 정리

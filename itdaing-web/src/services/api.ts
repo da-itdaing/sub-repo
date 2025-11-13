@@ -21,6 +21,7 @@ apiClient.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // removed debug: login request body logging
     return config;
   },
   (error: AxiosError) => {
@@ -28,10 +29,41 @@ apiClient.interceptors.request.use(
   }
 );
 
+// 재시도 로직 헬퍼 함수
+async function retryRequest(
+  requestFn: () => Promise<any>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<any> {
+  let lastError: any;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await requestFn();
+    } catch (error: any) {
+      lastError = error;
+      // 401, 403, 404 등 재시도 불가능한 에러는 즉시 반환
+      if (error.response?.status === 401 || error.response?.status === 403 || error.response?.status === 404) {
+        throw error;
+      }
+      // 마지막 시도가 아니면 대기 후 재시도
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+      }
+    }
+  }
+  throw lastError;
+}
+
 // 응답 인터셉터: 에러 처리 및 토큰 만료 처리
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    // 네트워크 에러 또는 타임아웃인 경우 재시도
+    if (!error.response && (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK')) {
+      // 재시도는 요청 레벨에서 처리하도록 함
+      console.error('Network error detected:', error.message);
+    }
+
     if (error.response?.status === 401) {
       // 토큰 만료 또는 인증 실패
       localStorage.removeItem('accessToken');
@@ -41,9 +73,27 @@ apiClient.interceptors.response.use(
         window.location.href = '/login';
       }
     }
+
+    // 에러 응답 형식 정규화
+    if (error.response?.data && typeof error.response.data === 'object') {
+      const errorData = error.response.data as any;
+      if (errorData.error) {
+        // 이미 표준 형식인 경우 그대로 반환
+        return Promise.reject(error);
+      }
+    }
+
     return Promise.reject(error);
   }
 );
+
+// 재시도 가능한 요청을 위한 래퍼 함수
+export async function apiRequestWithRetry<T>(
+  requestFn: () => Promise<{ data: ApiResponse<T> }>,
+  maxRetries: number = 3
+): Promise<{ data: ApiResponse<T> }> {
+  return retryRequest(requestFn, maxRetries);
+}
 
 export default apiClient;
 

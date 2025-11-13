@@ -7,17 +7,60 @@ import { SectionTitle } from '../components/common/SectionTitle';
 import { LoginConfirmDialog } from '../components/auth/LoginConfirmDialog';
 import { RecommendationModal } from '../components/consumer/RecommendationModal';
 import { useAuth } from '../context/AuthContext';
+import { useUser } from '../context/UserContext';
 import { usePopups } from '../hooks/usePopups';
+import { FALLBACK_IMAGES } from '../constants/fallbackImages';
+
+const SECTION_SAMPLE_LIMIT = 100;
+const SECTION_MAX_VISIBLE = 20;
+
+type EventCardData = {
+  id: number;
+  image: string;
+  title: string;
+  date: string;
+  location: string;
+  address?: string;
+  categories?: string[];
+};
+
+const fallbackImageById = (seed: number | string) => {
+  if (FALLBACK_IMAGES.length === 0) {
+    return "";
+  }
+  if (typeof seed === "number" && Number.isFinite(seed)) {
+    const index = Math.abs(Math.trunc(seed)) % FALLBACK_IMAGES.length;
+    return FALLBACK_IMAGES[index];
+  }
+  if (typeof seed === "string" && seed.length > 0) {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i += 1) {
+      hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+    }
+    return FALLBACK_IMAGES[Math.abs(hash) % FALLBACK_IMAGES.length];
+  }
+  return FALLBACK_IMAGES[Math.floor(Math.random() * FALLBACK_IMAGES.length)];
+};
 
 export default function MainPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
+  const { profile } = useUser();
   const [showAllOpening, setShowAllOpening] = useState(false);
   const [showAllLocal, setShowAllLocal] = useState(false);
   const [showAllCommunity, setShowAllCommunity] = useState(false);
+  const [dismissedToday, setDismissedToday] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const stored = window.localStorage.getItem('recommendationDismissed');
+    const today = new Date().toDateString();
+    return stored === today;
+  });
+  const [closedForSession, setClosedForSession] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.sessionStorage.getItem('recommendationClosed') === 'true';
+  });
   const [showRecommendationModal, setShowRecommendationModal] = useState(false);
-  const [dismissedToday, setDismissedToday] = useState(false);
   const [showLoginConfirmDialog, setShowLoginConfirmDialog] = useState(false);
   const [loginConfirmDialogType, setLoginConfirmDialogType] = useState<'favorite' | 'review' | 'mypage'>('favorite');
   const requireLogin = useCallback((type: 'favorite' | 'review' | 'mypage') => {
@@ -29,124 +72,231 @@ export default function MainPage() {
 
   const normalizedPopups = useMemo(() => {
     if (!popupRaw) return [];
-    return popupRaw.map(item => {
-      const start = new Date(item.startDate);
-      const end = new Date(item.endDate);
-      const now = new Date();
-      let status: 'upcoming' | 'ongoing' | 'ended' = 'upcoming';
-      if (now > end) {
-        status = 'ended';
-      } else if (now >= start && now <= end) {
-        status = 'ongoing';
-      }
-      const dateLabel =
-        start.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }) +
-        ' - ' +
-        end.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+    return popupRaw
+      .map(item => {
+        // DB에 저장된 S3 경로(썸네일 + 갤러리)를 그대로 사용
+        const gallery: string[] = [item.thumbnail ?? undefined, ...(item.gallery ?? [])].filter(Boolean) as string[];
+        const start = item.startDate ? new Date(item.startDate) : null;
+        const end = item.endDate ? new Date(item.endDate) : null;
+        const now = new Date();
+        let status: 'upcoming' | 'ongoing' | 'ended' = 'upcoming';
+        if (start && end) {
+          if (now > end) {
+            status = 'ended';
+          } else if (now >= start && now <= end) {
+            status = 'ongoing';
+          }
+        }
+        const dateLabel = start && end
+          ? start.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }) +
+            ' - ' +
+            end.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })
+          : '';
 
-      return {
-        id: item.id,
-        title: item.title,
-        thumbnail: item.thumbnail,
-        images: [item.thumbnail, ...item.gallery],
-        location: item.locationName,
-        address: item.address ?? item.locationName ?? "",
-        categories: item.styleTags,
-        date: dateLabel,
-        status
-      };
-    });
+        return {
+          id: item.id,
+          title: item.title,
+          thumbnail: gallery[0] || '',
+          images: gallery,
+          location: item.locationName || '',
+          address: item.address ?? item.locationName ?? "",
+          categories: item.styleTags || [],
+          date: dateLabel,
+          status,
+          startTimestamp: start ? start.getTime() : null,
+          endTimestamp: end ? end.getTime() : null,
+        };
+      });
   }, [popupRaw]);
 
-  // 이벤트 데이터를 카테고리별로 분류
-  const eventItems = useMemo(() => {
-    const opening = normalizedPopups
-      .filter(p => p.status === 'upcoming')
-      .slice(0, 12)
-      .map(p => ({
-        id: p.id,
-        image: p.images[0],
-        title: p.title,
-        date: p.date,
-        location: p.location,
-        address: p.address,
-        categories: p.categories
-      }));
-    const local = normalizedPopups
-      .filter(p => p.status === 'ongoing' || p.status === 'upcoming')
-      .slice(0, 20)
-      .map(p => ({
-        id: p.id,
-        image: p.images[0],
-        title: p.title,
-        date: p.date,
-        location: p.location,
-        address: p.address,
-        categories: p.categories
-      }));
-    const community = normalizedPopups.slice(0, 12).map(p => ({
-      id: p.id,
-      image: p.images[0],
-      title: p.title,
-      date: p.date,
-      location: p.location,
-      address: p.address,
-      categories: p.categories
-    }));
-    return { opening, local, community };
-  }, [normalizedPopups]);
+  const regionPrefsKey = useMemo(() => (profile?.regions ?? []).join('|'), [profile?.regions]);
+  const interestPrefsKey = useMemo(() => (profile?.interests ?? []).join('|'), [profile?.interests]);
 
-  const heroItems = useMemo(
-    () =>
-      normalizedPopups.slice(0, 7).map((p, idx) => ({
+  const eventBuckets = useMemo(() => {
+    if (normalizedPopups.length === 0) {
+      return {
+        opening: [] as EventCardData[],
+        local: [] as EventCardData[],
+        community: [] as EventCardData[],
+        localTotal: 0,
+        communityTotal: 0,
+        sorted: [] as typeof normalizedPopups,
+      };
+    }
+
+    const sorted = [...normalizedPopups].sort((a, b) => {
+      const aStart = a.startTimestamp ?? Number.MAX_SAFE_INTEGER;
+      const bStart = b.startTimestamp ?? Number.MAX_SAFE_INTEGER;
+      if (aStart !== bStart) return aStart - bStart;
+      return a.id - b.id;
+    });
+
+    const mapToEventCard = (popup: (typeof normalizedPopups)[number]): EventCardData => ({
+      id: popup.id,
+      image: popup.images[0] || fallbackImageById(popup.id),
+      title: popup.title,
+      date: popup.date,
+      location: popup.location,
+      address: popup.address,
+      categories: popup.categories,
+    });
+
+    const openingCandidates = sorted.filter((p) => p.status === 'upcoming');
+    const opening = openingCandidates.slice(0, SECTION_SAMPLE_LIMIT).map(mapToEventCard);
+
+    const regionPrefs = regionPrefsKey
+      ? regionPrefsKey
+          .split('|')
+          .map((v) => v.trim().toLowerCase())
+          .filter(Boolean)
+      : [];
+
+    const interestPrefs = interestPrefsKey
+      ? interestPrefsKey
+          .split('|')
+          .map((v) => v.trim().toLowerCase())
+          .filter(Boolean)
+      : [];
+
+    const prioritizedLocal: typeof sorted = [];
+    const seenLocal = new Set<number>();
+    if (regionPrefs.length > 0) {
+      sorted.forEach((popup) => {
+        const haystack = (popup.address ?? popup.location ?? '').toLowerCase();
+        if (regionPrefs.some((pref) => haystack.includes(pref))) {
+          prioritizedLocal.push(popup);
+          seenLocal.add(popup.id);
+        }
+      });
+    }
+    sorted.forEach((popup) => {
+      if (!seenLocal.has(popup.id)) {
+        prioritizedLocal.push(popup);
+        seenLocal.add(popup.id);
+      }
+    });
+    const localSample = prioritizedLocal.slice(0, SECTION_SAMPLE_LIMIT);
+
+    const communityScores = sorted.map((popup) => {
+      const categories = (popup.categories ?? []).map((cat) => cat.toLowerCase());
+      const score =
+        interestPrefs.length > 0
+          ? interestPrefs.reduce(
+              (acc, pref) =>
+                acc + (categories.some((cat) => cat.includes(pref) || pref.includes(cat)) ? 1 : 0),
+              0
+            )
+          : 0;
+      return { popup, score };
+    });
+    communityScores.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const aStart = a.popup.startTimestamp ?? Number.MAX_SAFE_INTEGER;
+      const bStart = b.popup.startTimestamp ?? Number.MAX_SAFE_INTEGER;
+      return aStart - bStart;
+    });
+    const communityOrdered: typeof sorted = [];
+    const seenCommunity = new Set<number>();
+    communityScores.forEach(({ popup }) => {
+      if (!seenCommunity.has(popup.id)) {
+        communityOrdered.push(popup);
+        seenCommunity.add(popup.id);
+      }
+    });
+    if (communityOrdered.length === 0) {
+      communityOrdered.push(...sorted);
+    }
+    const communitySample = communityOrdered.slice(0, SECTION_SAMPLE_LIMIT);
+
+    return {
+      opening,
+      local: localSample.map(mapToEventCard),
+      community: communitySample.map(mapToEventCard),
+      localTotal: Math.min(prioritizedLocal.length, SECTION_SAMPLE_LIMIT),
+      communityTotal: Math.min(communityOrdered.length, SECTION_SAMPLE_LIMIT),
+      sorted,
+    };
+  }, [normalizedPopups, regionPrefsKey, interestPrefsKey]);
+
+  const heroItems = useMemo(() => {
+    const source = eventBuckets.sorted;
+    if (!source || source.length === 0) return [];
+    return source
+      .slice(0, 7)
+      .map((p, idx) => ({
         id: p.id,
         rank: idx + 1,
-        image: p.images[0],
+        image: p.images[0] || fallbackImageById(p.id),
         title: p.title,
-      date: p.date,
-      location: p.location
-      })),
-    [normalizedPopups]
-  );
+        date: p.date,
+        location: p.location,
+      }));
+  }, [eventBuckets.sorted]);
 
   const handlePopupClick = useCallback((popupId: number) => {
     navigate(`/popup/${popupId}`);
   }, [navigate]);
 
-  const handleCloseRecommendationModal = () => {
+  const handleCloseRecommendationModal = useCallback(() => {
     setShowRecommendationModal(false);
-  };
+    setClosedForSession(true);
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('recommendationClosed', 'true');
+    }
+  }, []);
 
-  const handleDismissToday = () => {
-    setDismissedToday(true);
-    setShowRecommendationModal(false);
+  const handleDismissToday = useCallback(() => {
     const today = new Date().toDateString();
-    localStorage.setItem('recommendationDismissed', today);
-  };
+    setDismissedToday(true);
+    setClosedForSession(true);
+    setShowRecommendationModal(false);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('recommendationDismissed', today);
+      window.sessionStorage.setItem('recommendationClosed', 'true');
+    }
+  }, []);
 
   const handleResetRecommendation = useCallback(() => {
-    localStorage.removeItem('recommendationDismissed');
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('recommendationDismissed');
+      window.sessionStorage.removeItem('recommendationClosed');
+    }
     setDismissedToday(false);
+    setClosedForSession(false);
     if (isAuthenticated && user?.role === 'CONSUMER') {
       setShowRecommendationModal(true);
     }
   }, [isAuthenticated, user]);
 
-  // Check if user dismissed modal today
   useEffect(() => {
-    const dismissedDate = localStorage.getItem('recommendationDismissed');
-    const today = new Date().toDateString();
-    if (dismissedDate === today) {
-      setDismissedToday(true);
-    }
+    if (typeof window === 'undefined') return;
+    const syncState = () => {
+      const today = new Date().toDateString();
+      setDismissedToday(window.localStorage.getItem('recommendationDismissed') === today);
+      setClosedForSession(window.sessionStorage.getItem('recommendationClosed') === 'true');
+    };
+    syncState();
+    window.addEventListener('focus', syncState);
+    window.addEventListener('storage', syncState);
+    return () => {
+      window.removeEventListener('focus', syncState);
+      window.removeEventListener('storage', syncState);
+    };
   }, []);
 
-  // Show recommendation modal after consumer login
   useEffect(() => {
-    if (isAuthenticated && user?.role === 'CONSUMER' && !dismissedToday) {
+    if (!isAuthenticated || user?.role !== 'CONSUMER') {
+      setShowRecommendationModal(false);
+      setClosedForSession(false);
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.removeItem('recommendationClosed');
+      }
+      return;
+    }
+    if (!dismissedToday && !closedForSession) {
       setShowRecommendationModal(true);
     }
-  }, [isAuthenticated, user, dismissedToday]);
+  }, [isAuthenticated, user, dismissedToday, closedForSession]);
 
   useEffect(() => {
     const handleLogoEvent = () => handleResetRecommendation();
@@ -182,7 +332,7 @@ export default function MainPage() {
         onLoginClick={() => requireLogin('favorite')}
       />
 
-      <HorizontalBanner onClick={() => console.log('Banner clicked!')} />
+      <HorizontalBanner onClick={() => {}} />
 
       <div className="w-full max-w-[1089px] mx-auto">
         <EventSection
@@ -196,13 +346,14 @@ export default function MainPage() {
               showViewAll={false}
             />
           }
-          items={eventItems.opening}
+          items={eventBuckets.opening}
           showAll={showAllOpening}
           onToggleShowAll={() => setShowAllOpening(!showAllOpening)}
           type="opening"
           onPopupClick={handlePopupClick}
           isLoggedIn={isAuthenticated}
           onLoginClick={() => requireLogin('favorite')}
+          maxItems={SECTION_MAX_VISIBLE}
         />
 
         <EventSection
@@ -216,13 +367,15 @@ export default function MainPage() {
               showViewAll={false}
             />
           }
-          items={eventItems.local}
+          items={eventBuckets.local}
           showAll={showAllLocal}
           onToggleShowAll={() => setShowAllLocal(!showAllLocal)}
           type="local"
+          totalCountOverride={eventBuckets.localTotal}
           onPopupClick={handlePopupClick}
           isLoggedIn={isAuthenticated}
           onLoginClick={() => requireLogin('favorite')}
+          maxItems={SECTION_MAX_VISIBLE}
         />
 
         <EventSection
@@ -230,19 +383,30 @@ export default function MainPage() {
             <SectionTitle
               title={
                 <>
-                  <span className="text-[#eb0000]">카테고리</span>별 팝업 있다잉!
+                  {isAuthenticated && profile?.interests && profile.interests.length > 0 ? (
+                    <>
+                      <span className="text-[#eb0000]">소비자 취향</span> 카테고리 팝업 있다잉!
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-[#eb0000]">카테고리</span>별 팝업 있다잉!
+                    </>
+                  )}
                 </>
               }
               showViewAll={false}
             />
           }
-          items={eventItems.community}
+          items={eventBuckets.community}
           showAll={showAllCommunity}
           onToggleShowAll={() => setShowAllCommunity(!showAllCommunity)}
           type="community"
+          totalCountOverride={eventBuckets.communityTotal}
           onPopupClick={handlePopupClick}
           isLoggedIn={isAuthenticated}
           onLoginClick={() => requireLogin('favorite')}
+          userPreferences={isAuthenticated && profile?.interests ? profile.interests : undefined}
+          maxItems={SECTION_MAX_VISIBLE}
         />
       </div>
 
@@ -267,7 +431,7 @@ export default function MainPage() {
         </svg>
       </button>
 
-      {isAuthenticated && showRecommendationModal && (
+      {isAuthenticated && user?.role === 'CONSUMER' && showRecommendationModal && (
         <RecommendationModal
           onClose={handleCloseRecommendationModal}
           onDismissToday={handleDismissToday}

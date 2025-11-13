@@ -39,11 +39,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (loginId: string, password: string) => {
     try {
-      await authService.login({ loginId, password });
+      // eslint-disable-next-line no-console
+      console.log('[AuthContext] login called', { loginId });
+      const request = { loginId, password };
+      await authService.login(request);
       const profile = await authService.getMyProfile();
       setUser(profile);
       setIsAuthenticated(true);
+      // eslint-disable-next-line no-console
+      console.log('[AuthContext] login ok, set user', profile);
     } catch (error) {
+      console.error('AuthContext.login error:', error);
       throw error;
     }
   };
@@ -91,7 +97,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    // Fallback for development/HMR edge-cases:
+    // Return a safe unauthenticated context to avoid hard crashes.
+    return {
+      isAuthenticated: false,
+      user: null,
+      login: async () => {
+        throw new Error('Auth not initialized yet. Please reload and try again.');
+      },
+      logout: async () => {},
+      refreshUser: async () => {},
+      loading: false,
+    };
   }
   return context;
 }

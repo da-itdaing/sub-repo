@@ -1,3 +1,95 @@
-import { useState } from "react"; import { ChevronDown } from "lucide-react";
-const filters=["전체","패션","뷰티","음식","건강","공연/전시","스포츠","키즈","아트","굿즈","반려동물"] as const; interface CommunityFilterButtonsProps { activeFilter:string; onFilterChange:(f:string)=>void; }
-export function CommunityFilterButtons({ activeFilter,onFilterChange}:CommunityFilterButtonsProps){ const [open,setOpen]=useState(false); const mobile=filters.slice(0,4); return (<div className="mb-6"><div className="hidden md:flex flex-wrap gap-2 w-full">{filters.map(f=> (<button key={f} onClick={()=> onFilterChange(f)} className={`px-4 py-2 rounded-full border transition-all font-['Pretendard:Regular',sans-serif] whitespace-nowrap ${activeFilter===f? 'bg-[#eb0000] text-white border-[#eb0000]':'bg-white text-black border-gray-300 hover:border-[#eb0000]'}`}>{f}</button>))}</div><div className="md:hidden relative"><div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-2">{mobile.map(f=> (<button key={f} onClick={()=> onFilterChange(f)} className={`px-3 py-1.5 rounded-full border transition-all font-['Pretendard:Regular',sans-serif] text-xs whitespace-nowrap flex-shrink-0 ${activeFilter===f? 'bg-[#eb0000] text-white border-[#eb0000]':'bg-white text-black border-gray-300 hover:border-[#eb0000]'}`}>{f}</button>))}<button onClick={()=> setOpen(!open)} className="px-3 py-1.5 rounded-full border border-gray-300 bg-white text-black hover:border-[#eb0000] transition-all font-['Pretendard:Regular',sans-serif] text-xs flex items-center gap-1 whitespace-nowrap flex-shrink-0">더보기 <ChevronDown className={`w-3 h-3 transition-transform ${open?'rotate-180':''}`}/></button></div>{open && (<><div className="fixed inset-0 z-40" onClick={()=> setOpen(false)} /><div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">{filters.slice(4).map(f=> (<button key={f} onClick={()=> { onFilterChange(f); setOpen(false);} } className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors font-['Pretendard:Regular',sans-serif] text-sm border-b border-gray-100 last:border-b-0 ${activeFilter===f? 'bg-red-50 text-[#eb0000]':'text-black'}`}>{f}</button>))}</div></>)}</div></div>); }
+import { useState, useMemo } from "react";
+import { ChevronDown } from "lucide-react";
+
+const allFilters = ["전체", "패션", "뷰티", "음식", "건강", "공연/전시", "스포츠", "키즈", "아트", "굿즈", "반려동물"] as const;
+
+interface CommunityFilterButtonsProps {
+  activeFilter: string;
+  onFilterChange: (f: string) => void;
+  userPreferences?: string[]; // 소비자 선호 카테고리
+}
+
+export function CommunityFilterButtons({
+  activeFilter,
+  onFilterChange,
+  userPreferences,
+}: CommunityFilterButtonsProps) {
+  const [open, setOpen] = useState(false);
+
+  // 소비자 선호 카테고리가 있으면 그것을 우선 표시, 없으면 전체 카테고리 표시
+  const filters = useMemo(() => {
+    if (userPreferences && userPreferences.length > 0) {
+      // 선호 카테고리를 맨 앞에 배치하고, 나머지는 뒤에 추가
+      const preferences = userPreferences.filter(p => allFilters.includes(p as any));
+      const others = allFilters.filter(f => f !== "전체" && !preferences.includes(f as any));
+      return ["전체", ...preferences, ...others] as string[];
+    }
+    return allFilters as readonly string[];
+  }, [userPreferences]);
+
+  const mobile = filters.slice(0, 4);
+
+  return (
+    <div className="mb-6">
+      <div className="hidden md:flex flex-wrap gap-2 w-full">
+        {filters.map((f) => (
+          <button
+            key={f}
+            onClick={() => onFilterChange(f)}
+            className={`px-4 py-2 rounded-full border transition-all font-['Pretendard:Regular',sans-serif] whitespace-nowrap ${
+              activeFilter === f
+                ? "bg-[#eb0000] text-white border-[#eb0000]"
+                : "bg-white text-black border-gray-300 hover:border-[#eb0000]"
+            }`}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+      <div className="md:hidden relative">
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-2">
+          {mobile.map((f) => (
+            <button
+              key={f}
+              onClick={() => onFilterChange(f)}
+              className={`px-3 py-1.5 rounded-full border transition-all font-['Pretendard:Regular',sans-serif] text-xs whitespace-nowrap flex-shrink-0 ${
+                activeFilter === f
+                  ? "bg-[#eb0000] text-white border-[#eb0000]"
+                  : "bg-white text-black border-gray-300 hover:border-[#eb0000]"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+          <button
+            onClick={() => setOpen(!open)}
+            className="px-3 py-1.5 rounded-full border border-gray-300 bg-white text-black hover:border-[#eb0000] transition-all font-['Pretendard:Regular',sans-serif] text-xs flex items-center gap-1 whitespace-nowrap flex-shrink-0"
+          >
+            더보기 <ChevronDown className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`} />
+          </button>
+        </div>
+        {open && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+              {filters.slice(4).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => {
+                    onFilterChange(f);
+                    setOpen(false);
+                  }}
+                  className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors font-['Pretendard:Regular',sans-serif] text-sm border-b border-gray-100 last:border-b-0 ${
+                    activeFilter === f ? "bg-red-50 text-[#eb0000]" : "text-black"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

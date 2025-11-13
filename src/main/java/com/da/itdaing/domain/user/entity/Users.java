@@ -60,4 +60,11 @@ public class Users extends BaseTimeEntity {
         this.mbti = mbti;
         this.role = role;
     }
+
+    /**
+     * 비밀번호 업데이트 (테스트용)
+     */
+    public void updatePassword(String newPasswordHash) {
+        this.password = newPasswordHash;
+    }
 }

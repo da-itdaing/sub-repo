@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 
 // Layout 컴포넌트
 import Layout from '../components/layout/Layout';
+import PublicLayout from '../components/layout/PublicLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 
 // 페이지 컴포넌트 (lazy loading)
@@ -13,6 +14,7 @@ const SignupPage2 = lazy(() => import('../pages/SignupPage2'));
 const PopupDetailPage = lazy(() => import('../pages/PopupDetailPage'));
 const MyPage = lazy(() => import('../pages/MyPage'));
 const NearbyExplorePage = lazy(() => import('../pages/NearbyExplorePage'));
+const SearchPage = lazy(() => import('../pages/SearchPage'));
 const SellerDashboard = lazy(() => import('../pages/seller/Dashboard'));
 const SellerPopupManagement = lazy(() => import('../pages/seller/PopupManagement'));
 const SellerSchedule = lazy(() => import('../pages/seller/Schedule'));
@@ -55,39 +57,6 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'login',
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <LoginPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'signup',
-        children: [
-          {
-            index: true,
-            element: <Navigate to="/signup/1" replace />,
-          },
-          {
-            path: '1',
-            element: (
-              <Suspense fallback={<LoadingFallback />}>
-                <SignupPage1 />
-              </Suspense>
-            ),
-          },
-          {
-            path: '2',
-            element: (
-              <Suspense fallback={<LoadingFallback />}>
-                <SignupPage2 />
-              </Suspense>
-            ),
-          },
-        ],
-      },
-      {
         path: 'popup/:id',
         element: (
           <Suspense fallback={<LoadingFallback />}>
@@ -110,6 +79,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingFallback />}>
             <NearbyExplorePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'search',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <SearchPage />
           </Suspense>
         ),
       },
@@ -252,6 +229,45 @@ export const router = createBrowserRouter([
       {
         path: '*',
         element: <Navigate to="/" replace />,
+      },
+    ],
+  },
+  {
+    path: '/',
+    element: <PublicLayout />,
+    children: [
+      {
+        path: 'login',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <LoginPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'signup',
+        children: [
+          {
+            index: true,
+            element: <Navigate to="/signup/1" replace />,
+          },
+          {
+            path: '1',
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <SignupPage1 />
+              </Suspense>
+            ),
+          },
+          {
+            path: '2',
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <SignupPage2 />
+              </Suspense>
+            ),
+          },
+        ],
       },
     ],
   },

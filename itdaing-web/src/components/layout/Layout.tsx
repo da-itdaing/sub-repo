@@ -24,7 +24,7 @@ export default function Layout() {
 
   const handleMyPageClick = () => {
     if (!isAuthenticated || !user) {
-      navigate('/login', { state: { from: location } });
+      navigate('/login', { state: { from: { pathname: '/mypage' } } });
       return;
     }
 

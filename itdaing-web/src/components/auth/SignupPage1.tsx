@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 interface SignupPage1Props {
@@ -20,15 +20,37 @@ export function SignupPage1({ onClose, onNext, onGoHome, onLoginClick }: SignupP
     email: "",
     mbti: "",
   });
+  const firstInvalidRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
+
+  const LOGIN_ID_RE = useMemo(() => /^[a-z0-9._-]{4,20}$/, []);
+  const PASSWORD_RE = useMemo(() => /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^\w\s]).{8,32}$/, []);
+  const EMAIL_RE = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/, []);
+
+  const usernameError =
+    formData.username.length === 0 ? "" : (LOGIN_ID_RE.test(formData.username) ? "" : "소문자/숫자/._- 4~20자");
+  const nameError = formData.name.length === 0 ? "" : (formData.name.trim().length >= 2 ? "" : "이름은 2자 이상");
+  const passwordError =
+    formData.password.length === 0 ? "" : (PASSWORD_RE.test(formData.password) ? "" : "영문+숫자+특수문자 8~32자");
+  const passwordConfirmError =
+    formData.passwordConfirm.length === 0 ? "" : (formData.passwordConfirm === formData.password ? "" : "비밀번호가 일치하지 않습니다");
+  const emailError = formData.email.length === 0 ? "" : (EMAIL_RE.test(formData.email) ? "" : "이메일 형식이 올바르지 않습니다");
+  const ageError = userType === "consumer" && formData.ageGroup === "" ? "연령대를 선택해주세요" : "";
+
+  const isValid =
+    LOGIN_ID_RE.test(formData.username) &&
+    formData.name.trim().length >= 2 &&
+    PASSWORD_RE.test(formData.password) &&
+    formData.passwordConfirm === formData.password &&
+    EMAIL_RE.test(formData.email) &&
+    (userType === "seller" || formData.ageGroup !== "");
 
   const handleSubmit = () => {
-    // Validate form data
-    if (userType === "consumer") {
-      onNext({ ...formData, userType });
-    } else {
-      // For seller, skip to final page
-      console.log("Seller signup", { ...formData, userType });
+    if (!isValid) {
+      // focus first invalid
+      firstInvalidRef.current?.focus();
+      return;
     }
+    onNext({ ...formData, userType });
   };
 
   return (
@@ -37,8 +59,8 @@ export function SignupPage1({ onClose, onNext, onGoHome, onLoginClick }: SignupP
         {/* Logo clickable to go home */}
         <div className="text-center mb-12">
           <button onClick={onGoHome} className="group" aria-label="홈으로 이동">
-            <h1 className="font-['Luckiest_Guy:Regular',sans-serif] text-[64px] md:text-[72px] text-[#eb0000] leading-none tracking-tight group-hover:scale-105 transition-transform">
-              Da - It daing
+            <h1 className="font-display text-[92px] md:text-[108px] text-[#eb0000] leading-none tracking-wide uppercase group-hover:scale-105 transition-transform">
+              DA - IT DAING
             </h1>
           </button>
         </div>
@@ -47,7 +69,7 @@ export function SignupPage1({ onClose, onNext, onGoHome, onLoginClick }: SignupP
         <div className="flex mb-12 border-b">
           <button
             onClick={() => setUserType("consumer")}
-            className={`flex-1 h-[44px] font-['Luckiest_Guy:Regular','Noto_Sans_KR:Regular',sans-serif] text-[20px] flex items-center justify-center ${
+            className={`flex-1 h-[44px] font-display text-[20px] flex items-center justify-center ${
               userType === "consumer"
                 ? "text-[#eb0000] border-b-[1px] border-[#eb0000]"
                 : "text-[#9a9a9a] border-b-[1px] border-[#9a9a9a]"
@@ -58,7 +80,7 @@ export function SignupPage1({ onClose, onNext, onGoHome, onLoginClick }: SignupP
           </button>
           <button
             onClick={() => setUserType("seller")}
-            className={`flex-1 h-[44px] font-['Luckiest_Guy:Regular','Noto_Sans_KR:Regular',sans-serif] text-[20px] flex items-center justify-center ${
+            className={`flex-1 h-[44px] font-display text-[20px] flex items-center justify-center ${
               userType === "seller"
                 ? "text-[#eb0000] border-b-[1px] border-[#eb0000]"
                 : "text-[#9a9a9a] border-b-[1px] border-[#9a9a9a]"
@@ -80,10 +102,14 @@ export function SignupPage1({ onClose, onNext, onGoHome, onLoginClick }: SignupP
               type="text"
               value={formData.username}
               onChange={(e) =>
-                setFormData({ ...formData, username: e.target.value })
+                setFormData({ ...formData, username: e.target.value.toLowerCase() })
               }
               className="w-full h-[40px] rounded-[10px] border border-[#9a9a9a] px-4 font-['Pretendard:Regular',sans-serif] text-[14px] focus:outline-none focus:border-[#eb0000]"
+              ref={(el) => {
+                if (!isValid && el && !LOGIN_ID_RE.test(formData.username) && !firstInvalidRef.current) firstInvalidRef.current = el;
+              }}
             />
+            {usernameError && <p className="mt-1 text-xs text-red-600">{usernameError}</p>}
           </div>
 
           {/* 이름 & 연령대 */}
@@ -100,6 +126,7 @@ export function SignupPage1({ onClose, onNext, onGoHome, onLoginClick }: SignupP
                 }
                 className="w-full h-[40px] rounded-[10px] border border-[#9a9a9a] px-4 font-['Pretendard:Regular',sans-serif] text-[14px] focus:outline-none focus:border-[#eb0000]"
               />
+              {nameError && <p className="mt-1 text-xs text-red-600">{nameError}</p>}
             </div>
             {userType === "consumer" && (
               <div className="flex-1">
@@ -113,6 +140,9 @@ export function SignupPage1({ onClose, onNext, onGoHome, onLoginClick }: SignupP
                       setFormData({ ...formData, ageGroup: e.target.value })
                     }
                     className="w-full h-[40px] rounded-[10px] border border-[#9a9a9a] px-4 font-['Pretendard:Regular',sans-serif] text-[14px] appearance-none focus:outline-none focus:border-[#eb0000]"
+                    ref={(el) => {
+                      if (!isValid && el && userType === 'consumer' && formData.ageGroup === '' && !firstInvalidRef.current) firstInvalidRef.current = el;
+                    }}
                   >
                     <option value="">선택</option>
                     <option value="10대">10대</option>
@@ -123,6 +153,7 @@ export function SignupPage1({ onClose, onNext, onGoHome, onLoginClick }: SignupP
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4b4b4b] pointer-events-none" />
                 </div>
+                {ageError && <p className="mt-1 text-xs text-red-600">{ageError}</p>}
               </div>
             )}
           </div>
@@ -155,6 +186,7 @@ export function SignupPage1({ onClose, onNext, onGoHome, onLoginClick }: SignupP
               }
               className="w-full h-[40px] rounded-[10px] border border-[#9a9a9a] px-4 font-['Pretendard:Regular',sans-serif] text-[14px] focus:outline-none focus:border-[#eb0000]"
             />
+            {passwordError && <p className="mt-1 text-xs text-red-600">{passwordError}</p>}
           </div>
 
           {/* 비밀번호 재입력 */}
@@ -170,6 +202,7 @@ export function SignupPage1({ onClose, onNext, onGoHome, onLoginClick }: SignupP
               }
               className="w-full h-[40px] rounded-[10px] border border-[#9a9a9a] px-4 font-['Pretendard:Regular',sans-serif] text-[14px] focus:outline-none focus:border-[#eb0000]"
             />
+            {passwordConfirmError && <p className="mt-1 text-xs text-red-600">{passwordConfirmError}</p>}
           </div>
 
           {/* E-mail */}
@@ -185,6 +218,7 @@ export function SignupPage1({ onClose, onNext, onGoHome, onLoginClick }: SignupP
               }
               className="w-full h-[40px] rounded-[10px] border border-[#9a9a9a] px-4 font-['Pretendard:Regular',sans-serif] text-[14px] focus:outline-none focus:border-[#eb0000]"
             />
+            {emailError && <p className="mt-1 text-xs text-red-600">{emailError}</p>}
           </div>
 
           {/* MBTI - Only for consumers */}
@@ -228,7 +262,8 @@ export function SignupPage1({ onClose, onNext, onGoHome, onLoginClick }: SignupP
           <div className="pt-6 flex flex-col gap-3">
             <button
               onClick={handleSubmit}
-              className="w-full h-[48px] bg-[#eb0000] rounded-[30px] font-['Pretendard:Bold',sans-serif] text-[18px] text-white hover:bg-[#cc0000] transition-colors flex items-center justify-center"
+              disabled={!isValid}
+              className={`w-full h-[48px] rounded-[30px] font-['Pretendard:Bold',sans-serif] text-[18px] transition-colors flex items-center justify-center ${isValid ? 'bg-[#eb0000] text-white hover:bg-[#cc0000]' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
             >
               {userType === "consumer" ? "다음 페이지" : "가입하기"}
             </button>

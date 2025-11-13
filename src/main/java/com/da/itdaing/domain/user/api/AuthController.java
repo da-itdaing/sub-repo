@@ -259,7 +259,7 @@ public class AuthController {
     @Operation(
             summary = "로그인",
             description = """
-                    이메일과 비밀번호로 로그인하여 JWT 액세스 토큰을 발급받습니다.
+                    로그인 ID와 비밀번호로 로그인하여 JWT 액세스 토큰을 발급받습니다.
 
                     JWT 토큰에는 다음 클레임이 포함됩니다:
                     - sub: 사용자 ID
@@ -311,7 +311,7 @@ public class AuthController {
                                         "error": {
                                             "status": 401,
                                             "code": "AUTH-401",
-                                            "message": "이메일 또는 비밀번호가 올바르지 않습니다"
+                                            "message": "로그인ID 또는 비밀번호가 올바르지 않습니다"
                                         }
                                     }
                                     """)
