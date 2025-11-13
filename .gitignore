@@ -74,18 +74,35 @@ src/main/resources/application-*.yml
 !src/main/resources/application.yml                 # 기본 템플릿은 유지(비밀 제거 필수)
 !src/main/resources/application-dev.yml             # dev 프로파일 (비밀값 없음)
 !src/main/resources/application-chatbot.yml        # chatbot 프로파일 (비밀값 없음)
+!src/main/resources/application-prod.yml            # prod 프로파일 (비밀값 없음, 환경변수 사용)
 !src/main/resources/application-openapi.yml         # OpenAPI 프로파일
 !src/main/resources/application-*.example.yml       # 샘플은 허용
+
+# 환경 변수 파일 (절대 커밋 금지)
 prod.env
 .env
 .env.*
+.env.local
+.env.production
+.env.development
 !env.example
+
+# 인증서 및 키 파일
 **/*.keystore
 **/*.jks
 **/*.p12
 **/*.pem
 **/*.crt
 **/*.key
+**/*.p8
+**/*.p12
+**/credentials.json
+**/service-account.json
+
+# AWS 자격 증명 파일
+.aws/
+aws-credentials
+aws-keys.txt
 
 # Local deploy keys (do not commit)
 gh-pages

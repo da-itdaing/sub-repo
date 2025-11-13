@@ -2,13 +2,14 @@ version: '3.8'
 
 services:
   # PostgreSQL 15 + pgvector - 메인 데이터베이스
+  # 로컬 개발용이므로 비밀번호는 간단하게 설정 (프로덕션에서는 강력한 비밀번호 사용)
   postgres:
     image: pgvector/pgvector:pg15
     container_name: itdaing-postgres
     environment:
       POSTGRES_DB: itdaing
       POSTGRES_USER: itdaing
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: password  # 로컬 개발용 기본 비밀번호
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
       TZ: Asia/Seoul
     ports:
@@ -25,11 +26,12 @@ services:
       - itdaing-network
 
   # LocalStack - AWS 서비스 로컬 모킹 (S3, SQS, SNS 등)
+  # 로컬 개발용이므로 test 자격 증명 사용 (프로덕션에서는 실제 AWS 자격 증명 사용)
   localstack:
     image: localstack/localstack:latest
     container_name: itdaing-localstack
     ports:
-      - "4566:4566"            # LocalStack 게이트웨이
+      - "4566:4566"            # LocalStack 게이트웨이 (호스트 포트:컨테이너 포트)
       - "4510-4559:4510-4559"  # 외부 서비스 포트 범위
     environment:
       - SERVICES=s3
@@ -37,8 +39,8 @@ services:
       - DATA_DIR=/tmp/localstack/data
       - DOCKER_HOST=unix:///var/run/docker.sock
       - AWS_DEFAULT_REGION=ap-northeast-2
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_ACCESS_KEY_ID=test  # 로컬 개발용 더미 키
+      - AWS_SECRET_ACCESS_KEY=test  # 로컬 개발용 더미 시크릿
     volumes:
       - localstack_data:/var/lib/localstack
       - "/var/run/docker.sock:/var/run/docker.sock"
