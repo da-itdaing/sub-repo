@@ -1,6 +1,6 @@
-# 전체 개발 서버 중지
+# Private EC2에서 서버 중지
 
-실행 중인 모든 개발 서버를 중지합니다.
+Private EC2에서 실행 중인 백엔드 서버를 중지합니다.
 
 ## 사용법
 ```
@@ -9,24 +9,15 @@
 
 ## 실행되는 명령어
 ```bash
-# 백엔드 중지
-pkill -f "gradlew bootRun"
-
-# 프론트엔드 중지
-pkill -f "vite"
-
-# MySQL 중지 (선택사항)
-docker-compose stop mysql
+ssh private-ec2 "kill \$(lsof -ti:8080) || echo '프로세스 없음'"
 ```
 
 ## 설명
-- 백엔드와 프론트엔드 프로세스를 종료합니다
-- MySQL 컨테이너는 기본적으로 중지하지 않습니다 (데이터 유지를 위해)
-- MySQL도 중지하려면 `docker-compose stop mysql` 명령을 추가로 실행하세요
+- Private EC2에 SSH 접속하여 8080 포트를 사용하는 백엔드 서버를 종료합니다.
+- `lsof -ti:8080`으로 프로세스 ID를 찾아 종료합니다.
+- 프로세스가 없어도 에러가 발생하지 않습니다.
 
-## MySQL 완전 제거 (데이터 삭제)
-```bash
-# 주의: 데이터가 삭제됩니다
-docker-compose down -v mysql
-```
-
+## 주의사항
+- SSH 접속이 설정되어 있어야 합니다 (`~/.ssh/config`에 `private-ec2` 호스트 설정 필요).
+- 이 명령어는 8080 포트를 사용하는 모든 프로세스를 종료할 수 있습니다.
+- 다른 중요한 애플리케이션이 해당 포트를 사용 중이라면 주의해서 사용하세요.

@@ -1,6 +1,6 @@
-# 백엔드 개발 서버 실행
+# Private EC2에서 백엔드 서버 실행
 
-백엔드 개발 서버를 시작합니다.
+Private EC2에서 백엔드 개발 서버를 시작합니다.
 
 ## 사용법
 ```
@@ -9,28 +9,16 @@
 
 ## 실행되는 명령어
 ```bash
-./gradlew bootRun
+ssh private-ec2 "cd ~/itdaing && source prod.env && ./gradlew bootRun"
 ```
 
 ## 설명
-- Spring Boot 애플리케이션을 개발 모드로 실행
-- 기본 프로파일: `local` (H2 메모리 DB)
-- 포트: 8080
-- 접속 URL: http://localhost:8080
-- Swagger UI: http://localhost:8080/swagger-ui/index.html
-- 헬스 체크: http://localhost:8080/actuator/health
-
-## 프로파일 지정
-```bash
-# local 프로파일 (기본)
-SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
-
-# dev 프로파일 (RDS/S3 연동)
-SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
-```
+- Private EC2에 SSH 접속하여 Spring Boot 애플리케이션을 실행합니다.
+- 환경 변수(`prod.env`)를 자동으로 로드합니다.
+- 프로덕션 프로파일(`prod`)을 사용하며, AWS RDS PostgreSQL과 AWS S3를 사용합니다.
+- Swagger UI는 Private EC2의 공개 IP를 통해 접근 가능합니다.
 
 ## 주의사항
-- MySQL 컨테이너가 실행 중이어야 합니다 (`docker-compose up -d mysql`)
-- 포트 8080이 사용 중이 아닌지 확인하세요
-- 로그는 콘솔에 출력되며, 백그라운드 실행 시 `/tmp/itdaing-boot.log`에 저장됩니다
-
+- SSH 접속이 설정되어 있어야 합니다 (`~/.ssh/config`에 `private-ec2` 호스트 설정 필요).
+- 백그라운드 실행을 원하면 `nohup` 또는 `&`를 사용하세요.
+- 로그 확인: `ssh private-ec2 "tail -f /tmp/itdaing-boot.log"`
