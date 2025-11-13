@@ -56,14 +56,38 @@ export SPRING_PROFILES_ACTIVE='prod'
 
 ## 3) 패키징 및 배포
 
-로컬에서 빌드 후 jar를 전송:
+로컬에서 빌드 후 jar를 **Private EC2**로 전송:
+
+> **참고**: 
+> - **Bastion EC2**: 점프 서버 (SSH 접근용)
+> - **Private EC2**: 애플리케이션 실행 서버 (jar 파일 및 prod.env 배치)
+
+### 방법 1: Private EC2에 직접 접근 가능한 경우
 
 ```bash
 ./gradlew clean build -x test
-scp build/libs/*-SNAPSHOT.jar ubuntu@<ec2-public-ip>:/home/ubuntu/app.jar
+scp build/libs/*-SNAPSHOT.jar ubuntu@<private-ec2-ip>:/home/ubuntu/app.jar
+scp prod.env ubuntu@<private-ec2-ip>:/home/ubuntu/prod.env
 ```
 
-## 4) EC2에서 실행 (systemd 권장)
+### 방법 2: Bastion을 경유하여 전송하는 경우
+
+```bash
+./gradlew clean build -x test
+
+# Bastion을 경유하여 Private EC2로 전송
+scp -o ProxyJump=ubuntu@<bastion-ip> \
+    build/libs/*-SNAPSHOT.jar \
+    ubuntu@<private-ec2-ip>:/home/ubuntu/app.jar
+
+scp -o ProxyJump=ubuntu@<bastion-ip> \
+    prod.env \
+    ubuntu@<private-ec2-ip>:/home/ubuntu/prod.env
+```
+
+## 4) Private EC2에서 실행 (systemd 권장)
+
+**Private EC2 인스턴스**에서 systemd 서비스로 실행합니다.
 
 `/etc/systemd/system/itdaing.service` 예시:
 
@@ -75,11 +99,7 @@ After=network.target
 [Service]
 User=ubuntu
 WorkingDirectory=/home/ubuntu
-Environment=SPRING_PROFILES_ACTIVE=prod
-Environment=DB_URL=jdbc:mysql://<rds-endpoint>:3306/<db>
-Environment=DB_USERNAME=<username>
-Environment=DB_PASSWORD=<password>
-Environment=S3_BUCKET_NAME=daitdaing-server
+EnvironmentFile=/home/ubuntu/prod.env
 ExecStart=/usr/bin/java -jar /home/ubuntu/app.jar
 Restart=always
 RestartSec=10
@@ -99,8 +119,17 @@ sudo systemctl status itdaing
 
 ## 5) 로그
 
+**Private EC2**에서 로그 확인:
+
 ```bash
+# SSH로 Private EC2 접속
+ssh private-ec2
+
+# 서비스 로그 확인
 journalctl -u itdaing -f
+
+# 또는 실시간 로그 확인
+sudo tail -f /var/log/itdaing/app.log  # 로그 파일이 있는 경우
 ```
 
 ## 6) 보안 메모
