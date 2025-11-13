@@ -155,7 +155,8 @@ sudo systemctl status itdaing
 
 ## 📚 관련 문서
 
-- [EC2 배포 가이드](DEPLOY_EC2.md)
+- [Private EC2 배포 가이드](DEPLOY_TO_PRIVATE_EC2.md) - **배포 방법 상세 가이드**
+- [EC2 배포 가이드](DEPLOY_EC2.md) - 기본 배포 가이드
 - [prod.env 설정 가이드](PROD_ENV_SETUP.md)
 - [RDS PostgreSQL 설정](AWS_RDS_POSTGRESQL_SETUP.md)
 
