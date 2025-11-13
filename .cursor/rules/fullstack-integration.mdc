@@ -1,0 +1,231 @@
+---
+alwaysApply: true
+---
+
+# 풀스택 통합 개발 규칙
+
+프론트엔드와 백엔드 코드를 항상 동시에 고려하여 개발해야 합니다. 양쪽의 일관성과 호환성을 유지하는 것이 중요합니다.
+
+## 핵심 원칙
+
+### 1. API 우선 설계 (API-First Development)
+- 새로운 기능 개발 시 **백엔드 API를 먼저 설계**하고, 프론트엔드와 백엔드가 동일한 API 계약을 공유해야 합니다.
+- API 엔드포인트, 요청/응답 DTO를 먼저 정의한 후 양쪽에서 구현합니다.
+- Swagger/OpenAPI 문서를 참고하여 API 스펙을 확인합니다.
+
+### 2. 양쪽 동시 개발
+- 백엔드 API를 구현할 때는 **프론트엔드에서 어떻게 사용될지**를 고려합니다.
+- 프론트엔드 컴포넌트를 작성할 때는 **백엔드 API 응답 구조**를 확인합니다.
+- 한쪽만 수정하지 말고, 필요시 양쪽 모두 업데이트합니다.
+
+### 3. 데이터 구조 일관성
+- 백엔드 DTO와 프론트엔드 TypeScript 타입이 **일치**해야 합니다.
+- 필드명, 타입, null 가능성 등이 양쪽에서 동일해야 합니다.
+- 변경사항이 있으면 양쪽 모두 업데이트합니다.
+
+## 개발 워크플로우
+
+### 새 기능 추가 시
+
+1. **API 설계 단계**
+   - 백엔드: Controller, DTO 클래스 먼저 작성
+   - 프론트엔드: API 호출 함수와 TypeScript 타입 정의
+   - Swagger 문서 확인: http://localhost:8080/swagger-ui/index.html
+
+2. **백엔드 구현**
+   - Service 레이어에서 비즈니스 로직 구현
+   - 프론트엔드에서 필요한 데이터 구조를 고려하여 응답 DTO 설계
+   - 에러 응답 형식 일관성 유지 (`ApiResponse<T>` 사용)
+
+3. **프론트엔드 구현**
+   - 백엔드 API 응답 구조에 맞춰 TypeScript 인터페이스 정의
+   - API 호출 함수 작성 (`src/services/api.ts` 또는 `src/api/`)
+   - 컴포넌트에서 API 호출 및 데이터 표시
+
+4. **통합 테스트**
+   - 브라우저에서 실제 API 호출 확인
+   - Network 탭에서 요청/응답 검증
+   - 에러 케이스 테스트 (401, 404, 500 등)
+
+### API 변경 시 체크리스트
+
+백엔드 API를 변경할 때:
+- [ ] 프론트엔드 TypeScript 타입 업데이트 필요 여부 확인
+- [ ] 프론트엔드 API 호출 함수 업데이트 필요 여부 확인
+- [ ] 브레이킹 체인지인 경우 프론트엔드 영향 범위 확인
+- [ ] Swagger 문서가 최신 상태인지 확인
+
+프론트엔드에서 API 사용 시:
+- [ ] 백엔드 API 엔드포인트가 실제로 존재하는지 확인
+- [ ] 요청 DTO 구조가 백엔드와 일치하는지 확인
+- [ ] 응답 DTO 구조가 백엔드와 일치하는지 확인
+- [ ] 에러 처리 로직이 백엔드 에러 응답 형식과 일치하는지 확인
+
+## 데이터 타입 매핑 규칙
+
+### 백엔드 → 프론트엔드
+
+| 백엔드 (Java) | 프론트엔드 (TypeScript) |
+|--------------|----------------------|
+| `String` | `string` |
+| `Integer`, `Long` | `number` |
+| `Boolean` | `boolean` |
+| `LocalDateTime` | `string` (ISO 8601 형식) |
+| `List<T>` | `T[]` |
+| `Optional<T>` | `T | null` 또는 `T?` |
+| `enum` | `enum` 또는 `union type` |
+
+### 예시: 일관된 타입 정의
+
+**백엔드 DTO (Java)**
+```java
+public record PopupSummaryResponse(
+    Long id,
+    String title,
+    String description,
+    LocalDateTime startDate,
+    LocalDateTime endDate,
+    List<String> images
+) {}
+```
+
+**프론트엔드 타입 (TypeScript)**
+```typescript
+interface PopupSummaryResponse {
+  id: number;
+  title: string;
+  description: string;
+  startDate: string; // ISO 8601 형식
+  endDate: string;   // ISO 8601 형식
+  images: string[];
+}
+```
+
+## API 응답 형식 규칙
+
+### 백엔드 응답 형식
+
+모든 API는 `ApiResponse<T>` 래퍼를 사용합니다:
+
+```java
+@GetMapping("/api/popups/{id}")
+public ApiResponse<PopupSummaryResponse> getPopup(@PathVariable Long id) {
+    // ...
+    return ApiResponse.success(popup);
+}
+```
+
+### 프론트엔드 응답 처리
+
+프론트엔드에서는 `ApiResponse` 구조를 고려하여 처리:
+
+```typescript
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: {
+    code: string;
+    message: string;
+    fieldErrors?: Array<{
+      field: string;
+      message: string;
+    }>;
+  };
+}
+
+// API 호출 예시
+const response = await api.get<ApiResponse<PopupSummaryResponse>>(`/api/popups/${id}`);
+if (response.data.success) {
+  const popup = response.data.data;
+  // popup 사용
+} else {
+  // 에러 처리
+}
+```
+
+## 에러 처리 일관성
+
+### 백엔드 에러 응답
+
+- `GlobalExceptionHandler`에서 일관된 에러 형식 반환
+- HTTP 상태 코드와 `ApiResponse.error` 구조 사용
+- 필드 검증 에러는 `fieldErrors` 배열에 포함
+
+### 프론트엔드 에러 처리
+
+- Axios 인터셉터에서 401 에러 시 로그인 페이지로 리다이렉트
+- 400 에러 시 `fieldErrors`를 폼에 표시
+- 500 에러 시 사용자 친화적인 메시지 표시
+- 네트워크 에러 시 재시도 로직 고려
+
+## 파일 구조 매핑
+
+### 백엔드 구조
+```
+src/main/java/com/da/itdaing/domain/
+├── {domain}/
+│   ├── api/              # Controller
+│   ├── dto/              # DTO 클래스
+│   ├── entity/           # Entity 클래스
+│   ├── repository/       # Repository 인터페이스
+│   └── service/          # Service 클래스
+```
+
+### 프론트엔드 구조
+```
+itdaing-web/src/
+├── api/                  # API 클라이언트 (또는 services/)
+├── pages/                # 페이지 컴포넌트
+├── components/           # 재사용 가능한 컴포넌트
+└── types/                # TypeScript 타입 정의 (또는 각 파일 내부)
+```
+
+## 개발 시 확인 사항
+
+### 백엔드 개발 시
+- [ ] 프론트엔드에서 필요한 모든 필드가 응답에 포함되어 있는가?
+- [ ] 프론트엔드에서 사용하기 편한 데이터 구조인가?
+- [ ] 에러 응답이 프론트엔드에서 처리하기 쉬운 형식인가?
+- [ ] Swagger 문서가 최신 상태인가?
+
+### 프론트엔드 개발 시
+- [ ] 백엔드 API 엔드포인트가 실제로 존재하는가?
+- [ ] 요청/응답 타입이 백엔드 DTO와 일치하는가?
+- [ ] 에러 처리가 백엔드 에러 응답 형식과 일치하는가?
+- [ ] 로딩 상태와 에러 상태가 적절히 표시되는가?
+
+## 통합 테스트 체크리스트
+
+새 기능 개발 후:
+- [ ] 백엔드 API가 정상 작동하는지 확인 (Swagger 또는 Postman)
+- [ ] 프론트엔드에서 API 호출이 정상 작동하는지 확인 (브라우저 Network 탭)
+- [ ] 데이터가 올바르게 표시되는지 확인 (브라우저 화면)
+- [ ] 에러 케이스가 올바르게 처리되는지 확인
+- [ ] 로딩 상태가 적절히 표시되는지 확인
+
+## 주의사항
+
+1. **단방향 수정 금지**
+   - 백엔드 API를 변경했으면 프론트엔드도 반드시 확인/수정
+   - 프론트엔드에서 새로운 필드를 사용하려면 백엔드에서도 제공해야 함
+
+2. **타입 안정성**
+   - TypeScript 타입과 Java DTO가 항상 동기화되어야 함
+   - 타입 변경 시 양쪽 모두 업데이트
+
+3. **API 버전 관리**
+   - 브레이킹 체인지가 필요한 경우 API 버전 관리 고려
+   - 또는 점진적 마이그레이션 전략 수립
+
+4. **문서화**
+   - API 변경 시 `plan/BE-plan.md`의 "API 엔드포인트 요약" 업데이트
+   - 프론트엔드 변경 시 `plan/FE-plan.md` 업데이트
+
+## 예외 사항
+
+다음 경우에는 양쪽 동시 고려가 불필요할 수 있습니다:
+- 순수 백엔드 내부 로직 변경 (프론트엔드에 영향 없음)
+- 순수 프론트엔드 UI 변경 (백엔드 API 사용 안 함)
+- 유틸리티 함수나 헬퍼 함수 추가
+
+하지만 **API와 관련된 모든 변경사항**은 반드시 양쪽을 모두 고려해야 합니다.
