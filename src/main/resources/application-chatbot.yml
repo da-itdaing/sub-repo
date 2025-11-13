@@ -1,0 +1,25 @@
+# 챗봇 기능용 프로파일 (향후 사용)
+# PostgreSQL + pgvector 데이터베이스 사용
+
+spring:
+    datasource:
+        # PostgreSQL 데이터소스 (챗봇용)
+        url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/itdaing_chatbot}
+        username: ${POSTGRES_USERNAME:itdaing}
+        password: ${POSTGRES_PASSWORD:password}
+        driver-class-name: org.postgresql.Driver
+    jpa:
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+                # pgvector 타입 매핑 (향후 구현)
+                # physical_naming_strategy: com.da.itdaing.global.jpa.VectorNamingStrategy
+
+# 챗봇 관련 설정 (향후 추가)
+chatbot:
+    embedding:
+        model: ${CHATBOT_EMBEDDING_MODEL:}  # 예: text-embedding-ada-002
+        dimension: ${CHATBOT_EMBEDDING_DIMENSION:1536}
+    vector:
+        similarity-threshold: ${CHATBOT_SIMILARITY_THRESHOLD:0.7}
+
