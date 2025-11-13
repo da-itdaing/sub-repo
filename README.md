@@ -18,10 +18,9 @@ Spring Boot 3.5 (Java 21) 기반 백엔드 서비스.
 # 예) local
 SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 
-# 예) dev (RDS/S3 사용)
-SPRING_PROFILES_ACTIVE=dev DB_URL=jdbc:mysql://<rds-endpoint>:3306/<db> \
-DB_USERNAME=<user> DB_PASSWORD=<pass> S3_BUCKET_NAME=<bucket> \
-./gradlew bootRun
+# prod 환경
+- prod 환경 변수는 저장소 루트의 `prod.env` 파일로 관리합니다. 서버/배포 스크립트나 systemd가 이 파일을 로드하도록 구성되어 있습니다.
+- README 내 개별 환경변수 세팅 예시는 제거했습니다. 필요한 값은 `prod.env`에서 관리하세요.
 ```
 
 ## 필수 요구사항
@@ -45,16 +44,8 @@ SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 ## JWT 설정 메모
 
 - HS256은 최소 256비트(32바이트) 이상의 secret을 요구합니다.
-- `application-local.yml`, `application-dev.yml`, `application-openapi.yml`의 기본값은 충분한 길이로 설정되어 있습니다.
-- 만료시간은 밀리초(long)로 주입합니다.
-
-환경변수로 덮어쓰기 예:
-
-```bash
-export JWT_SECRET='your-very-long-32+bytes-secret................................'
-export JWT_ACCESS_TOKEN_EXPIRATION=900000
-export JWT_REFRESH_TOKEN_EXPIRATION=1209600000
-```
+- `application-*.yml` 기본값이 있으며, 운영/배포 환경에서는 `prod.env`로 덮어씁니다.
+- 만료시간 등 민감 설정은 `prod.env`에서 관리하세요. (README의 개별 환경변수 예시는 제거함)
 
 ## 테스트
 
@@ -66,6 +57,26 @@ export JWT_REFRESH_TOKEN_EXPIRATION=1209600000
 ```
 
 일부 컨트롤러 테스트(판매자 프로필) 실패 케이스가 있으며, 실행에는 영향을 주지 않습니다. 필요 시 별도 이슈로 보정 가능합니다.
+
+## VS Code에서 백엔드/프론트 동시 실행 (Tasks)
+
+`.vscode/tasks.json`을 통해 백엔드(Spring Boot)와 프론트엔드(Vite)를 간편하게 실행할 수 있습니다.
+
+- Backend: Gradle bootRun (현재 워크스페이스 `final-project`에서 실행)
+- Frontend: Vite dev 서버 (상위 디렉터리에 위치한 `itdaing-web` 기준)
+- Start: All — 백엔드와 프론트엔드를 병렬로 실행
+
+실행 방법:
+
+1) VS Code 메뉴 → Terminal → Run Task...
+2) 다음 중 하나를 선택
+	- "Backend: bootRun (Gradle)"
+	- "Frontend: dev (itdaing-web)"
+	- "Start: All (backend + itdaing-web)"
+
+참고:
+- 프론트엔드가 다른 경로(`figma-make` 등)에 있는 경우, 해당 경로에 맞는 Task를 추가해 사용하세요.
+- `itdaing-web`이 현재 워크스페이스 밖에 있다면, Task의 동작 경로(`cwd`)만 맞으면 실행 가능합니다.
 
 ## EC2 배포 (Docker 없이)
 
@@ -120,30 +131,3 @@ ssh-keygen -t ed25519 -C "gh-pages deploy" -f gh-pages -N ""
 ## 라이선스
 
 사내/프로젝트 정책에 따릅니다.
-
-## CI (GitHub Actions)
-
-[![CI](https://github.com/da-itdaing/final-project/actions/workflows/ci.yml/badge.svg?branch=dev/integration)](https://github.com/da-itdaing/final-project/actions/workflows/ci.yml)
-
-- 트리거: `dev/integration` 브랜치로의 push, 해당 브랜치 대상 PR, 수동 실행(workflow_dispatch)
-- 작업:
-	- Backend: JDK 21, Gradle `bootJar -x test` (테스트는 기본 스킵) → 산출물 업로드
-	- Frontend: Node 20, `itdaing-web`에서 `npm ci && npm run build` → `dist/` 업로드
-
-필요 시 테스트를 CI에 포함하려면 `ci.yml`의 Gradle 명령에서 `-x test`를 제거하세요.
-
-### gitmoji 커밋 컨벤션
-
-- 커밋 메시지 앞에 gitmoji 사용 권장(예: ✨, 🐛, 🔧 등). 예시:
-	- ✨ feat: 캐러셀 반응형 개선
-	- 🐛 fix: 모바일 우측 overflow 수정
-	- 🧹 refactor: 컴포넌트 분리
-	- 📝 docs: README CI 배지 추가
-
-간편 입력 도구:
-
-```bash
-npx gitmoji -c
-```
-
-직접 이모지 코드로도 가능: `git commit -m ":sparkles: feat: adjust breakpoints for hero carousel"`

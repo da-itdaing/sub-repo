@@ -1,14 +1,16 @@
 package com.da.itdaing.domain.social;
 
 import com.da.itdaing.domain.common.enums.UserRole;
-import com.da.itdaing.domain.geo.ZoneArea;
-import com.da.itdaing.domain.geo.ZoneAreaRepository;
-import com.da.itdaing.domain.geo.ZoneCell;
-import com.da.itdaing.domain.geo.ZoneCellRepository;
-import com.da.itdaing.domain.master.Region;
-import com.da.itdaing.domain.master.RegionRepository;
-import com.da.itdaing.domain.popup.Popup;
-import com.da.itdaing.domain.popup.PopupRepository;
+import com.da.itdaing.domain.geo.entity.ZoneArea;
+import com.da.itdaing.domain.geo.repository.ZoneAreaRepository;
+import com.da.itdaing.domain.geo.entity.ZoneCell;
+import com.da.itdaing.domain.geo.repository.ZoneCellRepository;
+import com.da.itdaing.domain.master.entity.Region;
+import com.da.itdaing.domain.master.repository.RegionRepository;
+import com.da.itdaing.domain.popup.entity.Popup;
+import com.da.itdaing.domain.popup.repository.PopupRepository;
+import com.da.itdaing.domain.social.entity.Wishlist;
+import com.da.itdaing.domain.social.repository.WishlistRepository;
 import com.da.itdaing.domain.user.repository.UserRepository;
 import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.testsupport.JpaSliceTest;
@@ -70,7 +72,10 @@ class WishlistRepositoryTest {
 
         ZoneCell zoneCell = ZoneCell.builder()
                 .zoneArea(zoneArea)
+                .owner(seller)
                 .label("A-1")
+                .lat(35.1890)
+                .lng(126.9789)
                 .build();
         zoneCellRepository.save(zoneCell);
 
@@ -126,7 +131,10 @@ class WishlistRepositoryTest {
 
         ZoneCell zoneCell = ZoneCell.builder()
                 .zoneArea(zoneArea)
+                .owner(seller)
                 .label("B-1")
+                .lat(35.1991)
+                .lng(126.9890)
                 .build();
         zoneCellRepository.save(zoneCell);
 

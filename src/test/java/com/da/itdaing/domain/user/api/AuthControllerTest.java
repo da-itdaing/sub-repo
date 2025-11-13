@@ -6,8 +6,6 @@ import com.da.itdaing.domain.user.exception.AuthException;
 import com.da.itdaing.domain.user.service.AuthService;
 import com.da.itdaing.global.error.ErrorCode;
 import com.da.itdaing.global.error.GlobalExceptionHandler;
-import com.da.itdaing.global.security.JwtAuthFilter;
-import com.da.itdaing.global.security.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * - Security 필터 비활성화(addFilters=false)로 컨트롤러 슬라이스만 검증
  * - 에러 응답은 GlobalExceptionHandler 포맷을 사용
  */
+@SuppressWarnings("null")
 @WebMvcTest(AuthController.class)
 @Import(GlobalExceptionHandler.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -134,7 +134,7 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
-            .andExpect(status().isOk()) // 컨트롤러에서 201로 바꾸면 isCreated()로 변경
+            .andExpect(status().isCreated())
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.userId").value(1))
             .andExpect(jsonPath("$.data.email").value("newconsumer@example.com"))
@@ -152,6 +152,8 @@ class AuthControllerTest {
             .passwordConfirm("password123")
             .name("박판매")
             .nickname("팝업왕")
+            .activityRegion("광주 남구")
+            .snsUrl("https://instagram.com/popup_king")
             .build();
 
         AuthDto.SignupResponse response = AuthDto.SignupResponse.builder()
@@ -168,7 +170,7 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
-            .andExpect(status().isOk())
+            .andExpect(status().isCreated())
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.userId").value(2))
             .andExpect(jsonPath("$.data.email").value("newseller@example.com"))
@@ -260,5 +262,88 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("토큰 재발급 성공 - 새 access/refresh 반환")
+    void tokenRefresh_Success() throws Exception {
+        AuthDto.TokenRefreshRequest request = AuthDto.TokenRefreshRequest.builder()
+            .refreshToken("r.jwt.token")
+            .build();
+
+        AuthDto.TokenPair pair = AuthDto.TokenPair.builder()
+            .accessToken("new.access.jwt")
+            .refreshToken("new.refresh.jwt")
+            .build();
+
+        given(authService.refresh(anyString())).willReturn(pair);
+
+        mockMvc.perform(post("/api/auth/refresh")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.accessToken").value("new.access.jwt"))
+            .andExpect(jsonPath("$.data.refreshToken").value("new.refresh.jwt"));
+    }
+
+    @Test
+    @DisplayName("토큰 재발급 실패 - 잘못된/만료 리프레시 토큰(401)")
+    void tokenRefresh_Failure_Invalid() throws Exception {
+        AuthDto.TokenRefreshRequest request = AuthDto.TokenRefreshRequest.builder()
+            .refreshToken("bad.token")
+            .build();
+
+        given(authService.refresh(anyString()))
+            .willThrow(new AuthException(ErrorCode.INVALID_TOKEN));
+
+        mockMvc.perform(post("/api/auth/refresh")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andDo(print())
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.error.code").value(ErrorCode.INVALID_TOKEN.getCode()))
+            .andExpect(jsonPath("$.error.status").value(ErrorCode.INVALID_TOKEN.getStatus().value()));
+    }
+
+    @Test
+    @DisplayName("토큰 재발급 실패 - 재사용 감지(회수된 리프레시 사용, 상태코드 매핑)")
+    void tokenRefresh_Failure_Reused() throws Exception {
+        AuthDto.TokenRefreshRequest request = AuthDto.TokenRefreshRequest.builder()
+            .refreshToken("reused.token")
+            .build();
+
+        given(authService.refresh(anyString()))
+            .willThrow(new AuthException(ErrorCode.REFRESH_REUSED));
+
+        mockMvc.perform(post("/api/auth/refresh")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andDo(print())
+            .andExpect(status().is(ErrorCode.REFRESH_REUSED.getStatus().value()))
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.error.code").value(ErrorCode.REFRESH_REUSED.getCode()))
+            .andExpect(jsonPath("$.error.status").value(ErrorCode.REFRESH_REUSED.getStatus().value()));
+    }
+
+    @Test
+    @DisplayName("토큰 재발급 실패 - 요청바디 유효성 실패(400)")
+    void tokenRefresh_Failure_BadRequest() throws Exception {
+        // refreshToken 누락
+        String badJson = "{}";
+
+        mockMvc.perform(post("/api/auth/refresh")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(badJson))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.error.status").value(400));
     }
 }

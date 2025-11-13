@@ -1,10 +1,11 @@
 package com.da.itdaing.domain.metric;
 
-import com.da.itdaing.domain.common.enums.CategoryType;
 import com.da.itdaing.domain.common.enums.EventAction;
 import com.da.itdaing.domain.common.enums.UserRole;
-import com.da.itdaing.domain.master.Category;
-import com.da.itdaing.domain.master.CategoryRepository;
+import com.da.itdaing.domain.master.entity.Category;
+import com.da.itdaing.domain.master.repository.CategoryRepository;
+import com.da.itdaing.domain.metric.entity.EventLogCategory;
+import com.da.itdaing.domain.metric.repository.EventLogCategoryRepository;
 import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.domain.user.repository.UserRepository;
 import com.da.itdaing.testsupport.JpaSliceTest;
@@ -38,7 +39,6 @@ class EventLogCategoryRepositoryTest {
 
         Category category = Category.builder()
                 .name("패션")
-                .type(CategoryType.POPUP)
                 .build();
         categoryRepository.save(category);
 

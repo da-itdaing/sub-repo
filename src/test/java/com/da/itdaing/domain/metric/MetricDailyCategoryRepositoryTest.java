@@ -1,13 +1,12 @@
 package com.da.itdaing.domain.metric;
 
-import com.da.itdaing.domain.common.enums.CategoryType;
-import com.da.itdaing.domain.master.Category;
-import com.da.itdaing.domain.master.CategoryRepository;
+import com.da.itdaing.domain.master.entity.Category;
+import com.da.itdaing.domain.master.repository.CategoryRepository;
+import com.da.itdaing.domain.metric.entity.MetricDailyCategory;
+import com.da.itdaing.domain.metric.repository.MetricDailyCategoryRepository;
 import com.da.itdaing.testsupport.JpaSliceTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
 
@@ -27,7 +26,6 @@ class MetricDailyCategoryRepositoryTest {
         // given
         Category category = Category.builder()
             .name("패션")
-            .type(CategoryType.POPUP)
             .build();
         categoryRepository.save(category);
 

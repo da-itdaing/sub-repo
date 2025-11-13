@@ -1,6 +1,13 @@
 package com.da.itdaing.domain.user.service;
 
-import com.da.itdaing.domain.master.*;
+import com.da.itdaing.domain.master.entity.Category;
+import com.da.itdaing.domain.master.entity.Feature;
+import com.da.itdaing.domain.master.entity.Region;
+import com.da.itdaing.domain.master.entity.Style;
+import com.da.itdaing.domain.master.repository.CategoryRepository;
+import com.da.itdaing.domain.master.repository.FeatureRepository;
+import com.da.itdaing.domain.master.repository.RegionRepository;
+import com.da.itdaing.domain.master.repository.StyleRepository;
 import com.da.itdaing.domain.seller.entity.SellerProfile;
 import com.da.itdaing.domain.seller.repository.SellerProfileRepository;
 import com.da.itdaing.domain.user.dto.AuthDto;

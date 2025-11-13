@@ -1,13 +1,25 @@
 package com.da.itdaing.domain.popup;
 
 import com.da.itdaing.domain.common.enums.ApprovalStatus;
-import com.da.itdaing.domain.common.enums.CategoryType;
 import com.da.itdaing.domain.common.enums.UserRole;
-import com.da.itdaing.domain.geo.ZoneArea;
-import com.da.itdaing.domain.geo.ZoneAreaRepository;
-import com.da.itdaing.domain.geo.ZoneCell;
-import com.da.itdaing.domain.geo.ZoneCellRepository;
-import com.da.itdaing.domain.master.*;
+import com.da.itdaing.domain.geo.entity.ZoneArea;
+import com.da.itdaing.domain.geo.repository.ZoneAreaRepository;
+import com.da.itdaing.domain.geo.entity.ZoneCell;
+import com.da.itdaing.domain.geo.repository.ZoneCellRepository;
+import com.da.itdaing.domain.master.entity.Category;
+import com.da.itdaing.domain.master.entity.Feature;
+import com.da.itdaing.domain.master.entity.Region;
+import com.da.itdaing.domain.master.repository.CategoryRepository;
+import com.da.itdaing.domain.master.repository.FeatureRepository;
+import com.da.itdaing.domain.master.repository.RegionRepository;
+import com.da.itdaing.domain.popup.entity.Popup;
+import com.da.itdaing.domain.popup.entity.PopupCategory;
+import com.da.itdaing.domain.popup.entity.PopupFeature;
+import com.da.itdaing.domain.popup.entity.PopupImage;
+import com.da.itdaing.domain.popup.repository.PopupCategoryRepository;
+import com.da.itdaing.domain.popup.repository.PopupFeatureRepository;
+import com.da.itdaing.domain.popup.repository.PopupImageRepository;
+import com.da.itdaing.domain.popup.repository.PopupRepository;
 import com.da.itdaing.domain.user.repository.UserRepository;
 import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.testsupport.JpaSliceTest;
@@ -73,7 +85,10 @@ class PopupRepositoryTest {
 
         ZoneCell zoneCell = ZoneCell.builder()
                 .zoneArea(zoneArea)
+                .owner(seller)
                 .label("A-1")
+                .lat(35.0891)
+                .lng(126.9877)
                 .build();
         zoneCellRepository.save(zoneCell);
 
@@ -121,7 +136,10 @@ class PopupRepositoryTest {
 
         ZoneCell zoneCell = ZoneCell.builder()
                 .zoneArea(zoneArea)
+                .owner(seller)
                 .label("B-1")
+                .lat(35.0992)
+                .lng(126.9983)
                 .build();
         zoneCellRepository.save(zoneCell);
 
@@ -140,13 +158,11 @@ class PopupRepositoryTest {
         // given - 카테고리 생성 및 연결
         Category fashionCategory = Category.builder()
                 .name("패션")
-                .type(CategoryType.POPUP)
                 .build();
         categoryRepository.save(fashionCategory);
 
         Category targetCategory = Category.builder()
                 .name("20대")
-                .type(CategoryType.CONSUMER)
                 .build();
         categoryRepository.save(targetCategory);
 

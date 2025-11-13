@@ -1,5 +1,7 @@
 package com.da.itdaing.domain.master;
 
+import com.da.itdaing.domain.master.entity.Style;
+import com.da.itdaing.domain.master.repository.StyleRepository;
 import com.da.itdaing.testsupport.JpaSliceTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

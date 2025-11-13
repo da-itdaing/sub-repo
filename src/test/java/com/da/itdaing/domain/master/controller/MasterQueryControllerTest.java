@@ -1,6 +1,5 @@
 package com.da.itdaing.domain.master.controller;
 
-import com.da.itdaing.domain.common.enums.CategoryType;
 import com.da.itdaing.domain.master.dto.CategoryResponse;
 import com.da.itdaing.domain.master.dto.FeatureResponse;
 import com.da.itdaing.domain.master.dto.RegionResponse;
@@ -151,11 +150,11 @@ class MasterQueryControllerTest extends MvcNoSecurityTest {
     void getCategories_withoutFilter_success() throws Exception {
         // given
         List<CategoryResponse> categories = List.of(
-                CategoryResponse.builder().id(1L).name("패션").type(CategoryType.POPUP).build(),
-                CategoryResponse.builder().id(2L).name("뷰티").type(CategoryType.POPUP).build(),
-                CategoryResponse.builder().id(3L).name("20대").type(CategoryType.CONSUMER).build()
+                CategoryResponse.builder().id(1L).name("패션").build(),
+                CategoryResponse.builder().id(2L).name("뷰티").build(),
+                CategoryResponse.builder().id(3L).name("20대").build()
         );
-        given(masterQueryService.getCategories(null)).willReturn(categories);
+        given(masterQueryService.getAllCategories()).willReturn(categories);
 
         // when & then
         mockMvc.perform(get("/api/master/categories"))
@@ -166,8 +165,6 @@ class MasterQueryControllerTest extends MvcNoSecurityTest {
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data.length()").value(3))
                 .andExpect(jsonPath("$.data[0].name").value("패션"))
-                .andExpect(jsonPath("$.data[0].type").value("POPUP"))
-                .andExpect(jsonPath("$.data[2].type").value("CONSUMER"))
                 .andDo(result -> {
                     if (result.getResponse().getContentAsString().isEmpty()) {
                         System.err.println("⚠️ Response content is EMPTY!");
@@ -176,78 +173,10 @@ class MasterQueryControllerTest extends MvcNoSecurityTest {
                     }
                 });
 
-        verify(masterQueryService).getCategories(null);
+        verify(masterQueryService).getAllCategories();
     }
 
-    @Test
-    @WithMockUser
-    @DisplayName("카테고리 목록 조회 - POPUP 타입 필터")
-    void getCategories_withPopupTypeFilter_success() throws Exception {
-        // given
-        List<CategoryResponse> popupCategories = List.of(
-                CategoryResponse.builder().id(1L).name("패션").type(CategoryType.POPUP).build(),
-                CategoryResponse.builder().id(2L).name("뷰티").type(CategoryType.POPUP).build(),
-                CategoryResponse.builder().id(3L).name("식품").type(CategoryType.POPUP).build()
-        );
-        given(masterQueryService.getCategories(CategoryType.POPUP)).willReturn(popupCategories);
 
-        // when & then
-        mockMvc.perform(get("/api/master/categories")
-                        .param("type", "POPUP"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith("application/json"))
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data.length()").value(3))
-                .andExpect(jsonPath("$.data[0].type").value("POPUP"))
-                .andExpect(jsonPath("$.data[1].type").value("POPUP"))
-                .andExpect(jsonPath("$.data[2].type").value("POPUP"))
-                .andDo(result -> {
-                    if (result.getResponse().getContentAsString().isEmpty()) {
-                        System.err.println("⚠️ Response content is EMPTY!");
-                        System.err.println("Check controller @RestController annotation and produces='application/json' in @GetMapping");
-                        System.err.println("Verify return type is ResponseEntity<ApiResponse<...>>, not void or .build()");
-                    }
-                });
-
-        verify(masterQueryService).getCategories(CategoryType.POPUP);
-    }
-
-    @Test
-    @WithMockUser
-    @DisplayName("카테고리 목록 조회 - CONSUMER 타입 필터")
-    void getCategories_withConsumerTypeFilter_success() throws Exception {
-        // given
-        List<CategoryResponse> consumerCategories = List.of(
-                CategoryResponse.builder().id(10L).name("20대").type(CategoryType.CONSUMER).build(),
-                CategoryResponse.builder().id(11L).name("30대").type(CategoryType.CONSUMER).build()
-        );
-        given(masterQueryService.getCategories(CategoryType.CONSUMER)).willReturn(consumerCategories);
-
-        // when & then
-        mockMvc.perform(get("/api/master/categories")
-                        .param("type", "CONSUMER"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith("application/json"))
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data.length()").value(2))
-                .andExpect(jsonPath("$.data[0].name").value("20대"))
-                .andExpect(jsonPath("$.data[0].type").value("CONSUMER"))
-                .andExpect(jsonPath("$.data[1].name").value("30대"))
-                .andExpect(jsonPath("$.data[1].type").value("CONSUMER"))
-                .andDo(result -> {
-                    if (result.getResponse().getContentAsString().isEmpty()) {
-                        System.err.println("⚠️ Response content is EMPTY!");
-                        System.err.println("Check controller @RestController annotation and produces='application/json' in @GetMapping");
-                        System.err.println("Verify return type is ResponseEntity<ApiResponse<...>>, not void or .build()");
-                    }
-                });
-
-        verify(masterQueryService).getCategories(CategoryType.CONSUMER);
-    }
 
     // ========================================
     // Jackson Message Converter Tests

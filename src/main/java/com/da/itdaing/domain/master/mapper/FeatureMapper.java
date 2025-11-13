@@ -1,6 +1,6 @@
 package com.da.itdaing.domain.master.mapper;
 
-import com.da.itdaing.domain.master.Feature;
+import com.da.itdaing.domain.master.entity.Feature;
 import com.da.itdaing.domain.master.dto.FeatureResponse;
 import org.mapstruct.Mapper;
 

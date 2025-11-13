@@ -1,14 +1,16 @@
 package com.da.itdaing.domain.reco;
 
 import com.da.itdaing.domain.common.enums.UserRole;
-import com.da.itdaing.domain.geo.ZoneArea;
-import com.da.itdaing.domain.geo.ZoneAreaRepository;
-import com.da.itdaing.domain.geo.ZoneCell;
-import com.da.itdaing.domain.geo.ZoneCellRepository;
-import com.da.itdaing.domain.master.Region;
-import com.da.itdaing.domain.master.RegionRepository;
-import com.da.itdaing.domain.popup.Popup;
-import com.da.itdaing.domain.popup.PopupRepository;
+import com.da.itdaing.domain.geo.entity.ZoneArea;
+import com.da.itdaing.domain.geo.repository.ZoneAreaRepository;
+import com.da.itdaing.domain.geo.entity.ZoneCell;
+import com.da.itdaing.domain.geo.repository.ZoneCellRepository;
+import com.da.itdaing.domain.master.entity.Region;
+import com.da.itdaing.domain.master.repository.RegionRepository;
+import com.da.itdaing.domain.popup.entity.Popup;
+import com.da.itdaing.domain.popup.repository.PopupRepository;
+import com.da.itdaing.domain.reco.entity.DailyConsumerRecommendation;
+import com.da.itdaing.domain.reco.repository.DailyConsumerRecommendationRepository;
 import com.da.itdaing.domain.user.repository.UserRepository;
 import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.testsupport.JpaSliceTest;
@@ -73,7 +75,10 @@ class DailyConsumerRecommendationRepositoryTest {
 
         ZoneCell zoneCell = ZoneCell.builder()
                 .zoneArea(zoneArea)
+                .owner(seller)
                 .label("A-1")
+                .lat(35.1234)
+                .lng(126.9123)
                 .build();
         zoneCellRepository.save(zoneCell);
 
@@ -136,7 +141,10 @@ class DailyConsumerRecommendationRepositoryTest {
 
         ZoneCell zoneCell = ZoneCell.builder()
                 .zoneArea(zoneArea)
+                .owner(seller)
                 .label("B-1")
+                .lat(35.1345)
+                .lng(126.9234)
                 .build();
         zoneCellRepository.save(zoneCell);
 

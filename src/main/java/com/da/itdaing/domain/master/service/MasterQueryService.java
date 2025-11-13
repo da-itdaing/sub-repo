@@ -1,10 +1,9 @@
 package com.da.itdaing.domain.master.service;
 
-import com.da.itdaing.domain.common.enums.CategoryType;
-import com.da.itdaing.domain.master.CategoryRepository;
-import com.da.itdaing.domain.master.FeatureRepository;
-import com.da.itdaing.domain.master.RegionRepository;
-import com.da.itdaing.domain.master.StyleRepository;
+import com.da.itdaing.domain.master.repository.CategoryRepository;
+import com.da.itdaing.domain.master.repository.FeatureRepository;
+import com.da.itdaing.domain.master.repository.RegionRepository;
+import com.da.itdaing.domain.master.repository.StyleRepository;
 import com.da.itdaing.domain.master.dto.CategoryResponse;
 import com.da.itdaing.domain.master.dto.FeatureResponse;
 import com.da.itdaing.domain.master.dto.RegionResponse;
@@ -52,12 +51,9 @@ public class MasterQueryService {
     }
 
     /**
-     * 카테고리 조회 (타입 필터링 옵션)
+     * 모든 카테고리 조회
      */
-    public List<CategoryResponse> getCategories(CategoryType type) {
-        if (type != null) {
-            return categoryMapper.toResponseList(categoryRepository.findByType(type));
-        }
+    public List<CategoryResponse> getAllCategories() {
         return categoryMapper.toResponseList(categoryRepository.findAll());
     }
 

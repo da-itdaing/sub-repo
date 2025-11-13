@@ -1,7 +1,6 @@
 // src/main/java/com/da/itdaing/domain/master/controller/MasterQueryController.java
 package com.da.itdaing.domain.master.controller;
 
-import com.da.itdaing.domain.common.enums.CategoryType;
 import com.da.itdaing.domain.master.dto.CategoryResponse;
 import com.da.itdaing.domain.master.dto.FeatureResponse;
 import com.da.itdaing.domain.master.dto.RegionResponse;
@@ -37,9 +36,7 @@ public class MasterQueryController {
     }
 
     @GetMapping(value = "/categories", produces = "application/json")
-    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategories(
-        @RequestParam(value = "type", required = false) CategoryType type
-    ) {
-        return ResponseEntity.ok(ApiResponse.success(masterQueryService.getCategories(type)));
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategories() {
+        return ResponseEntity.ok(ApiResponse.success(masterQueryService.getAllCategories()));
     }
 }

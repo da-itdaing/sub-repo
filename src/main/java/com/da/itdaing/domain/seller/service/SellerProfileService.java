@@ -1,7 +1,6 @@
 // src/main/java/com/da/itdaing/domain/user/service/SellerProfileService.java
 package com.da.itdaing.domain.seller.service;
 
-import com.da.itdaing.domain.common.enums.UserRole;   // ✅ enum import
 import com.da.itdaing.domain.seller.entity.SellerProfile;
 import com.da.itdaing.domain.seller.repository.SellerProfileRepository;
 import com.da.itdaing.domain.user.repository.UserRepository;
@@ -56,7 +55,7 @@ public class SellerProfileService {
         SellerProfile profile = sellerProfileRepository.findByUserId(userId)
             .map(p -> {
                 p.update(req.getProfileImageUrl(), req.getIntroduction(),
-                    req.getActivityRegion(), req.getSnsUrl());
+                    req.getActivityRegion(), req.getSnsUrl(), null, null);
                 return p;
             })
             .orElseGet(() -> SellerProfile.builder()
@@ -65,6 +64,8 @@ public class SellerProfileService {
                 .introduction(req.getIntroduction())
                 .activityRegion(req.getActivityRegion())
                 .snsUrl(req.getSnsUrl())
+                .category(null)
+                .contactPhone(null)
                 .build());
 
         SellerProfile saved = sellerProfileRepository.save(profile);

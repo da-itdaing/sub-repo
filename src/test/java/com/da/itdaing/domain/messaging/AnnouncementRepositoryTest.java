@@ -2,6 +2,8 @@ package com.da.itdaing.domain.messaging;
 
 import com.da.itdaing.domain.common.enums.AnnouncementAudience;
 import com.da.itdaing.domain.common.enums.UserRole;
+import com.da.itdaing.domain.messaging.entity.Announcement;
+import com.da.itdaing.domain.messaging.repository.AnnouncementRepository;
 import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.domain.user.repository.UserRepository;
 import com.da.itdaing.testsupport.JpaSliceTest;

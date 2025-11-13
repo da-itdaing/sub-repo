@@ -4,12 +4,18 @@ package com.da.itdaing.domain.seller.api;
 import com.da.itdaing.domain.seller.dto.SellerProfileRequest;
 import com.da.itdaing.domain.seller.dto.SellerProfileResponse;
 import com.da.itdaing.domain.seller.service.SellerProfileService;
-import com.da.itdaing.support.MvcNoSecurityTest;
+import com.da.itdaing.global.error.GlobalExceptionHandler;
+import com.da.itdaing.global.security.JwtAuthFilter;
+import com.da.itdaing.global.security.JwtAuthenticationHandler;
+import com.da.itdaing.global.security.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -24,13 +30,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SellerProfileController.class)
-class SellerProfileControllerTest extends MvcNoSecurityTest {
+@AutoConfigureMockMvc(addFilters = false)
+@Import(GlobalExceptionHandler.class)
+@TestPropertySource(properties = "storage.provider=test")
+class SellerProfileControllerTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
 
-    @MockitoBean
-    private SellerProfileService sellerProfileService;
+    @MockitoBean private SellerProfileService sellerProfileService;
+    @MockitoBean private JwtAuthFilter jwtAuthFilter;
+    @MockitoBean private JwtTokenProvider jwtTokenProvider;
+    @MockitoBean private JwtAuthenticationHandler jwtAuthenticationHandler;
 
     @Test
     @DisplayName("판매자 프로필 조회 - 성공(프로필 존재)")

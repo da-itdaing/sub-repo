@@ -4,7 +4,6 @@ import { FilterButtons } from "./FilterButtons";
 import { CommunityFilterButtons } from "./CommunityFilterButtons";
 import { SectionTitle } from "./SectionTitle";
 import { useRef, useState, useEffect } from "react";
-import { popups } from "../../data/popups";
 
 interface ExternalEventItem {
   id: number;
@@ -13,6 +12,8 @@ interface ExternalEventItem {
   date: string;
   location: string;
   isFavorite?: boolean;
+  address?: string;
+  categories?: string[];
 }
 
 interface EventSectionProps {
@@ -47,84 +48,19 @@ export function EventSection({
   const [currentCardIndex, setCurrentCardIndex] = useState(1);
   const [visibleCount, setVisibleCount] = useState(4);
 
-  const openingEvents = popups
-    .filter((p) => p.status === "upcoming")
-    .slice(0, 8)
-    .map((p) => ({
-      id: p.id,
-      image: p.images[0],
-      title: p.title,
-      date: p.date,
-      location: p.location,
-      isFavorite: false,
-    }));
-
-  const localEvents = popups
-    .filter((p) => p.status === "upcoming" || p.status === "ongoing")
-    .slice(0, 20)
-    .map((p) => ({
-      id: p.id,
-      image: p.images[0],
-      title: p.title,
-      date: p.date,
-      location: p.location,
-      isFavorite: false,
-    }));
-
-  const communityEvents = popups
-    .filter((p) => p.status === "upcoming" || p.status === "ongoing")
-    .slice(0, 20)
-    .map((p) => ({
-      id: p.id,
-      image: p.images[0],
-      title: p.title,
-      date: p.date,
-      location: p.location,
-      isFavorite: false,
-    }));
-
-  const baseEvents =
-    type === "opening"
-      ? openingEvents
-      : type === "local"
-      ? localEvents
-      : communityEvents;
-
-  const events = items && items.length > 0 ? items : baseEvents;
+  const events = items ?? [];
 
   const filteredEvents =
     type === "local"
       ? locationFilter === "전체"
         ? events
         : events.filter((e) =>
-            popups.find((p) => p.id === e.id)?.address.includes(locationFilter)
+            (e.address ?? e.location).includes(locationFilter)
           )
       : type === "community" && categoryFilter !== "전체"
       ? events.filter((e) => {
-          const popup = popups.find((p) => p.id === e.id);
-          const catMap: { [k: string]: string[] } = {
-            패션: ["플리마켓", "빈티지마켓", "패션마켓"],
-            뷰티: ["아로마페어", "뷰티마켓"],
-            음식: ["디저트마켓", "푸드마켓"],
-            건강: ["아로마페어", "헬스마켓", "요가페어"],
-            "공연/전시": ["크래프트페어", "아트마켓", "유리공예전", "공연마켓"],
-            스포츠: ["스포츠마켓"],
-            키즈: ["키즈마켓", "키즈페스티벌"],
-            아트: [
-              "크래프트페어",
-              "아트마켓",
-              "액세서리페어",
-              "목공예마켓",
-              "문구페어",
-              "플라워마켓",
-              "유리공예전",
-              "크리에이터마켓",
-            ],
-            굿즈: ["문구페어", "캔들마켓", "굿즈페어"],
-            반려동물: ["식물마켓", "펫페어"],
-          };
-          const match = catMap[categoryFilter] || [];
-          return popup && match.includes(popup.category);
+          if (!e.categories || e.categories.length === 0) return true;
+          return e.categories.some(cat => cat.includes(categoryFilter));
         })
       : events;
 

@@ -1,8 +1,9 @@
-import React from "react";
-import { getPopupById } from "../../data/popups";
+import React, { useMemo } from "react";
+import { usePopups } from "../../hooks/usePopups";
 interface RecommendationModalProps { onClose:()=>void; onDismissToday:()=>void; onPopupClick:(id:number)=>void }
 export function RecommendationModal({ onClose, onDismissToday, onPopupClick }: RecommendationModalProps){
-	const popup = getPopupById(1);
+	const { data: popupList } = usePopups();
+	const popup = useMemo(() => popupList?.[0], [popupList]);
 	if(!popup) return null;
 	return (
 		<div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
@@ -10,7 +11,7 @@ export function RecommendationModal({ onClose, onDismissToday, onPopupClick }: R
 				<h2 className="text-lg font-semibold">오늘의 추천 팝업</h2>
 				<div className="space-y-2">
 					<p className="font-bold">{popup.title}</p>
-					<p className="text-xs text-[#4d4d4d]">{popup.date}</p>
+					<p className="text-xs text-[#4d4d4d]">{popup.startDate} ~ {popup.endDate}</p>
 				</div>
 				<div className="flex gap-2">
 					<button onClick={()=>onPopupClick(popup.id)} className="flex-1 bg-[#eb0000] text-white rounded px-3 py-2">바로 보기</button>

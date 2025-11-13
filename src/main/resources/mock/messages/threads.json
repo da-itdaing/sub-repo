@@ -1,0 +1,57 @@
+[
+  {
+    "threadId": "T-20251027-0001",
+    "participants": {
+      "sender": { "id": 301, "role": "ADMIN", "name": "관리자" },
+      "receiver": { "id": 201, "role": "SELLER", "name": "대잇다잉" }
+    },
+    "subject": "문의 드립니다.",
+    "messages": [
+      {
+        "messageId": "M-1",
+        "authorId": 201,
+        "authorRole": "SELLER",
+        "body": "집회가 겹치는 경우 부스 구성은 어떻게 하면 좋나요?",
+        "createdAt": "2025-10-27T07:30:00Z",
+        "attachments": []
+      },
+      {
+        "messageId": "M-2",
+        "authorId": 301,
+        "authorRole": "ADMIN",
+        "body": "운영본부에 미리 협조 요청드렸습니다. 부스 사이 간격을 4m로 조정해주세요.",
+        "createdAt": "2025-10-27T08:05:00Z",
+        "attachments": []
+      }
+    ],
+    "unreadBy": [201],
+    "updatedAt": "2025-10-27T08:05:00Z"
+  },
+  {
+    "threadId": "T-20251023-0004",
+    "participants": {
+      "sender": { "id": 202, "role": "SELLER", "name": "플레이팩토리" },
+      "receiver": { "id": 301, "role": "ADMIN", "name": "관리자" }
+    },
+    "subject": "자료 전달드립니다",
+    "messages": [
+      {
+        "messageId": "M-3",
+        "authorId": 202,
+        "authorRole": "SELLER",
+        "body": "전력 사용 계획서를 첨부합니다.",
+        "createdAt": "2025-10-23T05:22:00Z",
+        "attachments": [
+          {
+            "id": "A-1",
+            "name": "전력계획서.pdf",
+            "url": "/mock/attachments/power-plan.pdf"
+          }
+        ]
+      }
+    ],
+    "unreadBy": [],
+    "updatedAt": "2025-10-23T05:22:00Z"
+  }
+]
+

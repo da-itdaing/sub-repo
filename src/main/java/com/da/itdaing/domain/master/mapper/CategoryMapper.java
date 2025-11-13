@@ -1,6 +1,6 @@
 package com.da.itdaing.domain.master.mapper;
 
-import com.da.itdaing.domain.master.Category;
+import com.da.itdaing.domain.master.entity.Category;
 import com.da.itdaing.domain.master.dto.CategoryResponse;
 import org.mapstruct.Mapper;
 

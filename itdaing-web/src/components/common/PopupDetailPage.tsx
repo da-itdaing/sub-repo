@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, Eye, MapPin, Star, Share2 } from "lucide-react";
 import {
   Select,
@@ -10,9 +10,7 @@ import {
 import { ReviewWritePage } from "../consumer/ReviewWritePage";
 import { SellerInfoPage } from "../seller/SellerInfoPage";
 import { LoginConfirmDialog } from "../auth/LoginConfirmDialog";
-import { getPopupById } from "../../data/popups";
-import { getSellerById } from "../../data/sellers";
-import { getReviewsByPopupId, getAverageRating } from "../../data/reviews";
+import { usePopupById, useReviewsByPopupId, useSellerById } from "../../hooks/usePopups";
 
 interface PopupDetailPageProps {
   onClose: () => void;
@@ -28,13 +26,22 @@ interface PopupDetailPageProps {
 export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExploreClick, isLoggedIn, onLoginClick, onPopupClick, showReviewWriteOnMount = false }: PopupDetailPageProps) {
   const [activeTab, setActiveTab] = useState<"설명" | "지도" | "후기">("설명");
   const [isLiked, setIsLiked] = useState(false);
-  // Initialize likes from data to reflect actual business data
-  const [likesCount, setLikesCount] = useState(() => getPopupById(popupId)?.likes ?? 0);
+  const [likesCount, setLikesCount] = useState(0);
   const [sortOrder, setSortOrder] = useState("최신순");
   const [showReviewWrite, setShowReviewWrite] = useState(showReviewWriteOnMount);
   const [showSellerInfo, setShowSellerInfo] = useState(false);
   const [showLoginConfirm, setShowLoginConfirm] = useState(false);
   const [showReviewLoginConfirm, setShowReviewLoginConfirm] = useState(false);
+  const { popup, loading: popupLoading, error: popupError } = usePopupById(popupId);
+  const sellerId = popup?.sellerId ?? 0;
+  const { seller, loading: sellerLoading, error: sellerError } = useSellerById(sellerId);
+  const { reviews, loading: reviewsLoading, error: reviewsError, average } = useReviewsByPopupId(popupId);
+
+  useEffect(() => {
+    if (popup) {
+      setLikesCount(popup.favoriteCount ?? 0);
+    }
+  }, [popup]);
   const handleShare = async () => {
     try {
       const shareData = {
@@ -63,9 +70,6 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
     setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
   };
 
-  // 후기 데이터
-  const reviews = getReviewsByPopupId(popupId);
-  const averageRating = getAverageRating(popupId);
   const totalReviews = reviews.length;
 
   // 평점 분포 (5~1점)
@@ -74,6 +78,42 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
     const percentage = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
     return { label: `${score}점`, percentage };
   });
+
+  if (popupLoading || sellerLoading || reviewsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-gray-500">
+        팝업 정보를 불러오는 중입니다...
+      </div>
+    );
+  }
+
+  if (popupError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-gray-500">
+        팝업 정보를 불러오지 못했습니다.
+      </div>
+    );
+  }
+
+  if (!popup) {
+    return <div className="flex items-center justify-center min-h-screen">팝업을 찾을 수 없습니다.</div>;
+  }
+
+  if (sellerError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-gray-500">
+        판매자 정보를 불러오지 못했습니다.
+      </div>
+    );
+  }
+
+  if (!seller) {
+    return <div className="flex items-center justify-center min-h-screen">판매자 정보를 찾을 수 없습니다.</div>;
+  }
+
+  if (reviewsError) {
+    console.warn(reviewsError);
+  }
 
   // Robust date parsing for format YYYY.MM.DD
   const parseDotDate = (s: string): number => {
@@ -93,33 +133,29 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
     }
   });
 
-  // Mock data - 실제로는 popupId에 따라 다른 데이터를 가져와야 함
-  const popup = getPopupById(popupId);
-  
-  if (!popup) {
-    return <div className="flex items-center justify-center min-h-screen">팝업을 찾을 수 없습니다.</div>;
-  }
-  
-  const seller = getSellerById(popup.sellerId);
+  const operatingHoursLabel =
+    popup.operatingHours?.map(item => `${item.day} ${item.time}`).join(" / ") ?? "운영 시간 정보 없음";
 
-  if (!seller) {
-    return <div className="flex items-center justify-center min-h-screen">판매자 정보를 찾을 수 없습니다.</div>;
-  }
+  const defaultSellerImage = useMemo(
+    () =>
+      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop",
+    []
+  );
 
   const popupData = {
     id: popup.id,
     title: popup.title,
-    date: popup.date,
-    location: popup.address,
-    hours: popup.hours,
-    tags: popup.tags.map(tag => `# ${tag}`),
-    likes: popup.likes,
-    views: popup.views,
-    imageUrl: popup.images[0] || "https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=800&h=600&fit=crop",
+    date: `${popup.startDate} ~ ${popup.endDate}`,
+    location: popup.address ?? popup.locationName ?? "",
+    hours: operatingHoursLabel,
+    tags: popup.styleTags.map(tag => `# ${tag}`),
+    likes: likesCount,
+    views: popup.viewCount,
+    imageUrl: popup.thumbnail || "https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=800&h=600&fit=crop",
     sellerName: seller.name,
-    sellerImage: seller.profileImage,
+    sellerImage: seller.profileImage ?? defaultSellerImage,
     content: {
-      title: popup.category,
+      title: seller.category ?? seller.name,
       description: popup.description,
     },
   };
@@ -426,7 +462,7 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
                         <Star
                           key={star}
                           className="w-[18%] h-full"
-                          fill={star <= Math.round(averageRating) ? "#EB0000" : "none"}
+                          fill={star <= Math.round(average) ? "#EB0000" : "none"}
                           stroke="#EB0000"
                         />
                       ))}
@@ -434,7 +470,7 @@ export function PopupDetailPage({ onClose, popupId, onMyPageClick, onNearbyExplo
                     <div className="font-['Pretendard:Medium',sans-serif] text-sm lg:text-base text-[#4d4d4d]">
                       {totalReviews > 0 ? (
                         <span>
-                          평균 <span className="text-black">{averageRating.toFixed(1)}</span>점 · 후기 {totalReviews}개
+                          평균 <span className="text-black">{average.toFixed(1)}</span>점 · 후기 {totalReviews}개
                         </span>
                       ) : (
                         <span>아직 후기가 없습니다.</span>

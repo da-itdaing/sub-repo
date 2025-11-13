@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("org.springframework.boot") version "3.5.6"
+    id("org.springframework.boot") version "3.5.7"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.springdoc.openapi-gradle-plugin") version "1.9.0"
 }
@@ -45,6 +45,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")   // Bean Validation
     implementation("org.springframework.boot:spring-boot-starter-actuator")     // /actuator
 
+    implementation("org.hibernate.orm:hibernate-spatial:6.6.29.Final")   // 네 로그의 hibernate-core 버전에 맞춤
+    implementation("org.locationtech.jts:jts-core:1.19.0")
+
     // --- OpenAPI (Swagger UI)
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 
@@ -52,6 +55,10 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.12.5")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
+
+    // AWS SDK v2 (S3)
+    implementation(platform("software.amazon.awssdk:bom:2.25.66"))
+    implementation("software.amazon.awssdk:s3")
 
     // --- QueryDSL (Jakarta)
     implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")

@@ -1,0 +1,800 @@
+[
+  {
+    "id": 501,
+    "title": "ACC 창제작 어린이공연",
+    "sellerId": 201,
+    "zoneId": 102,
+    "cellId": 10201,
+    "cellName": "B-1",
+    "locationName": "국립아시아문화전당 어린이문화원",
+    "address": "광주광역시 동구 문화전당로 38",
+    "hours": "평일 10:00-18:00 / 주말 11:00-20:00",
+    "categoryIds": [
+      5,
+      7
+    ],
+    "featureIds": [
+      1,
+      6
+    ],
+    "styleTags": [
+      "가족과 함께",
+      "체험가능"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup501/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup501a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup501b/640x480?auto=format&fit=crop"
+    ],
+    "status": "APPROVED",
+    "startDate": "2025-11-15",
+    "endDate": "2025-11-20",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "평일 10:00-18:00 / 주말 11:00-20:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "ACC 창제작 어린이공연 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 200,
+    "favoriteCount": 20,
+    "reviewSummary": {
+      "average": 3.5,
+      "total": 10,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-20T10:00:00Z",
+    "updatedAt": "2025-10-22T12:00:00Z"
+  },
+  {
+    "id": 502,
+    "title": "더 매직 서커스",
+    "sellerId": 202,
+    "zoneId": 101,
+    "cellId": 10103,
+    "cellName": "A-3",
+    "locationName": "충장로 문화의 거리",
+    "address": "광주광역시 동구 충장로5가",
+    "hours": "토 13:00-21:00 / 일 11:00-19:00",
+    "categoryIds": [
+      5,
+      8
+    ],
+    "featureIds": [
+      2,
+      4
+    ],
+    "styleTags": [
+      "야외",
+      "저녁 추천"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup502/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup502a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup502b/640x480?auto=format&fit=crop"
+    ],
+    "status": "PENDING",
+    "startDate": "2025-11-17",
+    "endDate": "2025-11-22",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "토 13:00-21:00 / 일 11:00-19:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "더 매직 서커스 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 237,
+    "favoriteCount": 25,
+    "reviewSummary": {
+      "average": 3.9,
+      "total": 13,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-21T10:00:00Z",
+    "updatedAt": "2025-10-23T12:00:00Z"
+  },
+  {
+    "id": 503,
+    "title": "로컬푸드 나이트마켓",
+    "sellerId": 203,
+    "zoneId": 101,
+    "cellId": 10101,
+    "cellName": "A-1",
+    "locationName": "충장로 문화의 거리",
+    "address": "광주광역시 동구 충장로5가",
+    "hours": "평일 11:00-19:00",
+    "categoryIds": [
+      3,
+      4
+    ],
+    "featureIds": [
+      1,
+      2
+    ],
+    "styleTags": [
+      "감성적인",
+      "포토존"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup503/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup503a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup503b/640x480?auto=format&fit=crop"
+    ],
+    "status": "APPROVED",
+    "startDate": "2025-11-19",
+    "endDate": "2025-11-24",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "평일 11:00-19:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "로컬푸드 나이트마켓 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 274,
+    "favoriteCount": 30,
+    "reviewSummary": {
+      "average": 4.3,
+      "total": 16,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-22T10:00:00Z",
+    "updatedAt": "2025-10-24T12:00:00Z"
+  },
+  {
+    "id": 504,
+    "title": "제로웨이스트 리필스테이션",
+    "sellerId": 204,
+    "zoneId": 102,
+    "cellId": 10103,
+    "cellName": "A-3",
+    "locationName": "국립아시아문화전당 야외광장",
+    "address": "광주광역시 동구 문화전당로 38",
+    "hours": "주말 12:00-21:00",
+    "categoryIds": [
+      1,
+      9
+    ],
+    "featureIds": [
+      3,
+      4
+    ],
+    "styleTags": [
+      "체험하기 좋은",
+      "야외"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup504/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup504a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup504b/640x480?auto=format&fit=crop"
+    ],
+    "status": "PENDING",
+    "startDate": "2025-11-21",
+    "endDate": "2025-11-26",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "주말 12:00-21:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "제로웨이스트 리필스테이션 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 311,
+    "favoriteCount": 35,
+    "reviewSummary": {
+      "average": 3.5,
+      "total": 19,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-23T10:00:00Z",
+    "updatedAt": "2025-10-25T12:00:00Z"
+  },
+  {
+    "id": 505,
+    "title": "아트굿즈 콜라보 전시",
+    "sellerId": 205,
+    "zoneId": 101,
+    "cellId": 10201,
+    "cellName": "B-1",
+    "locationName": "충장로 문화의 거리",
+    "address": "광주광역시 동구 충장로5가",
+    "hours": "평일 11:00-19:00",
+    "categoryIds": [
+      1,
+      9
+    ],
+    "featureIds": [
+      3,
+      4
+    ],
+    "styleTags": [
+      "감성적인",
+      "포토존"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup505/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup505a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup505b/640x480?auto=format&fit=crop"
+    ],
+    "status": "REJECTED",
+    "startDate": "2025-11-23",
+    "endDate": "2025-11-28",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "평일 11:00-19:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "아트굿즈 콜라보 전시 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 348,
+    "favoriteCount": 40,
+    "reviewSummary": {
+      "average": 3.9,
+      "total": 22,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-24T10:00:00Z",
+    "updatedAt": "2025-10-26T12:00:00Z"
+  },
+  {
+    "id": 506,
+    "title": "로맨틱 무드캔들 클래스",
+    "sellerId": 206,
+    "zoneId": 102,
+    "cellId": 10202,
+    "cellName": "B-2",
+    "locationName": "국립아시아문화전당 야외광장",
+    "address": "광주광역시 동구 문화전당로 38",
+    "hours": "주말 12:00-21:00",
+    "categoryIds": [
+      3,
+      4
+    ],
+    "featureIds": [
+      1,
+      2
+    ],
+    "styleTags": [
+      "체험하기 좋은",
+      "야외"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup506/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup506a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup506b/640x480?auto=format&fit=crop"
+    ],
+    "status": "APPROVED",
+    "startDate": "2025-11-25",
+    "endDate": "2025-11-30",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "주말 12:00-21:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "로맨틱 무드캔들 클래스 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 385,
+    "favoriteCount": 45,
+    "reviewSummary": {
+      "average": 4.3,
+      "total": 25,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-25T10:00:00Z",
+    "updatedAt": "2025-10-27T12:00:00Z"
+  },
+  {
+    "id": 507,
+    "title": "키즈 플레이 팝업",
+    "sellerId": 207,
+    "zoneId": 101,
+    "cellId": 10101,
+    "cellName": "A-1",
+    "locationName": "충장로 문화의 거리",
+    "address": "광주광역시 동구 충장로5가",
+    "hours": "평일 11:00-19:00",
+    "categoryIds": [
+      1,
+      9
+    ],
+    "featureIds": [
+      3,
+      4
+    ],
+    "styleTags": [
+      "감성적인",
+      "포토존"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup507/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup507a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup507b/640x480?auto=format&fit=crop"
+    ],
+    "status": "PENDING",
+    "startDate": "2025-11-27",
+    "endDate": "2025-12-02",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "평일 11:00-19:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "키즈 플레이 팝업 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 422,
+    "favoriteCount": 50,
+    "reviewSummary": {
+      "average": 3.5,
+      "total": 28,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-26T10:00:00Z",
+    "updatedAt": "2025-10-28T12:00:00Z"
+  },
+  {
+    "id": 508,
+    "title": "라이프스타일 편집숍",
+    "sellerId": 208,
+    "zoneId": 102,
+    "cellId": 10103,
+    "cellName": "A-3",
+    "locationName": "국립아시아문화전당 야외광장",
+    "address": "광주광역시 동구 문화전당로 38",
+    "hours": "주말 12:00-21:00",
+    "categoryIds": [
+      1,
+      9
+    ],
+    "featureIds": [
+      3,
+      4
+    ],
+    "styleTags": [
+      "체험하기 좋은",
+      "야외"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup508/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup508a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup508b/640x480?auto=format&fit=crop"
+    ],
+    "status": "REJECTED",
+    "startDate": "2025-11-29",
+    "endDate": "2025-12-04",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "주말 12:00-21:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "라이프스타일 편집숍 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 459,
+    "favoriteCount": 55,
+    "reviewSummary": {
+      "average": 3.9,
+      "total": 31,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-27T10:00:00Z",
+    "updatedAt": "2025-10-29T12:00:00Z"
+  },
+  {
+    "id": 509,
+    "title": "플라워&티 마켓",
+    "sellerId": 209,
+    "zoneId": 101,
+    "cellId": 10201,
+    "cellName": "B-1",
+    "locationName": "충장로 문화의 거리",
+    "address": "광주광역시 동구 충장로5가",
+    "hours": "평일 11:00-19:00",
+    "categoryIds": [
+      3,
+      4
+    ],
+    "featureIds": [
+      1,
+      2
+    ],
+    "styleTags": [
+      "감성적인",
+      "포토존"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup509/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup509a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup509b/640x480?auto=format&fit=crop"
+    ],
+    "status": "APPROVED",
+    "startDate": "2025-12-01",
+    "endDate": "2025-12-06",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "평일 11:00-19:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "플라워&티 마켓 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 496,
+    "favoriteCount": 60,
+    "reviewSummary": {
+      "average": 4.3,
+      "total": 34,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-28T10:00:00Z",
+    "updatedAt": "2025-10-30T12:00:00Z"
+  },
+  {
+    "id": 510,
+    "title": "스포츠 피트니스 체험존",
+    "sellerId": 210,
+    "zoneId": 102,
+    "cellId": 10202,
+    "cellName": "B-2",
+    "locationName": "국립아시아문화전당 야외광장",
+    "address": "광주광역시 동구 문화전당로 38",
+    "hours": "주말 12:00-21:00",
+    "categoryIds": [
+      1,
+      9
+    ],
+    "featureIds": [
+      3,
+      4
+    ],
+    "styleTags": [
+      "체험하기 좋은",
+      "야외"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup510/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup510a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup510b/640x480?auto=format&fit=crop"
+    ],
+    "status": "PENDING",
+    "startDate": "2025-12-03",
+    "endDate": "2025-12-08",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "주말 12:00-21:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "스포츠 피트니스 체험존 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 533,
+    "favoriteCount": 65,
+    "reviewSummary": {
+      "average": 3.5,
+      "total": 37,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-29T10:00:00Z",
+    "updatedAt": "2025-10-31T12:00:00Z"
+  },
+  {
+    "id": 511,
+    "title": "뷰티 메가 세일",
+    "sellerId": 211,
+    "zoneId": 101,
+    "cellId": 10101,
+    "cellName": "A-1",
+    "locationName": "충장로 문화의 거리",
+    "address": "광주광역시 동구 충장로5가",
+    "hours": "평일 11:00-19:00",
+    "categoryIds": [
+      1,
+      9
+    ],
+    "featureIds": [
+      3,
+      4
+    ],
+    "styleTags": [
+      "감성적인",
+      "포토존"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup511/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup511a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup511b/640x480?auto=format&fit=crop"
+    ],
+    "status": "REJECTED",
+    "startDate": "2025-12-05",
+    "endDate": "2025-12-10",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "평일 11:00-19:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "뷰티 메가 세일 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 570,
+    "favoriteCount": 70,
+    "reviewSummary": {
+      "average": 3.9,
+      "total": 40,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-30T10:00:00Z",
+    "updatedAt": "2025-10-32T12:00:00Z"
+  },
+  {
+    "id": 512,
+    "title": "패션 업사이클 팝업",
+    "sellerId": 212,
+    "zoneId": 102,
+    "cellId": 10103,
+    "cellName": "A-3",
+    "locationName": "국립아시아문화전당 야외광장",
+    "address": "광주광역시 동구 문화전당로 38",
+    "hours": "주말 12:00-21:00",
+    "categoryIds": [
+      3,
+      4
+    ],
+    "featureIds": [
+      1,
+      2
+    ],
+    "styleTags": [
+      "체험하기 좋은",
+      "야외"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup512/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup512a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup512b/640x480?auto=format&fit=crop"
+    ],
+    "status": "APPROVED",
+    "startDate": "2025-12-07",
+    "endDate": "2025-12-12",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "주말 12:00-21:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "패션 업사이클 팝업 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 607,
+    "favoriteCount": 75,
+    "reviewSummary": {
+      "average": 4.3,
+      "total": 43,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-31T10:00:00Z",
+    "updatedAt": "2025-10-33T12:00:00Z"
+  },
+  {
+    "id": 513,
+    "title": "디저트 살롱",
+    "sellerId": 213,
+    "zoneId": 101,
+    "cellId": 10201,
+    "cellName": "B-1",
+    "locationName": "충장로 문화의 거리",
+    "address": "광주광역시 동구 충장로5가",
+    "hours": "평일 11:00-19:00",
+    "categoryIds": [
+      1,
+      9
+    ],
+    "featureIds": [
+      3,
+      4
+    ],
+    "styleTags": [
+      "감성적인",
+      "포토존"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup513/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup513a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup513b/640x480?auto=format&fit=crop"
+    ],
+    "status": "PENDING",
+    "startDate": "2025-12-09",
+    "endDate": "2025-12-14",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "평일 11:00-19:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "디저트 살롱 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 644,
+    "favoriteCount": 80,
+    "reviewSummary": {
+      "average": 3.5,
+      "total": 46,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-32T10:00:00Z",
+    "updatedAt": "2025-10-34T12:00:00Z"
+  },
+  {
+    "id": 514,
+    "title": "친환경 캠핑 기어",
+    "sellerId": 214,
+    "zoneId": 102,
+    "cellId": 10202,
+    "cellName": "B-2",
+    "locationName": "국립아시아문화전당 야외광장",
+    "address": "광주광역시 동구 문화전당로 38",
+    "hours": "주말 12:00-21:00",
+    "categoryIds": [
+      1,
+      9
+    ],
+    "featureIds": [
+      3,
+      4
+    ],
+    "styleTags": [
+      "체험하기 좋은",
+      "야외"
+    ],
+    "thumbnail": "https://images.unsplash.com/seed/popup514/640x480?auto=format&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/seed/popup514a/640x480?auto=format&fit=crop",
+      "https://images.unsplash.com/seed/popup514b/640x480?auto=format&fit=crop"
+    ],
+    "status": "REJECTED",
+    "startDate": "2025-12-11",
+    "endDate": "2025-12-16",
+    "operatingHours": [
+      {
+        "day": "평일",
+        "time": "주말 12:00-21:00"
+      },
+      {
+        "day": "주말",
+        "time": "11:00 - 20:00"
+      }
+    ],
+    "description": "친환경 캠핑 기어 행사 설명입니다. 지역 셀러와 협업해 새로운 경험을 제공합니다.",
+    "viewCount": 681,
+    "favoriteCount": 85,
+    "reviewSummary": {
+      "average": 3.9,
+      "total": 49,
+      "distribution": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "createdAt": "2025-10-33T10:00:00Z",
+    "updatedAt": "2025-10-35T12:00:00Z"
+  }
+]

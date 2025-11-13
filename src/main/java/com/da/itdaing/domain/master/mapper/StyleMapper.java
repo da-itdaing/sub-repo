@@ -1,6 +1,6 @@
 package com.da.itdaing.domain.master.mapper;
 
-import com.da.itdaing.domain.master.Style;
+import com.da.itdaing.domain.master.entity.Style;
 import com.da.itdaing.domain.master.dto.StyleResponse;
 import org.mapstruct.Mapper;
 

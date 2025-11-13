@@ -1,18 +1,23 @@
 import React from "react";
 import { Heart, Eye, MapPin } from "lucide-react";
-import { getPopupById } from "../../data/popups";
+import { usePopups } from "../../hooks/usePopups";
 
-interface FavoritesProps { onPopupClick?:(id:number)=>void }
+interface FavoritesProps { onPopupClick?:(id:number)=>void; favoriteIds?: number[] }
 
-export function MyPageFavorites({ onPopupClick }: FavoritesProps){
-	const favorites = [getPopupById(1), getPopupById(2)].filter(Boolean).map(p => ({
-		id: p!.id,
-		title: p!.title,
-		date: p!.date,
-		location: p!.location ?? p!.address,
-		likes: p!.likes,
-		views: p!.views,
-		image: p!.images[0],
+export function MyPageFavorites({ onPopupClick, favoriteIds }: FavoritesProps){
+	const { data: popupList } = usePopups();
+	const source = popupList ?? [];
+	const filtered = favoriteIds && favoriteIds.length > 0
+		? source.filter(p => favoriteIds.includes(p.id))
+		: source.slice(0, 4);
+	const favorites = filtered.map(p => ({
+		id: p.id,
+		title: p.title,
+		date: `${p.startDate} ~ ${p.endDate}`,
+		location: p.locationName ?? "",
+		likes: p.favoriteCount ?? 0,
+		views: p.viewCount,
+		image: p.thumbnail
 	}));
 	return (
 		<div className="py-6 md:py-8 px-4 md:px-0">

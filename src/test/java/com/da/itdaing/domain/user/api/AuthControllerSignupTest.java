@@ -21,6 +21,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -47,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     SecurityAutoConfiguration.class,
     SecurityFilterAutoConfiguration.class
 })
+@TestPropertySource(properties = "storage.provider=test")
 class AuthControllerSignupTest {
 
     @Autowired
@@ -84,6 +86,7 @@ class AuthControllerSignupTest {
             .interestCategoryIds(List.of(101L, 105L))
             .styleIds(List.of(12L, 15L, 19L))
             .regionIds(List.of(2L))
+            .featureIds(List.of(201L))
             .build();
 
         AuthDto.SignupResponse response = AuthDto.SignupResponse.builder()
@@ -126,6 +129,7 @@ class AuthControllerSignupTest {
             .interestCategoryIds(List.of(101L, 105L))
             .styleIds(List.of(12L, 15L, 19L))
             .regionIds(List.of(2L))
+            .featureIds(List.of(201L))
             .build();
 
         // when & then
@@ -156,6 +160,7 @@ class AuthControllerSignupTest {
             .interestCategoryIds(List.of(101L, 105L))
             .styleIds(List.of(12L, 15L, 19L))
             .regionIds(List.of(2L))
+            .featureIds(List.of(201L))
             .build();
 
         // when & then
@@ -185,6 +190,7 @@ class AuthControllerSignupTest {
             .interestCategoryIds(List.of(101L, 105L))
             .styleIds(List.of(12L, 15L, 19L))
             .regionIds(List.of(2L))
+            .featureIds(List.of(201L))
             .build();
 
         // when & then
@@ -214,6 +220,7 @@ class AuthControllerSignupTest {
             .interestCategoryIds(List.of(101L, 105L))
             .styleIds(List.of(12L, 15L, 19L))
             .regionIds(List.of(2L))
+            .featureIds(List.of(201L))
             .build();
 
         given(authService.signupConsumer(any(AuthDto.SignupConsumerRequest.class)))
@@ -275,7 +282,8 @@ class AuthControllerSignupTest {
             .ageGroup(20)
             .interestCategoryIds(List.of(101L, 105L))
             .styleIds(List.of(12L, 15L, 19L))
-            .regionIds(List.of(2L, 3L, 4L))  // 3개 (초과)
+            .regionIds(List.of(1L, 2L, 3L, 4L, 5L))  // 5개 (초과)
+            .featureIds(List.of(201L))
             .build();
 
         // when & then
@@ -305,6 +313,7 @@ class AuthControllerSignupTest {
             .interestCategoryIds(List.of(999L, 1000L))  // 존재하지 않는 ID
             .styleIds(List.of(12L, 15L, 19L))
             .regionIds(List.of(2L))
+            .featureIds(List.of(201L))
             .build();
 
         given(authService.signupConsumer(any(AuthDto.SignupConsumerRequest.class)))
@@ -338,6 +347,7 @@ class AuthControllerSignupTest {
             .interestCategoryIds(List.of(101L, 105L))
             .styleIds(List.of(999L, 1000L))  // 존재하지 않는 ID
             .regionIds(List.of(2L))
+            .featureIds(List.of(201L))
             .build();
 
         given(authService.signupConsumer(any(AuthDto.SignupConsumerRequest.class)))
@@ -371,6 +381,7 @@ class AuthControllerSignupTest {
             .interestCategoryIds(List.of(101L, 105L))
             .styleIds(List.of(12L, 15L, 19L))
             .regionIds(List.of(999L))  // 존재하지 않는 ID
+            .featureIds(List.of(201L))
             .build();
 
         given(authService.signupConsumer(any(AuthDto.SignupConsumerRequest.class)))

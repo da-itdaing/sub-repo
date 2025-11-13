@@ -1,6 +1,6 @@
 package com.da.itdaing.domain.master.mapper;
 
-import com.da.itdaing.domain.master.Region;
+import com.da.itdaing.domain.master.entity.Region;
 import com.da.itdaing.domain.master.dto.RegionResponse;
 import org.mapstruct.Mapper;
 

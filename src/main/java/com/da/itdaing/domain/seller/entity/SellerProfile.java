@@ -27,32 +27,44 @@ public class SellerProfile extends BaseTimeEntity {
     @JoinColumn(name = "user_id", unique = true, nullable = false)  // unique 보장
     private Users user;
 
-    @Column(name = "profile_image_url", length = 512)
+    @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
 
-    @Column(name = "introduction", length = 1000)
+    @Column(name = "introduction", length = 500)
     private String introduction;
 
-    @Column(name = "activity_region", length = 255)
+    @Column(name = "activity_region", length = 100)
     private String activityRegion;
 
-    @Column(name = "sns_url", length = 512)
+    @Column(name = "sns_url", length = 200)
     private String snsUrl;
 
+    @Column(name = "category", length = 100)
+    private String category;
+
+    @Column(name = "contact_phone", length = 50)
+    private String contactPhone;
+
     @Builder
-    public SellerProfile(Users user, String profileImageUrl, String introduction, String activityRegion, String snsUrl) {
+    public SellerProfile(Users user, String profileImageUrl, String introduction, String activityRegion, String snsUrl,
+                         String category, String contactPhone) {
         this.user = user;
         this.profileImageUrl = profileImageUrl;
         this.introduction = introduction;
         this.activityRegion = activityRegion;
         this.snsUrl = snsUrl;
+        this.category = category;
+        this.contactPhone = contactPhone;
     }
 
-    public void update(String profileImageUrl, String introduction, String activityRegion, String snsUrl) {
+    public void update(String profileImageUrl, String introduction, String activityRegion, String snsUrl,
+                       String category, String contactPhone) {
         this.profileImageUrl = profileImageUrl;
         this.introduction = introduction;
         this.activityRegion = activityRegion;
         this.snsUrl = snsUrl;
+        this.category = category;
+        this.contactPhone = contactPhone;
     }
 }
 

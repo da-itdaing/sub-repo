@@ -1,8 +1,8 @@
 package com.da.itdaing.domain.user.repository;
 
 import com.da.itdaing.domain.common.enums.UserRole;
-import com.da.itdaing.domain.master.Style;
-import com.da.itdaing.domain.master.StyleRepository;
+import com.da.itdaing.domain.master.entity.Style;
+import com.da.itdaing.domain.master.repository.StyleRepository;
 import com.da.itdaing.domain.user.entity.UserPrefStyle;
 import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.testsupport.JpaSliceTest;

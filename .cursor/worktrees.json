@@ -1,0 +1,9 @@
+{
+  "setup-worktree": [
+    "echo 'Setting up worktree...'",
+    "cd itdaing-web && npm install",
+    "./gradlew build --refresh-dependencies",
+    "docker-compose up -d mysql",
+    "echo 'Worktree setup complete!'"
+  ]
+}

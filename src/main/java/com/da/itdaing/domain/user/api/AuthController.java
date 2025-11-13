@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -249,9 +250,10 @@ public class AuthController {
             )
     })
     @PostMapping("/auth/signup/seller")
-    public ApiResponse<AuthDto.SignupResponse> signupSeller(
+    public ResponseEntity<ApiResponse<AuthDto.SignupResponse>> signupSeller(
         @Valid @RequestBody AuthDto.SignupSellerRequest request) {
-        return ApiResponse.success(authService.signupSeller(request));
+        var response = authService.signupSeller(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
     @Operation(
@@ -422,50 +424,14 @@ public class AuthController {
     }
 
     @Operation(
-        summary = "액세스 토큰 재발급 (Refresh Token)",
-        description = """
-            만료되었거나 곧 만료될 Access Token을 **Refresh Token**으로 갱신합니다.
-            - 본 API는 Authorization 헤더가 필요없고, **refreshToken**을 본문으로 받습니다.
-            - 서버가 새 Access/Refresh 토큰 쌍을 반환합니다.
-            """,
-        security = {} // refresh는 인증 헤더 없이 요청
+        summary = "토큰 재발급 (Refresh Rotation)",
+        description = "유효한 refreshToken을 보내면 새 accessToken/refreshToken을 발급합니다."
     )
-    @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "200",
-            description = "재발급 성공",
-            content = @Content(
-                mediaType = "application/json",
-                examples = @ExampleObject(value = """
-                    {
-                      "success": true,
-                      "data": {
-                        "accessToken": "new.access.jwt.token",
-                        "refreshToken": "new.refresh.jwt.token"
-                      }
-                    }
-                    """)
-            )
-        ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "401",
-            description = "인증 실패 - 리프레시 토큰이 유효하지 않음/만료됨",
-            content = @Content(
-                mediaType = "application/json",
-                examples = @ExampleObject(value = """
-                    {
-                      "success": false,
-                      "error": {
-                        "status": 401,
-                        "code": "AUTH-402",
-                        "message": "유효하지 않은 토큰입니다"
-                      }
-                    }
-                    """)
-            )
-        )
-    })
-    @PostMapping("/auth/token/refresh")
+    @PostMapping(
+        value = "/auth/refresh",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<ApiResponse<AuthDto.TokenPair>> refresh(
         @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true,
@@ -476,10 +442,10 @@ public class AuthController {
                 examples = @ExampleObject(value = "{ \"refreshToken\": \"existing.refresh.jwt.token\" }")
             )
         )
-        @Valid @org.springframework.web.bind.annotation.RequestBody AuthDto.TokenRefreshRequest req
+        @Valid @RequestBody AuthDto.TokenRefreshRequest request
     ) {
-        var pair = authService.refresh(req.getRefreshToken());
-        return ResponseEntity.ok(ApiResponse.success(pair));
+        var tokens = authService.refresh(request.getRefreshToken());
+        return ResponseEntity.ok(ApiResponse.success(tokens));
     }
 
     @Operation(

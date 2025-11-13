@@ -1,5 +1,7 @@
 package com.da.itdaing.domain.audit;
 
+import com.da.itdaing.domain.audit.entity.ApprovalRecord;
+import com.da.itdaing.domain.audit.repository.ApprovalRecordRepository;
 import com.da.itdaing.domain.common.enums.DecisionType;
 import com.da.itdaing.domain.common.enums.UserRole;
 import com.da.itdaing.domain.user.entity.Users;

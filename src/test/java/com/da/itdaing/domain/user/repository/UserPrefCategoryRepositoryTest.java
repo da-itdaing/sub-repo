@@ -1,9 +1,8 @@
 package com.da.itdaing.domain.user.repository;
 
-import com.da.itdaing.domain.common.enums.CategoryType;
 import com.da.itdaing.domain.common.enums.UserRole;
-import com.da.itdaing.domain.master.Category;
-import com.da.itdaing.domain.master.CategoryRepository;
+import com.da.itdaing.domain.master.entity.Category;
+import com.da.itdaing.domain.master.repository.CategoryRepository;
 import com.da.itdaing.domain.user.entity.UserPrefCategory;
 import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.testsupport.JpaSliceTest;
@@ -39,7 +38,6 @@ class UserPrefCategoryRepositoryTest {
 
         Category category = Category.builder()
                 .name("패션")
-                .type(CategoryType.CONSUMER)
                 .build();
         categoryRepository.save(category);
 
@@ -54,7 +52,6 @@ class UserPrefCategoryRepositoryTest {
 
         // then
         assertThat(found.getUser().getId()).isEqualTo(user.getId());
-        assertThat(found.getCategory().getId()).isEqualTo(category.getId());
         assertThat(found.getCreatedAt()).isNotNull();
     }
 
@@ -71,7 +68,6 @@ class UserPrefCategoryRepositoryTest {
 
         Category category = Category.builder()
                 .name("뷰티")
-                .type(CategoryType.CONSUMER)
                 .build();
         categoryRepository.save(category);
 

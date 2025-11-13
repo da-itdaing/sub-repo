@@ -6,8 +6,6 @@ import com.da.itdaing.domain.user.exception.AuthException;
 import com.da.itdaing.domain.user.service.AuthService;
 import com.da.itdaing.global.error.ErrorCode;
 import com.da.itdaing.global.error.GlobalExceptionHandler;
-import com.da.itdaing.global.security.JwtAuthFilter;
-import com.da.itdaing.global.security.JwtTokenProvider;
 import com.da.itdaing.support.MvcNoSecurityTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -37,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     SecurityAutoConfiguration.class,
     SecurityFilterAutoConfiguration.class
 })
+@TestPropertySource(properties = "storage.provider=test")
 class AuthControllerLoginTest extends MvcNoSecurityTest {
 
     @Autowired MockMvc mockMvc;

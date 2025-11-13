@@ -1,6 +1,6 @@
 package com.da.itdaing.domain.user.entity;
 
-import com.da.itdaing.domain.master.Style;
+import com.da.itdaing.domain.master.entity.Style;
 import com.da.itdaing.global.jpa.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

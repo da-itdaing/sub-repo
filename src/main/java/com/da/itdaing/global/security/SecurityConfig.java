@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -32,6 +33,7 @@ class CommonSecurityBeans {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
+            "http://localhost:3000",
             "http://localhost:5173",
             "http://localhost:8081"
         ));
@@ -51,6 +53,7 @@ class CommonSecurityBeans {
 @Profile("!openapi")
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     /** JwtTokenProvider를 여기서만 생성(@Component 제거 가정) */
@@ -92,8 +95,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/master/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/popups/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/sellers/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/zones/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/inquiries/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/dev/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

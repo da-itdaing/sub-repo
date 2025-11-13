@@ -36,7 +36,7 @@ class RefreshTokenRepositoryTest {
         // given
         Users user = createAndSaveUser("test@example.com", "testuser");
         String tokenHash = "abcd1234efgh5678ijkl9012mnop3456qrst7890uvwx1234yzab5678cdef9012";
-        RefreshToken token = createAndSaveRefreshToken(user, tokenHash, false);
+        createAndSaveRefreshToken(user, tokenHash, false);
 
         // when
         Optional<RefreshToken> found = refreshTokenRepository.findByTokenHash(tokenHash);

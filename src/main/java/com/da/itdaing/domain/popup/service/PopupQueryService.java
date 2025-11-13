@@ -1,0 +1,290 @@
+package com.da.itdaing.domain.popup.service;
+
+import com.da.itdaing.domain.popup.dto.PopupOperatingHourResponse;
+import com.da.itdaing.domain.popup.dto.PopupReviewAuthorResponse;
+import com.da.itdaing.domain.popup.dto.PopupReviewResponse;
+import com.da.itdaing.domain.popup.dto.PopupReviewSummaryResponse;
+import com.da.itdaing.domain.popup.dto.PopupSummaryResponse;
+import com.da.itdaing.domain.popup.entity.Popup;
+import com.da.itdaing.domain.popup.entity.PopupCategory;
+import com.da.itdaing.domain.popup.entity.PopupFeature;
+import com.da.itdaing.domain.popup.entity.PopupImage;
+import com.da.itdaing.domain.popup.entity.PopupStyle;
+import com.da.itdaing.domain.popup.exception.PopupNotFoundException;
+import com.da.itdaing.domain.popup.repository.PopupCategoryRepository;
+import com.da.itdaing.domain.popup.repository.PopupFeatureRepository;
+import com.da.itdaing.domain.popup.repository.PopupImageRepository;
+import com.da.itdaing.domain.popup.repository.PopupRepository;
+import com.da.itdaing.domain.popup.repository.PopupStyleRepository;
+import com.da.itdaing.domain.social.entity.Review;
+import com.da.itdaing.domain.social.entity.ReviewImage;
+import com.da.itdaing.domain.social.repository.ReviewImageRepository;
+import com.da.itdaing.domain.social.repository.ReviewRepository;
+import com.da.itdaing.domain.user.entity.Users;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
+public class PopupQueryService {
+
+    private static final DateTimeFormatter REVIEW_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+
+    private final PopupRepository popupRepository;
+    private final PopupImageRepository popupImageRepository;
+    private final PopupCategoryRepository popupCategoryRepository;
+    private final PopupFeatureRepository popupFeatureRepository;
+    private final PopupStyleRepository popupStyleRepository;
+    private final ReviewRepository reviewRepository;
+    private final ReviewImageRepository reviewImageRepository;
+
+    public List<PopupSummaryResponse> getPopups() {
+        List<Popup> popups = popupRepository.findAllWithZoneAndSeller();
+        return mapToSummaryResponses(popups);
+    }
+
+    public PopupSummaryResponse getPopup(Long popupId) {
+        Popup popup = popupRepository.findByIdWithZoneAndSeller(popupId)
+            .orElseThrow(() -> new PopupNotFoundException(popupId));
+        return mapToSummaryResponses(List.of(popup)).stream()
+            .findFirst()
+            .orElseThrow(() -> new PopupNotFoundException(popupId));
+    }
+
+    public List<PopupReviewResponse> getAllReviews() {
+        List<Review> reviews = reviewRepository.findAll();
+        return mapToReviewResponses(reviews);
+    }
+
+    public List<PopupReviewResponse> getReviewsByPopup(Long popupId) {
+        popupRepository.findById(popupId).orElseThrow(() -> new PopupNotFoundException(popupId));
+        List<Review> reviews = reviewRepository.findByPopupId(popupId);
+        return mapToReviewResponses(reviews);
+    }
+
+    private List<PopupSummaryResponse> mapToSummaryResponses(List<Popup> popups) {
+        if (popups.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> popupIds = popups.stream().map(Popup::getId).toList();
+
+        Map<Long, List<PopupImage>> imagesByPopup = popupImageRepository.findByPopupIdIn(popupIds)
+            .stream()
+            .collect(Collectors.groupingBy(image -> image.getPopup().getId()));
+
+        Map<Long, List<PopupCategory>> categoriesByPopup = popupCategoryRepository.findByPopupIdIn(popupIds)
+            .stream()
+            .collect(Collectors.groupingBy(item -> item.getPopup().getId()));
+
+        Map<Long, List<PopupFeature>> featuresByPopup = popupFeatureRepository.findByPopupIdIn(popupIds)
+            .stream()
+            .collect(Collectors.groupingBy(item -> item.getPopup().getId()));
+
+        Map<Long, List<PopupStyle>> stylesByPopup = popupStyleRepository.findByPopupIdIn(popupIds)
+            .stream()
+            .collect(Collectors.groupingBy(item -> item.getPopup().getId()));
+
+        Map<Long, List<Review>> reviewsByPopup = reviewRepository.findByPopupIdIn(popupIds)
+            .stream()
+            .collect(Collectors.groupingBy(review -> review.getPopup().getId()));
+
+        return popups.stream()
+            .map(popup -> toSummaryResponse(
+                popup,
+                imagesByPopup.getOrDefault(popup.getId(), List.of()),
+                categoriesByPopup.getOrDefault(popup.getId(), List.of()),
+                featuresByPopup.getOrDefault(popup.getId(), List.of()),
+                stylesByPopup.getOrDefault(popup.getId(), List.of()),
+                reviewsByPopup.getOrDefault(popup.getId(), List.of())
+            ))
+            .toList();
+    }
+
+    private PopupSummaryResponse toSummaryResponse(
+        Popup popup,
+        List<PopupImage> images,
+        List<PopupCategory> categories,
+        List<PopupFeature> features,
+        List<PopupStyle> styles,
+        List<Review> reviews
+    ) {
+        String thumbnail = images.stream()
+            .filter(image -> Boolean.TRUE.equals(image.getIsThumbnail()))
+            .map(PopupImage::getImageUrl)
+            .findFirst()
+            .orElseGet(() -> images.stream().map(PopupImage::getImageUrl).findFirst().orElse(null));
+
+        List<String> gallery = images.stream()
+            .filter(image -> !Boolean.TRUE.equals(image.getIsThumbnail()))
+            .map(PopupImage::getImageUrl)
+            .toList();
+
+        List<Long> categoryIds = categories.stream()
+            .map(item -> item.getCategory().getId())
+            .distinct()
+            .toList();
+
+        List<Long> featureIds = features.stream()
+            .map(item -> item.getFeature().getId())
+            .distinct()
+            .toList();
+
+        List<String> styleTags = styles.stream()
+            .map(item -> item.getStyle().getName())
+            .distinct()
+            .toList();
+
+        List<PopupOperatingHourResponse> operatingHours = parseOperatingHours(popup.getOperatingTime());
+        PopupReviewSummaryResponse reviewSummary = buildReviewSummary(reviews);
+
+        String startDate = popup.getStartDate() != null ? popup.getStartDate().toString() : null;
+        String endDate = popup.getEndDate() != null ? popup.getEndDate().toString() : null;
+        String createdAt = formatDateTime(popup.getCreatedAt());
+        String updatedAt = formatDateTime(popup.getUpdatedAt());
+        String locationName = popup.getZoneCell().getZoneArea().getName();
+        String address = popup.getZoneCell().getDetailedAddress();
+
+        return new PopupSummaryResponse(
+            popup.getId(),
+            popup.getName(),
+            popup.getSeller().getId(),
+            resolveSellerName(popup.getSeller()),
+            popup.getZoneCell().getZoneArea().getId(),
+            popup.getZoneCell().getId(),
+            popup.getZoneCell().getLabel(),
+            locationName,
+            address,
+            popup.getApprovalStatus().name(),
+            startDate,
+            endDate,
+            popup.getOperatingTime(),
+            operatingHours,
+            popup.getDescription(),
+            popup.getViewCount(),
+            0L,
+            categoryIds,
+            featureIds,
+            styleTags,
+            thumbnail,
+            gallery,
+            reviewSummary,
+            createdAt,
+            updatedAt
+        );
+    }
+
+    private List<PopupOperatingHourResponse> parseOperatingHours(String operatingTime) {
+        if (operatingTime == null || operatingTime.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(operatingTime.split("/"))
+            .map(String::trim)
+            .filter(segment -> !segment.isBlank())
+            .map(segment -> {
+                int firstSpace = segment.indexOf(' ');
+                if (firstSpace > 0) {
+                    String day = segment.substring(0, firstSpace).trim();
+                    String time = segment.substring(firstSpace + 1).trim();
+                    return new PopupOperatingHourResponse(day, time);
+                }
+                return new PopupOperatingHourResponse("기본", segment);
+            })
+            .toList();
+    }
+
+    private PopupReviewSummaryResponse buildReviewSummary(List<Review> reviews) {
+        if (reviews.isEmpty()) {
+            return new PopupReviewSummaryResponse(0.0, 0, List.of(0, 0, 0, 0, 0));
+        }
+
+        int[] distribution = new int[5];
+        int total = reviews.size();
+        int sum = 0;
+
+        for (Review review : reviews) {
+            int rating = review.getRating() != null ? review.getRating() : 0;
+            sum += rating;
+            if (rating >= 1 && rating <= 5) {
+                distribution[rating - 1]++;
+            }
+        }
+
+        double average = total > 0 ? (double) sum / total : 0.0;
+        List<Integer> distributionList = Arrays.stream(distribution).boxed().toList();
+        return new PopupReviewSummaryResponse(average, total, distributionList);
+    }
+
+    private List<PopupReviewResponse> mapToReviewResponses(List<Review> reviews) {
+        if (reviews.isEmpty()) {
+            return List.of();
+        }
+        List<Long> reviewIds = reviews.stream().map(Review::getId).toList();
+        Map<Long, List<ReviewImage>> imagesByReview = reviewImageRepository.findByReviewIdIn(reviewIds)
+            .stream()
+            .collect(Collectors.groupingBy(image -> image.getReview().getId()));
+
+        return reviews.stream()
+            .map(review -> {
+                List<String> images = imagesByReview.getOrDefault(review.getId(), List.of())
+                    .stream()
+                    .map(ReviewImage::getImageUrl)
+                    .toList();
+                PopupReviewAuthorResponse author = buildReviewAuthor(review.getConsumer());
+                int rating = review.getRating() != null ? review.getRating() : 0;
+                String date = formatReviewDate(review.getCreatedAt());
+                return new PopupReviewResponse(
+                    review.getId(),
+                    review.getPopup().getId(),
+                    author,
+                    rating,
+                    date,
+                    review.getContent(),
+                    images
+                );
+            })
+            .toList();
+    }
+
+    private PopupReviewAuthorResponse buildReviewAuthor(Users user) {
+        if (user == null) {
+            return new PopupReviewAuthorResponse(null, null, null, null);
+        }
+        return new PopupReviewAuthorResponse(
+            user.getId(),
+            user.getName(),
+            user.getNickname(),
+            null
+        );
+    }
+
+    private String resolveSellerName(Users user) {
+        if (user == null) {
+            return null;
+        }
+        if (user.getNickname() != null && !user.getNickname().isBlank()) {
+            return user.getNickname();
+        }
+        if (user.getName() != null && !user.getName().isBlank()) {
+            return user.getName();
+        }
+        return user.getLoginId();
+    }
+
+    private String formatDateTime(LocalDateTime dateTime) {
+        return dateTime != null ? dateTime.toString() : null;
+    }
+
+    private String formatReviewDate(LocalDateTime createdAt) {
+        return createdAt != null ? createdAt.format(REVIEW_DATE_FORMATTER) : null;
+    }
+}
+

@@ -1,7 +1,6 @@
 import { User, Search, X } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-import { popups } from "../../data/popups";
-import { sellers } from "../../data/sellers";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePopups, useSellers } from "../../hooks/usePopups";
 
 interface HeaderProps {
   onLoginClick: () => void;
@@ -36,6 +35,9 @@ export function Header({
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+
+  const { data: popupData } = usePopups();
+  const { data: sellerData } = useSellers();
   const searchRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
 
@@ -47,29 +49,29 @@ export function Header({
     }
     const query = searchQuery.toLowerCase().trim();
     const results: SearchResult[] = [];
-    popups.forEach(popup => {
+    (popupData ?? []).forEach(popup => {
       if (popup.title.toLowerCase().includes(query)) {
         results.push({
           id: popup.id,
             type: "popup",
             name: popup.title,
-            subtitle: popup.location
+            subtitle: popup.locationName ?? ""
         });
       }
     });
-    sellers.forEach(seller => {
+    (sellerData ?? []).forEach(seller => {
       if (seller.name.toLowerCase().includes(query)) {
         results.push({
           id: seller.id,
           type: "seller",
           name: seller.name,
-          subtitle: "판매자"
+          subtitle: seller.category ?? "판매자"
         });
       }
     });
     setSearchResults(results.slice(0, 8));
     setShowAutocomplete(results.length > 0);
-  }, [searchQuery]);
+  }, [searchQuery, popupData, sellerData]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

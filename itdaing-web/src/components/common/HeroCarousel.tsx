@@ -1,22 +1,64 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import type { MouseEvent as ReactMouseEvent } from "react";
+import { ChevronLeft, ChevronRight, MapPin, Heart } from "lucide-react";
 import { motion, PanInfo } from "motion/react";
-import { popups } from "../../data/popups";
 
-interface HeroCarouselProps { onPopupClick?: (popupId: number) => void; }
-const carouselItems = popups.sort((a,b)=> (b.likes + b.views) - (a.likes + a.views)).slice(0,7).map((p,i)=>({id:p.id,rank:i+1,image:p.images[0],title:p.title,date:p.date,location:p.location}));
-export function HeroCarousel({ onPopupClick }: HeroCarouselProps) {
+interface HeroCarouselProps {
+  items?: Array<{
+    id: number;
+    rank?: number;
+    image: string;
+    title: string;
+    date?: string;
+    location?: string;
+  }>;
+  onPopupClick?: (popupId: number) => void;
+  isLoggedIn?: boolean;
+  onLoginClick?: () => void;
+}
+
+export function HeroCarousel({ items, onPopupClick, isLoggedIn, onLoginClick }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(3);
   const [isPaused, setIsPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [favoriteMap, setFavoriteMap] = useState<Record<number, boolean>>({});
+
+  const carouselItems = useMemo(() => {
+    const source = items ?? [];
+    return source.map((item, index) => ({
+      id: item.id,
+      rank: item.rank ?? index + 1,
+      image: item.image,
+      title: item.title,
+      date: item.date,
+      location: item.location
+    }));
+  }, [items]);
 
   // Unified responsive config for desktop + mobile
   const config = useResponsiveCarouselConfig();
 
-  useEffect(()=>{ if(isPaused) return; const interval=setInterval(()=> setCurrentIndex(prev => (prev+1)%carouselItems.length), config.isMobile?3000:4000); return ()=> clearInterval(interval); },[isPaused,config.isMobile]);
+  const handleFavoriteToggle = (event: ReactMouseEvent<HTMLButtonElement>, popupId: number) => {
+    event.stopPropagation();
+    if (!isLoggedIn) {
+      onLoginClick?.();
+      return;
+    }
+    setFavoriteMap((prev) => ({
+      ...prev,
+      [popupId]: !prev[popupId],
+    }));
+  };
+
+  useEffect(()=>{ if(isPaused || carouselItems.length === 0) return; const interval=setInterval(()=> setCurrentIndex(prev => (prev+1)%carouselItems.length), config.isMobile?3000:4000); return ()=> clearInterval(interval); },[isPaused,config.isMobile,carouselItems.length]);
   const handlePrev=()=> setCurrentIndex(prev=> (prev-1+carouselItems.length)%carouselItems.length);
   const handleNext=()=> setCurrentIndex(prev=> (prev+1)%carouselItems.length);
   const handleDragEnd=(e:MouseEvent|TouchEvent|PointerEvent, info:PanInfo)=>{ const t=50; if(info.offset.x>t) handlePrev(); else if(info.offset.x<-t) handleNext(); };
+
+  if (carouselItems.length === 0) {
+    return null;
+  }
+
   return (
     <div className="relative mt-0 mb-3 md:mb-12">
   <div ref={containerRef} className="relative rounded-lg bg-white md:bg-transparent overflow-hidden md:overflow-x-visible md:overflow-y-hidden" onMouseEnter={()=>setIsPaused(true)} onMouseLeave={()=>setIsPaused(false)}>
@@ -50,6 +92,7 @@ export function HeroCarousel({ onPopupClick }: HeroCarouselProps) {
               const x = position * step;
               const opacity = s.opacity[distance] ?? 0.4;
               // We anchor cards at center using left:50% then translate
+              const isFavorite = Boolean(favoriteMap[item.id]);
               return (
                 <motion.div
                   key={item.id}
@@ -74,6 +117,20 @@ export function HeroCarousel({ onPopupClick }: HeroCarouselProps) {
                   <div className="relative w-full h-full">
                     <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40" />
+                    <motion.button
+                      type="button"
+                      onClick={(event) => handleFavoriteToggle(event, item.id)}
+                      className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full shadow-md"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      aria-label="관심 팝업에 추가"
+                    >
+                      <Heart
+                        className="w-4 h-4"
+                        fill={isFavorite ? "#eb0000" : "none"}
+                        color={isFavorite ? "#eb0000" : "#414141"}
+                      />
+                    </motion.button>
                     <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
                       {item.rank && position === 0 && (
                         <div className="mb-1">
@@ -133,6 +190,7 @@ export function HeroCarousel({ onPopupClick }: HeroCarouselProps) {
             const scale = scaleMap[distance] ?? 0.7;
             const opacity = opacityMap[distance] ?? 0.4;
             const zIndex = 100 - distance; // center above others
+            const isFavorite = Boolean(favoriteMap[item.id]);
             return (
               <motion.div
                 key={item.id}
@@ -149,6 +207,18 @@ export function HeroCarousel({ onPopupClick }: HeroCarouselProps) {
                 <div className="relative w-full h-full">
                   <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+                  <button
+                    type="button"
+                    onClick={(event) => handleFavoriteToggle(event, item.id)}
+                    className="absolute top-4 right-4 p-2 bg-white/95 rounded-full shadow-md hover:scale-105 transition-transform"
+                    aria-label="관심 팝업에 추가"
+                  >
+                    <Heart
+                      className="w-5 h-5"
+                      fill={isFavorite ? "#eb0000" : "none"}
+                      color={isFavorite ? "#eb0000" : "#414141"}
+                    />
+                  </button>
                   <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-semibold tracking-wide bg-[#eb0000] px-2 py-0.5 rounded-full shadow">{item.rank}위</span>

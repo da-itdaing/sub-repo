@@ -151,7 +151,8 @@ public class AuthDto {
 
         // ===== 판매자 프로필 관련 필드 =====
 
-        @Schema(description = "활동 지역 (선택)", example = "광주/남구")
+        @Schema(description = "활동 지역 (필수)", example = "광주/남구")
+        @NotBlank(message = "활동 지역은 필수입니다")
         @Size(max = 255, message = "활동 지역은 255자 이하여야 합니다")
         private String activityRegion;
 

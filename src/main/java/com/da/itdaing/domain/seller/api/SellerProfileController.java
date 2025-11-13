@@ -4,7 +4,7 @@ package com.da.itdaing.domain.seller.api;
 import com.da.itdaing.domain.seller.dto.SellerProfileRequest;
 import com.da.itdaing.domain.seller.dto.SellerProfileResponse;
 import com.da.itdaing.domain.seller.service.SellerProfileService;
-import com.da.itdaing.global.api.ApiResponse;
+import com.da.itdaing.global.web.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;

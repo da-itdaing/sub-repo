@@ -1,38 +1,43 @@
 import { useState } from "react";
 
+type Option = { id: number; name: string };
+
 interface SignupPage2Props {
-  onComplete: () => void;
-  onClose: () => void; // back to login
+  onComplete: (preferences?: {
+    interests: string[];
+    activities: string[];
+    events: string[];
+    popups: string[];
+  }) => void;
+  onClose: () => void;
   userData: any;
-  onGoHome?: () => void; // go home by logo click
-  onLoginClick?: () => void; // switch to login
+  onGoHome?: () => void;
+  onLoginClick?: () => void;
+  categories: Option[];
+  styles: Option[];
+  features: Option[];
+  regions: Option[];
 }
 
-export function SignupPage2({ onComplete, onClose, userData, onGoHome, onLoginClick }: SignupPage2Props) {
+export function SignupPage2({
+  onComplete,
+  onClose,
+  userData,
+  onGoHome,
+  onLoginClick,
+  categories,
+  styles,
+  features,
+  regions,
+}: SignupPage2Props) {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [selectedPopups, setSelectedPopups] = useState<string[]>([]);
-
-  const interests = [
-    "패션", "뷰티", "음식", "건강", "공연/전시", "스포츠",
-    "키즈", "아트", "굿즈", "반려동물"
-  ];
-
-  const activities = [
-    "혼자여도 좋은", "가족과 함께", "친구와 함께", "연인과 함께",
-    "반려동물과 함께", "아기자기한", "감성적인", "활기찬",
-    "차분한", "체험하기 좋은", "포토존", "레트로/빈티지",
-    "체험가능", "실내", "야외"
-  ];
-
-  const events = [
-    "무료주차", "무료입장", "예약가능", "굿즈판매"
-  ];
-
-  const popups = [
-    "남구", "동구", "서구", "북구", "광산구"
-  ];
+  const interests = categories.map((category) => category.name);
+  const activities = styles.map((style) => style.name);
+  const events = features.map((feature) => feature.name);
+  const popupRegions = regions.map((region) => region.name);
 
   const toggleSelection = (
     item: string,
@@ -52,14 +57,23 @@ export function SignupPage2({ onComplete, onClose, userData, onGoHome, onLoginCl
   };
 
   const handleComplete = () => {
-    console.log("Signup complete", {
-      ...userData,
+    const preferences = {
       interests: selectedInterests,
       activities: selectedActivities,
       events: selectedEvents,
       popups: selectedPopups,
+    };
+    onComplete(preferences);
+  };
+
+  const handleSkip = () => {
+    // 선호도 조사 건너뛰기 - 빈 배열로 전달
+    onComplete({
+      interests: [],
+      activities: [],
+      events: [],
+      popups: [],
     });
-    onComplete();
   };
 
   return (
@@ -171,7 +185,7 @@ export function SignupPage2({ onComplete, onClose, userData, onGoHome, onLoginCl
               어떤 지역의 팝업 스토어를 방문하고 싶나요? (최소 1개, 최대 2개 선택)
             </h3>
             <div className="flex flex-wrap gap-2">
-              {popups.map((item) => (
+              {popupRegions.map((item) => (
                 <button
                   key={item}
                   onClick={() =>
@@ -199,7 +213,7 @@ export function SignupPage2({ onComplete, onClose, userData, onGoHome, onLoginCl
               가입 완료
             </button>
             <button
-              onClick={onComplete}
+              onClick={handleSkip}
               className="flex-1 h-[40px] bg-[#5a5a5a] rounded-[30px] font-['Pretendard:Bold',sans-serif] text-[16px] text-white hover:bg-[#4a4a4a] transition-colors flex items-center justify-center"
               aria-label="선호도 조사 건너뛰기"
             >

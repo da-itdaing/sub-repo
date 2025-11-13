@@ -1,8 +1,14 @@
 package com.da.itdaing.domain.user.repository;
 
-import com.da.itdaing.domain.common.enums.CategoryType;
 import com.da.itdaing.domain.common.enums.UserRole;
-import com.da.itdaing.domain.master.*;
+import com.da.itdaing.domain.master.entity.Category;
+import com.da.itdaing.domain.master.entity.Feature;
+import com.da.itdaing.domain.master.entity.Region;
+import com.da.itdaing.domain.master.entity.Style;
+import com.da.itdaing.domain.master.repository.CategoryRepository;
+import com.da.itdaing.domain.master.repository.FeatureRepository;
+import com.da.itdaing.domain.master.repository.RegionRepository;
+import com.da.itdaing.domain.master.repository.StyleRepository;
 import com.da.itdaing.domain.user.entity.*;
 import com.da.itdaing.testsupport.JpaSliceTest;
 import org.junit.jupiter.api.DisplayName;
@@ -36,9 +42,9 @@ class UserRepositoryTest {
     void consumerSignUp_saves1to4PreferencesEach() {
         // 1) 마스터 데이터 시딩 (각 1~4개)
         List<Category> categories = categoryRepository.saveAll(List.of(
-            Category.builder().name("패션").type(CategoryType.CONSUMER).build(),
-            Category.builder().name("뷰티").type(CategoryType.CONSUMER).build(),
-            Category.builder().name("음식").type(CategoryType.CONSUMER).build()
+            Category.builder().name("패션").build(),
+            Category.builder().name("뷰티").build(),
+            Category.builder().name("음식").build()
         ));
         List<Style> styles = styleRepository.saveAll(List.of(
             Style.builder().name("혼자여도 좋은").build(),
