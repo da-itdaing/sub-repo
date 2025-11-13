@@ -24,9 +24,113 @@
 2. `Action: ["s3:*"]` - 모든 작업 허용 (삭제, 수정 등)
 3. 버킷 레벨 권한 없음 - `ListBucket` 같은 작업 실패 가능
 
-## ✅ 권장 정책 (IAM 사용자 기반)
+## ✅ 권장 정책 (사용자 업로드 + 공개 읽기)
 
-### 옵션 1: 특정 IAM 사용자만 허용 (권장)
+### 아키텍처 이해
+- **사용자**: S3에 이미지 업로드 (Presigned URL 또는 애플리케이션을 통한 업로드)
+- **애플리케이션**: DB에서 S3 이미지 URL을 읽어서 프론트엔드에 제공
+- **프론트엔드**: S3 이미지 URL을 직접 표시 (공개 읽기 필요)
+
+### 옵션 1: 공개 읽기 + 애플리케이션 쓰기 (권장)
+
+이미지는 공개적으로 읽을 수 있지만, 쓰기는 애플리케이션(IAM 사용자)만 가능:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::daitdaing-static-files/uploads/*"
+    },
+    {
+      "Sid": "AllowListBucket",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::166357011361:user/hj"
+      },
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": "arn:aws:s3:::daitdaing-static-files"
+    },
+    {
+      "Sid": "AllowApplicationWrite",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::166357011361:user/hj"
+      },
+      "Action": [
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:PutObjectAcl"
+      ],
+      "Resource": "arn:aws:s3:::daitdaing-static-files/uploads/*"
+    }
+  ]
+}
+```
+
+**특징:**
+- ✅ 이미지는 공개적으로 읽을 수 있음 (`uploads/*` 경로)
+- ✅ 쓰기는 애플리케이션만 가능 (IAM 사용자)
+- ✅ 사용자는 애플리케이션을 통해 업로드 (Presigned URL 또는 직접 업로드 API)
+
+### 옵션 2: Presigned URL 사용 (더 안전)
+
+애플리케이션이 Presigned URL을 생성하여 사용자에게 제공:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::daitdaing-static-files/uploads/*"
+    },
+    {
+      "Sid": "AllowListBucket",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::166357011361:user/hj"
+      },
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": "arn:aws:s3:::daitdaing-static-files"
+    },
+    {
+      "Sid": "AllowApplicationGeneratePresignedURL",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::166357011361:user/hj"
+      },
+      "Action": [
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::daitdaing-static-files/uploads/*"
+    }
+  ]
+}
+```
+
+**Presigned URL 사용 흐름:**
+1. 사용자가 프론트엔드에서 이미지 업로드 요청
+2. 백엔드가 Presigned URL 생성 (임시 업로드 권한)
+3. 프론트엔드가 Presigned URL로 직접 S3에 업로드
+4. 업로드 완료 후 백엔드에 알림
+5. 백엔드가 DB에 S3 URL 저장
+
+### 옵션 3: 특정 IAM 사용자만 허용 (기존, 제한적)
 
 ```json
 {
@@ -61,6 +165,8 @@
   ]
 }
 ```
+
+**주의:** 이 옵션은 이미지가 공개적으로 읽을 수 없습니다. CloudFront나 애플리케이션을 통한 프록시가 필요합니다.
 
 ### 옵션 2: IAM 역할 사용 (EC2 Instance Profile 권장)
 
@@ -144,6 +250,31 @@ EC2에서 Instance Profile을 사용하는 경우:
   ]
 }
 ```
+
+## 🔄 업로드 흐름 이해
+
+### 현재 아키텍처
+1. **사용자 업로드**: 사용자가 이미지를 업로드
+2. **S3 저장**: 이미지가 S3에 저장됨
+3. **DB 저장**: 애플리케이션이 DB에 S3 URL 저장
+4. **이미지 표시**: 프론트엔드가 DB에서 URL을 가져와 S3에서 직접 이미지 로드
+
+### 권장 업로드 방식
+
+#### 방식 1: 애플리케이션을 통한 업로드 (간단)
+```
+사용자 → 프론트엔드 → 백엔드 API → S3 업로드 → DB 저장
+```
+- 장점: 간단하고 안전
+- 단점: 백엔드 서버를 통과하므로 대용량 파일 시 부하
+
+#### 방식 2: Presigned URL 사용 (권장)
+```
+사용자 → 프론리엔드 → 백엔드 API (Presigned URL 요청)
+     → Presigned URL 받음 → 직접 S3 업로드 → 백엔드에 완료 알림 → DB 저장
+```
+- 장점: 백엔드 부하 감소, 직접 업로드로 빠름
+- 단점: 구현이 약간 복잡
 
 ## 📋 정책 적용 방법
 
