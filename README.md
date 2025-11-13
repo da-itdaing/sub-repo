@@ -228,20 +228,34 @@ STORAGE_PROVIDER=s3 ./gradlew bootRun
 
 ### 개발 계획서
 
-- **백엔드**: `plan/BE-plan.md` 참조
-- **프론트엔드**: `plan/FE-plan.md` 참조
+- **백엔드**: [`docs/plan/BE-plan.md`](docs/plan/BE-plan.md) 참조
+- **프론트엔드**: [`docs/plan/FE-plan.md`](docs/plan/FE-plan.md) 참조
 
-### 로컬 개발 환경 설정
+### 문서 목차
 
-- **로컬 개발 가이드**: `docs/LOCAL_DEVELOPMENT.md` 참조
+모든 문서는 [`docs/README.md`](docs/README.md)에서 확인할 수 있습니다.
+
+#### 주요 문서
+
+- **로컬 개발 환경 설정**: [`docs/setup/LOCAL_DEVELOPMENT.md`](docs/setup/LOCAL_DEVELOPMENT.md)
   - LocalStack 설정 및 사용법
-  - PostgreSQL + pgvector 설정 (챗봇용)
+  - PostgreSQL + pgvector 설정
   - AWS 환경과의 차이점
 
-### 데이터베이스 마이그레이션
+- **IDE 설정**: [`docs/setup/IDE_SETUP.md`](docs/setup/IDE_SETUP.md)
+  - IntelliJ / Eclipse 설정 가이드
 
-- **마이그레이션 가이드**: `docs/DATABASE_MIGRATION.md` 참조
+- **배포 가이드**: [`docs/deployment/DEPLOY_EC2.md`](docs/deployment/DEPLOY_EC2.md)
+  - AWS EC2 배포 방법
+
+- **데이터베이스 마이그레이션**: [`docs/database/DATABASE_MIGRATION.md`](docs/database/DATABASE_MIGRATION.md)
   - PostgreSQL + pgvector Flyway 마이그레이션
+
+- **API 문서**: [`docs/api/REST_API_문서.md`](docs/api/REST_API_문서.md)
+  - REST API 엔드포인트 문서
+
+- **프론트엔드**: [`docs/frontend/README.md`](docs/frontend/README.md)
+  - 프론트엔드 프로젝트 개요 및 라우팅 구조
 
 ### Cursor IDE 명령어
 

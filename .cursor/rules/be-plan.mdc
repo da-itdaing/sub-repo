@@ -8,7 +8,7 @@ alwaysApply: true
 
 ## 중요 참조 문서
 
-**백엔드 개발 계획서**: `plan/BE-plan.md`
+**백엔드 개발 계획서**: `docs/plan/BE-plan.md`
 
 이 파일에는 다음 정보가 포함되어 있습니다:
 - 프로젝트 개요 및 기술 스택
