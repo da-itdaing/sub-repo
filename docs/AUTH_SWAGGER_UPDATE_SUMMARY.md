@@ -97,7 +97,7 @@
    ```
 
 2. **Swagger UI 확인**:
-   - 애플리케이션 실행 후 http://localhost:8080/swagger-ui.html 접속
+   - 애플리케이션 실행 후 http://localhost:8080/swagger-ui/index.html 접속
    - 각 엔드포인트의 예시 JSON 렌더링 확인
    - Bearer Authentication 기능 테스트
 

@@ -12,7 +12,7 @@
 
 프로파일은 크게 3개입니다.
 
-- `local` (기본): H2 메모리 DB. 빠른 개발/스모크 테스트용.
+- `local` (기본): MySQL Docker 컨테이너 사용. 빠른 개발/스모크 테스트용.
 - `dev`: IDE에서 RDS/S3에 붙는 개발용. 환경변수로 자격/엔드포인트 주입.
 - `prod`: EC2 운영용. 포트 80, 환경변수 기반 설정.
 
@@ -23,7 +23,7 @@
   - (옵션) VM Options: `-Dspring.profiles.active=local`
 - 포트: 8080
 - Swagger UI: http://localhost:8080/swagger-ui/index.html
-- DB: H2 (메모리)
+- DB: MySQL 8.0 (Docker 컨테이너)
 
 ### 2.2 dev 프로파일 (RDS/S3와 연동)
 - 파일: `src/main/resources/application-dev.yml`

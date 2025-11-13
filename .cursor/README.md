@@ -12,10 +12,14 @@
 │   ├── start-all.md   # 전체 서버 실행
 │   └── stop-all.md    # 전체 서버 중지
 ├── rules/             # 개발 규칙 및 가이드
-│   ├── project-rules.md        # 프로젝트 전반 규칙
-│   ├── commands-rules.md       # 명령어 사용 규칙
-│   ├── development-workflow.md # 개발 워크플로우
-│   └── docker-rules.md         # Docker 사용 규칙
+│   ├── project-rules.md              # 프로젝트 전반 규칙
+│   ├── commands-rules.md             # 명령어 사용 규칙
+│   ├── development-workflow.md       # 개발 워크플로우
+│   ├── docker-rules.md               # Docker 사용 규칙
+│   ├── be-plan.mdc                   # 백엔드 개발 계획 참조 규칙
+│   ├── fe-plan.mdc                   # 프론트엔드 개발 계획 참조 규칙
+│   ├── frontend-browser-testing.mdc  # 프론트엔드 브라우저 테스트 규칙
+│   └── fullstack-integration.mdc     # 풀스택 통합 개발 규칙
 └── README.md          # 이 파일
 ```
 
@@ -68,6 +72,18 @@ Rules는 프로젝트 개발 시 따라야 할 규칙과 가이드라인입니�
    - 볼륨 관리
    - 성능 모니터링
    - 문제 해결
+
+5. **be-plan.mdc** / **fe-plan.mdc**
+   - 백엔드/프론트엔드 개발 계획서 참조 규칙
+   - 각각 `plan/BE-plan.md`, `plan/FE-plan.md`를 항상 참조하도록 설정
+
+6. **frontend-browser-testing.mdc**
+   - 프론트엔드 화면 구현 시 브라우저 테스트 필수 규칙
+   - 반응형 디자인 확인 가이드
+
+7. **fullstack-integration.mdc**
+   - 프론트엔드와 백엔드 동시 고려 개발 규칙
+   - API 우선 설계 및 데이터 구조 일관성 유지
 
 ## 규칙 파일 업데이트
 

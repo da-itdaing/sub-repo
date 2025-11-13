@@ -1,7 +1,7 @@
 
 # itdaing-web (frontend)
 
-[![CI](https://github.com/da-itdaing/final-project/actions/workflows/ci.yml/badge.svg?branch=dev/integration)](https://github.com/da-itdaing/final-project/actions/workflows/ci.yml)
+[![CI](https://github.com/da-itdaing/sub-repo/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/da-itdaing/sub-repo/actions/workflows/ci.yml)
 
 ## Quick start
 
@@ -25,7 +25,7 @@ npm run build
 
 ## CI behavior
 
-- dev/integration 브랜치에 push 또는 PR이 올라오면 GitHub Actions 가 자동으로 프론트엔드/백엔드를 각각 빌드합니다.
+- main 브랜치에 push 또는 PR이 올라오면 GitHub Actions 가 자동으로 프론트엔드/백엔드를 각각 빌드합니다.
 - 프론트엔드: Node 20 + Vite 빌드 → `dist/` 산출물 아티팩트 업로드
 - 백엔드: JDK 21 + Gradle `bootJar -x test` (테스트는 CI 기본 단계에서 스킵)
 
