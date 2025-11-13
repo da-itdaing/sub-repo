@@ -12,7 +12,7 @@
 - **프레임워크**: Spring Boot 3.5.7
 - **언어**: Java 21
 - **빌드 도구**: Gradle (Kotlin DSL)
-- **데이터베이스**: MySQL 8.0 (Docker)
+- **데이터베이스**: PostgreSQL 15 + pgvector (Docker)
 - **ORM**: JPA/Hibernate + QueryDSL
 - **마이그레이션**: Flyway
 - **인증**: JWT (jjwt 0.12.x)
@@ -49,7 +49,7 @@ final-project/
 
 - **Java 21** (macOS는 Homebrew의 `openjdk@21` 권장)
 - **Node.js 20+**
-- **Docker** (MySQL, PostgreSQL, LocalStack 컨테이너용)
+- **Docker** (PostgreSQL + pgvector, LocalStack 컨테이너용)
 - **Gradle** (프로젝트에 포함된 wrapper 사용)
 - **AWS CLI** (LocalStack 사용 시, 선택사항)
 
@@ -65,11 +65,11 @@ cp env.example .env
 ### 2. Docker 서비스 시작
 
 ```bash
-# MySQL만 시작 (기본)
-docker-compose up -d mysql
+# PostgreSQL 시작 (기본)
+docker-compose up -d postgres
 
-# MySQL + LocalStack 시작 (S3 모킹)
-docker-compose up -d mysql localstack
+# PostgreSQL + LocalStack 시작 (S3 모킹)
+docker-compose up -d postgres localstack
 
 # PostgreSQL 포함 시작 (챗봇 개발 시)
 docker-compose --profile chatbot up -d
@@ -126,8 +126,8 @@ Cursor IDE 명령어 사용:
 
 또는 수동으로:
 ```bash
-# 터미널 1: MySQL
-docker-compose up -d mysql
+# 터미널 1: PostgreSQL
+docker-compose up -d postgres
 
 # 터미널 2: 백엔드
 ./gradlew bootRun
@@ -140,7 +140,7 @@ cd itdaing-web && npm run dev -- --host
 
 ### 백엔드 프로파일
 
-- **`local`** (기본): MySQL Docker 컨테이너 사용, LocalStack S3 또는 Local Storage 선택 가능, Swagger UI 활성화, 개발용
+- **`local`** (기본): PostgreSQL + pgvector Docker 컨테이너 사용, LocalStack S3 또는 Local Storage 선택 가능, Swagger UI 활성화, 개발용
 - **`dev`**: IDE에서 RDS/S3 등 외부 리소스와 연동하는 개발용 (환경변수 주입)
 - **`prod`**: EC2 배포용 (포트 80, 환경변수 기반). 운영 키/비밀번호는 절대 커밋하지 않음
 - **`chatbot`**: PostgreSQL + pgvector 사용 (향후 챗봇 기능용)
@@ -241,8 +241,7 @@ STORAGE_PROVIDER=s3 ./gradlew bootRun
 ### 데이터베이스 마이그레이션
 
 - **마이그레이션 가이드**: `docs/DATABASE_MIGRATION.md` 참조
-  - MySQL Flyway 마이그레이션
-  - PostgreSQL + pgvector 설정 (향후)
+  - PostgreSQL + pgvector Flyway 마이그레이션
 
 ### Cursor IDE 명령어
 

@@ -73,8 +73,8 @@ dependencies {
 
     // --- DB & Migration
     implementation("org.flywaydb:flyway-core")
-    implementation("org.flywaydb:flyway-mysql")
-    runtimeOnly("com.mysql:mysql-connector-j")
+    implementation("org.flywaydb:flyway-database-postgresql")
+    runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("com.h2database:h2")  // local/test
 
     // --- Lombok

@@ -1,51 +1,28 @@
 version: '3.8'
 
 services:
-  # MySQL 8.0 - 현재 사용 중인 데이터베이스
-  mysql:
-    image: mysql:8.0
-    container_name: itdaing-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: itdaing
-      MYSQL_USER: itdaing
-      MYSQL_PASSWORD: password
-      TZ: Asia/Seoul
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - itdaing-network
-
-  # PostgreSQL 15 + pgvector - 챗봇용 (향후 사용)
+  # PostgreSQL 15 + pgvector - 메인 데이터베이스
   postgres:
     image: pgvector/pgvector:pg15
     container_name: itdaing-postgres
     environment:
-      POSTGRES_DB: itdaing_chatbot
+      POSTGRES_DB: itdaing
       POSTGRES_USER: itdaing
       POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
       TZ: Asia/Seoul
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init-postgres.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U itdaing"]
+      test: ["CMD-SHELL", "pg_isready -U itdaing -d itdaing"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - itdaing-network
-    profiles:
-      - chatbot  # 기본적으로는 실행되지 않음 (--profile chatbot 옵션으로 실행)
 
   # LocalStack - AWS 서비스 로컬 모킹 (S3, SQS, SNS 등)
   localstack:
@@ -74,8 +51,6 @@ services:
       - itdaing-network
 
 volumes:
-  mysql_data:
-    driver: local
   postgres_data:
     driver: local
   localstack_data:
