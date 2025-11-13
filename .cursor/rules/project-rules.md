@@ -2,16 +2,18 @@
 
 ## 프로젝트 개요
 - **프로젝트명**: Itdaing (잇다잉) - 팝업스토어 추천 플랫폼
-- **아키텍처**: 프론트엔드(React) + 백엔드(Spring Boot) + MySQL
-- **개발 환경**: 로컬 개발 시 Docker MySQL 사용
+- **아키텍처**: 프론트엔드(React) + 백엔드(Spring Boot) + PostgreSQL (AWS RDS) + S3
+- **개발 환경**: Private EC2에서 개발 및 테스트 수행
 
 ## 디렉토리 구조
 ```
 final-project/
 ├── itdaing-web/          # 프론트엔드 (React + TypeScript + Vite)
 ├── src/                  # 백엔드 (Spring Boot)
-├── plan/                 # 개발 계획서 (FE-plan.md, BE-plan.md)
 ├── docs/                 # 문서
+│   ├── plan/            # 개발 계획서 (FE-plan.md, BE-plan.md)
+│   ├── deployment/      # 배포 가이드
+│   └── ...
 └── .cursor/              # Cursor IDE 설정
 ```
 
@@ -29,23 +31,24 @@ final-project/
 ### 백엔드
 - Spring Boot 3.5.7
 - Java 21
-- MySQL 8.0 (Docker)
+- PostgreSQL 15 + pgvector (AWS RDS)
 - JPA/Hibernate
 - QueryDSL
 - Flyway
 - JWT (jjwt 0.12.x)
+- AWS S3
 
 ## 개발 환경 설정
 
 ### 필수 요구사항
 - Java 21 (JDK)
 - Node.js 20+
-- Docker (MySQL 컨테이너용)
 - Gradle (프로젝트에 포함된 wrapper 사용)
+- SSH 접속 설정 (`~/.ssh/config`에 `private-ec2` 호스트 설정)
 
 ### 환경 변수
-- `.env.example` 파일 참조
-- 실제 값은 `.env` 파일에 저장 (gitignore됨)
+- 프로덕션 환경 변수는 `prod.env` 파일로 관리 (Private EC2에만 존재)
+- Git에 커밋하지 않음 (`.gitignore`에 포함)
 
 ## 코딩 규칙
 
@@ -84,6 +87,7 @@ final-project/
 ### 마이그레이션
 - Flyway를 사용한 버전 관리
 - 마이그레이션 파일: `src/main/resources/db/migration/V{version}__{description}.sql`
+- PostgreSQL 문법 사용
 - 롤백은 수동으로 처리 (Flyway는 롤백 미지원)
 
 ### 네이밍
@@ -91,6 +95,11 @@ final-project/
 - 컬럼명: snake_case
 - 인덱스: `idx_{table}_{column}`
 - 외래키: `fk_{table}_{referenced_table}`
+
+### 데이터베이스 접근
+- AWS RDS PostgreSQL 사용
+- Private EC2에서만 접근 가능
+- 연결 정보는 `prod.env`에 저장
 
 ## 테스트 규칙
 
@@ -112,7 +121,6 @@ final-project/
 
 ### 브랜치 전략
 - `main`: 프로덕션 브랜치
-- `dev/integration`: 개발 통합 브랜치
 - 기능 브랜치: `feature/{description}`
 
 ### 커밋 메시지
@@ -122,21 +130,23 @@ final-project/
 
 ## 배포 규칙
 
-### 로컬 개발
-- 프론트엔드: `npm run dev` (포트 3000)
-- 백엔드: `./gradlew bootRun` (포트 8080)
-- MySQL: Docker 컨테이너 (포트 3306)
+### 개발 및 테스트
+- 모든 개발 및 테스트는 Private EC2에서 수행
+- 프론트엔드: 빌드 후 nginx를 통해 서빙
+- 백엔드: Spring Boot 애플리케이션 실행
 
 ### 프로덕션
-- 백엔드: EC2에 jar 배포 (systemd 서비스)
-- 프론트엔드: 정적 파일 배포 (S3 + CloudFront 예정)
+- 백엔드: Private EC2에서 jar 실행 (systemd 서비스 권장)
+- 프론트엔드: nginx를 통해 정적 파일 서빙
+- 데이터베이스: AWS RDS PostgreSQL
+- 스토리지: AWS S3
 
 ## 보안 규칙
 
 ### 민감 정보
 - API 키, 비밀번호는 환경 변수로 관리
-- `.env` 파일은 절대 커밋하지 않음
-- `prod.env`는 서버에만 존재
+- `prod.env` 파일은 절대 Git에 커밋하지 않음
+- 파일 권한은 600으로 설정
 
 ### 인증/인가
 - 모든 API는 기본적으로 인증 필요
@@ -187,11 +197,21 @@ final-project/
 - 우선순위: Backend API → Mock API → Static JSON
 
 ### 데이터 시딩
-- `DevDataSeed` 클래스로 로컬 개발용 데이터 생성
-- 프로파일: `local`에서만 실행
+- `DevDataSeed` 클래스로 개발용 데이터 생성
+- 프로덕션 프로파일에서는 비활성화 가능
 - 샘플 계정:
   - 소비자: `consumer1` ~ `consumer10` / `pass!1234`
   - 판매자: `seller1` ~ `seller50` / `pass!1234`
   - 관리자: `admin1` ~ `admin3` / `pass!1234`
 
+## Private EC2 작업 규칙
 
+### 필수 사항
+- 모든 작업은 Private EC2에서 수행
+- 작업 전 항상 `source prod.env` 실행
+- 변경사항은 Git으로 관리하고 Private EC2에 반영
+
+### 주의사항
+- `prod.env` 파일은 절대 수정하지 않음 (환경 변수 변경 시 별도 관리)
+- 데이터베이스는 AWS RDS 사용 (로컬 DB 없음)
+- 스토리지는 AWS S3 사용 (로컬 스토리지 없음)

@@ -1,35 +1,35 @@
 # 개발 워크플로우 규칙
 
+## 개발 환경
+
+**중요**: 모든 개발 및 테스트는 **Private EC2**에서 수행됩니다. 로컬 개발 환경은 사용하지 않습니다.
+
 ## 개발 시작 전 체크리스트
 
-### 1. 환경 확인
-- [ ] Java 21 설치 확인: `java -version`
-- [ ] Node.js 20+ 설치 확인: `node -v`
-- [ ] Docker 설치 확인: `docker --version`
-- [ ] 프로젝트 루트 디렉토리 확인
+### 1. Private EC2 접속 확인
+- [ ] SSH 접속 테스트: `ssh private-ec2`
+- [ ] 프로젝트 디렉토리 확인: `ssh private-ec2 "cd ~/itdaing && pwd"`
+- [ ] 환경 변수 파일 확인: `ssh private-ec2 "ls -l ~/itdaing/prod.env"`
 
-### 2. 서버 시작 순서
-1. **MySQL 컨테이너 시작**
-   ```bash
-   docker-compose up -d mysql
-   docker ps | grep itdaing-mysql  # 상태 확인
-   ```
+### 2. 환경 확인
+- [ ] Java 21 설치 확인: `ssh private-ec2 "java -version"`
+- [ ] Gradle 확인: `ssh private-ec2 "cd ~/itdaing && ./gradlew --version"`
+- [ ] Git 확인: `ssh private-ec2 "cd ~/itdaing && git status"`
+- [ ] PostgreSQL RDS 연결 확인: `ssh private-ec2 "cd ~/itdaing && source prod.env && PGPASSWORD=\$SPRING_DATASOURCE_PASSWORD psql -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com -U itdaing_admin -d itdaing-db -c 'SELECT version();'"`
 
-2. **백엔드 서버 시작**
+### 3. 서버 시작 순서
+1. **백엔드 서버 시작**
    ```bash
-   ./gradlew bootRun
-   # 또는 백그라운드: ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &
+   ssh private-ec2 "cd ~/itdaing && source prod.env && nohup ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &"
    ```
-   - 확인: http://localhost:8080/actuator/health
-   - Swagger: http://localhost:8080/swagger-ui/index.html
+   - 확인: `ssh private-ec2 "curl http://localhost:8080/actuator/health"`
+   - Swagger: Private EC2의 공개 IP를 통해 접근
 
-3. **프론트엔드 서버 시작**
+2. **프론트엔드 빌드 및 배포**
    ```bash
-   cd itdaing-web
-   npm run dev -- --host
-   # 또는 백그라운드: npm run dev -- --host > /tmp/itdaing-web-dev.log 2>&1 &
+   ssh private-ec2 "cd ~/itdaing/itdaing-web && npm install && npm run build"
+   ssh private-ec2 "sudo cp -r ~/itdaing/itdaing-web/dist/* /var/www/itdaing/ && sudo chown -R www-data:www-data /var/www/itdaing"
    ```
-   - 확인: http://localhost:5173
 
 ## 개발 중 워크플로우
 
@@ -56,10 +56,11 @@
 
 #### 코드 수정 후
 ```bash
-# 자동 재시작 (Spring Boot DevTools 사용 시)
-# 또는 수동 재시작: Ctrl+C 후 ./gradlew bootRun
+# Private EC2에서 서버 재시작
+ssh private-ec2 "kill \$(lsof -ti:8080)"
+ssh private-ec2 "cd ~/itdaing && source prod.env && nohup ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &"
 
-# 테스트 실행
+# 테스트 실행 (로컬에서)
 ./gradlew test
 ```
 
@@ -84,14 +85,15 @@
    - 반응형 디자인 고려 (모바일 우선)
 
 #### 코드 수정 후
-- Vite HMR(Hot Module Replacement)로 자동 반영
-- 브라우저에서 즉시 확인 가능
+- 변경사항을 Private EC2에 업로드
+- 프론트엔드 재빌드 및 배포
+- 브라우저에서 확인
 
 ## 테스트 워크플로우
 
 ### 백엔드 테스트
 ```bash
-# 전체 테스트
+# 로컬에서 테스트 실행
 ./gradlew test
 
 # 특정 도메인 테스트
@@ -110,12 +112,13 @@ open build/reports/tests/test/index.html
 
 ### 통합 테스트
 1. **브라우저에서 수동 테스트**
+   - Private EC2의 공개 IP를 통해 접근
    - 소비자 플로우: 로그인 → 팝업 탐색 → 리뷰 작성
    - 판매자 플로우: 로그인 → 팝업 관리 → 대시보드 확인
    - 관리자 플로우: 로그인 → 존 관리 → 사용자 관리
 
 2. **API 테스트**
-   - Swagger UI 사용: http://localhost:8080/swagger-ui/index.html
+   - Swagger UI 사용: Private EC2의 Swagger UI 접근
    - Postman/Insomnia 사용
 
 ## 디버깅 워크플로우
@@ -124,20 +127,16 @@ open build/reports/tests/test/index.html
 1. **로그 확인**
    ```bash
    # 실시간 로그
-   tail -f /tmp/itdaing-boot.log
-   
-   # 또는 IDE에서 콘솔 확인
+   ssh private-ec2 "tail -f /tmp/itdaing-boot.log"
    ```
 
 2. **브레이크포인트 설정**
-   - IntelliJ/Eclipse에서 디버그 모드로 실행
-   - 원격 디버깅 설정 (필요 시)
+   - IDE에서 원격 디버깅 설정 (SSH 터널링)
+   - Private EC2의 8080 포트를 로컬로 포워딩
 
 3. **데이터베이스 확인**
    ```bash
-   docker exec -it itdaing-mysql mysql -u root -p
-   USE itdaing;
-   SELECT * FROM users WHERE username = 'consumer1';
+   ssh private-ec2 "cd ~/itdaing && source prod.env && PGPASSWORD=\$SPRING_DATASOURCE_PASSWORD psql -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com -U itdaing_admin -d itdaing-db"
    ```
 
 ### 프론트엔드 디버깅
@@ -146,13 +145,7 @@ open build/reports/tests/test/index.html
    - Network 탭: API 요청/응답 확인
    - React DevTools: 컴포넌트 상태 확인
 
-2. **로그 확인**
-   ```bash
-   # 실시간 로그
-   tail -f /tmp/itdaing-web-dev.log
-   ```
-
-3. **타입 체크**
+2. **타입 체크**
    ```bash
    cd itdaing-web
    npx tsc --noEmit
@@ -161,27 +154,12 @@ open build/reports/tests/test/index.html
 ## 데이터 관리 워크플로우
 
 ### 초기 데이터 시딩
-```bash
-# DevDataSeed가 local 프로파일에서 자동 실행됨
-# 또는 수동 실행 (필요 시)
-# ApplicationRunner로 구현되어 있음
-```
+- Private EC2에서 `DevDataSeed`가 자동 실행됨 (프로덕션 프로파일에서 비활성화 가능)
 
 ### 샘플 계정 사용
 - **소비자**: `consumer1` ~ `consumer10` / `pass!1234`
 - **판매자**: `seller1` ~ `seller50` / `pass!1234`
 - **관리자**: `admin1` ~ `admin3` / `pass!1234`
-
-### 데이터베이스 리셋
-```bash
-# MySQL 컨테이너 재시작 (데이터 유지)
-docker-compose restart mysql
-
-# 완전 초기화 (데이터 삭제)
-docker-compose down -v
-docker-compose up -d mysql
-# 백엔드 재시작 시 Flyway 마이그레이션 자동 실행
-```
 
 ## 배포 전 체크리스트
 
@@ -193,7 +171,6 @@ docker-compose up -d mysql
 
 ### 프론트엔드
 - [ ] 빌드 성공: `npm run build`
-- [ ] 빌드 결과 미리보기: `npm run preview`
 - [ ] 타입 체크 통과: `npx tsc --noEmit`
 - [ ] 반응형 디자인 확인 (모바일/태블릿/데스크톱)
 
@@ -202,39 +179,29 @@ docker-compose up -d mysql
 ### 서버가 시작되지 않을 때
 1. **포트 확인**
    ```bash
-   lsof -i :8080  # 백엔드
-   lsof -i :5173  # 프론트엔드
-   lsof -i :3306  # MySQL
+   ssh private-ec2 "lsof -ti:8080"
    ```
 
 2. **프로세스 종료 후 재시작**
    ```bash
-   pkill -f "gradlew bootRun"
-   pkill -f "vite"
-   docker-compose restart mysql
+   ssh private-ec2 "kill \$(lsof -ti:8080)"
+   ssh private-ec2 "cd ~/itdaing && source prod.env && nohup ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &"
    ```
 
 3. **로그 확인**
    ```bash
-   tail -n 100 /tmp/itdaing-boot.log
-   tail -n 100 /tmp/itdaing-web-dev.log
-   docker logs itdaing-mysql
+   ssh private-ec2 "tail -n 100 /tmp/itdaing-boot.log"
    ```
 
 ### 데이터베이스 연결 실패 시
-1. **MySQL 컨테이너 상태 확인**
+1. **RDS 연결 상태 확인**
    ```bash
-   docker ps | grep itdaing-mysql
+   ssh private-ec2 "cd ~/itdaing && source prod.env && PGPASSWORD=\$SPRING_DATASOURCE_PASSWORD psql -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com -U itdaing_admin -d itdaing-db -c 'SELECT 1;'"
    ```
 
-2. **컨테이너 재시작**
+2. **환경 변수 확인**
    ```bash
-   docker-compose restart mysql
-   ```
-
-3. **연결 테스트**
-   ```bash
-   docker exec -it itdaing-mysql mysql -u root -p
+   ssh private-ec2 "cd ~/itdaing && source prod.env && echo \$SPRING_DATASOURCE_URL"
    ```
 
 ### 빌드 실패 시
@@ -271,20 +238,24 @@ docker-compose up -d mysql
 
 ## 일일 개발 종료 시
 
-1. **변경사항 커밋**
+1. **변경사항 커밋 및 푸시**
    ```bash
    git add .
    git commit -m "✨ feat: 작업 내용"
+   git push origin main
    ```
 
-2. **서버 중지** (선택사항)
+2. **Private EC2에 변경사항 반영**
    ```bash
-   pkill -f "gradlew bootRun"
-   pkill -f "vite"
-   # MySQL은 계속 실행해도 됨
+   ssh private-ec2 "cd ~/itdaing && git pull origin main"
    ```
 
-3. **다음 작업 메모**
+3. **서버 재시작** (필요 시)
+   ```bash
+   ssh private-ec2 "kill \$(lsof -ti:8080)"
+   ssh private-ec2 "cd ~/itdaing && source prod.env && nohup ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &"
+   ```
+
+4. **다음 작업 메모**
    - 진행 중인 작업 내용 기록
    - 다음에 해야 할 작업 정리
-

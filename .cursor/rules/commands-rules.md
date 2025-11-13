@@ -3,56 +3,41 @@
 ## 프로젝트 루트 디렉토리
 모든 명령어는 프로젝트 루트(`/Users/dorae222/Desktop/final-project`) 또는 해당 하위 디렉토리에서 실행합니다.
 
-## Docker 명령어
+## Private EC2 접근
 
-### MySQL 컨테이너 관리
+### SSH 접속
 ```bash
-# MySQL 컨테이너 시작
-docker-compose up -d mysql
+# 기본 접속
+ssh private-ec2
 
-# MySQL 컨테이너 상태 확인
-docker ps | grep itdaing-mysql
-
-# MySQL 컨테이너 중지
-docker-compose stop mysql
-
-# MySQL 컨테이너 완전 제거 (데이터 유지)
-docker-compose down mysql
-
-# MySQL 컨테이너 로그 확인
-docker logs itdaing-mysql
-
-# MySQL 컨테이너 접속
-docker exec -it itdaing-mysql mysql -u root -p
+# 원격 명령 실행
+ssh private-ec2 "명령어"
 ```
 
-### Docker 전체 관리
+### 환경 변수 로드
 ```bash
-# 모든 컨테이너 중지 및 제거
-docker-compose down
+# Private EC2에서
+cd ~/itdaing
+source prod.env
 
-# 볼륨까지 제거 (주의: 데이터 삭제됨)
-docker-compose down -v
+# 원격 실행 시
+ssh private-ec2 "cd ~/itdaing && source prod.env && 명령어"
 ```
 
 ## 백엔드 명령어 (Gradle)
 
-### 개발 서버 실행
+### 개발 서버 실행 (Private EC2)
 ```bash
-# 기본 실행 (local 프로파일)
-./gradlew bootRun
+# Private EC2에서 직접 실행
+ssh private-ec2 "cd ~/itdaing && source prod.env && ./gradlew bootRun"
 
-# 특정 프로파일 지정
-SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
-SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
-
-# 백그라운드 실행 (로그 파일로 출력)
-./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &
+# 백그라운드 실행
+ssh private-ec2 "cd ~/itdaing && source prod.env && nohup ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &"
 ```
 
 ### 빌드
 ```bash
-# 전체 빌드 (테스트 포함)
+# 로컬에서 빌드
 ./gradlew build
 
 # 테스트 제외 빌드
@@ -67,7 +52,7 @@ SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 
 ### 테스트
 ```bash
-# 전체 테스트 실행
+# 전체 테스트 실행 (로컬)
 ./gradlew test
 
 # 특정 도메인 테스트
@@ -107,38 +92,31 @@ open build/reports/tests/test/index.html
 
 ## 프론트엔드 명령어 (npm)
 
-### 개발 서버 실행
+### 빌드 및 배포 (Private EC2)
+```bash
+# Private EC2에서 빌드
+ssh private-ec2 "cd ~/itdaing/itdaing-web && npm install && npm run build"
+
+# nginx 디렉토리로 복사
+ssh private-ec2 "sudo cp -r ~/itdaing/itdaing-web/dist/* /var/www/itdaing/ && sudo chown -R www-data:www-data /var/www/itdaing"
+```
+
+### 로컬 개발 (선택사항)
 ```bash
 # itdaing-web 디렉토리로 이동
 cd itdaing-web
 
-# 개발 서버 시작 (기본 포트: 5173)
+# 개발 서버 시작 (로컬)
 npm run dev
 
-# 호스트 바인딩 (다른 기기에서 접근 가능)
-npm run dev -- --host
-
-# 백그라운드 실행 (로그 파일로 출력)
-npm run dev -- --host > /tmp/itdaing-web-dev.log 2>&1 &
-```
-
-### 빌드 및 배포
-```bash
 # 프로덕션 빌드
 npm run build
-# 산출물: dist/
 
 # 빌드 결과 미리보기
 npm run preview
 
 # 의존성 설치
 npm install
-
-# 패키지 업데이트 확인
-npm outdated
-
-# 보안 취약점 확인
-npm audit
 ```
 
 ### 개발 도구
@@ -153,88 +131,93 @@ npx eslint .
 npx prettier --write .
 ```
 
-## 통합 개발 환경 실행
+## 서버 관리 명령어
 
-### 모든 서버 동시 실행
+### 백엔드 서버 관리
 ```bash
-# 터미널 1: MySQL
-docker-compose up -d mysql
+# 서버 상태 확인
+ssh private-ec2 "lsof -ti:8080 && echo '실행 중' || echo '미실행'"
 
-# 터미널 2: 백엔드
-./gradlew bootRun
+# 서버 시작
+ssh private-ec2 "cd ~/itdaing && source prod.env && nohup ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &"
 
-# 터미널 3: 프론트엔드
-cd itdaing-web && npm run dev -- --host
+# 서버 중지
+ssh private-ec2 "kill \$(lsof -ti:8080)"
+
+# 로그 확인
+ssh private-ec2 "tail -f /tmp/itdaing-boot.log"
 ```
 
-### 서버 중지
+### nginx 관리
 ```bash
-# 백엔드 중지: Ctrl+C 또는
-pkill -f "gradlew bootRun"
+# nginx 상태 확인
+ssh private-ec2 "sudo systemctl status nginx"
 
-# 프론트엔드 중지: Ctrl+C 또는
-pkill -f "vite"
+# nginx 재시작
+ssh private-ec2 "sudo systemctl restart nginx"
 
-# MySQL 중지
-docker-compose stop mysql
+# nginx 설정 테스트
+ssh private-ec2 "sudo nginx -t"
 ```
 
 ## 데이터베이스 명령어
 
 ### Flyway 마이그레이션
 ```bash
-# 마이그레이션 상태 확인
+# 마이그레이션 상태 확인 (로컬)
 ./gradlew flywayInfo
 
 # 마이그레이션 실행 (bootRun 시 자동 실행됨)
 ./gradlew flywayMigrate
-
-# 마이그레이션 롤백 (수동 SQL 필요)
-# Flyway는 자동 롤백을 지원하지 않으므로 수동으로 처리
 ```
 
-### MySQL 직접 접속
+### PostgreSQL RDS 접속
 ```bash
-# Docker 컨테이너를 통한 접속
-docker exec -it itdaing-mysql mysql -u root -p
+# Private EC2에서 접속
+ssh private-ec2 "cd ~/itdaing && source prod.env && PGPASSWORD=\$SPRING_DATASOURCE_PASSWORD psql -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com -U itdaing_admin -d itdaing-db"
 
-# 데이터베이스 선택
-USE itdaing;
+# 데이터베이스 목록 확인
+ssh private-ec2 "cd ~/itdaing && source prod.env && PGPASSWORD=\$SPRING_DATASOURCE_PASSWORD psql -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com -U itdaing_admin -d postgres -c '\l'"
 
 # 테이블 목록 확인
-SHOW TABLES;
+ssh private-ec2 "cd ~/itdaing && source prod.env && PGPASSWORD=\$SPRING_DATASOURCE_PASSWORD psql -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com -U itdaing_admin -d itdaing-db -c '\dt'"
+```
 
-# 데이터 확인
-SELECT * FROM users LIMIT 10;
+## S3 명령어
+
+### S3 버킷 확인
+```bash
+# 버킷 목록 확인
+ssh private-ec2 "cd ~/itdaing && source prod.env && AWS_ACCESS_KEY_ID=\$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=\$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=\$AWS_REGION aws s3 ls s3://\$STORAGE_S3_BUCKET"
+
+# 파일 업로드
+ssh private-ec2 "cd ~/itdaing && source prod.env && AWS_ACCESS_KEY_ID=\$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=\$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=\$AWS_REGION aws s3 cp /tmp/file.png s3://\$STORAGE_S3_BUCKET/uploads/"
+
+# 파일 다운로드
+ssh private-ec2 "cd ~/itdaing && source prod.env && AWS_ACCESS_KEY_ID=\$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=\$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=\$AWS_REGION aws s3 cp s3://\$STORAGE_S3_BUCKET/uploads/file.png /tmp/"
 ```
 
 ## 로그 확인
 
 ### 백엔드 로그
 ```bash
-# 실시간 로그 확인 (백그라운드 실행 시)
-tail -f /tmp/itdaing-boot.log
+# 실시간 로그 확인
+ssh private-ec2 "tail -f /tmp/itdaing-boot.log"
 
 # 최근 100줄 확인
-tail -n 100 /tmp/itdaing-boot.log
+ssh private-ec2 "tail -n 100 /tmp/itdaing-boot.log"
+
+# 에러만 확인
+ssh private-ec2 "grep -i error /tmp/itdaing-boot.log | tail -20"
 ```
 
-### 프론트엔드 로그
+### nginx 로그
 ```bash
-# 실시간 로그 확인 (백그라운드 실행 시)
-tail -f /tmp/itdaing-web-dev.log
+# 액세스 로그
+ssh private-ec2 "sudo tail -f /var/log/nginx/access.log"
 
-# 최근 100줄 확인
-tail -n 100 /tmp/itdaing-web-dev.log
-```
-
-### Docker 로그
-```bash
-# MySQL 컨테이너 로그
-docker logs -f itdaing-mysql
-
-# 최근 100줄
-docker logs --tail 100 itdaing-mysql
+# 에러 로그
+ssh private-ec2 "sudo tail -f /var/log/nginx/error.log"
 ```
 
 ## 프로세스 관리
@@ -242,49 +225,19 @@ docker logs --tail 100 itdaing-mysql
 ### 실행 중인 프로세스 확인
 ```bash
 # 백엔드 프로세스 확인
-ps aux | grep "gradlew bootRun"
-
-# 프론트엔드 프로세스 확인
-ps aux | grep "vite"
+ssh private-ec2 "ps aux | grep 'gradlew bootRun'"
 
 # 포트 사용 확인
-lsof -i :8080  # 백엔드
-lsof -i :5173  # 프론트엔드
-lsof -i :3306  # MySQL
+ssh private-ec2 "sudo ss -tlnp | grep -E ':(80|443|8080)'"
 ```
 
 ### 프로세스 종료
 ```bash
 # 특정 포트를 사용하는 프로세스 종료
-kill -9 $(lsof -t -i:8080)  # 백엔드
-kill -9 $(lsof -t -i:5173)  # 프론트엔드
-
-# 프로세스 이름으로 종료
-pkill -f "gradlew bootRun"
-pkill -f "vite"
+ssh private-ec2 "kill \$(lsof -ti:8080)"
 ```
 
-## 환경 변수 설정
-
-### 로컬 개발 환경
-```bash
-# .env 파일 생성 (itdaing-web/)
-cd itdaing-web
-cp .env.example .env
-# .env 파일 편집
-
-# 백엔드 환경 변수 (프로파일 기반)
-# application-local.yml, application-dev.yml 참조
-```
-
-### 프로덕션 환경
-```bash
-# prod.env 파일 사용 (서버에만 존재)
-source prod.env
-./gradlew bootRun
-```
-
-## Git 명령어 (참고)
+## Git 작업
 
 ### 일반적인 워크플로우
 ```bash
@@ -297,42 +250,61 @@ git add .
 # 커밋 (gitmoji 사용)
 git commit -m "✨ feat: add new feature"
 
-# 브랜치 생성 및 전환
-git checkout -b feature/new-feature
-
 # 원격 저장소에 푸시
-git push origin feature/new-feature
+git push origin main
 ```
 
-## 유용한 단축 명령어
-
-### 서버 재시작 스크립트
+### Private EC2에서 Git 작업
 ```bash
-# 모든 서버 중지 후 재시작
-# (별도 스크립트 파일로 만들 수 있음)
+# 상태 확인
+ssh private-ec2 "cd ~/itdaing && git status"
 
-# 1. 기존 프로세스 종료
-pkill -f "gradlew bootRun"
-pkill -f "vite"
-docker-compose stop mysql
+# 최신 코드 가져오기
+ssh private-ec2 "cd ~/itdaing && git pull origin main"
 
-# 2. MySQL 시작
-docker-compose up -d mysql
-sleep 5
+# 변경사항 확인
+ssh private-ec2 "cd ~/itdaing && git diff"
+```
 
-# 3. 백엔드 시작
-./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &
-sleep 10
+## 파일 전송
 
-# 4. 프론트엔드 시작
-cd itdaing-web && npm run dev -- --host > /tmp/itdaing-web-dev.log 2>&1 &
+### 로컬 → Private EC2
+```bash
+# 단일 파일
+scp 파일명 private-ec2:/tmp/
+
+# 디렉토리
+scp -r 디렉토리 private-ec2:/tmp/
+
+# 프로젝트 전체 (rsync)
+rsync -avz --exclude='.gradle' --exclude='build' --exclude='node_modules' ./ private-ec2:~/itdaing/
+```
+
+### Private EC2 → 로컬
+```bash
+# 단일 파일
+scp private-ec2:~/itdaing/파일명 ./
+
+# 디렉토리
+scp -r private-ec2:~/itdaing/디렉토리 ./
+```
+
+## 환경 변수 설정
+
+### 프로덕션 환경
+```bash
+# Private EC2에서 환경 변수 로드
+ssh private-ec2 "cd ~/itdaing && source prod.env"
+
+# 환경 변수 확인 (비밀번호 마스킹)
+ssh private-ec2 "cd ~/itdaing && cat prod.env | sed 's/PASSWORD=.*/PASSWORD=***/'"
 ```
 
 ## 주의사항
 
-1. **포트 충돌**: 8080(백엔드), 5173(프론트엔드), 3306(MySQL) 포트가 이미 사용 중인지 확인
-2. **데이터베이스 연결**: 백엔드 실행 전 MySQL 컨테이너가 실행 중인지 확인
-3. **환경 변수**: 로컬 개발 시 `local` 프로파일 사용, 외부 리소스 연동 시 `dev` 프로파일 사용
-4. **로그 파일**: 백그라운드 실행 시 로그 파일 위치 확인 (`/tmp/itdaing-*.log`)
-5. **의존성 설치**: 프론트엔드 의존성 변경 시 `npm install` 재실행 필요
-
+1. **SSH 접속**: 모든 Private EC2 작업은 SSH를 통해 수행됩니다
+2. **환경 변수**: Private EC2에서 작업 시 항상 `source prod.env` 실행
+3. **포트**: 백엔드는 8080, nginx는 80/443 포트 사용
+4. **로그 파일**: 백엔드 로그는 `/tmp/itdaing-boot.log`에 저장
+5. **데이터베이스**: AWS RDS PostgreSQL 사용 (로컬 DB 없음)
+6. **스토리지**: AWS S3 사용 (로컬 스토리지 없음)

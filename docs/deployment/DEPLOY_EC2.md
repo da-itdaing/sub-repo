@@ -1,21 +1,8 @@
-# AWS EC2 배포 가이드 (without Docker)
+# Private EC2 배포 가이드
 
-본 문서는 EC2 인스턴스에 Spring Boot 애플리케이션을 직접 배포(jar 실행)하기 위한 설정을 요약합니다. Docker는 사용하지 않습니다.
+본 문서는 Private EC2 인스턴스에 Spring Boot 애플리케이션을 직접 배포(jar 실행)하기 위한 설정을 요약합니다.
 
-## 1) JDK 21 설치 (macOS 로컬 개발/EC2 Ubuntu 기준)
-
-- macOS(Homebrew):
-
-```bash
-brew install openjdk@21
-sudo ln -sfn /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-21.jdk
-# zsh에 영구 반영
-echo 'export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
-java -version
-```
-
-- Ubuntu(EC2):
+## 1) JDK 21 설치 (Private EC2 Ubuntu 기준)
 
 ```bash
 sudo apt-get update
@@ -27,32 +14,39 @@ java -version
 
 운영용 프로파일 `prod`가 추가되었습니다: `src/main/resources/application-prod.yml`
 
-- 서버 포트: 80 (루트 권한이 필요할 수 있습니다. 필요 시 8080 + ALB/Nginx 사용 권장)
-- 데이터베이스(RDS) 및 S3 설정은 환경변수로 주입합니다.
+- 서버 포트: 8080 (nginx를 통해 80으로 프록시)
+- 데이터베이스(AWS RDS PostgreSQL) 및 S3 설정은 환경변수로 주입합니다.
 
-필수 환경변수:
+필수 환경변수 (`prod.env` 파일):
 
 ```bash
-# DB (RDS)
-export DB_URL='jdbc:mysql://<rds-endpoint>:3306/<db>'
-export DB_USERNAME='<username>'
-export DB_PASSWORD='<password>'
+# Spring Profile
+SPRING_PROFILES_ACTIVE=prod
 
-# JPA (옵션)
-export JPA_DDL_AUTO='update'      # 운영에서는 update/validate 권장
-export JPA_SHOW_SQL='false'
+# DB (RDS PostgreSQL)
+SPRING_DATASOURCE_URL=jdbc:postgresql://<rds-endpoint>:5432/<db>
+SPRING_DATASOURCE_USERNAME=<username>
+SPRING_DATASOURCE_PASSWORD=<password>
+
+# JWT
+JWT_SECRET=<secret>
+JWT_ISSUER=itdaing-prod
+JWT_ACCESS_TOKEN_EXPIRATION=86400000
+JWT_REFRESH_TOKEN_EXPIRATION=1209600000
 
 # AWS
-export AWS_REGION='ap-northeast-2'    # 코드에서 별도 사용 시
-export AWS_ACCESS_KEY_ID=''           # EC2 Instance Profile을 쓰면 비워둬도 됨
-export AWS_SECRET_ACCESS_KEY=''       # EC2 Instance Profile을 쓰면 비워둬도 됨
-export S3_BUCKET_NAME='daitdaing-server'
+AWS_REGION=ap-northeast-2
+AWS_ACCESS_KEY_ID=<access-key>
+AWS_SECRET_ACCESS_KEY=<secret-key>
 
-# Spring profile
-export SPRING_PROFILES_ACTIVE='prod'
+# S3
+STORAGE_PROVIDER=s3
+STORAGE_S3_BUCKET=<bucket-name>
+STORAGE_S3_REGION=ap-northeast-2
+STORAGE_S3_BASE_DIR=uploads
 ```
 
-주의: 키/비밀번호를 깃에 커밋하지 마세요. EC2에선 Instance Profile(역할)을 권장합니다.
+주의: 키/비밀번호를 깃에 커밋하지 마세요. `prod.env` 파일은 Private EC2에만 존재하며 권한은 600으로 설정합니다.
 
 ## 3) 패키징 및 배포
 
@@ -66,23 +60,18 @@ export SPRING_PROFILES_ACTIVE='prod'
 
 ```bash
 ./gradlew clean build -x test
-scp build/libs/*-SNAPSHOT.jar ubuntu@<private-ec2-ip>:/home/ubuntu/app.jar
-scp prod.env ubuntu@<private-ec2-ip>:/home/ubuntu/prod.env
+scp build/libs/*-SNAPSHOT.jar private-ec2:~/itdaing/app.jar
+scp prod.env private-ec2:~/itdaing/prod.env
 ```
 
-### 방법 2: Bastion을 경유하여 전송하는 경우
+### 방법 2: 배포 스크립트 사용
 
 ```bash
-./gradlew clean build -x test
+# 전체 프로젝트 배포 (권장)
+./scripts/deploy-full-project.sh
 
-# Bastion을 경유하여 Private EC2로 전송
-scp -o ProxyJump=ubuntu@<bastion-ip> \
-    build/libs/*-SNAPSHOT.jar \
-    ubuntu@<private-ec2-ip>:/home/ubuntu/app.jar
-
-scp -o ProxyJump=ubuntu@<bastion-ip> \
-    prod.env \
-    ubuntu@<private-ec2-ip>:/home/ubuntu/prod.env
+# 또는 JAR만 배포
+./scripts/deploy-to-private-ec2.sh
 ```
 
 ## 4) Private EC2에서 실행 (systemd 권장)
@@ -98,11 +87,13 @@ After=network.target
 
 [Service]
 User=ubuntu
-WorkingDirectory=/home/ubuntu
-EnvironmentFile=/home/ubuntu/prod.env
-ExecStart=/usr/bin/java -jar /home/ubuntu/app.jar
+WorkingDirectory=/home/ubuntu/itdaing
+EnvironmentFile=/home/ubuntu/itdaing/prod.env
+ExecStart=/usr/bin/java -jar /home/ubuntu/itdaing/app.jar
 Restart=always
 RestartSec=10
+StandardOutput=append:/tmp/itdaing-boot.log
+StandardError=append:/tmp/itdaing-boot.log
 
 [Install]
 WantedBy=multi-user.target
@@ -128,12 +119,55 @@ ssh private-ec2
 # 서비스 로그 확인
 journalctl -u itdaing -f
 
-# 또는 실시간 로그 확인
-sudo tail -f /var/log/itdaing/app.log  # 로그 파일이 있는 경우
+# 또는 로그 파일 확인
+tail -f /tmp/itdaing-boot.log
 ```
 
-## 6) 보안 메모
+## 6) nginx 설정
 
-- 포트 80 바인딩은 루트 권한 요구될 수 있음. 8080에서 실행하고 ALB/Nginx로 80을 종단하는 구성을 권장.
-- 운영 DB에 대해 `ddl-auto=create`는 데이터 손실 위험이 큼. `update` 또는 `validate` 사용을 권장.
-- AWS 키는 환경변수나 Instance Profile로만 주입하고, 코드/설정 파일에 하드코딩하지 마세요.
+nginx를 통해 프론트엔드 정적 파일과 백엔드 API를 서빙합니다.
+
+`/etc/nginx/sites-available/itdaing` 예시:
+
+```nginx
+server {
+    listen 80;
+    server_name <your-domain>;
+
+    # 프론트엔드 정적 파일
+    location / {
+        root /var/www/itdaing;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 백엔드 API 프록시
+    location /api {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+활성화:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/itdaing /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+## 7) 보안 메모
+
+- 포트 8080에서 실행하고 nginx로 80을 프록시하는 구성을 권장합니다.
+- 운영 DB에 대해 `ddl-auto=create`는 데이터 손실 위험이 큼. `validate` 사용을 권장합니다.
+- AWS 키는 환경변수로만 주입하고, 코드/설정 파일에 하드코딩하지 마세요.
+- `prod.env` 파일 권한은 600으로 설정합니다: `chmod 600 ~/itdaing/prod.env`
+
+## 8) 관련 문서
+
+- [Private EC2 접근 가이드](PRIVATE_EC2_ACCESS.md)
+- [Private EC2 초기 설정](SETUP_PRIVATE_EC2.md)
+- [Private EC2 환경 설정](PRIVATE_EC2_ENV_SETUP.md)
