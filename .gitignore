@@ -112,3 +112,23 @@ itdaing-web/Thumbs.db
 ### Local backup folders (do not commit)
 itdaing-web_backup_*/
 
+### Docker data directories ###
+.docker/mysql/
+.docker/**/*.dblwr
+.docker/**/*.ibd
+.docker/**/*.sdi
+.docker/**/binlog.*
+.docker/**/ib_buffer_pool
+.docker/**/ibdata*
+.docker/**/undo_*
+.docker/**/mysql.sock
+.docker/**/#innodb_redo/
+
+### Temporary files ###
+*.tmp
+*.temp
+/tmp/
+/tmp/itdaing-*.log
+
+### Cursor IDE ###
+.cursor/.worktrees.json
