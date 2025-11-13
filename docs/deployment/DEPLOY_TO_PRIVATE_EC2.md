@@ -6,6 +6,20 @@
 
 ## 🚀 배포 방법
 
+### 방법 0: 초기 설정 (처음 설정 시)
+
+기존 프로젝트 폴더를 제거하고 새로 시작하는 경우:
+
+```bash
+export PRIVATE_EC2_HOST=<private-ec2-ip>
+export PRIVATE_EC2_USER=ubuntu
+./scripts/setup-private-ec2.sh
+```
+
+이 스크립트는 기존 `final-project` 폴더를 제거하고 전체 프로젝트를 업로드합니다.
+
+자세한 내용은 [초기 설정 가이드](SETUP_PRIVATE_EC2.md)를 참고하세요.
+
 ### 방법 1: JAR 파일만 배포 (권장)
 
 애플리케이션 JAR 파일과 설정 파일만 업로드합니다.
