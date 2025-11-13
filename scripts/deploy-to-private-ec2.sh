@@ -55,15 +55,17 @@ scp "${JAR_FILE}" ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST}:${REMOTE_DIR}/app/app.
 echo -e "${GREEN}✅ JAR 파일 업로드 완료: $(basename ${JAR_FILE})${NC}"
 echo ""
 
-# 4. prod.env 파일 업로드 (있는 경우)
-if [ -f "prod.env" ]; then
-    echo -e "${YELLOW}📤 prod.env 파일 업로드 중...${NC}"
-    scp prod.env ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST}:${REMOTE_DIR}/config/prod.env
-    ssh ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST} "chmod 600 ${REMOTE_DIR}/config/prod.env"
-    echo -e "${GREEN}✅ prod.env 파일 업로드 완료${NC}"
-else
-    echo -e "${YELLOW}⚠️  prod.env 파일이 없습니다. 수동으로 업로드하세요.${NC}"
+# 4. prod.env 파일 업로드 (필수)
+if [ ! -f "prod.env" ]; then
+    echo -e "${RED}❌ prod.env 파일이 없습니다!${NC}"
+    echo "prod.env 파일을 프로젝트 루트에 생성하거나 확인하세요."
+    exit 1
 fi
+
+echo -e "${YELLOW}📤 prod.env 파일 업로드 중...${NC}"
+scp prod.env ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST}:${REMOTE_DIR}/config/prod.env
+ssh ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST} "chmod 600 ${REMOTE_DIR}/config/prod.env"
+echo -e "${GREEN}✅ prod.env 파일 업로드 완료${NC}"
 echo ""
 
 # 5. systemd 서비스 파일 업로드

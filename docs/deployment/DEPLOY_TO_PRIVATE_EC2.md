@@ -75,11 +75,12 @@ export PRIVATE_EC2_USER=ubuntu
 ```
 
 이 스크립트는 다음을 제외하고 업로드합니다:
-- `.git/`
 - `build/`, `out/`
 - `node_modules/`
 - `.gradle/`
 - 기타 임시 파일
+
+**참고**: `.git/` 폴더는 포함됩니다 (Git 히스토리 포함)
 
 #### 3. 원격에서 빌드 및 실행
 
@@ -114,6 +115,10 @@ scp build/libs/*-SNAPSHOT.jar ubuntu@<private-ec2-ip>:/home/ubuntu/itdaing/app/a
 
 #### 2. prod.env 파일 업로드
 
+`deploy-to-private-ec2.sh` 스크립트는 자동으로 `prod.env` 파일을 업로드합니다.
+
+수동 업로드가 필요한 경우:
+
 ```bash
 scp prod.env ubuntu@<private-ec2-ip>:/home/ubuntu/itdaing/config/prod.env
 ssh ubuntu@<private-ec2-ip> "chmod 600 /home/ubuntu/itdaing/config/prod.env"
@@ -123,12 +128,13 @@ ssh ubuntu@<private-ec2-ip> "chmod 600 /home/ubuntu/itdaing/config/prod.env"
 
 ```bash
 rsync -avz --progress \
-    --exclude=.git \
     --exclude=build \
     --exclude=node_modules \
     --exclude=.gradle \
     ./ ubuntu@<private-ec2-ip>:/home/ubuntu/itdaing/
 ```
+
+**참고**: `.git/` 폴더는 포함됩니다.
 
 ## 📁 원격 디렉토리 구조
 

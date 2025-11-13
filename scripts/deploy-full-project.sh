@@ -32,7 +32,6 @@ echo ""
 
 # 제외할 파일/폴더 목록
 EXCLUDE_PATTERNS=(
-    "--exclude=.git"
     "--exclude=.gradle"
     "--exclude=build"
     "--exclude=out"
@@ -48,6 +47,7 @@ EXCLUDE_PATTERNS=(
     "--exclude=*.swo"
     "--exclude=*~"
 )
+# 참고: .git 폴더는 포함됩니다
 
 # rsync를 사용한 업로드
 echo -e "${YELLOW}📤 프로젝트 폴더 업로드 중...${NC}"
@@ -63,6 +63,17 @@ else
 fi
 
 echo ""
+# prod.env 파일 확인
+if [ -f "prod.env" ]; then
+    echo -e "${YELLOW}📤 prod.env 파일 업로드 중...${NC}"
+    scp prod.env ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST}:${REMOTE_DIR}/prod.env
+    ssh ${PRIVATE_EC2_USER}@${PRIVATE_EC2_HOST} "chmod 600 ${REMOTE_DIR}/prod.env"
+    echo -e "${GREEN}✅ prod.env 파일 업로드 완료${NC}"
+else
+    echo -e "${RED}⚠️  prod.env 파일이 없습니다. 수동으로 업로드하세요.${NC}"
+fi
+echo ""
+
 echo -e "${GREEN}✅ 전체 프로젝트 폴더 업로드 완료!${NC}"
 echo ""
 echo "다음 단계:"
@@ -72,12 +83,11 @@ echo ""
 echo "  2. 프로젝트 디렉토리로 이동:"
 echo "     cd ${REMOTE_DIR}"
 echo ""
-echo "  3. 빌드 (필요한 경우):"
-echo "     ./gradlew clean build -x test"
-echo ""
-echo "  4. prod.env 파일 확인:"
+echo "  3. prod.env 파일 확인:"
 echo "     ls -la prod.env"
-echo "     # 없으면 생성하거나 업로드하세요"
+echo ""
+echo "  4. 빌드 (필요한 경우):"
+echo "     ./gradlew clean build -x test"
 echo ""
 echo "  5. 애플리케이션 실행:"
 echo "     source prod.env"
