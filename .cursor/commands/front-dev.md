@@ -1,6 +1,6 @@
-# 프론트엔드 개발 서버 실행
+# Private EC2에서 프론트엔드 빌드
 
-프론트엔드 개발 서버를 시작합니다.
+Private EC2에서 프론트엔드를 빌드합니다.
 
 ## 사용법
 ```
@@ -9,16 +9,15 @@
 
 ## 실행되는 명령어
 ```bash
-cd itdaing-web && npm run dev -- --host
+ssh private-ec2 "cd ~/itdaing/itdaing-web && npm install && npm run build"
 ```
 
 ## 설명
-- `itdaing-web` 디렉토리로 이동
-- Vite 개발 서버 시작
-- `--host` 옵션으로 다른 기기에서도 접근 가능하도록 설정
-- 기본 포트: 5173
-- 접속 URL: http://localhost:5173
+- Private EC2에 SSH 접속하여 프론트엔드를 빌드합니다.
+- 의존성 설치 후 프로덕션 빌드를 수행합니다.
+- 빌드 결과는 `itdaing-web/dist/` 디렉토리에 생성됩니다.
+- 빌드 후 nginx를 통해 서빙됩니다.
 
 ## 주의사항
-- 백엔드 서버가 실행 중이어야 API 호출이 가능합니다
-- MySQL 컨테이너도 실행 중이어야 합니다
+- SSH 접속이 설정되어 있어야 합니다 (`~/.ssh/config`에 `private-ec2` 호스트 설정 필요).
+- 빌드 후 nginx 디렉토리로 복사해야 합니다: `sudo cp -r ~/itdaing/itdaing-web/dist/* /var/www/itdaing/`
