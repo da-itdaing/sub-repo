@@ -1,0 +1,118 @@
+---
+alwaysApply: true
+---
+
+# Private EC2 접근 및 작업 규칙
+
+이 규칙은 Cursor에서 Private EC2에 직접 접근하여 작업할 때 따라야 할 가이드라인입니다.
+
+## SSH 접속 정보
+
+- **호스트**: `private-ec2` (SSH config에 설정됨)
+- **사용자**: `ubuntu`
+- **프록시**: Bastion EC2를 통한 접속
+- **프로젝트 디렉토리**: `/home/ubuntu/itdaing`
+
+## SSH 접속 방법
+
+```bash
+ssh private-ec2
+```
+
+또는 직접 명령 실행:
+
+```bash
+ssh private-ec2 "명령어"
+```
+
+## 환경 변수
+
+Private EC2에서 작업 시 항상 환경 변수를 로드해야 합니다:
+
+```bash
+cd ~/itdaing
+source prod.env
+```
+
+또는 SSH로 원격 실행 시:
+
+```bash
+ssh private-ec2 "cd ~/itdaing && source prod.env && 명령어"
+```
+
+## 주요 작업 디렉토리
+
+- **프로젝트 루트**: `~/itdaing`
+- **환경 변수 파일**: `~/itdaing/prod.env` (권한: 600)
+- **로그 파일**: `~/itdaing/logs/` (있는 경우)
+- **빌드 출력**: `~/itdaing/build/`
+
+## 자주 사용하는 명령어
+
+### 환경 확인
+```bash
+ssh private-ec2 "cd ~/itdaing && source prod.env && echo 'Bucket: $STORAGE_S3_BUCKET' && echo 'DB: $SPRING_DATASOURCE_URL'"
+```
+
+### 백엔드 서버 상태 확인
+```bash
+ssh private-ec2 "lsof -ti:8080 && echo '백엔드 실행 중' || echo '백엔드 미실행'"
+```
+
+### 백엔드 서버 시작
+```bash
+ssh private-ec2 "cd ~/itdaing && source prod.env && ./gradlew bootRun > /tmp/itdaing-boot.log 2>&1 &"
+```
+
+### 백엔드 서버 중지
+```bash
+ssh private-ec2 "kill \$(lsof -ti:8080) || echo '프로세스 없음'"
+```
+
+### 로그 확인
+```bash
+ssh private-ec2 "tail -f /tmp/itdaing-boot.log"
+```
+
+### Git 작업
+```bash
+ssh private-ec2 "cd ~/itdaing && git status"
+ssh private-ec2 "cd ~/itdaing && git pull origin main"
+```
+
+### S3 테스트
+```bash
+ssh private-ec2 "cd ~/itdaing && source prod.env && AWS_ACCESS_KEY_ID=\$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=\$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=\$AWS_REGION aws s3 ls s3://\$STORAGE_S3_BUCKET"
+```
+
+### 데이터베이스 연결 테스트
+```bash
+ssh private-ec2 "cd ~/itdaing && source prod.env && PGPASSWORD=\$SPRING_DATASOURCE_PASSWORD psql -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com -U itdaing_admin -d itdaing-db -c 'SELECT version();'"
+```
+
+## 주의사항
+
+1. **환경 변수 보안**
+   - `prod.env` 파일은 절대 Git에 커밋하지 않음
+   - 파일 권한은 항상 600 유지
+   - 환경 변수에 비밀번호가 포함되어 있으므로 주의
+
+2. **백엔드 서버 관리**
+   - 서버 시작 전에 포트 8080이 사용 중인지 확인
+   - 로그는 `/tmp/itdaing-boot.log`에 저장
+   - 서버 중지 시 `kill` 명령어 사용
+
+3. **파일 업로드**
+   - 로컬 파일을 Private EC2로 업로드: `scp 파일 private-ec2:/tmp/`
+   - Private EC2에서 로컬로 다운로드: `scp private-ec2:~/itdaing/파일 .`
+
+4. **프로덕션 환경**
+   - 모든 작업은 프로덕션 환경에서 수행됨
+   - 데이터베이스는 AWS RDS PostgreSQL 사용
+   - 스토리지는 AWS S3 사용
+   - 로컬 개발 환경은 사용하지 않음
+
+## 관련 문서
+
+- [Private EC2 환경 설정](../docs/deployment/PRIVATE_EC2_ENV_SETUP.md)
+- [배포 가이드](../docs/deployment/DEPLOY_TO_PRIVATE_EC2.md)

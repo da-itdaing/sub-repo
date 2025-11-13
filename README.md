@@ -12,12 +12,13 @@
 - **프레임워크**: Spring Boot 3.5.7
 - **언어**: Java 21
 - **빌드 도구**: Gradle (Kotlin DSL)
-- **데이터베이스**: PostgreSQL 15 + pgvector (Docker)
+- **데이터베이스**: PostgreSQL 15 + pgvector (AWS RDS)
 - **ORM**: JPA/Hibernate + QueryDSL
 - **마이그레이션**: Flyway
 - **인증**: JWT (jjwt 0.12.x)
 - **API 문서**: OpenAPI 3.0 (Swagger UI)
 - **주요 라이브러리**: Spring Web, Security, Data JPA, MapStruct
+- **스토리지**: AWS S3
 
 #### 프론트엔드
 - **프레임워크**: React 18.3.1
