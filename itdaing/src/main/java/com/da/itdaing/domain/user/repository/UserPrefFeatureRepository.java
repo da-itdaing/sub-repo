@@ -19,4 +19,6 @@ public interface UserPrefFeatureRepository extends JpaRepository<UserPrefFeature
         order by upf.createdAt desc
         """)
     List<UserPrefFeature> findByUserIdWithFeature(@Param("userId") Long userId);
+
+    List<UserPrefFeature> findAllByUser_Id(Long userId);
 }

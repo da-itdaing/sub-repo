@@ -20,4 +20,6 @@ public interface UserPrefStyleRepository extends JpaRepository<UserPrefStyle, Lo
         order by ups.createdAt desc
         """)
     List<UserPrefStyle> findByUserIdWithStyle(@Param("userId") Long userId);
+
+    List<UserPrefStyle> findAllByUser_Id(Long userId);
 }

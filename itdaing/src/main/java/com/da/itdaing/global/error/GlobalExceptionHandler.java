@@ -128,6 +128,28 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 인증 실패(401): 로그인 필요
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleSpringAuthenticationException(AuthenticationException e) {
+        log.warn("AuthenticationException: {}", e.getMessage());
+        // 프로젝트 ErrorCode에 UNAUTHORIZED가 있다고 가정
+        ApiError apiError = ApiError.of(ErrorCode.UNAUTHORIZED);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error(apiError));
+    }
+
+    /**
+     * 인가 실패(403): 권한 없음
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException e) {
+        log.warn("AccessDeniedException: {}", e.getMessage());
+        // 프로젝트 ErrorCode에 FORBIDDEN이 있다고 가정
+        ApiError apiError = ApiError.of(ErrorCode.FORBIDDEN);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(apiError));
+    }
+
+    /**
      * 데이터 무결성 위반 (DB 제약조건 위반 등)
      */
     @ExceptionHandler(DataIntegrityViolationException.class)

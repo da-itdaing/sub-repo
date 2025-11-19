@@ -33,9 +33,9 @@ public class UserPrefFeature extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "feature_id", nullable = false)
     private Feature feature;
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    // @CreatedDate
+    // @Column(name = "created_at", nullable = false, updatable = false)
+    // private LocalDateTime createdAt;
 
     @Builder
     public UserPrefFeature(Users user, Feature feature) {

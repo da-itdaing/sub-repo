@@ -20,6 +20,8 @@ public interface UserPrefRegionRepository extends JpaRepository<UserPrefRegion, 
         order by upr.createdAt desc
         """)
     List<UserPrefRegion> findByUserIdWithRegion(@Param("userId") Long userId);
+
+    List<UserPrefRegion> findAllByUser_Id(Long userId);
 }
 
 
