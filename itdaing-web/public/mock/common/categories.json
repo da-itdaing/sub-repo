@@ -1,0 +1,53 @@
+[
+  {
+    "id": 1,
+    "name": "패션",
+    "type": "POPUP"
+  },
+  {
+    "id": 2,
+    "name": "뷰티",
+    "type": "POPUP"
+  },
+  {
+    "id": 3,
+    "name": "음식",
+    "type": "POPUP"
+  },
+  {
+    "id": 4,
+    "name": "건강",
+    "type": "POPUP"
+  },
+  {
+    "id": 5,
+    "name": "공연/전시",
+    "type": "POPUP"
+  },
+  {
+    "id": 6,
+    "name": "스포츠",
+    "type": "POPUP"
+  },
+  {
+    "id": 7,
+    "name": "키즈",
+    "type": "POPUP"
+  },
+  {
+    "id": 8,
+    "name": "아트",
+    "type": "POPUP"
+  },
+  {
+    "id": 9,
+    "name": "굿즈",
+    "type": "POPUP"
+  },
+  {
+    "id": 10,
+    "name": "반려동물",
+    "type": "POPUP"
+  }
+]
+

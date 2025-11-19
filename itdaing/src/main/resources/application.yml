@@ -1,0 +1,11 @@
+spring:
+    config:
+        import: optional:file:${ENV_FILE:prod.env}
+    servlet:
+        multipart:
+            max-file-size: 10MB
+            max-request-size: 30MB
+
+external:
+    kakao:
+        map-app-key: ${KAKAO_MAP_APP_KEY:}

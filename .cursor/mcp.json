@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "AWS Documentation": {
+      "command": "/home/ubuntu/.local/bin/uvx",
+      "args": [
+        "awslabs.aws-documentation-mcp-server@latest"
+      ],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "INFO",
+        "AWS_DOCUMENTATION_PARTITION": "aws",
+        "PATH": "/home/ubuntu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      }
+    },
+    "Chrome DevTools": {
+      "command": "npx chrome-devtools-mcp@latest",
+      "env": {},
+      "args": []
+    }
+  }
+}

@@ -1,0 +1,144 @@
+# ============================================
+# DA-ITDAING 모노레포 .gitignore
+# ============================================
+
+# ============================================
+# 시스템 캐시 및 히스토리 (제외)
+# ============================================
+.cache/
+.config/
+.local/
+.bash_history
+.bash_logout
+.bashrc
+.profile
+.zshrc
+.lesshst
+.viminfo
+.mysql_history
+.psql_history
+.wget-hsts
+.sudo_as_admin_successful
+
+# ============================================
+# IDE 및 개발 도구
+# ============================================
+.cursor-server/
+.vscode-server/
+.dbclient/
+.dotnet/
+.redhat/
+
+# ============================================
+# 패키지 관리자 캐시
+# ============================================
+.gradle/
+.npm/
+.nvm/
+
+# ============================================
+# 보안 (제외 필수)
+# ============================================
+.ssh/
+*.pem
+*.key
+*.jks
+*.p12
+*.keystore
+*.crt
+*.p8
+
+# ============================================
+# 하위 Git 저장소 제외
+# ============================================
+itdaing/.git/
+itdaing/.git-backup/
+itdaing-web/.git/
+itdaing-web/.git-backup/
+
+# ============================================
+# itdaing (백엔드) 제외 항목
+# ============================================
+# 환경 변수 및 민감 정보
+itdaing/prod.env
+itdaing/.env
+itdaing/.env.*
+
+# 빌드 산출물
+itdaing/build/
+itdaing/bin/
+itdaing/.gradle/
+
+# 로그 파일
+itdaing/*.log
+itdaing/logs/
+
+# 데이터베이스 백업
+itdaing/backups/
+itdaing/*.sql.gz
+itdaing/db_backup_*.sql
+
+# 로컬 설정 파일
+itdaing/src/main/resources/application-local.yml
+
+# IDE 캐시
+itdaing/.cursor/
+
+# 임시 파일
+itdaing/tmp/
+itdaing/temp/
+
+# 배포 JAR는 포함 (부정 패턴)
+!itdaing/app.jar
+
+# ============================================
+# itdaing-web (프론트엔드) 제외 항목
+# ============================================
+# 환경 변수
+itdaing-web/.env
+itdaing-web/.env.*
+
+# NPM 패키지
+itdaing-web/node_modules/
+
+# 빌드 결과
+itdaing-web/dist/
+itdaing-web/dist-ssr/
+
+# 캐시
+itdaing-web/.vite/
+itdaing-web/.cache/
+
+# 임시 파일
+itdaing-web/tmp/
+
+# IDE 설정
+itdaing-web/.vscode/
+
+# ============================================
+# 기타 제외 항목
+# ============================================
+# 테스트 프로젝트
+my-map-test/
+
+# 루트의 src (itdaing 외부)
+/src/
+
+# 문서 파일
+*.pdf
+
+# 심볼릭 링크
+/start
+/stop
+/status
+
+# RDS 인증서
+rds-combined-ca-bundle.pem
+
+# OS 파일
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+
