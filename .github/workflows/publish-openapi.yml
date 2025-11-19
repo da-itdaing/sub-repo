@@ -1,0 +1,81 @@
+name: "Publish OpenAPI to GitHub Pages"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'itdaing/docs/openapi.json'
+      - '.github/workflows/publish-openapi.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy-swagger:
+    name: Deploy Swagger UI to GitHub Pages
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify OpenAPI file exists
+        run: |
+          if [ ! -f "itdaing/docs/openapi.json" ]; then
+            echo "❌ OpenAPI file not found at itdaing/docs/openapi.json"
+            echo "Please run ./update-openapi-docs.sh locally to generate the file"
+            exit 1
+          fi
+          echo "✅ OpenAPI file found"
+          ls -lh itdaing/docs/openapi.json
+
+      - name: Download Swagger UI
+        run: |
+          SWAGGER_VERSION="5.10.5"
+          wget -q https://github.com/swagger-api/swagger-ui/archive/refs/tags/v${SWAGGER_VERSION}.tar.gz
+          tar -xzf v${SWAGGER_VERSION}.tar.gz
+          mkdir -p swagger-ui-dist
+          cp -r swagger-ui-${SWAGGER_VERSION}/dist/* swagger-ui-dist/
+          rm -rf swagger-ui-${SWAGGER_VERSION} v${SWAGGER_VERSION}.tar.gz
+
+      - name: Prepare Swagger UI for deployment
+        run: |
+          # Copy OpenAPI JSON to Swagger UI dist
+          cp itdaing/docs/openapi.json swagger-ui-dist/openapi.json
+          
+          # Update Swagger UI to use our OpenAPI file
+          sed -i 's|https://petstore.swagger.io/v2/swagger.json|openapi.json|g' swagger-ui-dist/swagger-initializer.js || \
+          sed -i 's|url:.*petstore.*|url: "openapi.json",|g' swagger-ui-dist/swagger-initializer.js
+          
+          # Add custom title
+          sed -i 's|<title>.*</title>|<title>DA-ITDAING API Documentation</title>|g' swagger-ui-dist/index.html
+          
+          echo "✅ Swagger UI prepared for deployment"
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./swagger-ui-dist
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "🚀 :rocket: Deploy OpenAPI documentation to GitHub Pages"
+
+      - name: Summary
+        run: |
+          echo "## 🎉 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ OpenAPI documentation deployed to GitHub Pages" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📚 **View Documentation**: https://da-itdaing.github.io/sub-repo/" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏰ Deployed at: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💡 **Update API docs**: Run \`./update-openapi-docs.sh\` locally and commit changes" >> $GITHUB_STEP_SUMMARY

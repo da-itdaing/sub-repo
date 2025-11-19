@@ -1,0 +1,159 @@
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+
+### OS / Editor cruft ###
+.DS_Store
+Thumbs.db
+*~
+
+# Vim / JetBrains caches (프로젝트 루트 외에 우발 생성물)
+*.swp
+*.swo
+
+### Logs ###
+logs/
+*.log
+spring.log
+hs_err_pid*.log        # JVM crash log
+
+### Databases (H2 등) ###
+*.mv.db
+*.h2.db
+*.trace.db
+
+### Build reports / coverage ###
+build/reports/
+build/test-results/
+build/jacoco/
+jacoco.exec
+
+### Generated sources ###
+src/main/generated/     # Querydsl 등 annotation processor 산출물
+# (build/ 아래는 이미 무시 중)
+
+### Secrets / Local config ###
+# 실제 비밀값이 들어가는 로컬 설정은 ignore
+src/main/resources/application-local.yml
+src/main/resources/application-*.yml
+!src/main/resources/application.yml                 # 기본 템플릿은 유지(비밀 제거 필수)
+!src/main/resources/application-dev.yml             # dev 프로파일 (비밀값 없음)
+!src/main/resources/application-chatbot.yml        # chatbot 프로파일 (비밀값 없음)
+!src/main/resources/application-prod.yml            # prod 프로파일 (비밀값 없음, 환경변수 사용)
+!src/main/resources/application-openapi.yml         # OpenAPI 프로파일
+!src/main/resources/application-*.example.yml       # 샘플은 허용
+
+# 환경 변수 파일 (절대 커밋 금지)
+prod.env
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+!env.example
+
+# 인증서 및 키 파일
+**/*.keystore
+**/*.jks
+**/*.p12
+**/*.pem
+**/*.crt
+**/*.key
+**/*.p8
+**/*.p12
+**/credentials.json
+**/service-account.json
+
+# AWS 자격 증명 파일
+.aws/
+aws-credentials
+aws-keys.txt
+
+# Local deploy keys (do not commit)
+gh-pages
+gh-pages.pub
+
+### Uploads / runtime files (있다면) ###
+uploads/
+tmp/
+temp/
+
+### Database backups ###
+backups/
+*.sql.gz
+db_backup_*.sql
+
+### Frontend build / caches (itdaing-web)
+itdaing-web/node_modules/
+itdaing-web/dist/
+itdaing-web/dist-ssr/
+itdaing-web/.vite/
+itdaing-web/.cache/
+itdaing-web/**/*.map
+
+### PWA transient artifacts (if generated during experiments)
+itdaing-web/public/sw.*.map
+itdaing-web/public/workbox-*.*
+
+### Editor / OS (frontend duplicates handled here for safety)
+itdaing-web/.DS_Store
+itdaing-web/Thumbs.db
+
+### Local backup folders (do not commit)
+itdaing-web_backup_*/
+
+### Docker data directories ###
+.docker/mysql/
+.docker/**/*.dblwr
+.docker/**/*.ibd
+.docker/**/*.sdi
+.docker/**/binlog.*
+.docker/**/ib_buffer_pool
+.docker/**/ibdata*
+.docker/**/undo_*
+.docker/**/mysql.sock
+.docker/**/#innodb_redo/
+
+### Temporary files ###
+*.tmp
+*.temp
+/tmp/
+/tmp/itdaing-*.log
+
+### Cursor IDE ###
+.cursor/.worktrees.json

@@ -1,0 +1,93 @@
+name: Publish Swagger to GitHub Pages (manual)
+permissions:
+    contents: write
+on:
+  # 자동 실행을 비활성화하고 수동으로만 실행하도록 변경
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      HAS_DEPLOY_KEY: ${{ secrets.GH_PAGES_DEPLOY_KEY != '' }}
+      # App runtime env for generating OpenAPI
+      SPRING_PROFILES_ACTIVE: openapi
+      SERVER_PORT: 8080
+      JWT_SECRET: ci-test-secret-please-replace-0123456789-abcdefghijklmnopqrstuvwxyz-long-key
+      JWT_ISSUER: itdaing-server
+      # JwtTokenProvider expects millis (long). 15m and 7d respectively.
+      JWT_ACCESS_TOKEN_EXPIRATION: "900000"
+      JWT_REFRESH_TOKEN_EXPIRATION: "604800000"
+
+    steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  lfs: true
+
+            - name: Inspect wrapper files
+              run: |
+                ls -lah gradle/wrapper
+                xxd -l 4 gradle/wrapper/gradle-wrapper.jar || true
+
+            - name: Set up JDK 21
+              uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: '21'
+
+            - name: Grant execute permission for Gradle
+              run: chmod +x ./gradlew
+
+            - name: Build (compile only)
+              run: ./gradlew --no-daemon clean classes
+
+            # springdoc 플러그인이 앱을 잠깐 띄워서 /v3/api-docs.yaml을 파일로 생성
+            - name: Generate OpenAPI spec
+              run: ./gradlew --no-daemon generateOpenApiDocs
+
+            - name: Prepare static Swagger UI
+              run: |
+                  mkdir -p public
+                  cp build/openapi/openapi.yaml public/
+                  cat > public/index.html <<'EOF'
+                  <!doctype html>
+                  <html>
+                  <head>
+                    <meta charset="utf-8"/>
+                    <title>ItDaIng API Docs</title>
+                    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+                    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css">
+                  </head>
+                  <body>
+                    <div id="swagger-ui"></div>
+                    <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+                    <script>
+                      window.onload = () => {
+                        window.ui = SwaggerUIBundle({
+                          url: './openapi.yaml',
+                          dom_id: '#swagger-ui'
+                        });
+                      };
+                    </script>
+                  </body>
+                  </html>
+                  EOF
+
+            # If a deploy key is configured, prefer it (works even when org restricts GITHUB_TOKEN writes)
+            - name: Deploy to GitHub Pages (deploy key)
+              if: ${{ env.HAS_DEPLOY_KEY == 'true' }}
+              uses: peaceiris/actions-gh-pages@v3
+              with:
+                  deploy_key: ${{ secrets.GH_PAGES_DEPLOY_KEY }}
+                  publish_dir: ./public
+                  publish_branch: gh-pages
+
+            # Fallback to GITHUB_TOKEN when it has contents: write
+            - name: Deploy to GitHub Pages (token)
+              if: ${{ env.HAS_DEPLOY_KEY != 'true' }}
+              uses: peaceiris/actions-gh-pages@v3
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: ./public
+                  publish_branch: gh-pages
