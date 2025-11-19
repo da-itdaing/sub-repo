@@ -27,8 +27,8 @@ repositories {
 
 openApi {
     // CI가 앱을 띄운 뒤 /v3/api-docs.yaml을 가져와서 파일로 저장
-    outputDir.set(file("$buildDir/openapi"))
-    outputFileName.set("openapi.yaml")
+    outputDir.set(file("$projectDir/docs"))
+    outputFileName.set("openapi.json")
     waitTimeInSeconds.set(90)
 
     // 'openapi' 프로파일로 부팅 (H2 사용/보안완화용)
