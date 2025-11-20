@@ -1,0 +1,87 @@
+@charset "UTF-8";
+
+/* Pretendard (Custom family aliases to match existing usage) */
+@font-face {
+  font-family: 'Pretendard:Regular';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Pretendard Regular'), local('Pretendard-Regular'), local('Pretendard');
+}
+
+@font-face {
+  font-family: 'Pretendard:Medium';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local('Pretendard Medium'), local('Pretendard-Medium'), local('Pretendard');
+}
+
+@font-face {
+  font-family: 'Pretendard:SemiBold';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Pretendard SemiBold'), local('Pretendard-SemiBold'), local('Pretendard');
+}
+
+@font-face {
+  font-family: 'Pretendard:Bold';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Pretendard Bold'), local('Pretendard-Bold'), local('Pretendard');
+}
+
+/* Black Han Sans */
+@font-face {
+  font-family: 'Black_Han_Sans:Regular';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/blackhansans/v16/ea8Aad44WunzF9a8Xb7eO11dNNA.woff2') format('woff2');
+}
+
+/* Luckiest Guy */
+@font-face {
+  font-family: 'Luckiest_Guy:Regular';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/luckiestguy/v17/_gP_1RrxsjcxVyin9l9n_j2hZd0.woff2') format('woff2');
+}
+
+/* Jeju Gothic */
+@font-face {
+  font-family: 'JejuGothic:Regular';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Jeju Gothic'), local('JejuGothic'), local('Noto Sans KR'), local('Malgun Gothic'), sans-serif;
+}
+
+:root,
+:host {
+  --font-display: 'Black_Han_Sans:Regular', 'Luckiest_Guy:Regular', 'Pretendard:Bold', 'Noto Sans KR', sans-serif;
+  --font-heading: 'Pretendard:SemiBold', 'Pretendard:Bold', 'Pretendard:Medium', 'Noto Sans KR', sans-serif;
+  --font-body: 'Pretendard:Regular', 'Pretendard:Medium', 'JejuGothic:Regular', 'Noto Sans KR', sans-serif;
+  --font-sans: var(--font-body);
+  --default-font-family: var(--font-body);
+}
+
+body {
+  font-family: var(--font-body);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
