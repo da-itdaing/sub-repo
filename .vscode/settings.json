@@ -1,4 +1,5 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
-    "sqltools.connections": []
+    "sqltools.connections": [],
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

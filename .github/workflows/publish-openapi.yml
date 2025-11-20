@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths:
+      - 'itdaing/src/**'
+      - 'itdaing/build.gradle.kts'
       - 'itdaing/docs/openapi.json'
       - '.github/workflows/publish-openapi.yml'
   workflow_dispatch:
@@ -18,22 +20,38 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy-swagger:
-    name: Deploy Swagger UI to GitHub Pages
+  generate-and-deploy:
+    name: Generate OpenAPI and Deploy to GitHub Pages
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Verify OpenAPI file exists
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Generate OpenAPI documentation
+        working-directory: itdaing
+        run: |
+          chmod +x ./gradlew
+          ./gradlew generateOpenApiDocs --no-daemon
+
+      - name: Verify OpenAPI file
         run: |
           if [ ! -f "itdaing/docs/openapi.json" ]; then
-            echo "❌ OpenAPI file not found at itdaing/docs/openapi.json"
-            echo "Please run ./update-openapi-docs.sh locally to generate the file"
+            echo "❌ OpenAPI file not found!"
             exit 1
           fi
-          echo "✅ OpenAPI file found"
+          echo "✅ OpenAPI file generated successfully"
           ls -lh itdaing/docs/openapi.json
 
       - name: Download Swagger UI
@@ -50,9 +68,9 @@ jobs:
           # Copy OpenAPI JSON to Swagger UI dist
           cp itdaing/docs/openapi.json swagger-ui-dist/openapi.json
           
-          # Update Swagger UI to use our OpenAPI file
+          # Update Swagger UI index.html to use our OpenAPI file
           sed -i 's|https://petstore.swagger.io/v2/swagger.json|openapi.json|g' swagger-ui-dist/swagger-initializer.js || \
-          sed -i 's|url:.*petstore.*|url: "openapi.json",|g' swagger-ui-dist/swagger-initializer.js
+          sed -i 's|https://petstore.swagger.io/v2/swagger.json|openapi.json|g' swagger-ui-dist/index.html
           
           # Add custom title
           sed -i 's|<title>.*</title>|<title>DA-ITDAING API Documentation</title>|g' swagger-ui-dist/index.html
@@ -66,16 +84,15 @@ jobs:
           publish_dir: ./swagger-ui-dist
           publish_branch: gh-pages
           force_orphan: true
-          commit_message: "🚀 :rocket: Deploy OpenAPI documentation to GitHub Pages"
+          commit_message: "🚀 Deploy OpenAPI documentation"
 
       - name: Summary
         run: |
           echo "## 🎉 Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ OpenAPI documentation deployed to GitHub Pages" >> $GITHUB_STEP_SUMMARY
+          echo "✅ OpenAPI documentation has been deployed to GitHub Pages" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📚 **View Documentation**: https://da-itdaing.github.io/sub-repo/" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "⏰ Deployed at: $(date)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "💡 **Update API docs**: Run \`./update-openapi-docs.sh\` locally and commit changes" >> $GITHUB_STEP_SUMMARY
+

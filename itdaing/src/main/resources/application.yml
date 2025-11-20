@@ -1,6 +1,5 @@
+# 공통 설정 (local, prod 다 같이 씀)
 spring:
-    config:
-        import: optional:file:${ENV_FILE:prod.env}
     servlet:
         multipart:
             max-file-size: 10MB
@@ -9,3 +8,12 @@ spring:
 external:
     kakao:
         map-app-key: ${KAKAO_MAP_APP_KEY:}
+
+---
+
+# 여기부터는 prod 프로필에서만 적용
+spring:
+    config:
+        activate:
+            on-profile: prod
+        import: optional:file:${ENV_FILE:prod.env}

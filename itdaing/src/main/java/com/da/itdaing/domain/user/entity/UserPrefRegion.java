@@ -40,9 +40,9 @@ public class UserPrefRegion extends BaseTimeEntity {
     @JoinColumn(name = "region_id", nullable = false)
     private Region region;
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    // @CreatedDate
+    // @Column(name = "created_at", nullable = false, updatable = false)
+    // private LocalDateTime createdAt;
 
     @Builder
     public UserPrefRegion(Users user, Region region) {

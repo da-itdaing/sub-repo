@@ -16,10 +16,7 @@ import java.time.LocalDate;
 @Entity
 @Table(
     name = "metric_daily_popup",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uk_mdp_popup_date",
-        columnNames = {"popup_id", "date"}
-    )
+    uniqueConstraints = @UniqueConstraint(name = "uk_metric_popup_date", columnNames = {"popup_id", "date"})
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -56,6 +53,20 @@ public class MetricDailyPopup {
         this.uniqueUsers = uniqueUsers != null ? uniqueUsers : 0;
         this.favorites = favorites != null ? favorites : 0;
         this.reviews = reviews != null ? reviews : 0;
+    }
+
+    public static MetricDailyPopup create(Popup popup, LocalDate date) {
+        MetricDailyPopup m = new MetricDailyPopup();
+        // 같은 클래스 내부이므로 private 필드에 직접 접근 가능
+        m.popup = popup;
+        m.date = date;
+        m.views = 0;      // Integer 타입이므로 0 (long 리터럴 0L 금지)
+        return m;
+    }
+
+    public void increaseViews(int delta) {
+        if (this.views == null) this.views = 0;
+        this.views += delta;   // views가 Integer이므로 delta도 int로
     }
 }
 

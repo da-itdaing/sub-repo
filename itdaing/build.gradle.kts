@@ -27,8 +27,8 @@ repositories {
 
 openApi {
     // CI가 앱을 띄운 뒤 /v3/api-docs.yaml을 가져와서 파일로 저장
-    outputDir.set(file("$projectDir/docs"))
-    outputFileName.set("openapi.json")
+    outputDir.set(file("$buildDir/openapi"))
+    outputFileName.set("openapi.yaml")
     waitTimeInSeconds.set(90)
 
     // 'openapi' 프로파일로 부팅 (H2 사용/보안완화용)
@@ -59,6 +59,9 @@ dependencies {
     // AWS SDK v2 (S3)
     implementation(platform("software.amazon.awssdk:bom:2.25.66"))
     implementation("software.amazon.awssdk:s3")
+
+    // --- Redis
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
     // --- QueryDSL (Jakarta)
     implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
@@ -98,13 +101,6 @@ dependencies {
 //    testImplementation("org.testcontainers:junit-jupiter")
 //    testImplementation("org.testcontainers:mysql")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-// QueryDSL Q타입 및 기타 APT 산출물을 IDE가 인식하도록 추가
-sourceSets {
-    named("main") {
-        java.srcDir("build/generated/sources/annotationProcessor/java/main")
-    }
 }
 
 // build.gradle.kts

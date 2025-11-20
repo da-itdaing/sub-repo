@@ -15,6 +15,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.naming.AuthenticationException;
+import java.nio.file.AccessDeniedException;
 import java.util.stream.Collectors;
 
 /**
@@ -30,17 +32,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         log.warn("MethodArgumentNotValidException: {}", e.getMessage());
-        
+
         // @AssertTrue 메서드 에러를 실제 필드명으로 매핑
         org.springframework.validation.BindingResult bindingResult = e.getBindingResult();
         java.util.List<org.springframework.validation.FieldError> fieldErrors = bindingResult.getFieldErrors();
-        
+
         // @AssertTrue 에러 필드명 매핑 (isPasswordConfirmed -> passwordConfirm)
         java.util.Map<String, String> assertTrueFieldMapping = java.util.Map.of(
             "isPasswordConfirmed", "passwordConfirm",
             "isAgeGroupTens", "ageGroup"
         );
-        
+
         java.util.List<org.springframework.validation.FieldError> mappedFieldErrors = fieldErrors.stream()
             .map(error -> {
                 String fieldName = error.getField();
@@ -59,7 +61,7 @@ public class GlobalExceptionHandler {
                 return error;
             })
             .collect(java.util.stream.Collectors.toList());
-        
+
         // 매핑된 필드 에러로 ApiError 생성
         java.util.List<com.da.itdaing.global.error.ApiError.FieldError> apiFieldErrors = mappedFieldErrors.stream()
             .map(error -> new com.da.itdaing.global.error.ApiError.FieldError(
@@ -68,7 +70,7 @@ public class GlobalExceptionHandler {
                 error.getDefaultMessage()
             ))
             .collect(java.util.stream.Collectors.toList());
-        
+
         ApiError apiError = ApiError.of(ErrorCode.INVALID_INPUT_VALUE, apiFieldErrors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(apiError));
     }
@@ -125,6 +127,28 @@ public class GlobalExceptionHandler {
         log.warn("AuthException: {}", e.getMessage());
         ApiError apiError = ApiError.of(e.getErrorCode());
         return ResponseEntity.status(e.getErrorCode().getStatus()).body(ApiResponse.error(apiError));
+    }
+
+    /**
+     * 인증 실패(401): 로그인 필요
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleSpringAuthenticationException(AuthenticationException e) {
+        log.warn("AuthenticationException: {}", e.getMessage());
+        // 프로젝트 ErrorCode에 UNAUTHORIZED가 있다고 가정
+        ApiError apiError = ApiError.of(ErrorCode.UNAUTHORIZED);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error(apiError));
+    }
+
+    /**
+     * 인가 실패(403): 권한 없음
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException e) {
+        log.warn("AccessDeniedException: {}", e.getMessage());
+        // 프로젝트 ErrorCode에 FORBIDDEN이 있다고 가정
+        ApiError apiError = ApiError.of(ErrorCode.FORBIDDEN);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(apiError));
     }
 
     /**

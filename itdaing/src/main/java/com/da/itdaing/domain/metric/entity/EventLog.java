@@ -56,10 +56,18 @@ public class EventLog {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(length = 100)
+    private String source;          // "home/top", "search/result" 등
+
+    @Column(length = 64)
+    private String sessionId;
+
     @Builder
-    public EventLog(Users user, Popup popup, ZoneCell zoneCell, EventAction actionType) {
+    public EventLog(Users user, Popup popup, String source, String sessionId, ZoneCell zoneCell, EventAction actionType) {
         this.user = user;
         this.popup = popup;
+        this.source = source;
+        this.sessionId = sessionId;
         this.zoneCell = zoneCell;
         this.actionType = actionType;
     }

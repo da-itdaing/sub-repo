@@ -40,9 +40,9 @@ public class UserPrefStyle extends BaseTimeEntity {
     @JoinColumn(name = "style_id", nullable = false)
     private Style style;
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    // @CreatedDate
+    // @Column(name = "created_at", nullable = false, updatable = false)
+    // private LocalDateTime createdAt;
 
     @Builder
     public UserPrefStyle(Users user, Style style) {

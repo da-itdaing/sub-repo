@@ -15,6 +15,10 @@ public enum ErrorCode {
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "E001", "입력값이 올바르지 않습니다"),
     INVALID_TYPE_VALUE(HttpStatus.BAD_REQUEST, "E002", "입력 타입이 올바르지 않습니다"),
     MISSING_INPUT_VALUE(HttpStatus.BAD_REQUEST, "E003", "필수 입력값이 누락되었습니다"),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "E401", "로그인이 필요합니다"),
+    INVALID_PREFERENCE_IDS(HttpStatus.BAD_REQUEST, "E004", "유효하지 않은 선호 ID가 포함되어 있습니다"),
+    DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, "E409-DB", "데이터 무결성 위반"),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "E403", "접근 권한이 없습니다"),
 
     // 404 Not Found
     ENTITY_NOT_FOUND(HttpStatus.NOT_FOUND, "E101", "요청한 리소스를 찾을 수 없습니다"),
@@ -37,6 +41,9 @@ public enum ErrorCode {
     DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "E201", "이미 존재하는 리소스입니다"),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "E202", "이미 사용 중인 이메일입니다"),
     DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, "E203", "이미 사용 중인 로그인 아이디입니다"),
+
+    // 503 Service Unavailable (옵션: 캐시/외부시스템 장애)
+    CACHE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "E901", "캐시 서버 연결에 실패했습니다"),
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "E999", "서버 내부 오류가 발생했습니다");

@@ -20,5 +20,7 @@ public interface UserPrefCategoryRepository extends JpaRepository<UserPrefCatego
         order by upc.createdAt desc
         """)
     List<UserPrefCategory> findByUserIdWithCategory(@Param("userId") Long userId);
+
+    List<UserPrefCategory> findAllByUser_Id(Long userId);
 }
 

@@ -40,9 +40,9 @@ public class UserPrefCategory extends BaseTimeEntity {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    // @CreatedDate
+    // @Column(name = "created_at", nullable = false, updatable = false)
+    // private LocalDateTime createdAt;
 
     @Builder
     public UserPrefCategory(Users user, Category category) {
