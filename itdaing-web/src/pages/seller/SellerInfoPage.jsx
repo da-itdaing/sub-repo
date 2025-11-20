@@ -1,73 +1,177 @@
-import React, { useMemo } from "react";
-import { usePopups, useSellerById } from "../../hooks/usePopups";
-import { getImageUrl } from "../../utils/imageUtils";
+import { useRef, useState } from "react";
+import { UserRound } from "lucide-react";
 
-export function SellerInfoPage({ sellerId, onClose, onMyPageClick, onPopupClick }){
-	const { seller, loading: sellerLoading, error: sellerError } = useSellerById(sellerId);
-	const { data: popupList, loading: popupsLoading, error: popupsError } = usePopups();
-	const sellerPopups = (popupList ?? []).filter(p=> p.sellerId === sellerId);
-	const defaultSellerImage = useMemo(
-		() => "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop",
-		[]
-	);
+export default function SellerInfoPage() {
+	const [editMode, setEditMode] = useState(false);
 
-	if (sellerLoading || popupsLoading) {
-		return <div className="pt-24 p-6 text-gray-500">판매자 정보를 불러오는 중입니다...</div>;
-	}
-	if (sellerError) {
-		return <div className="pt-24 p-6 text-gray-500">판매자 정보를 불러오지 못했습니다.</div>;
-	}
-	if(!seller) return <div className="pt-24 p-6">판매자 정보를 찾을 수 없습니다.</div>;
-	if (popupsError) {
-		return <div className="pt-24 p-6 text-gray-500">판매자 팝업 정보를 불러오지 못했습니다.</div>;
-	}
+	const [profile, setProfile] = useState({
+		name: "다잇다잉 님", // ✔ 닉네임은 수정 불가
+		email: "DaitDaing@gmail.com",
+		intro: "소개말",
+		area: "",
+		sns: "",
+		image: null, // 이미지 파일
+		imagePreview: null, // 이미지 미리보기 URL
+	});
+
+	const fileInputRef = useRef(null);
+
+	// 프로필 사진 변경
+	const handleImageClick = () => {
+		fileInputRef.current?.click();
+	};
+
+	const handleImageChange = event => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		const previewURL = URL.createObjectURL(file);
+
+		setProfile(prev => ({
+			...prev,
+			image: file,
+			imagePreview: previewURL,
+		}));
+	};
+
+	const handleChange = event => {
+		const { name, value } = event.target;
+		setProfile(prev => ({ ...prev, [name]: value }));
+	};
+
+	const handleSave = () => {
+		setEditMode(false);
+		alert("프로필이 저장되었습니다!");
+	};
+
 	return (
-		<div className="min-h-screen bg-white pt-24 p-6">
-			<div className="max-w-[930px] mx-auto space-y-8">
-				<div className="flex justify-between items-center">
-					<h1 className="text-2xl font-bold">{seller.name}</h1>
-					<div className="flex gap-2">
-						<button onClick={onMyPageClick} className="px-3 py-2 rounded bg-gray-100">마이페이지</button>
-						<button onClick={onClose} className="px-3 py-2 rounded bg-gray-200">닫기</button>
+		<div className="flex items-start justify-center w-full h-full pt-14">
+			<div className="w-[900px] bg-white border border-gray-300 rounded-lg p-8 shadow-sm">
+				{/* 상단 프로필 */}
+				<div className="flex items-center gap-6 mb-10">
+					{/* 프로필 이미지 */}
+					<button
+						type="button"
+						onClick={handleImageClick}
+						className="flex items-center justify-center w-32 h-32 overflow-hidden bg-gray-200 border rounded-full cursor-pointer"
+					>
+						{profile.imagePreview ? (
+							<img
+								src={profile.imagePreview}
+								alt="profile"
+								className="object-cover w-full h-full"
+							/>
+						) : (
+							<UserRound size={60} className="text-gray-500" />
+						)}
+					</button>
+
+					{/* 숨겨진 파일 input */}
+					<input
+						type="file"
+						accept="image/*"
+						ref={fileInputRef}
+						onChange={handleImageChange}
+						className="hidden"
+					/>
+
+					{/* 닉네임 + 소개말 */}
+					<div>
+						<h2 className="text-3xl font-bold text-[#eb0000]">{profile.name}</h2>
+
+						{/* 소개말만 수정 가능 */}
+						{!editMode ? (
+							<p className="mt-3 text-gray-600">{profile.intro}</p>
+						) : (
+							<input
+								type="text"
+								name="intro"
+								value={profile.intro}
+								onChange={handleChange}
+								className="border p-2 rounded w-[300px] mt-2"
+								placeholder="소개말 입력"
+							/>
+						)}
 					</div>
 				</div>
-				<div className="flex flex-col md:flex-row gap-6">
-					<div className="w-32 h-32 flex-shrink-0">
-						<img
-							src={getImageUrl(seller.profileImage, defaultSellerImage)}
-							alt={seller.name}
-							className="w-full h-full object-cover rounded-full border border-gray-100 shadow-sm"
-						/>
+
+				{/* 상세 정보 */}
+				<div className="grid grid-cols-2 text-sm gap-y-8">
+					{/* 주 활동 지역 */}
+					<div>
+						<p className="font-semibold text-red-600">주 활동 지역</p>
+						{!editMode ? (
+							<p className="mt-2 text-gray-600">
+								{profile.area || "활동 지역을 입력해주세요."}
+							</p>
+						) : (
+							<input
+								type="text"
+								name="area"
+								value={profile.area}
+								onChange={handleChange}
+								className="border p-2 rounded mt-1 w-[250px]"
+								placeholder="지역 입력"
+							/>
+						)}
 					</div>
-					<div className="flex-1 space-y-2 text-sm text-[#4d4d4d]">
-						<p className="whitespace-pre-line">{seller.description ?? "소개 정보가 준비중입니다."}</p>
-						<div className="grid sm:grid-cols-2 gap-x-4 gap-y-2">
-							<p><span className="font-semibold text-gray-900">활동 지역</span> {seller.mainArea ?? "미정"}</p>
-							<p><span className="font-semibold text-gray-900">카테고리</span> {seller.category ?? "미분류"}</p>
-							<p><span className="font-semibold text-gray-900">이메일</span> {seller.email}</p>
-							<p><span className="font-semibold text-gray-900">연락처</span> {seller.phone ?? "제공되지 않음"}</p>
-							{seller.sns && (
-								<p className="sm:col-span-2"><span className="font-semibold text-gray-900">SNS</span> {seller.sns}</p>
-							)}
-						</div>
+
+					{/* 이메일 */}
+					<div>
+						<p className="font-semibold text-red-600">이메일</p>
+						<p className="mt-2 text-gray-700">{profile.email}</p>
+					</div>
+
+					{/* SNS */}
+					<div>
+						<p className="font-semibold text-red-600">SNS</p>
+						{!editMode ? (
+							<p className="mt-2 text-gray-600">
+								{profile.sns || "링크를 입력해주세요."}
+							</p>
+						) : (
+							<input
+								type="text"
+								name="sns"
+								value={profile.sns}
+								onChange={handleChange}
+								className="border p-2 rounded mt-1 w-[250px]"
+								placeholder="SNS 링크"
+							/>
+						)}
 					</div>
 				</div>
-				<div>
-					<h2 className="text-lg font-semibold mb-3">판매자의 팝업 ({sellerPopups.length})</h2>
-					<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-						{sellerPopups.map(p => (
-							<button key={p.id} onClick={()=>onPopupClick?.(p.id)} className="text-left border rounded p-3 bg-white shadow-sm hover:shadow">
-								<img alt={p.title} src={getImageUrl(p.thumbnail, "https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=800&h=600&fit=crop")} className="w-full h-32 object-cover rounded mb-2" />
-								<p className="font-semibold text-sm mb-1 line-clamp-2">{p.title}</p>
-								<p className="text-xs text-[#4d4d4d] mb-1">{p.startDate} ~ {p.endDate}</p>
-								<p className="text-xs">조회수 {p.viewCount} / 좋아요 {p.favoriteCount}</p>
+
+				{/* 버튼 영역 */}
+				<div className="flex justify-end gap-3 mt-12">
+					{!editMode ? (
+						<button
+							type="button"
+							className="bg-[#eb0000] text-white px-6 py-2 rounded-full hover:bg-red-600 transition"
+							onClick={() => setEditMode(true)}
+						>
+							프로필 수정
+						</button>
+					) : (
+						<>
+							<button
+								type="button"
+								className="px-6 py-2 text-black transition bg-gray-300 rounded-full hover:bg-gray-400"
+								onClick={() => setEditMode(false)}
+							>
+								취소
 							</button>
-						))}
-						{sellerPopups.length === 0 && <p className="text-sm text-[#4d4d4d]">등록된 팝업이 없습니다.</p>}
-					</div>
+							<button
+								type="button"
+								className="bg-[#eb0000] text-white px-6 py-2 rounded-full hover:bg-red-600 transition"
+								onClick={handleSave}
+							>
+								저장
+							</button>
+						</>
+					)}
 				</div>
 			</div>
 		</div>
 	);
 }
-export default SellerInfoPage;

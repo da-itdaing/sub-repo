@@ -21,6 +21,8 @@ const SignupSellerPage = lazy(() => import('../pages/Login/SignupSellerPage.jsx'
 // Seller pages
 const SellerDashboard = lazy(() => import('../pages/seller/SellerDashboard.jsx'));
 const SellerPopupManagement = lazy(() => import('../pages/seller/PopupManagement.jsx'));
+const SellerPopupCreatePage = lazy(() => import('../pages/seller/PopupCreatePage.jsx'));
+const LocationSelectPage = lazy(() => import('../pages/seller/LocationSelectPage.jsx'));
 const SellerSchedule = lazy(() => import('../pages/seller/Schedule.jsx'));
 const SellerMessages = lazy(() => import('../pages/seller/Messages.jsx'));
 const SellerReviewManagement = lazy(() => import('../pages/seller/ReviewManagement.jsx'));
@@ -161,6 +163,22 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<LoadingFallback />}>
                 <SellerPopupManagement />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'popup/create',
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <SellerPopupCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'location',
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <LocationSelectPage />
               </Suspense>
             ),
           },
