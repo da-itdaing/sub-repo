@@ -15,6 +15,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.naming.AuthenticationException;
+import java.nio.file.AccessDeniedException;
 import java.util.stream.Collectors;
 
 /**
@@ -30,17 +32,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         log.warn("MethodArgumentNotValidException: {}", e.getMessage());
-        
+
         // @AssertTrue 메서드 에러를 실제 필드명으로 매핑
         org.springframework.validation.BindingResult bindingResult = e.getBindingResult();
         java.util.List<org.springframework.validation.FieldError> fieldErrors = bindingResult.getFieldErrors();
-        
+
         // @AssertTrue 에러 필드명 매핑 (isPasswordConfirmed -> passwordConfirm)
         java.util.Map<String, String> assertTrueFieldMapping = java.util.Map.of(
             "isPasswordConfirmed", "passwordConfirm",
             "isAgeGroupTens", "ageGroup"
         );
-        
+
         java.util.List<org.springframework.validation.FieldError> mappedFieldErrors = fieldErrors.stream()
             .map(error -> {
                 String fieldName = error.getField();
@@ -59,7 +61,7 @@ public class GlobalExceptionHandler {
                 return error;
             })
             .collect(java.util.stream.Collectors.toList());
-        
+
         // 매핑된 필드 에러로 ApiError 생성
         java.util.List<com.da.itdaing.global.error.ApiError.FieldError> apiFieldErrors = mappedFieldErrors.stream()
             .map(error -> new com.da.itdaing.global.error.ApiError.FieldError(
@@ -68,7 +70,7 @@ public class GlobalExceptionHandler {
                 error.getDefaultMessage()
             ))
             .collect(java.util.stream.Collectors.toList());
-        
+
         ApiError apiError = ApiError.of(ErrorCode.INVALID_INPUT_VALUE, apiFieldErrors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(apiError));
     }

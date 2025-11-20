@@ -18,6 +18,7 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "E401", "로그인이 필요합니다"),
     INVALID_PREFERENCE_IDS(HttpStatus.BAD_REQUEST, "E004", "유효하지 않은 선호 ID가 포함되어 있습니다"),
     DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, "E409-DB", "데이터 무결성 위반"),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "E403", "접근 권한이 없습니다"),
 
     // 404 Not Found
     ENTITY_NOT_FOUND(HttpStatus.NOT_FOUND, "E101", "요청한 리소스를 찾을 수 없습니다"),

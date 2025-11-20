@@ -55,7 +55,7 @@ public class Popup extends BaseTimeEntity {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Column(name = "operating_time", length = 50)
+    @Column(name = "operating_time", length = 250)
     private String operatingTime;
 
     @Enumerated(EnumType.STRING)
@@ -98,5 +98,11 @@ public class Popup extends BaseTimeEntity {
     public void updateApprovalStatus(ApprovalStatus status, String rejectionReason) {
         this.approvalStatus = status;
         this.rejectionReason = rejectionReason;
+    }
+
+    // Popup.java (엔티티 내부)
+    public void increaseViewCount() {
+        if (this.viewCount == null) this.viewCount = 0L;
+        this.viewCount++;
     }
 }

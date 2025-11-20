@@ -17,6 +17,11 @@ public class ApiResponse<T> {
         this.error = error;
     }
 
+    // ✅ 데이터 없는 성공 응답 (void, 단순 OK용)
+    public static ApiResponse<Void> success() {
+        return new ApiResponse<>(true, null, null);
+    }
+
     // ✅ 빌더 호출 제거: 가장 안전
     public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<>(true, data, null);
