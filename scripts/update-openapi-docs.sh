@@ -9,26 +9,29 @@ set -e
 echo "📚 OpenAPI 문서 생성 중..."
 
 # 백엔드 디렉토리로 이동
-cd ~/itdaing
+cd /home/ubuntu/itdaing
 
 # Gradle로 OpenAPI 문서 생성
 ./gradlew generateOpenApiDocs
 
 # 생성된 문서 확인
-if [ -f "docs/openapi.json" ]; then
+if [ -f "/home/ubuntu/itdaing/docs/openapi.json" ]; then
     echo "✅ OpenAPI 문서 생성 완료: itdaing/docs/openapi.json"
     
     # 프론트엔드로 복사
-    cp docs/openapi.json ~/itdaing-web/openapi.json
+    cp /home/ubuntu/itdaing/docs/openapi.json /home/ubuntu/itdaing-web/openapi.json
     echo "✅ 프론트엔드에 복사 완료: itdaing-web/openapi.json"
     
     echo ""
     echo "✨ OpenAPI 문서 업데이트 완료!"
     echo ""
     echo "📌 다음 단계:"
-    echo "  1. Git에 커밋: git add itdaing/docs/openapi.json itdaing-web/openapi.json"
-    echo "  2. GitHub Pages 배포: Git push 후 자동 배포됨"
-    echo "  3. 문서 확인: https://da-itdaing.github.io/sub-repo/"
+    echo "  1. 루트로 이동: cd /home/ubuntu"
+    echo "  2. Git에 커밋: git add itdaing/docs/openapi.json itdaing-web/openapi.json"
+    echo "  3. 커밋: git commit -m '📚 Update OpenAPI documentation'"
+    echo "  4. Push: git push origin main"
+    echo "  5. GitHub Pages 자동 배포됨"
+    echo "  6. 문서 확인: https://da-itdaing.github.io/sub-repo/"
 else
     echo "❌ OpenAPI 문서 생성 실패"
     exit 1
