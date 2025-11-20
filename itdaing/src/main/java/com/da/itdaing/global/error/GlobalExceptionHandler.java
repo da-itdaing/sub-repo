@@ -14,9 +14,9 @@ import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 
-import javax.naming.AuthenticationException;
-import java.nio.file.AccessDeniedException;
 import java.util.stream.Collectors;
 
 /**
@@ -146,8 +146,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     protected ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException e) {
         log.warn("AccessDeniedException: {}", e.getMessage());
-        // 프로젝트 ErrorCode에 FORBIDDEN이 있다고 가정
-        ApiError apiError = ApiError.of(ErrorCode.FORBIDDEN);
+        // 프로젝트 ErrorCode에 ACCESS_DENIED가 있다고 가정
+        ApiError apiError = ApiError.of(ErrorCode.ACCESS_DENIED);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(apiError));
     }
 
