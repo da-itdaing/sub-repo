@@ -102,7 +102,9 @@ public class Popup extends BaseTimeEntity {
 
     // Popup.java (엔티티 내부)
     public void increaseViewCount() {
-        if (this.viewCount == null) this.viewCount = 0L;
+        if (this.viewCount == null) {
+            this.viewCount = 0L;
+        }
         this.viewCount++;
     }
 }
