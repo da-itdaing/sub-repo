@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { SignupPage2 as SignupPage2Component } from '../components/auth/SignupPage2';
-import { authService } from '../services/authService';
-import { masterService } from '../services/masterService';
-import { useAuth } from '../context/AuthContext';
+import { SignupPage2 as SignupPage2Component } from '../../components/auth/SignupPage2';
+import { authService } from '../../services/authService';
+import { masterService } from '../../services/masterService';
+import { useAuth } from '../../context/AuthContext';
 
 export default function SignupPage2() {
   const navigate = useNavigate();

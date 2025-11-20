@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import ImageUpload from "../common/ImageUpload";
+import ImageUpload from "../../components/custom-ui/ImageUpload";
 import { sellerService } from "../../services/sellerService";
-import { Button } from "../ui/button";
+import { Button } from "../../components/ui/button";
 
 export function SellerProfileEdit({ sellerId, onClose, onSave }) {
   const [loading, setLoading] = useState(true);

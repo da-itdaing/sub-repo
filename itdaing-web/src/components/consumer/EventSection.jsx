@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { EventCard } from "./EventCard";
-import { FilterButtons } from "./FilterButtons";
-import { CommunityFilterButtons } from "./CommunityFilterButtons";
-import { SectionTitle } from "./SectionTitle";
+import { EventCard } from "../custom-ui/EventCard";
+import { FilterButtons } from "../custom-ui/FilterButtons";
+import { CommunityFilterButtons } from "../custom-ui/CommunityFilterButtons";
+import { SectionTitle } from "../custom-ui/SectionTitle";
 
 export function EventSection({
   title,

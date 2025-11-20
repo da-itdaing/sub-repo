@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SignupPage1 as SignupPage1Component } from '../components/auth/SignupPage1';
+import { SignupPage1 as SignupPage1Component } from '../../components/auth/SignupPage1';
 
 export default function SignupPage1() {
   const navigate = useNavigate();

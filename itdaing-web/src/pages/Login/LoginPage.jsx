@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageCircle, Loader2, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useUser } from '../context/UserContext';
+import { useAuth } from '../../context/AuthContext';
+import { useUser } from '../../context/UserContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();

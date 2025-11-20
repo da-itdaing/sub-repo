@@ -4,8 +4,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Suspense } from 'react';
-import { SignupPage1 } from '../components/auth/SignupPage1';
-import { signupSeller } from '../services/authService';
+import { SignupPage1 } from '../../components/auth/SignupPage1';
+import { signupSeller } from '../../services/authService';
 
 export function SignupSellerPage() {
   const navigate = useNavigate();

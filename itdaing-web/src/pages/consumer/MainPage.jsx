@@ -1,14 +1,14 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { HeroCarousel } from '../components/common/HeroCarousel';
-import { HorizontalBanner } from '../components/common/HorizontalBanner';
-import { EventSection } from '../components/common/EventSection';
-import { SectionTitle } from '../components/common/SectionTitle';
-import { LoginConfirmDialog } from '../components/auth/LoginConfirmDialog';
-import { RecommendationModal } from '../components/consumer/RecommendationModal';
-import { useAuth } from '../context/AuthContext';
-import { usePopups } from '../hooks/usePopups';
-import { getImageUrl, getImageUrls } from '../utils/imageUtils';
+import { HeroCarousel } from '../../components/consumer/HeroCarousel';
+import { HorizontalBanner } from '../../components/consumer/HorizontalBanner';
+import { EventSection } from '../../components/consumer/EventSection';
+import { SectionTitle } from '../../components/custom-ui/SectionTitle';
+import { LoginConfirmDialog } from '../../components/auth/LoginConfirmDialog';
+import { RecommendationModal } from '../../components/consumer/RecommendationModal';
+import { useAuth } from '../../context/AuthContext';
+import { usePopups } from '../../hooks/usePopups';
+import { getImageUrl, getImageUrls } from '../../utils/imageUtils';
 
 export default function MainPage() {
   const navigate = useNavigate();

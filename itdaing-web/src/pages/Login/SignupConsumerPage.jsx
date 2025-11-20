@@ -3,10 +3,10 @@
  */
 import { useNavigate } from 'react-router-dom';
 import { Suspense } from 'react';
-import { SignupPage1 } from '../components/auth/SignupPage1';
-import { SignupPage2 } from '../components/auth/SignupPage2';
+import SignupPage1 from './SignupPage1.jsx';
+import SignupPage2 from './SignupPage2.jsx';
 import { useState } from 'react';
-import { signupConsumer } from '../services/authService';
+import { signupConsumer } from '../../services/authService';
 
 export function SignupConsumerPage() {
   const navigate = useNavigate();

@@ -1,4 +1,4 @@
-import { ImageWithFallback } from "./ImageWithFallback";
+import { ImageWithFallback } from "../custom-ui/ImageWithFallback";
 
 export function HorizontalBanner({ onClick }) {
   return (

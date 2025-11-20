@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { CalendarDays, Clock, CheckCircle2, MapPin } from "lucide-react";
 import { MyPageCalendar } from "../../components/consumer/MyPageCalendar";
-import KakaoMap from "../../components/common/KakaoMap";
+import KakaoMap from "../../components/map/KakaoMap";
 import { popupService } from "../../services/popupService";
 
 function getPhase(startDate, endDate) {

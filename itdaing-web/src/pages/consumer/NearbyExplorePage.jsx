@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { NearbyExplorePage as NearbyExplorePageComponent } from '../components/consumer/NearbyExplorePage';
-import { useAuth } from '../context/AuthContext';
+import { NearbyExplorePage as NearbyExplorePageComponent } from '../../components/consumer/NearbyExplorePage';
+import { useAuth } from '../../context/AuthContext';
 
 export default function NearbyExplorePage() {
   const navigate = useNavigate();

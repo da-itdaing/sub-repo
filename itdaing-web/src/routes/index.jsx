@@ -1,51 +1,61 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 
-// Layout 컴포넌트
-import Layout from '../components/layout/Layout';
-import ProtectedRoute from '../components/auth/ProtectedRoute';
+// Layout
+import Layout from '../components/layout/Layout.jsx';
+import ProtectedRoute from '../components/auth/ProtectedRoute.jsx';
 
-// 페이지 컴포넌트 (lazy loading)
-const MainPage = lazy(() => import('../pages/MainPage'));
-const LoginPage = lazy(() => import('../pages/LoginPage'));
-const SignupPage1 = lazy(() => import('../pages/SignupPage1'));
-const SignupPage2 = lazy(() => import('../pages/SignupPage2'));
-const PopupDetailPage = lazy(() => import('../pages/PopupDetailPage'));
-const MyPage = lazy(() => import('../pages/MyPage'));
-const NearbyExplorePage = lazy(() => import('../pages/NearbyExplorePage'));
-const SellerDashboard = lazy(() => import('../pages/seller/Dashboard'));
-const SellerPopupManagement = lazy(() => import('../pages/seller/PopupManagement'));
-const SellerSchedule = lazy(() => import('../pages/seller/Schedule'));
-const SellerMessages = lazy(() => import('../pages/seller/Messages'));
-const SellerReviewManagement = lazy(() => import('../pages/seller/ReviewManagement'));
-const SellerNotices = lazy(() => import('../pages/seller/Notices'));
-const AdminDashboard = lazy(() => import('../pages/admin/Dashboard'));
-const AdminZoneManagement = lazy(() => import('../pages/admin/ZoneManagement'));
-const AdminApprovals = lazy(() => import('../pages/admin/Approvals'));
-const AdminUserManagement = lazy(() => import('../pages/admin/UserManagement'));
-const AdminMessages = lazy(() => import('../pages/admin/Messages'));
-const AdminLogs = lazy(() => import('../pages/admin/Logs'));
-const AdminNotices = lazy(() => import('../pages/admin/Notices'));
+// Consumer pages
+const MainPage = lazy(() => import('../pages/consumer/MainPage.jsx'));
+const MyPage = lazy(() => import('../pages/consumer/MyPage.jsx'));
+const NearbyExplorePage = lazy(() => import('../pages/consumer/NearbyExplorePage.jsx'));
+const PopupDetailPage = lazy(() => import('../pages/consumer/PopupDetailPage.jsx'));
 
-const SellerAppLayout = lazy(() => import('../components/layout/SellerAppLayout'));
-const AdminAppLayout = lazy(() => import('../components/layout/AdminAppLayout'));
+// Login pages
+const LoginPage = lazy(() => import('../pages/Login/LoginPage.jsx'));
+const SignupPage1 = lazy(() => import('../pages/Login/SignupPage1.jsx'));
+const SignupPage2 = lazy(() => import('../pages/Login/SignupPage2.jsx'));
+const SignupConsumerPage = lazy(() => import('../pages/Login/SignupConsumerPage.jsx'));
+const SignupSellerPage = lazy(() => import('../pages/Login/SignupSellerPage.jsx'));
 
-// 로딩 컴포넌트
+// Seller pages
+const SellerDashboard = lazy(() => import('../pages/seller/SellerDashboard.jsx'));
+const SellerPopupManagement = lazy(() => import('../pages/seller/PopupManagement.jsx'));
+const SellerPopupCreatePage = lazy(() => import('../pages/seller/PopupCreatePage.jsx'));
+const LocationSelectPage = lazy(() => import('../pages/seller/LocationSelectPage.jsx'));
+const SellerSchedule = lazy(() => import('../pages/seller/Schedule.jsx'));
+const SellerMessages = lazy(() => import('../pages/seller/Messages.jsx'));
+const SellerReviewManagement = lazy(() => import('../pages/seller/ReviewManagement.jsx'));
+const SellerNotices = lazy(() => import('../pages/seller/Notices.jsx'));
+const SellerInfoPage = lazy(() => import('../pages/seller/SellerInfoPage.jsx'));
+const SellerProfileEdit = lazy(() => import('../pages/seller/SellerProfileEdit.jsx'));
+
+// Admin pages
+const AdminDashboard = lazy(() => import('../pages/admin/Dashboard.jsx'));
+const AdminZoneManagement = lazy(() => import('../pages/admin/ZoneManagement.jsx'));
+const AdminApprovals = lazy(() => import('../pages/admin/Approvals.jsx'));
+const AdminUserManagement = lazy(() => import('../pages/admin/UserManagement.jsx'));
+const AdminMessages = lazy(() => import('../pages/admin/Messages.jsx'));
+const AdminLogs = lazy(() => import('../pages/admin/Logs.jsx'));
+const AdminNotices = lazy(() => import('../pages/admin/Notices.jsx'));
+
+// Layout for seller/admin
+const SellerAppLayout = lazy(() => import('../components/layout/SellerAppLayout.jsx'));
+const AdminAppLayout = lazy(() => import('../components/layout/AdminAppLayout.jsx'));
+
+// Loading UI
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
-    <div className="text-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#eb0000] mx-auto mb-4"></div>
-      <p className="text-gray-600">로딩 중...</p>
-    </div>
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#eb0000]"></div>
   </div>
 );
 
-// 라우터 생성
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <Layout />,
     children: [
+      // Main
       {
         index: true,
         element: (
@@ -54,6 +64,8 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
+
+      // Login
       {
         path: 'login',
         element: (
@@ -62,31 +74,42 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
+
+      // Signup
       {
-        path: 'signup',
-        children: [
-          {
-            index: true,
-            element: <Navigate to="/signup/1" replace />,
-          },
-          {
-            path: '1',
-            element: (
-              <Suspense fallback={<LoadingFallback />}>
-                <SignupPage1 />
-              </Suspense>
-            ),
-          },
-          {
-            path: '2',
-            element: (
-              <Suspense fallback={<LoadingFallback />}>
-                <SignupPage2 />
-              </Suspense>
-            ),
-          },
-        ],
+        path: 'signup/consumer',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <SignupConsumerPage />
+          </Suspense>
+        ),
       },
+      {
+        path: 'signup/seller',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <SignupSellerPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'signup/1',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <SignupPage1 />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'signup/2',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <SignupPage2 />
+          </Suspense>
+        ),
+      },
+
+      // Consumer
       {
         path: 'popup/:id',
         element: (
@@ -113,6 +136,8 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
+
+      // Seller
       {
         path: 'seller',
         element: (
@@ -123,10 +148,8 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         children: [
-          {
-            index: true,
-            element: <Navigate to="/seller/dashboard" replace />,
-          },
+          { index: true, element: <Navigate to="/seller/dashboard" replace /> },
+
           {
             path: 'dashboard',
             element: (
@@ -140,6 +163,22 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<LoadingFallback />}>
                 <SellerPopupManagement />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'popup/create',
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <SellerPopupCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'location',
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <LocationSelectPage />
               </Suspense>
             ),
           },
@@ -175,8 +214,26 @@ export const router = createBrowserRouter([
               </Suspense>
             ),
           },
+          {
+            path: 'info',
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <SellerInfoPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'profile',
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <SellerProfileEdit />
+              </Suspense>
+            ),
+          },
         ],
       },
+
+      // Admin
       {
         path: 'admin',
         element: (
@@ -187,10 +244,8 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         children: [
-          {
-            index: true,
-            element: <Navigate to="/admin/dashboard" replace />,
-          },
+          { index: true, element: <Navigate to="/admin/dashboard" replace /> },
+
           {
             path: 'dashboard',
             element: (
@@ -249,6 +304,8 @@ export const router = createBrowserRouter([
           },
         ],
       },
+
+      // Not found
       {
         path: '*',
         element: <Navigate to="/" replace />,
@@ -256,4 +313,3 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
-
