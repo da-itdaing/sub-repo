@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import ImageUpload from "../common/ImageUpload";
+import ImageUpload from "../custom-ui/ImageUpload";
 import { getAccessToken } from "../../utils/tokenStorage";
 import { invalidateReviewsCache } from "../../hooks/usePopups";
 

@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { MapPin, LogIn, LogOut, Navigation, RefreshCw, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { popupService } from "../../services/popupService";
 import { getImageUrl } from "../../utils/imageUtils";
-import { EventCard } from "../common/EventCard";
-import KakaoMapDirect from "../common/KakaoMapDirect";
+import { EventCard } from "../custom-ui/EventCard";
+import KakaoMapDirect from "../map/KakaoMapDirect";
 
 // 광주광역시 중심 및 각 구별 중심 좌표
 const GWANGJU_CENTER = { lat: 35.14667451156048, lng: 126.92227158987355 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Calendar, MapPin } from "lucide-react";
-import ImageUpload from "../common/ImageUpload";
+import ImageUpload from "../custom-ui/ImageUpload";
 import apiClient from "../../services/api";
 import { Button } from "../ui/button";
 import CellSelector from "./CellSelector";

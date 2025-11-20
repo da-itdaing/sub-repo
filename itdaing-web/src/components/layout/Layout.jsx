@@ -1,7 +1,7 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Header } from '../common/Header';
-import { Footer } from '../common/Footer';
-import { BottomNav } from '../common/BottomNav';
+import { Header } from './Header';
+import { Footer } from './Footer';
+import { BottomNav } from './BottomNav';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Layout() {
