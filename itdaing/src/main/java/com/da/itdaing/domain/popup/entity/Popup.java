@@ -68,10 +68,13 @@ public class Popup extends BaseTimeEntity {
     @Column(name = "view_count", nullable = false)
     private Long viewCount = 0L;
 
+    @Column(name = "favorite_count", nullable = false)
+    private Long favoriteCount = 0L;
+
     @Builder
     public Popup(Users seller, ZoneCell zoneCell, String name, String description,
                  LocalDate startDate, LocalDate endDate, String operatingTime,
-                 ApprovalStatus approvalStatus, String rejectionReason, Long viewCount) {
+                 ApprovalStatus approvalStatus, String rejectionReason, Long viewCount, Long favoriteCount) {
         this.seller = seller;
         this.zoneCell = zoneCell;
         this.name = name;
@@ -82,6 +85,7 @@ public class Popup extends BaseTimeEntity {
         this.approvalStatus = approvalStatus != null ? approvalStatus : ApprovalStatus.PENDING;
         this.rejectionReason = rejectionReason;
         this.viewCount = viewCount != null ? viewCount : 0L;
+        this.favoriteCount= favoriteCount != null ? favoriteCount : 0L;
     }
 
     public void update(ZoneCell zoneCell, String name, String description,
@@ -106,5 +110,19 @@ public class Popup extends BaseTimeEntity {
             this.viewCount = 0L;
         }
         this.viewCount++;
+    }
+
+    public void increaseFavoriteCount() {
+        if (this.favoriteCount == null) {
+            this.favoriteCount = 0L;
+        }
+        this.favoriteCount++;
+    }
+
+    public void decreaseFavoriteCount() {
+        if (this.favoriteCount == null || this.favoriteCount == 0L) {
+            return;
+        }
+        this.favoriteCount--;
     }
 }

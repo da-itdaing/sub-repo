@@ -43,14 +43,21 @@ public class WishlistService {
             .build();
 
         wishlistRepository.save(wishlist);
+
+        popup.increaseFavoriteCount();
     }
 
     public void removeFromWishlist(Long userId, Long popupId) {
         Wishlist wishlist = wishlistRepository.findByPopupIdAndUserId(popupId, userId);
         if (wishlist != null) {
+            Popup popup = wishlist.getPopup();
             wishlistRepository.delete(wishlist);
+
+            //  좋아요 수 감소
+            if (popup != null) {
+                popup.decreaseFavoriteCount();
+            }
         }
-        // 없으면 조용히 패스 (정책에 따라 예외 던져도 됨)
     }
 
     @Transactional(readOnly = true)
@@ -103,7 +110,7 @@ public class WishlistService {
                 List.of(),          // operatingHours (간단 버전에서는 비워둠)
                 p.getDescription(),
                 p.getViewCount(),
-                0L,                 // favoriteCount (나중에 집계 로직 붙일 수 있음)
+                p.getFavoriteCount(),                 // favoriteCount
                 List.of(),          // categoryIds
                 List.of(),          // featureIds
                 List.of(),          // styleTags

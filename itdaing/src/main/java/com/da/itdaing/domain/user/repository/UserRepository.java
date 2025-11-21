@@ -1,10 +1,13 @@
 package com.da.itdaing.domain.user.repository;
 
 import com.da.itdaing.domain.common.enums.UserRole;
+import com.da.itdaing.domain.common.enums.UserStatus;
 import com.da.itdaing.domain.user.entity.Users;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * 사용자 Repository
@@ -29,5 +32,9 @@ public interface UserRepository extends JpaRepository<Users, Long> {
     boolean existsByLoginId(String loginId);
 
     List<Users> findByRole(UserRole role);
+
+    Page<Users> findByRole(UserRole role, Pageable pageable);
+
+    Page<Users> findByRoleAndStatus(UserRole role, UserStatus status, Pageable pageable);
 }
 

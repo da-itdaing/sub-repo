@@ -1,6 +1,7 @@
 package com.da.itdaing.domain.user.entity;
 
 import com.da.itdaing.domain.common.enums.UserRole;
+import com.da.itdaing.domain.common.enums.UserStatus;
 import com.da.itdaing.global.jpa.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -49,6 +50,10 @@ public class Users extends BaseTimeEntity {
     @Column(name = "role", length = 20, nullable = false)
     private UserRole role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status = UserStatus.ACTIVE;
+
     @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
 
@@ -58,7 +63,7 @@ public class Users extends BaseTimeEntity {
     @Builder
     public Users(String loginId, Integer ageGroup, String password, String name, String nickname,
                  String email, String mbti, UserRole role,
-                 String profileImageUrl, String profileImageKey) {
+                 String profileImageUrl, String profileImageKey, UserStatus status) {
         this.loginId = loginId;
         this.ageGroup = ageGroup;
         this.password = password;
@@ -69,6 +74,7 @@ public class Users extends BaseTimeEntity {
         this.role = role;
         this.profileImageUrl = profileImageUrl;
         this.profileImageKey = profileImageKey;
+        this.status = status;
     }
 
     /**
@@ -81,5 +87,9 @@ public class Users extends BaseTimeEntity {
     public void updateProfileImage(String url, String key) {
         this.profileImageUrl = url;
         this.profileImageKey = key;
+    }
+
+    public void changeStatus(UserStatus status) {
+        this.status = status;
     }
 }

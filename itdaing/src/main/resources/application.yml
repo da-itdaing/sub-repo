@@ -1,9 +1,12 @@
 # 공통 설정 (local, prod 다 같이 씀)
 spring:
-    servlet:
-        multipart:
-            max-file-size: 10MB
-            max-request-size: 30MB
+    profiles:
+        active: local
+
+        servlet:
+            multipart:
+                max-file-size: 10MB
+                max-request-size: 30MB
 
 external:
     kakao:

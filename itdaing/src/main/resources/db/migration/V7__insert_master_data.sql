@@ -2,7 +2,7 @@
 
 -- Category 데이터 (POPUP 타입)
 INSERT INTO category (name, type, created_at, updated_at)
-VALUES 
+VALUES
     ('패션', 'POPUP', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
     ('뷰티', 'POPUP', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
     ('음식', 'POPUP', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
@@ -17,7 +17,7 @@ ON CONFLICT (type, name) DO NOTHING;
 
 -- Category 데이터 (CONSUMER 타입 - 소비자 관심사)
 INSERT INTO category (name, type, created_at, updated_at)
-VALUES 
+VALUES
     ('패션', 'CONSUMER', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
     ('뷰티', 'CONSUMER', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
     ('음식', 'CONSUMER', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
@@ -32,7 +32,7 @@ ON CONFLICT (type, name) DO NOTHING;
 
 -- Style 데이터 (팝업 분위기)
 INSERT INTO style (name, created_at, updated_at)
-VALUES 
+VALUES
     ('혼자여도 좋은', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
     ('가족과 함께', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
     ('친구와 함께', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
@@ -52,7 +52,7 @@ ON CONFLICT (name) DO NOTHING;
 
 -- Feature 데이터 (편의사항)
 INSERT INTO feature (name, created_at, updated_at)
-VALUES 
+VALUES
     ('무료주차', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
     ('무료입장', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
     ('예약가능', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),

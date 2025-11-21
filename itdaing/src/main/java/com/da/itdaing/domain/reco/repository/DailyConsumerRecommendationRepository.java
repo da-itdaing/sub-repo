@@ -20,5 +20,7 @@ public interface DailyConsumerRecommendationRepository extends JpaRepository<Dai
         @Param("consumerId") Long consumerId,
         Pageable pageable
     );
+
+    List<DailyConsumerRecommendation> findByConsumer_IdOrderByIdDesc(Long consumerId);
 }
 
