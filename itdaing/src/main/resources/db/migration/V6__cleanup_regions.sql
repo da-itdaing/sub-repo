@@ -3,7 +3,7 @@
 DO $$
 BEGIN
     INSERT INTO region (name, created_at, updated_at)
-    VALUES 
+    VALUES
         ('남구', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
         ('동구', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),
         ('서구', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)),

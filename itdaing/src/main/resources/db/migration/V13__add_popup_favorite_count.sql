@@ -1,0 +1,2 @@
+ALTER TABLE popup
+    ADD COLUMN favorite_count BIGINT NOT NULL DEFAULT 0;

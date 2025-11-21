@@ -7,7 +7,7 @@
 
 -- 남구 존 (남구 문화거리 근처)
 INSERT INTO zone_area (region_id, name, geometry_data, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     r.id,
     '남구 팝업존',
     '{"type":"Polygon","coordinates":[[[126.90,35.13],[126.92,35.13],[126.92,35.15],[126.90,35.15],[126.90,35.13]]]}',
@@ -21,7 +21,7 @@ ON CONFLICT DO NOTHING;
 
 -- 동구 존
 INSERT INTO zone_area (region_id, name, geometry_data, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     r.id,
     '동구 팝업존',
     '{"type":"Polygon","coordinates":[[[126.93,35.14],[126.95,35.14],[126.95,35.16],[126.93,35.16],[126.93,35.14]]]}',
@@ -35,7 +35,7 @@ ON CONFLICT DO NOTHING;
 
 -- 서구 존
 INSERT INTO zone_area (region_id, name, geometry_data, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     r.id,
     '서구 팝업존',
     '{"type":"Polygon","coordinates":[[[126.85,35.14],[126.87,35.14],[126.87,35.16],[126.85,35.16],[126.85,35.14]]]}',
@@ -49,7 +49,7 @@ ON CONFLICT DO NOTHING;
 
 -- 북구 존
 INSERT INTO zone_area (region_id, name, geometry_data, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     r.id,
     '북구 팝업존',
     '{"type":"Polygon","coordinates":[[[126.88,35.17],[126.90,35.17],[126.90,35.19],[126.88,35.19],[126.88,35.17]]]}',
@@ -63,7 +63,7 @@ ON CONFLICT DO NOTHING;
 
 -- 광산구 존
 INSERT INTO zone_area (region_id, name, geometry_data, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     r.id,
     '광산구 팝업존',
     '{"type":"Polygon","coordinates":[[[126.80,35.12],[126.82,35.12],[126.82,35.14],[126.80,35.14],[126.80,35.12]]]}',
@@ -78,7 +78,7 @@ ON CONFLICT DO NOTHING;
 -- 각 존별 셀 생성 (부스 개념)
 -- 남구 존 셀들
 INSERT INTO zone_cell (zone_area_id, owner_id, label, detailed_address, lat, lng, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     za.id,
     u.id,
     'A1',
@@ -96,7 +96,7 @@ WHERE za.name = '남구 팝업존' AND u.login_id = 'seller1'
 LIMIT 1;
 
 INSERT INTO zone_cell (zone_area_id, owner_id, label, detailed_address, lat, lng, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     za.id,
     u.id,
     'A2',
@@ -114,7 +114,7 @@ WHERE za.name = '남구 팝업존' AND u.login_id = 'seller1'
 LIMIT 1;
 
 INSERT INTO zone_cell (zone_area_id, owner_id, label, detailed_address, lat, lng, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     za.id,
     u.id,
     'B1',
@@ -133,7 +133,7 @@ LIMIT 1;
 
 -- 동구 존 셀들
 INSERT INTO zone_cell (zone_area_id, owner_id, label, detailed_address, lat, lng, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     za.id,
     u.id,
     'A1',
@@ -151,7 +151,7 @@ WHERE za.name = '동구 팝업존' AND u.login_id = 'seller1'
 LIMIT 1;
 
 INSERT INTO zone_cell (zone_area_id, owner_id, label, detailed_address, lat, lng, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     za.id,
     u.id,
     'A2',
@@ -170,7 +170,7 @@ LIMIT 1;
 
 -- 서구 존 셀들
 INSERT INTO zone_cell (zone_area_id, owner_id, label, detailed_address, lat, lng, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     za.id,
     u.id,
     'A1',
@@ -188,7 +188,7 @@ WHERE za.name = '서구 팝업존' AND u.login_id = 'seller1'
 LIMIT 1;
 
 INSERT INTO zone_cell (zone_area_id, owner_id, label, detailed_address, lat, lng, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     za.id,
     u.id,
     'B1',
@@ -207,7 +207,7 @@ LIMIT 1;
 
 -- 북구 존 셀들
 INSERT INTO zone_cell (zone_area_id, owner_id, label, detailed_address, lat, lng, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     za.id,
     u.id,
     'A1',
@@ -225,7 +225,7 @@ WHERE za.name = '북구 팝업존' AND u.login_id = 'seller1'
 LIMIT 1;
 
 INSERT INTO zone_cell (zone_area_id, owner_id, label, detailed_address, lat, lng, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     za.id,
     u.id,
     'A2',
@@ -243,7 +243,7 @@ WHERE za.name = '북구 팝업존' AND u.login_id = 'seller1'
 LIMIT 1;
 
 INSERT INTO zone_cell (zone_area_id, owner_id, label, detailed_address, lat, lng, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     za.id,
     u.id,
     'B1',
@@ -262,7 +262,7 @@ LIMIT 1;
 
 -- 광산구 존 셀들
 INSERT INTO zone_cell (zone_area_id, owner_id, label, detailed_address, lat, lng, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     za.id,
     u.id,
     'A1',
@@ -280,7 +280,7 @@ WHERE za.name = '광산구 팝업존' AND u.login_id = 'seller1'
 LIMIT 1;
 
 INSERT INTO zone_cell (zone_area_id, owner_id, label, detailed_address, lat, lng, status, max_capacity, notice, created_at, updated_at)
-SELECT 
+SELECT
     za.id,
     u.id,
     'A2',

@@ -1,7 +1,7 @@
 -- 테스트 계정 생성
 -- 비밀번호: Test1234! (모든 계정 동일)
 -- BCrypt 해시: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
--- 
+--
 -- 주의: 이미 존재하는 login_id가 있으면 건너뜁니다 (ON CONFLICT DO NOTHING)
 -- 기존 계정의 정보는 변경되지 않습니다.
 -- login_id가 unique constraint이므로, 이미 존재하는 계정은 자동으로 건너뜁니다.
@@ -32,7 +32,7 @@ CROSS JOIN (
 ) c
 WHERE u.login_id = 'consumer1'
   AND NOT EXISTS (
-      SELECT 1 FROM user_pref_category upc 
+      SELECT 1 FROM user_pref_category upc
       WHERE upc.user_id = u.id AND upc.category_id = c.id
   )
 LIMIT 2;
@@ -46,7 +46,7 @@ CROSS JOIN (
 ) s
 WHERE u.login_id = 'consumer1'
   AND NOT EXISTS (
-      SELECT 1 FROM user_pref_style ups 
+      SELECT 1 FROM user_pref_style ups
       WHERE ups.user_id = u.id AND ups.style_id = s.id
   )
 LIMIT 2;
@@ -60,7 +60,7 @@ CROSS JOIN (
 ) r
 WHERE u.login_id = 'consumer1'
   AND NOT EXISTS (
-      SELECT 1 FROM user_pref_region upr 
+      SELECT 1 FROM user_pref_region upr
       WHERE upr.user_id = u.id AND upr.region_id = r.id
   )
 LIMIT 1;
@@ -74,7 +74,7 @@ CROSS JOIN (
 ) f
 WHERE u.login_id = 'consumer1'
   AND NOT EXISTS (
-      SELECT 1 FROM user_pref_feature upf 
+      SELECT 1 FROM user_pref_feature upf
       WHERE upf.user_id = u.id AND upf.feature_id = f.id
   )
 LIMIT 1;

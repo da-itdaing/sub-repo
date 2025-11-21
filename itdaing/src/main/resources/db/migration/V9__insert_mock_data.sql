@@ -9,7 +9,7 @@
 
 -- 팝업 1: 패션 팝업 (남구, 현재 진행 중)
 INSERT INTO popup (seller_id, zone_cell_id, name, description, start_date, end_date, operating_time, approval_status, view_count, created_at, updated_at)
-SELECT 
+SELECT
     u.id,
     zc.id,
     '트렌디 패션 팝업스토어',
@@ -28,7 +28,7 @@ LIMIT 1;
 
 -- 팝업 1 이미지
 INSERT INTO popup_image (popup_id, image_url, image_key, is_thumbnail, created_at)
-SELECT 
+SELECT
     p.id,
     'https://daitdaing-static-files.s3.ap-northeast-2.amazonaws.com/uploads/1f65f319fc66053cc771a9875a94d071a6555ce4.png',
     'uploads/1f65f319fc66053cc771a9875a94d071a6555ce4.png',
@@ -39,7 +39,7 @@ WHERE p.name = '트렌디 패션 팝업스토어'
 LIMIT 1;
 
 INSERT INTO popup_image (popup_id, image_url, image_key, is_thumbnail, created_at)
-SELECT 
+SELECT
     p.id,
     'https://daitdaing-static-files.s3.ap-northeast-2.amazonaws.com/uploads/34febaa073f4651d36f9e74724d6a847f7b4e87b.png',
     'uploads/34febaa073f4651d36f9e74724d6a847f7b4e87b.png',
@@ -51,7 +51,7 @@ LIMIT 1;
 
 -- 팝업 1 카테고리 (POPUP 타입)
 INSERT INTO popup_category (popup_id, category_id, category_role)
-SELECT 
+SELECT
     p.id,
     c.id,
     'POPUP'
@@ -62,7 +62,7 @@ LIMIT 1;
 
 -- 팝업 1 스타일
 INSERT INTO popup_style (popup_id, style_id)
-SELECT 
+SELECT
     p.id,
     s.id
 FROM popup p
@@ -71,7 +71,7 @@ WHERE p.name = '트렌디 패션 팝업스토어' AND s.name = '활기찬'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO popup_style (popup_id, style_id)
-SELECT 
+SELECT
     p.id,
     s.id
 FROM popup p
@@ -81,7 +81,7 @@ ON CONFLICT DO NOTHING;
 
 -- 팝업 1 특징
 INSERT INTO popup_feature (popup_id, feature_id)
-SELECT 
+SELECT
     p.id,
     f.id
 FROM popup p
@@ -91,7 +91,7 @@ LIMIT 1;
 
 -- 팝업 2: 뷰티 팝업 (동구, 예정)
 INSERT INTO popup (seller_id, zone_cell_id, name, description, start_date, end_date, operating_time, approval_status, view_count, created_at, updated_at)
-SELECT 
+SELECT
     u.id,
     zc.id,
     '뷰티 라운지 팝업',
@@ -109,7 +109,7 @@ WHERE u.login_id = 'seller1' AND zc.label = 'A1' AND zc.zone_area_id IN (SELECT 
 LIMIT 1;
 
 INSERT INTO popup_image (popup_id, image_url, image_key, is_thumbnail, created_at)
-SELECT 
+SELECT
     p.id,
     'https://daitdaing-static-files.s3.ap-northeast-2.amazonaws.com/uploads/e6f688d20f3479754131b0ac7ec700810a7b1265.png',
     'uploads/e6f688d20f3479754131b0ac7ec700810a7b1265.png',
@@ -120,7 +120,7 @@ WHERE p.name = '뷰티 라운지 팝업'
 LIMIT 1;
 
 INSERT INTO popup_category (popup_id, category_id, category_role)
-SELECT 
+SELECT
     p.id,
     c.id,
     'POPUP'
@@ -130,7 +130,7 @@ WHERE p.name = '뷰티 라운지 팝업' AND c.name = '뷰티' AND c.type = 'POP
 LIMIT 1;
 
 INSERT INTO popup_feature (popup_id, feature_id)
-SELECT 
+SELECT
     p.id,
     f.id
 FROM popup p
@@ -140,7 +140,7 @@ LIMIT 1;
 
 -- 팝업 3: 음식 팝업 (서구, 현재 진행 중)
 INSERT INTO popup (seller_id, zone_cell_id, name, description, start_date, end_date, operating_time, approval_status, view_count, created_at, updated_at)
-SELECT 
+SELECT
     u.id,
     zc.id,
     '맛있는 푸드 트럭',
@@ -158,7 +158,7 @@ WHERE u.login_id = 'seller1' AND zc.label = 'A1' AND zc.zone_area_id IN (SELECT 
 LIMIT 1;
 
 INSERT INTO popup_image (popup_id, image_url, image_key, is_thumbnail, created_at)
-SELECT 
+SELECT
     p.id,
     'https://daitdaing-static-files.s3.ap-northeast-2.amazonaws.com/uploads/f052ae48a2f8e894c47126c94845d427b18c0f8f.png',
     'uploads/f052ae48a2f8e894c47126c94845d427b18c0f8f.png',
@@ -169,7 +169,7 @@ WHERE p.name = '맛있는 푸드 트럭'
 LIMIT 1;
 
 INSERT INTO popup_category (popup_id, category_id, category_role)
-SELECT 
+SELECT
     p.id,
     c.id,
     'POPUP'
@@ -179,7 +179,7 @@ WHERE p.name = '맛있는 푸드 트럭' AND c.name = '음식' AND c.type = 'POP
 LIMIT 1;
 
 INSERT INTO popup_feature (popup_id, feature_id)
-SELECT 
+SELECT
     p.id,
     f.id
 FROM popup p
@@ -188,7 +188,7 @@ WHERE p.name = '맛있는 푸드 트럭' AND f.name = '무료입장'
 LIMIT 1;
 
 INSERT INTO popup_style (popup_id, style_id)
-SELECT 
+SELECT
     p.id,
     s.id
 FROM popup p
@@ -197,7 +197,7 @@ WHERE p.name = '맛있는 푸드 트럭' AND s.name = '친구와 함께'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO popup_style (popup_id, style_id)
-SELECT 
+SELECT
     p.id,
     s.id
 FROM popup p
@@ -207,7 +207,7 @@ ON CONFLICT DO NOTHING;
 
 -- 팝업 4-10: 추가 팝업들 (다양한 카테고리와 지역)
 INSERT INTO popup (seller_id, zone_cell_id, name, description, start_date, end_date, operating_time, approval_status, view_count, created_at, updated_at)
-SELECT 
+SELECT
     u.id,
     zc.id,
     '아트 갤러리 팝업',
@@ -225,7 +225,7 @@ WHERE u.login_id = 'seller1' AND zc.label = 'A2' AND zc.zone_area_id IN (SELECT 
 LIMIT 1;
 
 INSERT INTO popup_image (popup_id, image_url, image_key, is_thumbnail, created_at)
-SELECT 
+SELECT
     p.id,
     'https://daitdaing-static-files.s3.ap-northeast-2.amazonaws.com/uploads/fb64eb656194ae46b05b2960a9c89215cc09c3de.png',
     'uploads/fb64eb656194ae46b05b2960a9c89215cc09c3de.png',
@@ -236,7 +236,7 @@ WHERE p.name = '아트 갤러리 팝업'
 LIMIT 1;
 
 INSERT INTO popup_category (popup_id, category_id, category_role)
-SELECT 
+SELECT
     p.id,
     c.id,
     'POPUP'
@@ -246,7 +246,7 @@ WHERE p.name = '아트 갤러리 팝업' AND c.name = '아트' AND c.type = 'POP
 LIMIT 1;
 
 INSERT INTO popup_style (popup_id, style_id)
-SELECT 
+SELECT
     p.id,
     s.id
 FROM popup p
@@ -255,7 +255,7 @@ WHERE p.name = '아트 갤러리 팝업' AND s.name = '감성적인'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO popup_style (popup_id, style_id)
-SELECT 
+SELECT
     p.id,
     s.id
 FROM popup p
@@ -265,7 +265,7 @@ ON CONFLICT DO NOTHING;
 
 -- 추가 팝업들 (5-10개)
 INSERT INTO popup (seller_id, zone_cell_id, name, description, start_date, end_date, operating_time, approval_status, view_count, created_at, updated_at)
-SELECT 
+SELECT
     u.id,
     zc.id,
     '키즈 놀이터 팝업',
@@ -283,7 +283,7 @@ WHERE u.login_id = 'seller1' AND zc.label = 'B1' AND zc.zone_area_id IN (SELECT 
 LIMIT 1;
 
 INSERT INTO popup_image (popup_id, image_url, image_key, is_thumbnail, created_at)
-SELECT 
+SELECT
     p.id,
     'https://daitdaing-static-files.s3.ap-northeast-2.amazonaws.com/uploads/34febaa073f4651d36f9e74724d6a847f7b4e87b.png',
     'uploads/34febaa073f4651d36f9e74724d6a847f7b4e87b.png',
@@ -294,7 +294,7 @@ WHERE p.name = '키즈 놀이터 팝업'
 LIMIT 1;
 
 INSERT INTO popup_category (popup_id, category_id, category_role)
-SELECT 
+SELECT
     p.id,
     c.id,
     'POPUP'
@@ -304,7 +304,7 @@ WHERE p.name = '키즈 놀이터 팝업' AND c.name = '키즈' AND c.type = 'POP
 LIMIT 1;
 
 INSERT INTO popup_style (popup_id, style_id)
-SELECT 
+SELECT
     p.id,
     s.id
 FROM popup p
@@ -313,7 +313,7 @@ WHERE p.name = '키즈 놀이터 팝업' AND s.name = '가족과 함께'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO popup_style (popup_id, style_id)
-SELECT 
+SELECT
     p.id,
     s.id
 FROM popup p
@@ -322,7 +322,7 @@ WHERE p.name = '키즈 놀이터 팝업' AND s.name = '체험가능'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO popup_feature (popup_id, feature_id)
-SELECT 
+SELECT
     p.id,
     f.id
 FROM popup p
@@ -332,7 +332,7 @@ LIMIT 1;
 
 -- 굿즈 팝업
 INSERT INTO popup (seller_id, zone_cell_id, name, description, start_date, end_date, operating_time, approval_status, view_count, created_at, updated_at)
-SELECT 
+SELECT
     u.id,
     zc.id,
     '한정판 굿즈 샵',
@@ -350,7 +350,7 @@ WHERE u.login_id = 'seller1' AND zc.label = 'A2' AND zc.zone_area_id IN (SELECT 
 LIMIT 1;
 
 INSERT INTO popup_image (popup_id, image_url, image_key, is_thumbnail, created_at)
-SELECT 
+SELECT
     p.id,
     'https://daitdaing-static-files.s3.ap-northeast-2.amazonaws.com/uploads/1f65f319fc66053cc771a9875a94d071a6555ce4.png',
     'uploads/1f65f319fc66053cc771a9875a94d071a6555ce4.png',
@@ -361,7 +361,7 @@ WHERE p.name = '한정판 굿즈 샵'
 LIMIT 1;
 
 INSERT INTO popup_category (popup_id, category_id, category_role)
-SELECT 
+SELECT
     p.id,
     c.id,
     'POPUP'
@@ -371,7 +371,7 @@ WHERE p.name = '한정판 굿즈 샵' AND c.name = '굿즈' AND c.type = 'POPUP'
 LIMIT 1;
 
 INSERT INTO popup_style (popup_id, style_id)
-SELECT 
+SELECT
     p.id,
     s.id
 FROM popup p
@@ -380,7 +380,7 @@ WHERE p.name = '한정판 굿즈 샵' AND s.name = '레트로/빈티지'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO popup_feature (popup_id, feature_id)
-SELECT 
+SELECT
     p.id,
     f.id
 FROM popup p

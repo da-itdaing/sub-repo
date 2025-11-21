@@ -265,7 +265,7 @@ public class PopupQueryService {
             operatingHours,
             popup.getDescription(),
             popup.getViewCount(),
-            0L,
+            popup.getFavoriteCount(),
             categoryIds,
             featureIds,
             styleTags,

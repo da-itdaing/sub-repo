@@ -1,9 +1,6 @@
 package com.da.itdaing.config;
 
-import com.da.itdaing.domain.common.enums.ApprovalStatus;
-import com.da.itdaing.domain.common.enums.AreaStatus;
-import com.da.itdaing.domain.common.enums.UserRole;
-import com.da.itdaing.domain.common.enums.ZoneStatus;
+import com.da.itdaing.domain.common.enums.*;
 import com.da.itdaing.domain.geo.entity.ZoneArea;
 import com.da.itdaing.domain.geo.entity.ZoneCell;
 import com.da.itdaing.domain.geo.repository.ZoneAreaRepository;
@@ -217,6 +214,7 @@ public class DevDataSeed implements CommandLineRunner {
                         .nickname(seed.nickname())
                         .email(seed.email())
                         .role(UserRole.ADMIN)
+                        .status(UserStatus.ACTIVE)
                         .build()
                 )
             );
@@ -267,6 +265,7 @@ public class DevDataSeed implements CommandLineRunner {
                         .ageGroup(parseAgeGroup(profile.ageGroup()))
                         .mbti(profile.mbti())
                         .role(UserRole.CONSUMER)
+                        .status(UserStatus.ACTIVE)
                         .build()
                 )
             );
@@ -297,6 +296,7 @@ public class DevDataSeed implements CommandLineRunner {
                     .ageGroup(20)
                     .mbti("INFP")
                     .role(UserRole.CONSUMER)
+                    .status(UserStatus.ACTIVE)
                     .build()
             )
         );
@@ -411,6 +411,7 @@ public class DevDataSeed implements CommandLineRunner {
                             .nickname(mock.name())
                             .email(Optional.ofNullable(mock.email()).orElse(loginId + "@example.com"))
                             .role(UserRole.SELLER)
+                            .status(UserStatus.ACTIVE)
                             .build()
                     )
                 );
@@ -455,6 +456,7 @@ public class DevDataSeed implements CommandLineRunner {
                     .nickname("팝업왕")
                     .email("seller1@example.com")
                     .role(UserRole.SELLER)
+                    .status(UserStatus.ACTIVE)
                     .build()
             );
             log.info("Seeded SELLER user: id={}, loginId={}", seller1.getId(), seller1.getLoginId());
@@ -486,6 +488,7 @@ public class DevDataSeed implements CommandLineRunner {
                     .nickname("플레이팩토리")
                     .email("seller2@example.com")
                     .role(UserRole.SELLER)
+                    .status(UserStatus.ACTIVE)
                     .build()
             );
             log.info("Seeded SELLER user (no profile): id={}, loginId={}", seller2.getId(), seller2.getLoginId());
@@ -966,6 +969,7 @@ public class DevDataSeed implements CommandLineRunner {
                 .nickname(name)
                 .email(loginId + "@example.com")
                 .role(UserRole.CONSUMER)
+                .status(UserStatus.ACTIVE)
                 .build();
             return userRepository.save(reviewer);
         });

@@ -84,6 +84,7 @@ public class PopupCommandService {
                 .operatingTime(request.operatingTime())
                 .approvalStatus(ApprovalStatus.PENDING)
                 .viewCount(0L)
+                .favoriteCount(0L)
                 .build()
         );
 
