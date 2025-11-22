@@ -37,13 +37,15 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     
-    <!-- Service Worker 등록 -->
+    <!-- Service Worker 등록 (HTTPS 환경에서만) -->
     <script>
-      if ('serviceWorker' in navigator) {
+      if ('serviceWorker' in navigator && location.protocol === 'https:') {
+        // HTTPS일 때만 Service Worker 등록 시도
+        // HTTP 또는 SSL 인증서 문제가 있는 경우 건너뜀
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then(reg => console.log('Service Worker registered'))
-            .catch(err => console.error('Service Worker registration failed:', err));
+            .catch(err => console.warn('Service Worker registration skipped:', err.message));
         });
       }
     </script>
