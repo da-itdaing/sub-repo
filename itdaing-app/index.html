@@ -37,15 +37,28 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     
-    <!-- Service Worker 등록 (HTTPS 환경에서만) -->
+    <!-- Service Worker 등록 (스마트 감지) -->
     <script>
-      if ('serviceWorker' in navigator && location.protocol === 'https:') {
-        // HTTPS일 때만 Service Worker 등록 시도
-        // HTTP 또는 SSL 인증서 문제가 있는 경우 건너뜀
+      if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Service Worker registered'))
-            .catch(err => console.warn('Service Worker registration skipped:', err.message));
+          // HTTPS 환경에서만 Service Worker 등록
+          // localhost 또는 정상 SSL 인증서가 있을 때만 작동
+          const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+          const isSecure = location.protocol === 'https:';
+          const isHttp = location.protocol === 'http:';
+          
+          // HTTP(localhost 포함) 또는 정상 HTTPS에서만 등록 시도
+          if (isLocalhost || (isSecure && !location.hostname.includes('elb.amazonaws.com'))) {
+            navigator.serviceWorker.register('/sw.js')
+              .then(reg => {
+                console.log('[PWA] Service Worker 등록 성공');
+              })
+              .catch(err => {
+                console.warn('[PWA] Service Worker 등록 실패:', err.message);
+              });
+          } else {
+            console.info('[PWA] Service Worker 비활성화 (ALB 환경 또는 SSL 인증서 불일치)');
+          }
         });
       }
     </script>

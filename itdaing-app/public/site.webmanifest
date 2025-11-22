@@ -1,1 +1,27 @@
-{"name":"Da-Itdaing","short_name":"itdaing","description":"팝업/이벤트 탐색과 리뷰를 제공하는 Itdaing 서비스","start_url":"/","scope":"/","icons":[{"src":"/android-chrome-192x192.png","sizes":"192x192","type":"image/png"},{"src":"/android-chrome-512x512.png","sizes":"512x512","type":"image/png"}],"theme_color":"#0a4195","background_color":"#0a4195","display":"standalone","orientation":"portrait","categories":["lifestyle","shopping","events"]}
+{
+  "name":"Da-Itdaing",
+  "short_name":"잇다잉",
+  "description":"팝업 스토어 추천 및 탐색 플랫폼",
+  "start_url":"/",
+  "scope":"/",
+  "icons":[
+    {
+      "src":"/android-chrome-192x192.png",
+      "sizes":"192x192",
+      "type":"image/png",
+      "purpose":"any maskable"
+    },
+    {
+      "src":"/android-chrome-512x512.png",
+      "sizes":"512x512",
+      "type":"image/png",
+      "purpose":"any maskable"
+    }
+  ],
+  "theme_color":"#eb0000",
+  "background_color":"#ffffff",
+  "display":"standalone",
+  "orientation":"portrait",
+  "categories":["lifestyle","shopping","events"],
+  "lang":"ko-KR"
+}
