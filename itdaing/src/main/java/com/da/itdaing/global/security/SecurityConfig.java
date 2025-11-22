@@ -32,10 +32,12 @@ class CommonSecurityBeans {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
-            "http://localhost:3000",
-            "http://localhost:5173",
-            "http://localhost:8081"
+        config.setAllowedOriginPatterns(List.of(
+            "http://localhost:*",
+            "http://127.0.0.1:*",
+            "https://*.elb.amazonaws.com",
+            "https://*.daitdaing.link",
+            "http://*.daitdaing.link"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
@@ -45,7 +47,7 @@ class CommonSecurityBeans {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-        // ⭐ 기존 "/api/**" → 수정된 "/**" (모든 경로 CORS 허용)
+        // ⭐ 모든 경로 CORS 허용
         source.registerCorsConfiguration("/**", config);
 
         return source;
