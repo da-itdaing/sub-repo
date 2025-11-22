@@ -128,6 +128,7 @@ git commit -m "📝 문서: API 엔드포인트 문서화"
 ### 🚀 시작하기
 - [QUICK_START.md](itdaing-app/QUICK_START.md) - 빠른 시작 (5분 만에 실행)
 - [DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md) - 개발 환경 설정
+- [SYNC_BACKEND.md](docs/SYNC_BACKEND.md) - dev/be 백엔드 동기화 방법
 
 ### 📚 프로젝트 가이드
 - [BRANCH_STRATEGY.md](docs/BRANCH_STRATEGY.md) - 브랜치 전략 및 워크플로우
