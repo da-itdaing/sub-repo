@@ -17,6 +17,14 @@ dist-ssr
 .env.*
 !.env.example
 
+# 배포 관련 민감 정보 (IP 주소 포함)
+docs/DEPLOYMENT_NGINX.md
+docs/DEPLOYMENT_COMPLETE_GUIDE.md
+docs/DNS_SETUP_GUIDE.md
+scripts/deploy.sh
+scripts/deploy-s3.sh
+scripts/deploy-s3-setup.sh
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
