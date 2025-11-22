@@ -42,7 +42,7 @@ $ nslookup daitdaing.link
 3. Application Load Balancer 선택
 4. **Internet-facing** 선택
 5. **Public Subnet** 선택
-6. Target Group에 Private EC2 추가 (10.0.145.136:80)
+6. Target Group에 Private EC2 추가 ()
 
 #### 2단계: Route 53 설정
 1. Route 53 → Hosted zones → daitdaing.link
