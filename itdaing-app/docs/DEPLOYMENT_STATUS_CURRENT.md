@@ -111,26 +111,166 @@ AWS Console → EC2 → Target Groups → private-tg
 → Targets 탭 → private2-ec2 선택 → Deregister
 ```
 
-### 문제 3: ALB Health Check 경로 확인 필요
+### 문제 3: ALB Health Check 경로 문제 발견! 🔴
 
-**현재 상태**:
-- itdaing-test: Healthy ✅
-- Health check path: `/` (추정)
+**AWS Console 확인 결과**:
+- Health check path: **`/actuator/health`** ⚠️
+- Protocol: HTTP
+- Port: Traffic port (80)
+- Timeout: 5 seconds
+- Interval: 30 seconds
+- Success codes: 200
+
+**문제 분석**:
+```
+ALB → Private EC2:80 (Nginx)
+     → Health Check: /actuator/health
+```
+
+`/actuator/health`는 **Spring Boot 백엔드 엔드포인트**입니다!
+- Backend: Port 8080 (`/actuator/health` 존재 ✅)
+- Nginx: Port 80 (React App, `/actuator/health` 없음 ❌)
+
+**현재 itdaing-test가 Healthy인 이유**:
+→ **Nginx 설정에서 `/actuator/health`를 백엔드(8080)로 프록시하고 있음** ✅
+
+**Nginx 설정 확인됨** (`/etc/nginx/sites-available/itdaing.conf`):
+```nginx
+location = /actuator/health {
+    proxy_pass http://127.0.0.1:8080/actuator/health;
+    # ... 
+}
+```
+
+**결론**: Health Check는 정상 작동 중 ✅
+
+### 문제 4: 카카오맵 API 키 로드 실패 발견! 🔴
+
+**ALB DNS 접속 결과** (스크린샷):
+```
+https://aischool-bastion-alb-1858295846.ap-northeast-2.elb.amazonaws.com
+→ "카카오맵 API 기를 불러오지 못했습니다"
+→ "Kakao Map API key is not configured"
+```
+
+**원인**:
+1. React App이 **정상 로딩됨** ✅
+2. Kakao Map API 키를 백엔드에서 가져오지 못함
+3. 백엔드 연결 문제 또는 환경변수 미설정
 
 **확인 필요**:
-```
-AWS Console → EC2 → Target Groups → private-tg
-→ Health checks 탭
-→ Health check path: / 또는 /actuator/health 확인
+```bash
+# 1. Backend가 실행 중인지 확인
+curl http://localhost:8080/actuator/health
+
+# 2. Kakao Map API 엔드포인트 테스트
+curl http://localhost:8080/api/config/kakao-map-key
+
+# 3. prod.env 확인
+grep KAKAO /home/ubuntu/itdaing/prod.env
+# KAKAO_MAP_APP_KEY=95c50c02952121a082de072da2530448
 ```
 
-**권장**:
-- Health check path: `/` (React App root)
-- Healthy threshold: 2
-- Unhealthy threshold: 2
-- Timeout: 5초
-- Interval: 30초
+**테스트 결과**:
+```bash
+# 1. Backend Health Check
+$ curl http://localhost:8080/actuator/health
+{"status":"UP"}  ✅ 백엔드 실행 중
+
+# 2. Kakao Map API (Backend 직접)
+$ curl http://localhost:8080/api/config/kakao-map-key
+{"success":false,"error":{"status":500,"code":"E999","message":"서버 내부 오류가 발생했습니다"}}
+❌ 500 에러
+
+# 3. Kakao Map API (Nginx 프록시 경유)
+$ curl http://localhost/api/config/kakao-map-key
+{"success":false,"error":{"status":401,"code":"AUTH-401","message":"인증이 필요합니다"}}
+⚠️ 401 인증 필요
+```
+
+**추가 발견 (스크린샷 분석)**:
+
+### ALB DNS 접속 성공! ✅
+```
+https://aischool-bastion-alb-1858295846.ap-northeast-2.elb.amazonaws.com
+→ React 앱 로딩 성공!
+→ "카카오맵 API 기를 불러오지 못했습니다" 표시
+```
+
+**의미**:
+- ✅ ALB → Nginx → React App 정상 작동!
+- ✅ HTTPS 인증서 정상 작동!
+- ⚠️ Kakao Map API 백엔드 연동 문제만 남음
+
+### Health Check 설정 확인
+
+**AWS Target Group 설정**:
+- Path: `/actuator/health` (Backend 엔드포인트)
+- Protocol: HTTP
+- Port: 80 (Nginx)
 - Success codes: 200
+- Status: **Healthy** ✅
+
+**작동 원리**:
+```
+ALB Health Check
+→ Private EC2:80 (/actuator/health)
+→ Nginx proxy_pass
+→ Backend:8080 (/actuator/health)
+→ {"status":"UP"}
+→ Healthy ✅
+```
+
+### VPC 구성 확인 (스크린샷)
+
+**Subnets**:
+- ✅ **Public Subnet**: aischool-project-subnet-public1-ap-northeast-2a
+- ✅ **Private Subnet**: aischool-project-subnet-private2-ap-northeast-2b
+
+**Route Tables**:
+- ✅ aischool-project-rtb-public (IGW 연결)
+- ✅ aischool-project-rtb-private1, private2
+
+**Network Connections**:
+- ✅ aischool-project-igw (Internet Gateway)
+- ✅ nat-014aec9dcc3f1c7f7 (NAT Gateway)
+- ✅ aischool-project-vpce-s3 (S3 VPC Endpoint)
+
+**결론**: VPC 구성 완벽함! ✅
+
+---
+
+## 🎯 핵심 발견
+
+### ✅ 배포 성공!
+```
+https://aischool-bastion-alb-1858295846.ap-northeast-2.elb.amazonaws.com
+→ React App 정상 표시됨!
+```
+
+### ⏳ DNS 전파 대기 중
+```
+aischool.daitdaing.link → NXDOMAIN
+```
+
+**전파 후 동일하게 작동 예정**:
+```
+https://aischool.daitdaing.link
+→ https://aischool-bastion-alb-1858295846.ap-northeast-2.elb.amazonaws.com
+```
+
+### 🐛 Kakao Map API 키 로드 문제
+
+**Backend 엔드포인트 문제**:
+```
+/api/config/kakao-map-key
+→ 직접 접근: 500 에러
+→ Nginx 경유: 401 인증 필요
+```
+
+**해결 방법**:
+1. Backend 코드 확인 (ConfigController)
+2. 또는 Frontend에서 환경변수 직접 사용
 
 ---
 
