@@ -67,7 +67,18 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         // Refresh 실패 시 로그아웃 처리
         clearTokens();
-        window.location.href = '/login';
+        
+        // 현재 페이지가 인증 필요한 페이지인지 확인
+        const protectedPaths = ['/mypage', '/seller', '/admin'];
+        const isProtectedPath = protectedPaths.some(path => 
+          window.location.pathname.startsWith(path)
+        );
+        
+        // 인증 필요한 페이지에서만 로그인으로 리디렉션
+        if (isProtectedPath) {
+          window.location.href = '/login';
+        }
+        
         return Promise.reject(refreshError);
       }
     }
