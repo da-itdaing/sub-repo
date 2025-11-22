@@ -67,43 +67,104 @@ server {
 
 ---
 
-### 방법 2: Elastic IP 할당 (Public Subnet 필요)
+### 방법 2: Bastion Host + Elastic IP
 
-**주의**: 현재 EC2가 Private Subnet에 있으면 사용 불가
+**현재 구성**: Private VPC → Bastion Host를 통해 접속
 
-#### 1단계: Elastic IP 할당
-```bash
-# AWS Console에서
-EC2 → Elastic IPs → Allocate Elastic IP address
-→ Associate with instance i-0f3c3ae4ce27bb373
+#### 아키텍처
+```
+Internet
+    ↓
+Elastic IP (43.203.224.238)
+    ↓
+Bastion Host (Public Subnet)
+    ↓
+Private EC2 (10.0.5.175)
+    ↓
+RDS, Redis (Private)
 ```
 
-#### 2단계: Route 53 A 레코드
-```
-Name: aischool.daitdaing.link
-Type: A
-Value: [Elastic IP]
-TTL: 300
-```
+**중요**: 
+- ✅ Bastion Host에 Elastic IP 할당 (이미 설정됨)
+- ❌ Private EC2에는 Elastic IP 할당 불가
+- ✅ ALB를 사용하여 Private EC2를 Public으로 노출
 
 ---
 
-### 방법 3: CloudFront + S3 (정적 사이트)
+### 방법 3: CloudFront + S3 (정적 사이트) - 권장!
 
-SPA를 S3에 배포하고 CloudFront로 서빙:
+SPA를 S3에 배포하고 CloudFront로 서빙하는 방법입니다.
 
-#### 1단계: S3 버킷 생성
-```bash
-aws s3 mb s3://aischool-daitdaing-frontend
-aws s3 sync /home/ubuntu/itdaing-app/dist/ s3://aischool-daitdaing-frontend/
+#### 아키텍처
+```
+Internet → CloudFront → S3 (daitdaing-static-files/prod/)
+                      ↓
+Route 53: aischool.daitdaing.link → CloudFront
 ```
 
-#### 2단계: CloudFront 배포
-- Origin: S3 bucket
-- Domain: aischool.daitdaing.link
+#### 1단계: S3 설정
+```bash
+# S3 정적 웹사이트 호스팅 활성화
+cd /home/ubuntu/itdaing-app
+./scripts/deploy-s3-setup.sh
+```
 
-#### 3단계: API는 별도 ALB
-- API endpoint: api.daitdaing.link → ALB → Private EC2
+#### 2단계: 빌드 및 S3 업로드
+```bash
+# 자동 배포 스크립트
+cd /home/ubuntu/itdaing-app
+./scripts/deploy-s3.sh
+```
+
+**배포 경로**: `s3://daitdaing-static-files/prod/`
+
+#### 3단계: CloudFront Distribution 생성
+
+**AWS Console → CloudFront → Create Distribution**
+
+**Origin 설정**:
+- Origin domain: `daitdaing-static-files.s3.ap-northeast-2.amazonaws.com`
+- Origin path: `/prod`
+- Origin access: `Public`
+
+**Default cache behavior**:
+- Viewer protocol policy: `Redirect HTTP to HTTPS`
+- Allowed HTTP methods: `GET, HEAD, OPTIONS`
+- Cache policy: `CachingOptimized`
+- Origin request policy: `CORS-S3Origin`
+
+**Settings**:
+- Price class: `Use all edge locations`
+- Alternate domain names (CNAMEs): `aischool.daitdaing.link`
+- Custom SSL certificate: `*.daitdaing.link` (ACM에서 발급)
+
+**Default root object**: `index.html`
+
+**Custom error responses**:
+- HTTP error code: `403` → Response page path: `/index.html` → HTTP response code: `200`
+- HTTP error code: `404` → Response page path: `/index.html` → HTTP response code: `200`
+
+#### 4단계: Route 53 설정
+```
+Record name: aischool
+Record type: A (Alias)
+Route traffic to: CloudFront distribution
+Distribution: [생성한 CloudFront]
+```
+
+#### 5단계: API 별도 설정 (옵션)
+
+CloudFront에서는 정적 파일만 서빙하고, API는 ALB로 분리:
+
+```
+aischool.daitdaing.link  → CloudFront → S3 (프론트엔드)
+api.daitdaing.link       → ALB → Private EC2 (백엔드 API)
+```
+
+**프론트엔드 환경변수**:
+```env
+VITE_API_BASE_URL=https://api.daitdaing.link
+```
 
 ---
 
