@@ -65,6 +65,9 @@ itdaing-web/.git-backup/
 itdaing/prod.env
 itdaing/.env
 itdaing/.env.*
+itdaing/*.env
+*.env.local
+*.env.production
 
 # 빌드 산출물
 itdaing/build/

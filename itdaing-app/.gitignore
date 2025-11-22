@@ -17,13 +17,19 @@ dist-ssr
 .env.*
 !.env.example
 
-# 배포 관련 민감 정보 (IP 주소 포함)
+# 배포 관련 민감 정보 (IP 주소, ALB DNS, 인프라 정보 포함)
 docs/DEPLOYMENT_NGINX.md
 docs/DEPLOYMENT_COMPLETE_GUIDE.md
+docs/DEPLOYMENT_STATUS_CURRENT.md
 docs/DNS_SETUP_GUIDE.md
 scripts/deploy.sh
 scripts/deploy-s3.sh
 scripts/deploy-s3-setup.sh
+
+# 백업 및 임시 파일
+backup/
+*.backup
+.DS_Store
 
 # Editor directories and files
 .vscode/*
