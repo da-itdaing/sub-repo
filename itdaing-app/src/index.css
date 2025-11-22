@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #eb0000;
+  --color-primary-foreground: #ffffff;
+  --color-background: #ffffff;
+  --color-foreground: #000000;
+  
+  --radius: 0.5rem;
+  
+  /* Custom breakpoints */
+  --breakpoint-xs: 375px;
+}
+
+* {
+  border-color: theme(colors.gray.200);
+}
+
+body {
+  background-color: theme(colors.background);
+  color: theme(colors.foreground);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.container-mobile {
+  width: 100%;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 스크롤바 숨기기 */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

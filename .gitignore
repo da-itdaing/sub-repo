@@ -23,11 +23,13 @@
 # ============================================
 # IDE 및 개발 도구
 # ============================================
+.cursor/
 .cursor-server/
 .vscode-server/
 .dbclient/
 .dotnet/
 .redhat/
+.gitmoji/
 
 # ============================================
 # 패키지 관리자 캐시
@@ -118,8 +120,28 @@ itdaing-web/.vscode/
 # ============================================
 # 기타 제외 항목
 # ============================================
-# 테스트 프로젝트
+# 테스트/백업 프로젝트
 my-map-test/
+my-map-test 2/
+itdaing-web-backup/
+Responsive-Main-Page-Design/
+
+# 이미지 리소스 폴더
+seller-ui-image/
+admin-ui-image/
+
+# Cursor IDE 설정 (이미 상위 .cursor/에 포함됨)
+
+# Git 및 보안 파일
+.git-credentials
+
+# 임시/테스트 파일
+test.txt
+*.md.backup
+
+# npm 패키지 (itdaing 백엔드용 Node.js 도구)
+itdaing/node_modules/
+itdaing/package-lock.json
 
 # 루트의 src (itdaing 외부)
 /src/

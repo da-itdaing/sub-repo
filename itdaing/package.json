@@ -1,0 +1,19 @@
+{
+  "name": "itdaing",
+  "version": "1.0.0",
+  "description": "```bash cd ~/itdaing ./scripts/start-backend.sh # 로그: tail -f /tmp/itdaing-boot.log # 중지:  ./scripts/stop-backend.sh ```",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt": "^6.0.0"
+  }
+}
