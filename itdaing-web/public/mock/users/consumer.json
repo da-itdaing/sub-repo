@@ -1,0 +1,41 @@
+{
+  "profile": {
+    "userType": "consumer",
+    "username": "consumer1",
+    "name": "김소비",
+    "nickname": "소비왕",
+    "email": "consumer1@example.com",
+    "ageGroup": "20대",
+    "mbti": "INFP",
+    "interests": [
+      "패션",
+      "문화기획"
+    ],
+    "moods": [
+      "감성적인",
+      "포토존"
+    ],
+    "regions": [
+      "동구",
+      "남구"
+    ],
+    "conveniences": [
+      "무료주차",
+      "굿즈판매"
+    ],
+    "favorites": [
+      501,
+      502
+    ],
+    "recentViewed": [
+      501,
+      502,
+      503
+    ],
+    "recommendations": [
+      502,
+      503,
+      504
+    ]
+  }
+}
