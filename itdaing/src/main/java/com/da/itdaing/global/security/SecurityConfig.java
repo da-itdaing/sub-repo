@@ -37,7 +37,9 @@ class CommonSecurityBeans {
             "http://127.0.0.1:*",
             "https://*.elb.amazonaws.com",
             "https://*.daitdaing.link",
-            "http://*.daitdaing.link"
+            "http://*.daitdaing.link",
+            "https://*.daitdaing.com",
+            "http://*.daitdaing.com"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

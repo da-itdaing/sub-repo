@@ -1,6 +1,36 @@
 import axios from 'axios';
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from '@/utils/tokenStorage';
 
+// 공개 API와 보호 API를 명확히 구분하기 위한 경로 목록
+// 공개 API에는 Authorization 헤더를 붙이지 않도록 한다.
+const PUBLIC_GET_PATHS = [
+  '/popups',
+  '/popups/',
+  '/popups/search',
+  '/master',
+  '/zones',
+  '/config',
+  '/inquiries',
+  '/dev',
+  '/uploads',
+];
+
+// 401 처리 시 Refresh / 리디렉션을 수행하지 않을 공개/인증 관련 경로
+const PUBLIC_OR_AUTH_PATHS = [
+  '/auth/login',
+  '/auth/signup',
+  '/auth/refresh',
+  '/config/map-key',
+  '/popups',
+  '/popups/',
+  '/popups/search',
+  '/master',
+  '/zones',
+  '/inquiries',
+  '/dev',
+  '/uploads',
+];
+
 // Vite proxy를 사용하기 위해 상대 경로 사용
 // Vite proxy가 /api 요청을 http://localhost:8080으로 전달
 const apiClient = axios.create({
@@ -14,10 +44,20 @@ const apiClient = axios.create({
 // Request Interceptor: JWT 토큰 자동 추가
 apiClient.interceptors.request.use(
   (config) => {
-    const token = getAccessToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const method = (config.method || 'get').toLowerCase();
+    const url = typeof config.url === 'string' ? config.url : '';
+
+    // 공개 GET API에는 토큰을 붙이지 않는다.
+    const isPublicGet =
+      method === 'get' && PUBLIC_GET_PATHS.some((path) => url.startsWith(path));
+
+    if (!isPublicGet) {
+      const token = getAccessToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
+
     return config;
   },
   (error) => {
@@ -37,8 +77,16 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // 401 에러 처리: Silent Refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // 401 에러 처리: 공개 API와 보호 API를 구분하여 동작
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      const url = typeof originalRequest.url === 'string' ? originalRequest.url : '';
+
+      // 공개 API 및 인증 관련 엔드포인트는 Refresh / 리다이렉션을 하지 않는다.
+      const isPublicOrAuthPath = PUBLIC_OR_AUTH_PATHS.some((path) => url.startsWith(path));
+      if (isPublicOrAuthPath) {
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       try {
@@ -65,12 +113,12 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh 실패 시 로그아웃 처리
+        // Refresh 실패 시 토큰 정리
         clearTokens();
         
         // 현재 페이지가 인증 필요한 페이지인지 확인
         const protectedPaths = ['/mypage', '/seller', '/admin'];
-        const isProtectedPath = protectedPaths.some(path => 
+        const isProtectedPath = protectedPaths.some((path) =>
           window.location.pathname.startsWith(path)
         );
         

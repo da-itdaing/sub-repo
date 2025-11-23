@@ -122,6 +122,6 @@ self.addEventListener('fetch', (event) => {
           return caches.match('/android-chrome-192x192.png');
         }
         return new Response('Offline', { status: 503 });
-      })
+    })
   );
 });
