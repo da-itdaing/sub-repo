@@ -2,8 +2,11 @@ name: "Publish OpenAPI to GitHub Pages"
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
     paths:
+      - 'itdaing/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
       - 'itdaing/docs/openapi.json'
       - '.github/workflows/publish-openapi.yml'
   workflow_dispatch:
