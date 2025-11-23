@@ -19,7 +19,7 @@
 │   ├── app.jar           # 실행 가능한 JAR (89MB)
 │   └── build.gradle.kts  # Gradle 빌드 설정
 │
-├── itdaing-app/          # 프론트엔드 (React + Vite) - TS→JS 전환 버전
+├── itdaing-app/          # 프론트엔드 (React 19 + Vite 7 + Tailwind v4) - Consumer/Seller/Admin 통합
 │   ├── src/              # React 소스 코드 (JavaScript)
 │   │   ├── api/          # API 클라이언트 (Axios)
 │   │   ├── components/   # 재사용 컴포넌트
@@ -30,17 +30,22 @@
 │   │   ├── services/     # API 서비스
 │   │   ├── store/        # Zustand 상태 관리
 │   │   └── utils/        # 유틸리티
-│   ├── docs/             # 프로젝트 문서
+│   ├── docs/             # 프로젝트 문서 (배포, 가이드, 아키텍처)
 │   ├── public/           # 정적 파일
 │   ├── README.md         # 프로젝트 개요
 │   ├── QUICK_START.md    # 빠른 시작 가이드
 │   └── package.json      # NPM 패키지 설정
 │
+├── itdaing-web/          # 레거시 프론트 (React 18 + TS) - 마이그레이션 레퍼런스
+│   ├── src/              # 기존 Seller/Admin Dashboard
+│   ├── public/           # 정적 파일
+│   └── package.json      # NPM 패키지 설정
+│
 └── .gitignore            # Git 제외 파일
 
-# 비교:
-# - itdaing-web (dev/fe): TypeScript + React 18 + Radix UI
-# - itdaing-app (test/fe): JavaScript + React 19 + Tailwind CSS v4
+# 비교 포커스:
+# - dev/be → dev/fe → main 순으로 동기화
+# - test/fe는 dev/fe 기반 QA/핫픽스 전용
 ```
 
 ## 🌿 브랜치 전략
@@ -50,16 +55,16 @@
 | 브랜치 | 설명 |
 |--------|------|
 | **main** | 통합 메인 브랜치 (프로덕션) |
-| **dev/be** | 백엔드 개발 |
-| **dev/fe** | 프론트엔드 v1 (TS → 부분 JS 전환) |
-| **test/fe** | 프론트엔드 v2 (완전 JS 전환) ← **현재** |
+| **dev/be** | 백엔드 스테이징 (Spring Boot) |
+| **dev/fe** | 프론트/통합 스테이징 (React 19 + Tailwind v4) ← **현재** |
+| **test/fe** | QA·실험·핫픽스 브랜치 (dev/fe 기반) |
 | **gh-pages** | API 문서 자동 배포 |
 
 ```
-main (통합)
-├── dev/be (백엔드)
-├── dev/fe (프론트 v1)
-└── test/fe (프론트 v2) ← 현재 진행 중 ✅
+main (통합 / 배포)
+└── dev/be (백엔드 스테이징)
+    └── dev/fe (프론트/통합 스테이징) ✅
+        └── test/fe (QA·실험 브랜치)
 ```
 
 **상세 정보**: [docs/BRANCH_STRATEGY.md](docs/BRANCH_STRATEGY.md)
@@ -154,7 +159,7 @@ git commit -m "📝 문서: API 엔드포인트 문서화"
 
 ## 🤝 기여하기
 
-1. 브랜치 선택: `test/fe` (프론트 v2), `dev/be` (백엔드)
+1. 브랜치 선택: `dev/be`(백엔드) / `dev/fe`(프론트·통합) / `test/fe`(QA·핫픽스, dev/fe 기반)
 2. 커밋 규칙: Gitmoji + 한글 메시지
 3. Pull Request: 작업 브랜치 → `main`
 4. 문서 업데이트: 새 기능 추가 시 필수
@@ -164,4 +169,62 @@ git commit -m "📝 문서: API 엔드포인트 문서화"
 ## 📄 라이선스
 
 사내 프로젝트
+
+## 👥 팀 소개
+
+<table>
+  <tbody>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/dorae222">
+          <img src="https://avatars.githubusercontent.com/dorae222" width="100px;" alt="도형준 아바타"/><br />
+          <sub><b>도형준 · Infra PM</b></sub>
+        </a>
+        <br /><small>인프라 엔지니어 / AWS·배포 총괄 PM</small><br />
+        <img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonwebservices&logoColor=white" />
+        <img src="https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" />
+        <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" />
+      </td>
+      <td align="center">
+        <a href="https://github.com/Jongha611">
+          <img src="https://avatars.githubusercontent.com/Jongha611" width="100px;" alt="김종하 아바타"/><br />
+          <sub><b>김종하 · AI Lead</b></sub>
+        </a>
+        <br /><small>LangGraph 챗봇 · FastAPI 설계 · PostgreSQL 연동</small><br />
+        <img src="https://img.shields.io/badge/LangGraph-000000?style=for-the-badge&logo=python&logoColor=white" />
+        <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+        <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+      </td>
+      <td align="center">
+        <a href="https://github.com/ChaeRi0609">
+          <img src="https://avatars.githubusercontent.com/ChaeRi0609" width="100px;" alt="황채리 아바타"/><br />
+          <sub><b>황채리 · Frontend Lead</b></sub>
+        </a>
+        <br /><small>React 19 + Tailwind v4 기반 프론트엔드</small><br />
+        <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
+        <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+        <img src="https://img.shields.io/badge/Tailwind%20CSS-0EA5E9?style=for-the-badge&logo=tailwindcss&logoColor=white" />
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/jangjuya">
+          <img src="https://avatars.githubusercontent.com/jangjuya" width="100px;" alt="장주찬 아바타"/><br />
+          <sub><b>장주찬 · Backend Lead</b></sub>
+        </a>
+        <br /><small>Spring Boot · JWT 인증 · 운영 API</small><br />
+        <img src="https://img.shields.io/badge/Spring%20Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" />
+        <img src="https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=openjdk&logoColor=white" />
+        <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+      </td>
+      <td align="center">
+        <img src="https://placehold.co/100x100?text=Design" width="100px;" alt="정현희 아바타"/><br />
+        <sub><b>정현희 · Product Designer</b></sub>
+        <br /><small>Figma 기반 디자인 시스템 · UI/UX 가이드</small><br />
+        <img src="https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white" />
+        <img src="https://img.shields.io/badge/Design%20System-111827?style=for-the-badge&logoColor=white" />
+      </td>
+    </tr>
+  </tbody>
+</table>
 

@@ -10,6 +10,12 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+coverage
+.vite
+.vitest
+playwright-report
+cypress/videos
+cypress/screenshots
 *.local
 
 # Environment variables
@@ -29,12 +35,15 @@ scripts/deploy-s3-setup.sh
 # 백업 및 임시 파일
 backup/
 *.backup
+*.plan
+*.plan.md
 .DS_Store
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
+.cursor/
 .DS_Store
 *.suo
 *.ntvs*

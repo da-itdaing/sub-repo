@@ -8,8 +8,14 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-# dist
+dist
 dist-ssr
+coverage
+.vite
+.vitest
+playwright-report
+cypress/videos
+cypress/screenshots
 *.local
 
 # Vite/Preview local cache
@@ -35,8 +41,13 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea
+.cursor/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Planning artifacts
+*.plan
+*.plan.md

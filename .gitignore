@@ -141,6 +141,8 @@ admin-ui-image/
 # 임시/테스트 파일
 test.txt
 *.md.backup
+*.plan
+*.plan.md
 
 # npm 패키지 (itdaing 백엔드용 Node.js 도구)
 itdaing/node_modules/
