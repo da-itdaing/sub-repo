@@ -29,7 +29,29 @@ body {
   margin-right: auto;
 }
 
+.app-shell {
+  @apply relative mx-auto min-h-screen w-full bg-white;
+  max-width: 540px;
+}
+
+@media (min-width: 768px) {
+  .app-shell {
+    max-width: 1200px;
+  }
+}
+
 /* 스크롤바 숨기기 */
+html,
+body {
+  height: 100%;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;

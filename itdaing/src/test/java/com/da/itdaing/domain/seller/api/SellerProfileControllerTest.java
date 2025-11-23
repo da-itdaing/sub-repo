@@ -4,6 +4,7 @@ package com.da.itdaing.domain.seller.api;
 import com.da.itdaing.domain.file.dto.ImagePayload;
 import com.da.itdaing.domain.seller.dto.SellerProfileRequest;
 import com.da.itdaing.domain.seller.dto.SellerProfileResponse;
+import com.da.itdaing.domain.seller.service.SellerDashboardService;
 import com.da.itdaing.domain.seller.service.SellerProfileService;
 import com.da.itdaing.global.error.GlobalExceptionHandler;
 import com.da.itdaing.global.security.JwtAuthFilter;
@@ -40,6 +41,7 @@ class SellerProfileControllerTest {
     @Autowired ObjectMapper objectMapper;
 
     @MockitoBean private SellerProfileService sellerProfileService;
+    @MockitoBean private SellerDashboardService sellerDashboardService;
     @MockitoBean private JwtAuthFilter jwtAuthFilter;
     @MockitoBean private JwtTokenProvider jwtTokenProvider;
     @MockitoBean private JwtAuthenticationHandler jwtAuthenticationHandler;

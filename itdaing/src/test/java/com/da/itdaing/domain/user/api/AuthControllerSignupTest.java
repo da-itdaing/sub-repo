@@ -4,6 +4,7 @@ import com.da.itdaing.domain.common.enums.UserRole;
 import com.da.itdaing.domain.file.dto.ImagePayload;
 import com.da.itdaing.domain.user.dto.AuthDto;
 import com.da.itdaing.domain.user.service.AuthService;
+import com.da.itdaing.domain.user.service.UserDashboardService;
 import com.da.itdaing.global.error.ErrorCode;
 import com.da.itdaing.global.error.GlobalExceptionHandler;
 import com.da.itdaing.global.error.exception.DuplicateResourceException;
@@ -62,6 +63,8 @@ class AuthControllerSignupTest {
 
     @MockitoBean
     private AuthService authService;
+    @MockitoBean
+    private UserDashboardService userDashboardService;
 
 
     @MockitoBean

@@ -10,13 +10,16 @@ cd ~/itdaing
 # 중지:  ./scripts/stop-backend.sh
 ```
 
-### Frontend (Vite + React)
+### Frontend (itdaing-app, React 19 + Vite 7)
 ```bash
-cd ~/itdaing-web
-npm install          # 최초 1회
+cd ~/itdaing-app
+export NVM_DIR="$HOME/.nvm"
+source "$NVM_DIR/nvm.sh"
+nvm use
+npm install   # 최초 1회
 npm run dev -- --host 0.0.0.0 --port 3000
 # 로그: tail -f /tmp/itdaing-frontend.log
-# 중지: kill $(cat /tmp/itdaing-frontend.pid)
+# 중지: pkill -f "vite"
 ```
 
 팝업스토어 추천 플랫폼 - 풀스택 웹 애플리케이션
@@ -39,30 +42,30 @@ npm run dev -- --host 0.0.0.0 --port 3000
 - **주요 라이브러리**: Spring Web, Security, Data JPA, MapStruct
 - **스토리지**: AWS S3
 
-#### 프론트엔드
-- **프레임워크**: React 18.3.1
-- **언어**: TypeScript 5.9.3
-- **빌드 도구**: Vite 6.3.5
-- **UI 라이브러리**: Radix UI + Tailwind CSS
-- **상태 관리**: React Context API
-- **라우팅**: React Router v6
+#### 프론트엔드 (현재 운영: `itdaing-app`)
+- **프레임워크**: React 19
+- **언어**: JavaScript (전환 완료)
+- **빌드 도구**: Vite 7
+- **UI/스타일**: Tailwind CSS v4 (Pure) + Custom Components
+- **상태 관리**: Zustand + React Query
+- **라우팅**: React Router v7
 - **API 통신**: Axios
+> 레거시 TypeScript 버전(`itdaing-web`)은 참고용으로만 보관합니다.
 
 ## 📁 프로젝트 구조
 
 ```
 /home/ubuntu/
-├── itdaing/              # 백엔드 프로젝트 (Spring Boot)
-│   ├── src/              # 백엔드 소스 코드
-│   │   ├── main/java/    # Java 소스 코드
-│   │   └── main/resources/ # 설정 파일 및 리소스
-│   ├── docs/             # 문서
-│   ├── scripts/          # 배포 및 실행 스크립트
-│   └── .cursor/          # Cursor IDE 설정
-└── itdaing-web/          # 프론트엔드 프로젝트 (React + TypeScript + Vite)
-    ├── src/              # 프론트엔드 소스 코드
-    ├── public/           # 정적 파일
-    └── docs/             # 프론트엔드 문서
+├── itdaing/               # 백엔드 (Spring Boot)
+│   ├── src/main/java/     # Java 소스
+│   ├── src/main/resources # 설정/리소스
+│   ├── docs/              # 백엔드 문서 & OpenAPI
+│   └── scripts/           # 배포/운영 스크립트
+├── itdaing-app/           # 프론트엔드 v2 (React 19 + JS)
+│   ├── src/               # React 코드
+│   ├── public/            # 정적/PWA 자산
+│   └── docs/              # FE 아키텍처/배포 문서
+└── itdaing-web/           # 레거시 프론트 (React 18 + TS, 참고용)
 ```
 
 ## 🚀 개발 환경

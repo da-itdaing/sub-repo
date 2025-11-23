@@ -12,7 +12,7 @@ const PUBLIC_GET_PATHS = [
   '/config',
   '/inquiries',
   '/dev',
-  '/uploads',
+  // '/uploads', // uploads는 보호된 리소스로 취급될 수 있음, 필요 시 제거
 ];
 
 // 401 처리 시 Refresh / 리디렉션을 수행하지 않을 공개/인증 관련 경로
@@ -28,7 +28,7 @@ const PUBLIC_OR_AUTH_PATHS = [
   '/zones',
   '/inquiries',
   '/dev',
-  '/uploads',
+  // '/uploads', // uploads는 Refresh 대상이어야 함
 ];
 
 // Vite proxy를 사용하기 위해 상대 경로 사용
@@ -52,10 +52,10 @@ apiClient.interceptors.request.use(
       method === 'get' && PUBLIC_GET_PATHS.some((path) => url.startsWith(path));
 
     if (!isPublicGet) {
-      const token = getAccessToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    const token = getAccessToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     }
 
     return config;
@@ -124,7 +124,7 @@ apiClient.interceptors.response.use(
         
         // 인증 필요한 페이지에서만 로그인으로 리디렉션
         if (isProtectedPath) {
-          window.location.href = '/login';
+        window.location.href = '/login';
         }
         
         return Promise.reject(refreshError);

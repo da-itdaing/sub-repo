@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 @Import(JpaAuditingTestConfig.class)
+@org.springframework.test.context.ActiveProfiles("test")
 class MessageRepositoryTest {
 
     @Autowired UserRepository userRepository;

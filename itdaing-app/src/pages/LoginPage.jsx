@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { login as loginApi, getMyProfile } from '@/services/authService';
 import { ROUTES } from '@/routes/paths';
@@ -15,7 +16,7 @@ const loginSchema = z.object({
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login: loginStore } = useAuthStore();
+  const { login: loginStore, setUser } = useAuthStore();
   const [userType, setUserType] = useState('consumer'); // consumer or seller
   const [error, setError] = useState('');
 
@@ -38,25 +39,27 @@ const LoginPage = () => {
       // API 호출
       const response = await loginApi(data.loginId, data.password);
       
-      // 토큰 저장
       if (response.accessToken && response.refreshToken) {
-        loginStore(null, response.accessToken, response.refreshToken);
-        
-        // 사용자 정보 조회
+        loginStore(null, response.accessToken, response.refreshToken, response.role);
+
+        let resolvedRole = response.role;
+
         try {
           const userProfile = await getMyProfile();
-          loginStore(userProfile, response.accessToken, response.refreshToken);
-          
-          // 역할에 따라 리다이렉트
-          if (userProfile.role === 'SELLER') {
-            navigate(ROUTES.seller.dashboard);
-          } else {
-            navigate(ROUTES.home);
-          }
+          setUser(userProfile);
+          resolvedRole = userProfile.role ?? resolvedRole;
         } catch (profileError) {
-          // 프로필 조회 실패해도 로그인은 성공
-          navigate(ROUTES.home);
+          console.error('Failed to fetch profile after login:', profileError);
         }
+
+        const nextPath =
+          resolvedRole === 'SELLER'
+            ? ROUTES.seller.dashboard
+            : resolvedRole === 'ADMIN'
+            ? ROUTES.admin.dashboard
+            : ROUTES.home;
+
+        navigate(nextPath, { replace: true });
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -70,8 +73,8 @@ const LoginPage = () => {
       <div className="relative w-full max-w-[420px] mx-auto py-12 px-6">
         {/* Logo */}
         <div className="flex justify-center mb-16">
-          <h1 className="font-bold text-[32px] sm:text-[40px] md:text-[56px] text-primary leading-normal w-[280px] sm:w-auto text-center">
-            Da - It daing
+          <h1 className="font-['Luckiest_Guy'] text-[32px] sm:text-[40px] md:text-[56px] text-primary leading-normal w-[280px] sm:w-auto text-center">
+            DA-ITDAING
           </h1>
         </div>
 
@@ -159,23 +162,20 @@ const LoginPage = () => {
             >
               회원가입
             </button>
-            <span>|</span>
-            <button type="button" className="hover:text-primary transition-colors">
-              아이디/비밀번호 찾기
-            </button>
           </div>
         </form>
 
-        {/* Close Button */}
+        
+        {/* Bottom Back Navigation */}
+        <div className="mt-12 flex justify-center">
         <button
+            type="button"
           onClick={() => navigate(ROUTES.home)}
-          className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="Close"
+            className="flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-colors"
         >
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+            <ArrowLeft className="w-5 h-5" />
         </button>
+        </div>
       </div>
     </div>
   );

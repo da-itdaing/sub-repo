@@ -4,6 +4,7 @@ import com.da.itdaing.domain.common.enums.UserRole;
 import com.da.itdaing.domain.user.dto.AuthDto;
 import com.da.itdaing.domain.user.exception.AuthException;
 import com.da.itdaing.domain.user.service.AuthService;
+import com.da.itdaing.domain.user.service.UserDashboardService;
 import com.da.itdaing.global.error.ErrorCode;
 import com.da.itdaing.global.error.GlobalExceptionHandler;
 import com.da.itdaing.support.MvcNoSecurityTest;
@@ -44,6 +45,8 @@ class AuthControllerLoginTest extends MvcNoSecurityTest {
 
     @MockitoBean
     AuthService authService;
+    @MockitoBean
+    UserDashboardService userDashboardService;
 
     private AuthDto.LoginRequest loginReq(String loginId, String password) {
         return AuthDto.LoginRequest.builder()

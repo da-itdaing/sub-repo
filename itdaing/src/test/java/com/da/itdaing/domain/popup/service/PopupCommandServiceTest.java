@@ -41,7 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
 @JpaSliceTest
-@Import(PopupCommandService.class)
+@Import({PopupCommandService.class, PopupCommandServiceTest.StubConfig.class})
 class PopupCommandServiceTest {
 
     @Autowired PopupCommandService popupCommandService;
@@ -351,5 +351,12 @@ class PopupCommandServiceTest {
             .isInstanceOf(BusinessException.class)
             .extracting(ex -> ((BusinessException) ex).getErrorCode())
             .isEqualTo(ErrorCode.ACCESS_DENIED);
+    }
+    @org.springframework.boot.test.context.TestConfiguration
+    static class StubConfig {
+        @org.springframework.context.annotation.Bean
+        com.da.itdaing.domain.file.service.DefaultImageProvider defaultImageProvider() {
+            return new com.da.itdaing.domain.file.service.DefaultImageProvider(new com.da.itdaing.global.storage.StorageProps());
+        }
     }
 }

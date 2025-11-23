@@ -15,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@org.springframework.test.context.ActiveProfiles("test")
 class ZoneAreaRepositoryTest {
 
     @Autowired ZoneAreaRepository areaRepo;

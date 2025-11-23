@@ -11,6 +11,8 @@ export const ROUTES = {
   // 팝업 상세
   popupDetail: (id) => `/popup/${id}`,
   popupDetailPattern: '/popup/:id',
+  reviewWrite: (id) => `/popup/${id}/reviews/write`,
+  reviewWritePattern: '/popup/:id/reviews/write',
   
   // 탐색
   nearby: '/nearby',
@@ -24,11 +26,21 @@ export const ROUTES = {
   
   // Seller 대시보드 (추후 구현)
   seller: {
+    root: '/seller',
     dashboard: '/seller/dashboard',
     profile: '/seller/profile',
     popups: '/seller/popups',
     popupCreate: '/seller/popups/create',
     popupEdit: (id) => `/seller/popups/${id}/edit`,
+  },
+
+  // Admin 대시보드
+  admin: {
+    root: '/admin',
+    dashboard: '/admin/dashboard',
+    users: '/admin/users',
+    zones: '/admin/zones',
+    approvals: '/admin/approvals',
   },
 };
 

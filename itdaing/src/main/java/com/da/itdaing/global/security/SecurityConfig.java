@@ -15,9 +15,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.*;
-
-import java.util.List;
 
 /* ===================== 공용 빈 ===================== */
 @Configuration
@@ -28,32 +25,6 @@ class CommonSecurityBeans {
         return new BCryptPasswordEncoder();
     }
 
-    /** CORS 설정 (전체 경로 허용: /** ) */
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of(
-            "http://localhost:*",
-            "http://127.0.0.1:*",
-            "https://*.elb.amazonaws.com",
-            "https://*.daitdaing.link",
-            "http://*.daitdaing.link",
-            "https://*.daitdaing.com",
-            "http://*.daitdaing.com"
-        ));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("Authorization"));
-        config.setAllowCredentials(true);
-        config.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-
-        // ⭐ 모든 경로 CORS 허용
-        source.registerCorsConfiguration("/**", config);
-
-        return source;
-    }
 }
 
 /* ============ 일반/운영 프로파일용 보안체인 ============ */
@@ -91,7 +62,8 @@ public class SecurityConfig {
                                                JwtAuthFilter jwtAuthFilter,
                                                JwtAuthenticationHandler jwtAuthenticationHandler) throws Exception {
     http
-        .cors(cors -> {})
+        // CORS는 Nginx 레벨에서 처리하도록 하고, Spring Security 레벨에서는 비활성화
+        .cors(AbstractHttpConfigurer::disable)
         .csrf(AbstractHttpConfigurer::disable)
         
         // 🔥 기본 인증 사용 안함

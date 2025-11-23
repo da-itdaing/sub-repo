@@ -35,6 +35,7 @@ const KakaoMap = ({
       zoomable={zoomable}
       draggable={draggable}
       onCreate={(map) => onMapReady?.(map)}
+      scrollwheel={false} // 스크롤 확대/축소 비활성화하여 passive event violation 방지 및 UX 개선
     >
       {enableClustering && validMarkers.length > 0 ? (
         <MarkerClusterer averageCenter minLevel={5}>
@@ -71,7 +72,7 @@ const KakaoMap = ({
   );
 
   return (
-    <div className="rounded-lg overflow-hidden" style={{ width: '100%', height }}>
+    <div className="rounded-lg overflow-hidden" style={{ width: '100%', height, touchAction: 'none' }}>
       {mapContent}
     </div>
   );

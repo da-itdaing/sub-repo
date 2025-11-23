@@ -92,6 +92,7 @@ class ReviewCommandControllerTest {
         org.mockito.Mockito.when(mockPopup.getId()).thenReturn(200L);
         
         given(reviewRepository.findById(100L)).willReturn(java.util.Optional.of(mockReview));
+        given(reviewRepository.findByIdWithRelations(100L)).willReturn(java.util.Optional.of(mockReview));
         given(reviewImageRepository.findByReviewIdIn(any())).willReturn(List.of());
 
         mockMvc.perform(post("/api/popups/200/reviews")
@@ -135,6 +136,7 @@ class ReviewCommandControllerTest {
         org.mockito.Mockito.when(mockPopup.getId()).thenReturn(200L);
         
         given(reviewRepository.findById(100L)).willReturn(java.util.Optional.of(mockReview));
+        given(reviewRepository.findByIdWithRelations(100L)).willReturn(java.util.Optional.of(mockReview));
         given(reviewImageRepository.findByReviewIdIn(any())).willReturn(List.of());
 
         mockMvc.perform(put("/api/reviews/100")

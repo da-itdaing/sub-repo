@@ -4,6 +4,7 @@ import com.da.itdaing.domain.common.enums.UserRole;
 import com.da.itdaing.domain.user.dto.AuthDto;
 import com.da.itdaing.domain.user.exception.AuthException;
 import com.da.itdaing.domain.user.service.AuthService;
+import com.da.itdaing.domain.user.service.UserDashboardService;
 import com.da.itdaing.global.error.ErrorCode;
 import com.da.itdaing.global.error.GlobalExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +51,7 @@ class AuthControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockitoBean private AuthService authService;
+    @MockitoBean private UserDashboardService userDashboardService;
 
     @Test
     @DisplayName("로그인 성공 - 올바른 loginId/비밀번호로 JWT 토큰을 받는다")

@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MapPin, Heart } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { getImageUrl } from '@/utils/imageUtils';
+import { useToast } from '@/hooks/useToast';
+import { useAuthStore } from '@/store/authStore';
+import { addToWishlist, removeFromWishlist } from '@/services/wishlistService';
+import { ROUTES } from '@/routes/paths';
+import { useLoginPrompt } from '@/hooks/useLoginPrompt';
 
 /**
  * HeroCarousel Component (반응형 최적화)
@@ -11,19 +18,33 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [favoriteMap, setFavoriteMap] = useState({});
-  const [dimensions, setDimensions] = useState({ width: 0, isMobile: true });
+  const [favoriteLoadingId, setFavoriteLoadingId] = useState(null);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : true);
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
+  const { openLoginPrompt } = useLoginPrompt();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const navigate = useNavigate();
+  useEffect(() => {
+    setFavoriteMap((prev) => {
+      const next = { ...prev };
+      (items ?? []).forEach((popup) => {
+        if (popup?.id == null) return;
+        if (!(popup.id in next)) {
+          next[popup.id] = Boolean(popup.isFavorite);
+        }
+      });
+      return next;
+    });
+  }, [items]);
 
   // 화면 크기 감지
   useEffect(() => {
     const updateDimensions = () => {
-      const width = window.innerWidth;
-      setDimensions({
-        width,
-        isMobile: width < 768,
-      });
+      const newIsMobile = window.innerWidth < 768;
+      setIsMobile(newIsMobile);
     };
     
-    updateDimensions();
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
@@ -49,6 +70,7 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
         location: popup.address || popup.locationName || '위치 미정',
         date: dateLabel,
         image: heroImage,
+        isFavorite: Boolean(popup.isFavorite),
       };
     });
   }, [items]);
@@ -74,9 +96,51 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
     setCurrentIndex((prev) => (prev + 1) % normalizedItems.length);
   };
 
-  const handleFavoriteToggle = (event, popupId) => {
+  const handleFavoriteToggle = async (event, popupId) => {
     event.stopPropagation();
-    setFavoriteMap((prev) => ({ ...prev, [popupId]: !prev[popupId] }));
+    if (!popupId) return;
+
+    if (!isAuthenticated) {
+      const shouldLogin = await openLoginPrompt({
+        description: '관심 팝업은 로그인 후 이용 가능합니다.\n지금 로그인하시겠습니까?',
+      });
+      if (shouldLogin) {
+        navigate(ROUTES.login);
+      }
+      return;
+    }
+
+    if (role && role !== 'CONSUMER') {
+      addToast({
+        title: '관심 팝업은 소비자 계정에서만 이용 가능합니다.',
+        variant: 'error',
+      });
+      return;
+    }
+
+    if (favoriteLoadingId === popupId) return;
+    setFavoriteLoadingId(popupId);
+    try {
+      const currentlyFavorite = Boolean(favoriteMap[popupId]);
+      if (currentlyFavorite) {
+        await removeFromWishlist(popupId);
+        addToast({ title: '관심 목록에서 제거되었습니다.' });
+      } else {
+        await addToWishlist(popupId);
+        addToast({ title: '관심 목록에 추가되었습니다.' });
+      }
+      setFavoriteMap((prev) => ({ ...prev, [popupId]: !currentlyFavorite }));
+      queryClient.invalidateQueries({ queryKey: ['my-wishlist'] });
+    } catch (error) {
+      console.error('HeroCarousel wishlist error', error);
+      addToast({
+        title: '관심 목록 처리 실패',
+        description: error.message || '다시 시도해주세요.',
+        variant: 'error',
+      });
+    } finally {
+      setFavoriteLoadingId(null);
+    }
   };
 
   if (isLoading && !hasItems) {
@@ -86,7 +150,6 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
   if (!hasItems) return null;
 
   // 반응형 카드 설정 (컨테이너 안에 모두 수용)
-  const { isMobile } = dimensions;
   const centerCardWidth = isMobile ? 150 : 280;
   const centerCardHeight = isMobile ? 225 : 420;
   const containerHeight = isMobile ? 260 : 460;
@@ -99,7 +162,7 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
     >
       <div className="relative mx-auto rounded-2xl bg-linear-to-b from-[#fff6f2] via-white to-[#fff6f2] p-4 md:p-6 overflow-hidden">
         {/* 캐러셀 컨테이너 (5개 카드 겹쳐서 표시) */}
-        <div 
+          <div
           className="relative w-full overflow-hidden" 
           style={{ height: containerHeight }}
         >
@@ -158,7 +221,7 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
               }
 
               const isActive = position === 0;
-              const isFavorite = Boolean(favoriteMap[item.id]);
+              const isFavorite = favoriteMap[item.id] ?? item.isFavorite ?? false;
 
               return (
                 <motion.div
@@ -174,13 +237,13 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
                     ease: [0.4, 0, 0.2, 1],
                   }}
                   className="absolute rounded-2xl overflow-hidden shadow-xl cursor-pointer"
-                  style={{ 
+                  style={{
                     zIndex,
                     width: centerCardWidth,
                     height: centerCardHeight,
                   }}
                   onClick={() => {
-                    if (position < 0) handlePrev();
+                      if (position < 0) handlePrev();
                     else if (position > 0) handleNext();
                     else onSelect?.(item.id);
                   }}
@@ -189,13 +252,14 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
                     <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
                     
-                    {isActive && (
-                      <>
+                      {isActive && (
+                        <>
                         <button
                           type="button"
                           onClick={(e) => handleFavoriteToggle(e, item.id)}
                           className="absolute top-3 md:top-4 right-3 md:right-4 p-2 bg-white/90 rounded-full shadow-md hover:bg-white transition-colors"
                           aria-label="관심 팝업"
+                          disabled={favoriteLoadingId === item.id}
                         >
                           <Heart
                             className="w-4 h-4 md:w-5 md:h-5"
@@ -205,7 +269,7 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
                         </button>
                         <div className="absolute bottom-0 left-0 right-0 p-3 md:p-5 space-y-1 md:space-y-2">
                           <div className="inline-flex items-center bg-white/90 px-2.5 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-bold text-gray-900">
-                            #{item.rank.toString().padStart(2, '0')}
+                              #{item.rank.toString().padStart(2, '0')}
                           </div>
                           <h3 className="text-base md:text-2xl font-bold text-white leading-tight line-clamp-2">
                             {item.title}
@@ -213,32 +277,32 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
                           <p className="text-xs md:text-sm text-white/90">{item.date}</p>
                           <p className="flex items-center gap-1 text-xs md:text-sm text-white/85">
                             <MapPin className="w-3 h-3 md:w-4 md:h-4" />
-                            <span className="line-clamp-1">{item.location}</span>
-                          </p>
+                                <span className="line-clamp-1">{item.location}</span>
+                              </p>
                         </div>
-                      </>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
+                            </>
+                          )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
           </div>
-        </div>
 
         {/* 페이지네이션 */}
         <div className="mt-4 md:mt-6 flex items-center justify-center gap-1.5 md:gap-2">
-          {normalizedItems.map((_, idx) => (
-            <button
+            {normalizedItems.map((_, idx) => (
+              <button
               key={`dot-${idx}`}
-              onClick={() => setCurrentIndex(idx)}
-              className={`rounded-full transition-all ${
+                onClick={() => setCurrentIndex(idx)}
+                className={`rounded-full transition-all ${
                 idx === currentIndex 
                   ? 'w-6 md:w-8 h-1.5 md:h-2 bg-slate-800' 
                   : 'w-1.5 md:w-2 h-1.5 md:h-2 bg-slate-300'
-              }`}
+                }`}
               aria-label={`슬라이드 ${idx + 1}`}
-            />
-          ))}
+              />
+            ))}
         </div>
       </div>
     </section>

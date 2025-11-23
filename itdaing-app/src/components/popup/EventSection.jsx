@@ -2,7 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import EventCard from './EventCard';
 
-const EventSection = ({ title, description, popups = [], initialShow = 4, filterType }) => {
+const EventSection = ({
+  title,
+  description,
+  popups = [],
+  initialShow = 4,
+  filterType,
+  customFilterOptions,
+}) => {
   const [visibleCount, setVisibleCount] = useState(initialShow);
   const [expanded, setExpanded] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('전체');
@@ -17,6 +24,9 @@ const EventSection = ({ title, description, popups = [], initialShow = 4, filter
   }, [initialShow, popups.length, filterType]);
 
   const filterOptions = useMemo(() => {
+    if (Array.isArray(customFilterOptions) && customFilterOptions.length > 0) {
+      return customFilterOptions;
+    }
     if (!filterType || popups.length === 0) return [];
     const raw = popups
       .map((popup) => {
@@ -31,7 +41,7 @@ const EventSection = ({ title, description, popups = [], initialShow = 4, filter
       .filter(Boolean);
     const unique = Array.from(new Set(raw));
     return ['전체', ...unique];
-  }, [filterType, popups]);
+  }, [customFilterOptions, filterType, popups]);
 
   const filteredPopups = useMemo(() => {
     if (selectedFilter === '전체') return popups;
@@ -130,7 +140,7 @@ const EventSection = ({ title, description, popups = [], initialShow = 4, filter
         {filterOptions.length > 0 && (
           <FilterChips options={filterOptions} value={selectedFilter} onChange={setSelectedFilter} />
         )}
-        <div className="w-full h-px bg-gradient-to-r from-gray-200 via-gray-100 to-transparent" />
+        <div className="w-full h-px bg-linear-to-r from-gray-200 via-gray-100 to-transparent" />
       </div>
 
       {displayedPopups.length > 0 ? (
@@ -142,13 +152,13 @@ const EventSection = ({ title, description, popups = [], initialShow = 4, filter
             ))}
           </div>
 
-          {/* 모바일: 가로 스크롤 */}
+          {/* 모바일: 가로 스크롤 (filteredPopups 전체 사용) */}
           <div className="md:hidden">
             <div
               ref={scrollRef}
               className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
             >
-              {filteredPopups.map((popup, index) => (
+              {filteredPopups.slice(0, MAX_ITEMS).map((popup, index) => (
                 <div key={popup.id} data-card-index={index} className="w-[42%] shrink-0 snap-start">
                   <EventCard popup={popup} />
                 </div>
@@ -194,9 +204,7 @@ const EventSection = ({ title, description, popups = [], initialShow = 4, filter
 export default EventSection;
 
 const FilterChips = ({ options, value, onChange }) => {
-  // 최대 6개까지만 표시 (전체 + 5개)
-  const displayOptions = options.slice(0, 6);
-  
+  const displayOptions = options;
   return (
     <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 scrollbar-hide">
       {displayOptions.map((option) => (

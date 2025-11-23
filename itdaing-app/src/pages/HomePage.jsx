@@ -7,6 +7,7 @@ import HeroCarousel from '@/components/common/HeroCarousel';
 import HorizontalBanner from '@/components/consumer/HorizontalBanner';
 import EventSection from '@/components/popup/EventSection';
 import { usePopups } from '@/hooks/usePopups';
+import { useMasterData } from '@/hooks/useMasterData';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
 
@@ -14,6 +15,15 @@ const HomePage = () => {
   const navigate = useNavigate();
   // 팝업 목록 조회
   const { data: popups = [], isLoading, error } = usePopups();
+  const { regions: masterRegions } = useMasterData();
+
+  const gwangjuRegions = useMemo(() => {
+    const DISTRICTS = ['동구', '서구', '남구', '북구', '광산구'];
+    const matched = masterRegions
+      ?.filter((region) => DISTRICTS.includes(region.name))
+      .map((region) => region.name);
+    return matched?.length === DISTRICTS.length ? matched : DISTRICTS;
+  }, [masterRegions]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -21,67 +31,71 @@ const HomePage = () => {
 
   const normalizedPopups = useMemo(() => {
     const now = new Date();
-    return (popups ?? []).map((popup) => {
-      const startDate = popup.startDate ? new Date(popup.startDate) : null;
-      const endDate = popup.endDate ? new Date(popup.endDate) : null;
-      let status = 'unknown';
-      if (startDate && now < startDate) status = 'upcoming';
-      else if (startDate && endDate && now >= startDate && now <= endDate) status = 'ongoing';
-      else if (endDate && now > endDate) status = 'ended';
+    return (popups ?? [])
+      .filter((popup) => {
+        const endDate = popup.endDate ? new Date(popup.endDate) : null;
+        // endDate가 있고 현재보다 과거라면 종료된 것으로 간주하여 필터링
+        if (endDate && now > endDate) return false;
+        return true;
+      })
+      .map((popup) => {
+        const startDate = popup.startDate ? new Date(popup.startDate) : null;
+        const endDate = popup.endDate ? new Date(popup.endDate) : null;
+        let status = 'unknown';
+        if (startDate && now < startDate) status = 'upcoming';
+        else if (startDate && endDate && now >= startDate && now <= endDate) status = 'ongoing';
+        else if (endDate && now > endDate) status = 'ended';
 
-      // 지역 추출 로직 개선 (광주광역시의 경우 구 단위 추출)
-      let primaryRegion = '전체';
-      const address = popup.address || popup.locationName || '';
-      
-      if (address) {
-        const parts = address.split(' ');
-        // 광주광역시인 경우 두 번째 부분(구)을 추출
-        if (parts[0] === '광주광역시' || parts[0] === '광주') {
-          primaryRegion = parts[1] || parts[0];
-        } else {
-          // 다른 지역은 첫 번째 부분 사용
-          primaryRegion = parts[0];
+        const address = `${popup.address || ''} ${popup.locationName || ''}`;
+        let primaryRegion = gwangjuRegions.find((region) => address.includes(region)) || '기타';
+        if (!address) {
+          primaryRegion = '기타';
         }
-      }
 
-      const categoryTag = popup.styleTags?.[0] || popup.category || popup.homeDisplay?.categoryTag || '전체';
+        const categoryTag = popup.styleTags?.[0] || popup.category || popup.homeDisplay?.categoryTag || '전체';
 
-      return {
-        ...popup,
-        status,
-        primaryRegion,
-        categoryTag,
-      };
-    });
-  }, [popups]);
+        return {
+          ...popup,
+          status,
+          primaryRegion,
+          categoryTag,
+        };
+      });
+  }, [gwangjuRegions, popups]);
 
   const heroItems = useMemo(() => normalizedPopups.slice(0, 7), [normalizedPopups]);
 
   const openingSoonPopups = useMemo(() => {
-    const filtered = normalizedPopups.filter((popup) => popup.status === 'upcoming');
-    return (filtered.length > 0 ? filtered : normalizedPopups).slice(0, 12);
+    const now = new Date();
+    const filtered = normalizedPopups.filter((popup) => {
+      // 종료된 팝업 제외
+      const endDate = popup.endDate ? new Date(popup.endDate) : null;
+      if (endDate && now > endDate) return false;
+      return popup.status === 'upcoming';
+    });
+    return filtered.length > 0 ? filtered : [];
   }, [normalizedPopups]);
 
   const localPopups = useMemo(() => {
-    // 광주광역시 5개 구 팝업 필터링 (동구, 서구, 남구, 북구, 광산구)
-    const gwangjuDistricts = ['동구', '서구', '남구', '북구', '광산구'];
+    const now = new Date();
     const filtered = normalizedPopups.filter((popup) => {
-      const address = popup.address || popup.locationName || '';
-      const region = popup.primaryRegion || '';
-      // 광주광역시 또는 광주로 시작하는 주소 확인
-      const isGwangju = address.includes('광주광역시') || address.includes('광주');
-      // 5개 구 중 하나를 포함하는지 확인
-      const hasDistrict = gwangjuDistricts.some((district) => 
-        address.includes(district) || region === district
-      );
-      return isGwangju || hasDistrict;
+      // 종료된 팝업 제외
+      const endDate = popup.endDate ? new Date(popup.endDate) : null;
+      if (endDate && now > endDate) return false;
+      return gwangjuRegions.includes(popup.primaryRegion);
     });
-    return (filtered.length > 0 ? filtered : normalizedPopups).slice(0, 12);
-  }, [normalizedPopups]);
+    return filtered.length > 0 ? filtered : [];
+  }, [gwangjuRegions, normalizedPopups]);
 
   const categoryPopups = useMemo(() => {
-    const filtered = normalizedPopups.filter((popup) => popup.categoryTag && popup.categoryTag !== '전체');
-    return (filtered.length > 0 ? filtered : normalizedPopups).slice(0, 12);
+    const now = new Date();
+    const filtered = normalizedPopups.filter((popup) => {
+      // 종료된 팝업 제외
+      const endDate = popup.endDate ? new Date(popup.endDate) : null;
+      if (endDate && now > endDate) return false;
+      return popup.categoryTag && popup.categoryTag !== '전체';
+    });
+    return filtered.length > 0 ? filtered : [];
   }, [normalizedPopups]);
 
   const handlePopupNavigate = (popupId) => {
@@ -117,7 +131,7 @@ const HomePage = () => {
       <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto bg-white">
         {/* Hero Carousel */}
         <div className="px-5 md:px-8 pt-5">
-          <HeroCarousel items={heroItems} isLoading={isLoading} onSelect={handlePopupNavigate} />
+        <HeroCarousel items={heroItems} isLoading={isLoading} onSelect={handlePopupNavigate} />
         </div>
 
         {/* Event Banner */}
@@ -146,6 +160,7 @@ const HomePage = () => {
               }
               popups={openingSoonPopups}
               description="이번 달에 문을 여는 팝업을 미리 확인하세요."
+              customFilterOptions={['전체', ...gwangjuRegions]}
             />
 
             <EventSection
@@ -156,6 +171,7 @@ const HomePage = () => {
               }
               popups={localPopups}
               filterType="region"
+              customFilterOptions={['전체', ...gwangjuRegions]}
             />
 
             <EventSection

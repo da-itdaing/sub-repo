@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import { getAccessToken, setTokens as saveTokens, clearTokens } from '@/utils/tokenStorage';
+import {
+  getAccessToken,
+  setTokens as saveTokens,
+  clearTokens,
+  getUserRole,
+  setUserRole,
+  clearUserRole,
+} from '@/utils/tokenStorage';
 
 /**
  * 인증 상태 관리 Zustand Store
@@ -10,6 +17,7 @@ export const useAuthStore = create((set) => ({
   isAuthenticated: false,
   accessToken: null,
   refreshToken: null,
+  role: null,
 
   // Actions
   /**
@@ -18,13 +26,18 @@ export const useAuthStore = create((set) => ({
    * @param {string} accessToken - Access Token
    * @param {string} refreshToken - Refresh Token
    */
-  login: (user, accessToken, refreshToken) => {
+  login: (user, accessToken, refreshToken, roleOverride = null) => {
     saveTokens(accessToken, refreshToken);
+    const resolvedRole = roleOverride ?? user?.role ?? getUserRole();
+    if (resolvedRole) {
+      setUserRole(resolvedRole);
+    }
     set({
       user,
       isAuthenticated: true,
       accessToken,
       refreshToken,
+      role: resolvedRole ?? null,
     });
   },
 
@@ -33,11 +46,13 @@ export const useAuthStore = create((set) => ({
    */
   logout: () => {
     clearTokens();
+    clearUserRole();
     set({
       user: null,
       isAuthenticated: false,
       accessToken: null,
       refreshToken: null,
+      role: null,
     });
   },
 
@@ -59,7 +74,13 @@ export const useAuthStore = create((set) => ({
    * @param {Object} user 
    */
   setUser: (user) => {
-    set({ user, isAuthenticated: !!user });
+    if (user?.role) {
+      setUserRole(user.role);
+    }
+    set({
+      user,
+      role: user?.role ?? null,
+    });
   },
 
   /**
@@ -67,13 +88,13 @@ export const useAuthStore = create((set) => ({
    */
   initialize: () => {
     const token = getAccessToken();
+    const storedRole = getUserRole();
     if (token) {
       set({
         isAuthenticated: true,
         accessToken: token,
+        role: storedRole,
       });
     }
   },
 }));
-
-

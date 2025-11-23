@@ -19,7 +19,7 @@ public class LocalImageStorage implements ImageStorage {
     @Override
     @Deprecated
     public UploadImageResponse store(MultipartFile file, Long userId) {
-        return store(file, userId, "general");
+        return store(file, userId, "images");
     }
 
     @Override

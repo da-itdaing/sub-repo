@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { MapPin, Search, ChevronDown } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -6,18 +6,10 @@ import BottomNav from '@/components/layout/BottomNav';
 import KakaoMap from '@/components/map/KakaoMap';
 import EventCard from '@/components/popup/EventCard';
 import { usePopups } from '@/hooks/usePopups';
+import { useMasterData } from '@/hooks/useMasterData';
 
 // 광주광역시 중심 좌표
 const GWANGJU_CENTER = { lat: 35.14667451156048, lng: 126.92227158987355 };
-
-const REGION_FILTERS = [
-  { id: 'ALL', label: '전체' },
-  { id: '남구', label: '남구' },
-  { id: '동구', label: '동구' },
-  { id: '서구', label: '서구' },
-  { id: '북구', label: '북구' },
-  { id: '광산구', label: '광산구' },
-];
 
 const NearbyExplorePage = () => {
   const [selectedRegion, setSelectedRegion] = useState('ALL');
@@ -25,10 +17,34 @@ const NearbyExplorePage = () => {
   const [selectedPopupId, setSelectedPopupId] = useState(null);
   const [visibleCount, setVisibleCount] = useState(4);
   const [expanded, setExpanded] = useState(false);
+  const [mapCenter, setMapCenter] = useState(GWANGJU_CENTER);
   const MAX_ITEMS = 20;
 
   // 팝업 데이터 조회
   const { data: popups = [], isLoading } = usePopups();
+  const { regions: masterRegions } = useMasterData();
+
+  const gwangjuRegions = useMemo(() => {
+    const DISTRICTS = ['동구', '서구', '남구', '북구', '광산구'];
+    const matched = masterRegions
+      ?.filter((region) => DISTRICTS.includes(region.name))
+      .map((region) => region.name);
+    return matched?.length === DISTRICTS.length ? matched : DISTRICTS;
+  }, [masterRegions]);
+
+  const regionFilters = useMemo(() => ['ALL', ...gwangjuRegions], [gwangjuRegions]);
+
+  const getPopupRegion = useCallback((popup) => {
+    const address = `${popup.address || ''} ${popup.locationName || ''}`;
+    return gwangjuRegions.find((region) => address.includes(region)) || null;
+  }, [gwangjuRegions]);
+
+  const handleSelectPopup = (popup) => {
+    setSelectedPopupId(popup.id);
+    if (popup.latitude && popup.longitude) {
+      setMapCenter({ lat: popup.latitude, lng: popup.longitude });
+    }
+  };
 
   // 지도 마커 데이터
   const mapMarkers = useMemo(() => {
@@ -39,20 +55,33 @@ const NearbyExplorePage = () => {
         lat: popup.latitude,
         lng: popup.longitude,
         label: popup.title,
+        content: selectedPopupId === popup.id ? popup.title : null,
         onClick: (marker) => {
           setSelectedPopupId(marker.id);
+          if (marker.lat && marker.lng) {
+            setMapCenter({ lat: marker.lat, lng: marker.lng });
+          }
+          const target = document.getElementById(`popup-card-${marker.id}`);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
         },
       }));
-  }, [popups]);
+  }, [popups, selectedPopupId]);
 
   // 필터링된 팝업 목록
   const filteredPopups = useMemo(() => {
+    const now = new Date();
     return popups
       .filter((popup) => {
+        // 종료된 팝업 제외
+        const endDate = popup.endDate ? new Date(popup.endDate) : null;
+        if (endDate && now > endDate) return false;
+
         // 지역 필터
         if (selectedRegion !== 'ALL') {
-          const locationText = `${popup.locationName || ''} ${popup.address || ''}`;
-          if (!locationText.includes(selectedRegion)) {
+          const popupRegion = getPopupRegion(popup);
+          if (popupRegion !== selectedRegion) {
             return false;
           }
         }
@@ -67,7 +96,7 @@ const NearbyExplorePage = () => {
 
         return true;
       });
-  }, [popups, selectedRegion, searchTerm]);
+  }, [getPopupRegion, popups, searchTerm, selectedRegion]);
 
   // 표시할 팝업 목록
   const displayedPopups = useMemo(() => {
@@ -104,68 +133,70 @@ const NearbyExplorePage = () => {
             </h2>
             
             <KakaoMap
-              center={GWANGJU_CENTER}
+              center={mapCenter}
               markers={mapMarkers}
               height={typeof window !== 'undefined' && window.innerWidth >= 768 ? '500px' : '300px'}
               level={5}
             />
           </div>
-        </div>
+          </div>
 
         {/* 검색 및 필터 영역 */}
         <div className="px-5 md:px-8 mt-4">
           <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
             <div className="relative mb-3">
-              <input
-                type="text"
-                placeholder="팝업 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                <input
+                  type="text"
+                  placeholder="팝업 검색..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full h-10 pl-10 pr-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-              />
+                />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            </div>
+              </div>
 
               {/* 지역 필터 */}
               <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                {REGION_FILTERS.map((region) => (
+                {regionFilters.map((region) => (
                   <button
-                    key={region.id}
-                    onClick={() => setSelectedRegion(region.id)}
+                    key={region}
+                    onClick={() => setSelectedRegion(region)}
                     className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                      selectedRegion === region.id
+                      selectedRegion === region
                         ? 'bg-primary text-white shadow-md scale-105'
                         : 'bg-white text-gray-700 border border-gray-300 hover:border-gray-400'
                     }`}
                   >
-                    {region.label}
+                    {region === 'ALL' ? '전체' : region}
                   </button>
                 ))}
               </div>
-          </div>
-        </div>
+              </div>
+            </div>
 
         {/* 팝업 카드 그리드 */}
         <div className="px-5 md:px-8 mt-4">
-          {isLoading ? (
-            <div className="text-center py-12">
-              <div className="inline-block w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              {isLoading ? (
+                <div className="text-center py-12">
+                  <div className="inline-block w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
               <p className="mt-2 text-gray-600 text-sm">로딩 중...</p>
-            </div>
-          ) : filteredPopups.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+                </div>
+              ) : filteredPopups.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
               <p className="text-sm">표시할 팝업이 없습니다.</p>
-            </div>
-          ) : (
+                </div>
+              ) : (
             <>
               {/* 데스크톱: 4열 그리드 */}
               <div className="hidden md:grid grid-cols-4 gap-4">
                 {displayedPopups.map((popup) => (
                   <div
                     key={popup.id}
+                    id={`popup-card-${popup.id}`}
                     className={`${
                       selectedPopupId === popup.id ? 'ring-2 ring-primary rounded-2xl' : ''
                     }`}
+                    onClick={() => handleSelectPopup(popup)}
                   >
                     <EventCard popup={popup} />
                   </div>
@@ -180,6 +211,7 @@ const NearbyExplorePage = () => {
                     className={`w-[42%] shrink-0 snap-start ${
                       selectedPopupId === popup.id ? 'ring-2 ring-primary rounded-2xl' : ''
                     }`}
+                    onClick={() => handleSelectPopup(popup)}
                   >
                     <EventCard popup={popup} />
                   </div>
@@ -211,9 +243,9 @@ const NearbyExplorePage = () => {
                   >
                     {expanded ? '접기' : '전체보기'}
                   </button>
-                )}
-              </div>
+              )}
             </div>
+          </div>
           )}
         </div>
       </main>

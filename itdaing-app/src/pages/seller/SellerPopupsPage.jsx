@@ -1,30 +1,25 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
-import { 
-  PlusCircle, 
-  Search, 
-  Filter, 
-  Eye, 
+import {
+  PlusCircle,
+  Search,
+  Eye,
   Heart,
   Edit,
   Trash2,
   Calendar,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  MapPin,
 } from 'lucide-react';
 
-/**
- * SellerPopupsPage
- * 판매자의 팝업 관리 페이지
- */
 const SellerPopupsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('전체');
   const [approvalFilter, setApprovalFilter] = useState('전체');
 
-  // TODO: API에서 실제 데이터 가져오기
   const popups = [
     {
       id: 1,
@@ -103,18 +98,16 @@ const SellerPopupsPage = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      '진행 중': { bg: 'bg-green-100', text: 'text-green-800', icon: CheckCircle },
-      '오픈 예정': { bg: 'bg-blue-100', text: 'text-blue-800', icon: Clock },
-      '종료': { bg: 'bg-gray-100', text: 'text-gray-800', icon: XCircle },
-      '-': { bg: 'bg-gray-100', text: 'text-gray-800', icon: XCircle },
+      '진행 중': { bg: 'bg-emerald-50', text: 'text-emerald-700', icon: CheckCircle },
+      '오픈 예정': { bg: 'bg-blue-50', text: 'text-blue-700', icon: Clock },
+      '종료': { bg: 'bg-gray-100', text: 'text-gray-700', icon: XCircle },
+      '-': { bg: 'bg-gray-100', text: 'text-gray-700', icon: XCircle },
     };
-
     const config = statusConfig[status] || statusConfig['-'];
     const Icon = config.icon;
-
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
-        <Icon className="w-3 h-3 mr-1" />
+      <span className={`inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-xs font-semibold ${config.bg} ${config.text}`}>
+        <Icon className="h-3.5 w-3.5" />
         {status}
       </span>
     );
@@ -122,166 +115,137 @@ const SellerPopupsPage = () => {
 
   const getApprovalBadge = (status) => {
     const statusConfig = {
-      '완료': { bg: 'bg-green-500', text: 'text-white' },
-      '대기': { bg: 'bg-yellow-500', text: 'text-white' },
-      '반려': { bg: 'bg-red-500', text: 'text-white' },
+      '완료': 'bg-emerald-100 text-emerald-700',
+      '대기': 'bg-amber-100 text-amber-700',
+      '반려': 'bg-rose-100 text-rose-700',
     };
-
-    const config = statusConfig[status] || statusConfig['대기'];
-
+    const classes = statusConfig[status] || statusConfig['대기'];
     return (
-      <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${config.bg} ${config.text}`}>
+      <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${classes}`}>
         {status}
       </span>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Link to={ROUTES.seller.dashboard} className="text-sm text-gray-600 hover:text-gray-900 mb-2 inline-block">
-                ← 대시보드로 돌아가기
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">팝업 관리</h1>
-            </div>
-            <Link
-              to={ROUTES.seller.popupCreate}
-              className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              <PlusCircle className="w-5 h-5 mr-2" />
-              새 팝업 등록
-            </Link>
+    <div className="space-y-6">
+      <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
+        <div className="flex flex-wrap gap-4">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="팝업명 검색"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-10 py-2 text-sm focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
           </div>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="rounded-2xl border border-gray-200 px-4 py-2 text-sm text-gray-700 focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="전체">전체 상태</option>
+            <option value="진행 중">진행 중</option>
+            <option value="오픈 예정">오픈 예정</option>
+            <option value="종료">종료</option>
+          </select>
+          <select
+            value={approvalFilter}
+            onChange={(event) => setApprovalFilter(event.target.value)}
+            className="rounded-2xl border border-gray-200 px-4 py-2 text-sm text-gray-700 focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="전체">전체 승인</option>
+            <option value="완료">승인 완료</option>
+            <option value="대기">승인 대기</option>
+            <option value="반려">승인 반려</option>
+          </select>
+          <Link
+            to={ROUTES.seller.popupCreate}
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary/90"
+          >
+            <PlusCircle className="h-4 w-4" />
+            새 팝업 등록
+          </Link>
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 검색 및 필터 */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* 검색 */}
-            <div className="md:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="팝업명으로 검색..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
-
-            {/* 운영 상태 필터 */}
-            <div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="전체">전체 상태</option>
-                <option value="진행 중">진행 중</option>
-                <option value="오픈 예정">오픈 예정</option>
-                <option value="종료">종료</option>
-              </select>
-            </div>
-
-            {/* 승인 상태 필터 */}
-            <div>
-              <select
-                value={approvalFilter}
-                onChange={(e) => setApprovalFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="전체">전체 승인</option>
-                <option value="완료">승인 완료</option>
-                <option value="대기">승인 대기</option>
-                <option value="반려">승인 반려</option>
-              </select>
-            </div>
+      <section className="rounded-3xl border border-white/80 bg-white shadow-sm shadow-slate-200/60">
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <div className="text-sm text-gray-500">
+            총{' '}
+            <span className="font-semibold text-gray-900">
+              {filteredPopups.length.toLocaleString()}
+            </span>
+            개의 팝업
           </div>
+          <Link to={ROUTES.seller.dashboard} className="text-xs font-semibold text-gray-500 hover:text-gray-900">
+            대시보드
+          </Link>
         </div>
 
-        {/* 팝업 목록 */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <p className="text-sm text-gray-600">
-              총 <span className="font-semibold text-gray-900">{filteredPopups.length}</span>개의 팝업
-            </p>
-          </div>
-
-          <div className="divide-y divide-gray-200">
-            {filteredPopups.length > 0 ? (
-              filteredPopups.map((popup) => (
-                <div key={popup.id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{popup.title}</h3>
-                        {getStatusBadge(popup.status)}
-                        {getApprovalBadge(popup.approvalStatus)}
-                      </div>
-
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {popup.startDate} ~ {popup.endDate}
-                        </div>
-                        <div>{popup.location}</div>
-                      </div>
-
-                      {/* 반려 사유 */}
-                      {popup.approvalStatus === '반려' && popup.rejectionReason && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-                          <p className="text-sm text-red-800">
-                            <strong>반려 사유:</strong> {popup.rejectionReason}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* 통계 */}
-                      <div className="flex items-center gap-6 text-sm">
-                        <div className="flex items-center text-gray-600">
-                          <Eye className="w-4 h-4 mr-1" />
-                          조회 {popup.views}
-                        </div>
-                        <div className="flex items-center text-gray-600">
-                          <Heart className="w-4 h-4 mr-1" />
-                          찜 {popup.favorites}
-                        </div>
-                        {popup.reviews > 0 && (
-                          <div className="text-gray-600">
-                            ⭐ {popup.rating} ({popup.reviews}개)
-                          </div>
-                        )}
-                      </div>
+        <div className="divide-y divide-gray-100">
+          {filteredPopups.length > 0 ? (
+            filteredPopups.map((popup) => (
+              <div key={popup.id} className="p-6 transition hover:bg-slate-50/60">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-lg font-semibold text-gray-900">{popup.title}</h3>
+                      {getStatusBadge(popup.status)}
+                      {getApprovalBadge(popup.approvalStatus)}
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                      <span className="inline-flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                        {popup.startDate} ~ {popup.endDate}
+                      </span>
+                      <span className="inline-flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                        {popup.location}
+                      </span>
                     </div>
 
-                    {/* 액션 버튼 */}
-                    <div className="flex items-center gap-2 ml-4">
-                      <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                        <Edit className="w-5 h-5" />
-                      </button>
-                      <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                        <Trash2 className="w-5 h-5" />
-                      </button>
+                    {popup.approvalStatus === '반려' && popup.rejectionReason ? (
+                      <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50/70 p-3 text-sm text-rose-700">
+                        <strong className="mr-1">반려 사유</strong>
+                        {popup.rejectionReason}
+                      </div>
+                    ) : null}
+
+                    <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-600">
+                      <span className="inline-flex items-center gap-1">
+                        <Eye className="h-4 w-4 text-gray-400" />
+                        {popup.views.toLocaleString()}회 노출
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <Heart className="h-4 w-4 text-gray-400" />
+                        {popup.favorites.toLocaleString()}명이 찜
+                      </span>
+                      {popup.reviews > 0 && (
+                        <span className="inline-flex items-center gap-1 text-amber-500">
+                          ⭐ {popup.rating} ({popup.reviews}개)
+                        </span>
+                      )}
                     </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <button className="rounded-2xl border border-blue-100 p-2 text-blue-600 transition hover:bg-blue-50">
+                      <Edit className="h-5 w-5" />
+                    </button>
+                    <button className="rounded-2xl border border-rose-100 p-2 text-rose-500 transition hover:bg-rose-50">
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </div>
                 </div>
-              ))
-            ) : (
-              <div className="p-12 text-center">
-                <p className="text-gray-500">검색 결과가 없습니다.</p>
               </div>
-            )}
-          </div>
+            ))
+          ) : (
+            <div className="p-12 text-center text-sm text-gray-500">검색 조건에 맞는 팝업이 없습니다.</div>
+          )}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

@@ -4,13 +4,14 @@
 
 **프로젝트명**: Itdaing (잇다잉) - 광주광역시 플리마켓 플랫폼  
 **백엔드 기술 스택**: Spring Boot 3.5.7 + Java 21  
-**데이터베이스**: PostgreSQL 15 + pgvector (AWS RDS)  
+**데이터베이스**: PostgreSQL 15 + pgvector + LangGraph PostgresSaver Memory 저장소 (AWS RDS)  
 **ORM**: JPA/Hibernate + QueryDSL  
 **마이그레이션**: Flyway  
 **인증**: JWT (jjwt 0.12.x)  
 **API 문서**: OpenAPI 3.0 (Swagger UI)  
 **빌드 도구**: Gradle (Kotlin DSL)  
 **스토리지**: AWS S3  
+**OpenAPI 배포**: `./gradlew generateOpenApiDocs` → GitHub Pages workflow(`publish-openapi.yml`)
 
 ---
 
@@ -252,6 +253,11 @@
 - [x] POST `/api/admin/approvals/{id}/reject`: 거부 처리 (완료)
   - 팝업 상태를 REJECTED로 변경
   - 거부 사유 저장 및 승인 기록 생성
+
+- #### 1.5 소비자 위시리스트 & 리뷰 보완 (신규)
+- [ ] 위시리스트 API 명세 확정 (`GET /api/wishlist`, `POST /api/wishlist?popupId`, `DELETE /api/wishlist/{popupId}`) 및 응답 DTO 문서화. 프론트가 로그인 게이트를 걸 수 있도록 401/403 케이스 정의.
+- [ ] 리뷰 작성/수정/삭제 API의 권한 체크 로깅 추가 (소비자 본인만 수정/삭제)와 `uk_review_once` 위반 시 사용자 친화적 에러 코드 반환.
+- [ ] 마스터 데이터 엔드포인트(`categories/styles/regions/features`) 응답에 버전/정렬 메타데이터 추가하여 프론트엔드가 항상 광주 5개구 순서를 유지하도록 지원.
 
 ### 2. 검색 및 필터링 기능 (우선순위: 중간)
 - [ ] 팝업 검색 API

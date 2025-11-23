@@ -74,7 +74,7 @@ public class Users extends BaseTimeEntity {
         this.role = role;
         this.profileImageUrl = profileImageUrl;
         this.profileImageKey = profileImageKey;
-        this.status = status;
+        this.status = status != null ? status : UserStatus.ACTIVE;
     }
 
     /**

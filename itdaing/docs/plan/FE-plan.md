@@ -3,11 +3,20 @@
 ## 📋 프로젝트 개요
 
 **프로젝트명**: Itdaing (잇다잉) - 광주광역시 플리마켓 플랫폼  
-**프론트엔드 기술 스택**: React 18.3.1 + TypeScript + Vite 6.3.5  
-**UI 프레임워크**: Radix UI + Tailwind CSS  
-**상태 관리**: React Context API (AuthContext, UserContext)  
-**라우팅**: React Router v6  
+**프론트엔드 기술 스택 (현재 운영)**: React 19 + Vite 7 + JavaScript (itdaing-app)  
+**레거시 참고**: React 18 + TypeScript + Vite 6 (itdaing-web, 더 이상 개발 없음)  
+**UI 프레임워크**: Tailwind CSS v4 (Pure) + Custom Components (기존 Radix UI 일부 레거시)  
+**상태 관리**: Zustand (Client), React Query (Server)  
+**라우팅**: React Router v7  
 **API 통신**: Axios  
+
+---
+
+### 현재 브랜치/애플리케이션 구분
+
+- **`itdaing-app` (`test/fe`, `dev/fe`)**: React 19 + Tailwind v4 기반의 JavaScript 전환 버전으로, 소비자 앱·판매자/관리자 대시보드·PWA 기능이 모두 이 트랙에서 개발됩니다.
+- **`itdaing-web` (`dev/fe` 레거시 스냅샷)**: React 18 + TypeScript 버전으로, 더 이상 기능 개발은 진행하지 않으며 UI/기능 참고 자료로만 활용됩니다.
+- 이 문서의 **진행 상황 표/체크리스트는 itdaing-app 기준**으로 순차 업데이트 되고, 레거시 구조에 관한 내용은 필요 시 부록으로 이동 예정입니다.
 
 ---
 
@@ -20,6 +29,7 @@
 - ✅ 환경 변수 관리 (.env.example)
 
 ### 2. 인증 및 사용자 관리
+- itdaing-app 기준: `authStore`(Zustand)와 `tokenStorage.js`로 access/refresh 토큰을 관리하며, React Query를 통해 `/api/users/me`를 캐싱합니다. 아래 항목은 레거시 구조를 포함한 전체 히스토리입니다.
 - ✅ JWT 기반 인증 시스템 구현
 - ✅ 로그인 페이지 (`/login`) - `loginId` 기반 인증
 - ✅ 회원가입 플로우 (`/signup/1`, `/signup/2`)
@@ -216,6 +226,21 @@
   - 로딩 상태 개선
   - 에러 메시지 개선
   - 빈 상태(Empty State) UI 추가
+
+### 2-1. Consumer UX Alignment (신규)
+- [x] HomePage / EventSection에서 지역·카테고리 필터를 **마스터 데이터 기반**으로 교체하고 광주 5개구만 노출 (`/src/pages/HomePage.jsx`, `/src/components/popup/EventSection.jsx`).
+- [x] NearbyExplorePage의 `REGION_FILTERS` 상수를 제거하고 `useMasterData()`로 대체, 선택 제한/정렬 규칙 반영.
+- [x] SignupStep2: 지역 선택 제한을 **1~2개**로 강제하고 안내 문구 수정, 나이대 입력 UI 추가 (`/src/pages/SignupStep2.jsx`).
+- [x] 헤더/판매자/관리자 레이아웃에 즉시 로그아웃 버튼 추가, 로그아웃 시 홈으로 리디렉션 (`Header.jsx`, `SellerLayout.jsx`, `AdminLayout.jsx`).
+- [x] SignupStep1/2 UI 리뉴얼 + 진행 헤더/취소 동선 추가 (`SignupStepHeader`, `SignupStep1.jsx`, `SignupStep2.jsx`).
+- [x] 홈 섹션 데이터 제한을 EventSection 규칙(최대 20개)에 맞춰 조정 (`HomePage.jsx`).
+- [x] 마이페이지 모바일 뷰 폭을 App Shell 규격으로 축소 (`max-w-[540px]`)하여 콘텐츠 압축.
+- [x] 전역 로그인 프롬프트 모달 + 훅 도입 (`LoginPromptProvider`, `useLoginPrompt`), 모든 관심/CTA에서 confirm 사용 제거.
+- [x] PopupDetailPage에 위시리스트/후기 CTA 및 `ReviewWritePage` 라우팅·폼 구현 (`PopupDetailPage.jsx`, `ReviewWritePage.jsx`).
+- [ ] Review 수정/삭제 및 이미지 업로드, LoginPrompt 모달의 디자인 고도화(앱/웹) 남음.
+- [x] 마이페이지: itdaing-web 설계와 동일한 탭 구조(추천·관심·후기·일정)와 통계 카드, 위시리스트 실데이터 연동 (`/src/pages/MyPage.jsx`).
+- [ ] 리뷰 작성 플로우 복원: PopupDetailPage에 “후기 작성” CTA 추가, 별도 `ReviewWritePage` 구현, `reviewService` 연동 및 React Query 캐시 무효화.
+- [ ] 새 문서들 (`CUSTOMER_FOUNDATION.md`, `CUSTOMER_GUIDE.md`, `CONSUMER_GAP_REPORT.md`, `CONSUMER_DOC_TODO.md`)을 기능 구현과 함께 유지·업데이트.
 
 ### 3. API 연동 완성 (우선순위: 높음)
 - [x] 팝업 데이터를 Backend API로 전환 (`/api/popups`)

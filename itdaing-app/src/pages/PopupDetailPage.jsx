@@ -1,20 +1,100 @@
-import { useParams } from 'react-router-dom';
-import { MapPin, Calendar, Clock, Star } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { MapPin, Calendar, Clock, Star, Heart, Pencil } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/layout/BottomNav';
 import KakaoMap from '@/components/map/KakaoMap';
 import { usePopupById, usePopupReviews } from '@/hooks/usePopups';
 import { getImageUrl, getImageUrls } from '@/utils/imageUtils';
+import { addToWishlist, removeFromWishlist } from '@/services/wishlistService';
+import { useAuthStore } from '@/store/authStore';
+import { useToast } from '@/hooks/useToast';
+import { useLoginPrompt } from '@/hooks/useLoginPrompt';
+import { ROUTES } from '@/routes/paths';
 
 const PopupDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuthStore();
+  const { addToast } = useToast();
+  const { openLoginPrompt } = useLoginPrompt();
+  const role = useAuthStore((state) => state.role);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
 
   // 팝업 상세 조회
   const { data: popup, isLoading } = usePopupById(id);
 
   // 리뷰 조회
   const { data: reviews = [] } = usePopupReviews(id);
+
+  useEffect(() => {
+    setIsFavorite(Boolean(popup?.isFavorite));
+  }, [popup?.isFavorite]);
+
+  const handleFavoriteToggle = async () => {
+    if (!popup?.id) return;
+    if (!isAuthenticated) {
+      const shouldLogin = await openLoginPrompt({
+        description: '관심 팝업은 로그인 후 이용 가능합니다.\n지금 로그인하시겠습니까?',
+      });
+      if (shouldLogin) navigate(ROUTES.login);
+      return;
+    }
+
+    if (role && role !== 'CONSUMER') {
+      addToast({
+        title: '관심 팝업은 소비자 계정에서만 이용 가능합니다.',
+        variant: 'error',
+      });
+      return;
+    }
+    if (isFavoriteLoading) return;
+    setIsFavoriteLoading(true);
+    try {
+      if (isFavorite) {
+        await removeFromWishlist(popup.id);
+        addToast({ title: '관심 목록에서 제거되었습니다.' });
+      } else {
+        await addToWishlist(popup.id);
+        addToast({ title: '관심 목록에 추가되었습니다.' });
+      }
+      setIsFavorite((prev) => !prev);
+      queryClient.invalidateQueries({ queryKey: ['my-wishlist'] });
+    } catch (error) {
+      console.error('popup detail wishlist error', error);
+      addToast({
+        title: '관심 목록 처리 실패',
+        description: error.message || '다시 시도해주세요.',
+        variant: 'error',
+      });
+    } finally {
+      setIsFavoriteLoading(false);
+    }
+  };
+
+  const handleReviewWrite = async () => {
+    if (!popup?.id) return;
+    if (!isAuthenticated) {
+      const shouldLogin = await openLoginPrompt({
+        title: '후기 작성 전 로그인',
+        description: '후기 작성은 로그인 후 이용 가능합니다.\n지금 로그인하시겠습니까?',
+      });
+      if (shouldLogin) navigate(ROUTES.login);
+      return;
+    }
+    if (role && role !== 'CONSUMER') {
+      addToast({
+        title: '후기 작성은 소비자 계정에서만 이용 가능합니다.',
+        variant: 'error',
+      });
+      return;
+    }
+    navigate(ROUTES.reviewWrite(popup.id));
+  };
 
   if (isLoading) {
     return (
@@ -48,7 +128,7 @@ const PopupDetailPage = () => {
           <img
             src={mainImage}
             alt={popup.title}
-            className="w-full h-[400px] object-cover rounded-xl"
+            className="w-full h-[260px] rounded-3xl object-cover md:h-[420px]"
             onError={(e) => {
               e.target.src = '/placeholder-popup.png';
             }}
@@ -56,13 +136,31 @@ const PopupDetailPage = () => {
         </div>
 
         {/* Basic Info */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h1 className="text-3xl font-bold mb-4">{popup.title}</h1>
-          
-          <div className="space-y-3 text-gray-700">
+        <div className="bg-white rounded-3xl shadow-md p-5 mb-6 md:p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{popup.title}</h1>
+              {popup.subtitle && <p className="text-gray-500">{popup.subtitle}</p>}
+            </div>
+            <button
+              type="button"
+              onClick={handleFavoriteToggle}
+              disabled={isFavoriteLoading}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                isFavorite ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Heart
+                className={`h-4 w-4 ${isFavorite ? 'fill-primary text-primary' : 'text-gray-500'}`}
+              />
+              {isFavorite ? '관심 등록됨' : '관심 팝업'}
+            </button>
+          </div>
+
+          <div className="mt-4 space-y-3 text-gray-700">
             {popup.address && (
               <div className="flex items-start gap-2">
-                <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                 <span>{popup.address}</span>
               </div>
             )}
@@ -122,7 +220,17 @@ const PopupDetailPage = () => {
 
         {/* Reviews */}
         <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold mb-4">리뷰 ({reviews.length})</h2>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+            <h2 className="text-xl font-bold">리뷰 ({reviews.length})</h2>
+            <button
+              type="button"
+              onClick={handleReviewWrite}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            >
+              <Pencil className="h-4 w-4" />
+              후기 작성하기
+            </button>
+          </div>
           
           {reviews.length > 0 ? (
             <div className="space-y-4">

@@ -1,0 +1,113 @@
+Table users {
+  id bigint [pk]
+  login_id varchar
+  password varchar
+  name varchar
+  email varchar
+  role varchar
+  created_at timestamp
+}
+
+Table seller_profile {
+  id bigint [pk]
+  user_id bigint [ref: > users.id]
+  activity_region varchar
+  introduction text
+  sns_url varchar
+  contact_phone varchar
+}
+
+Table popup {
+  id bigint [pk]
+  seller_id bigint [ref: > seller_profile.id]
+  zone_cell_id bigint [ref: > zone_cell.id]
+  title varchar
+  description text
+  approval_status varchar
+  start_date date
+  end_date date
+  created_at timestamp
+}
+
+Table popup_image {
+  id bigint [pk]
+  popup_id bigint [ref: > popup.id]
+  image_url varchar
+  ordering int
+}
+
+Table zone_area {
+  id bigint [pk]
+  name varchar
+  polygon json
+  created_at timestamp
+}
+
+Table zone_cell {
+  id bigint [pk]
+  zone_area_id bigint [ref: > zone_area.id]
+  label varchar
+  centroid json
+  created_at timestamp
+}
+
+Table category {
+  id bigint [pk]
+  name varchar
+}
+
+Table style {
+  id bigint [pk]
+  name varchar
+}
+
+Table region {
+  id bigint [pk]
+  name varchar
+}
+
+Table feature {
+  id bigint [pk]
+  name varchar
+}
+
+Table user_pref_category {
+  id bigint [pk]
+  user_id bigint [ref: > users.id]
+  category_id bigint [ref: > category.id]
+}
+
+Table user_pref_style {
+  id bigint [pk]
+  user_id bigint [ref: > users.id]
+  style_id bigint [ref: > style.id]
+}
+
+Table user_pref_region {
+  id bigint [pk]
+  user_id bigint [ref: > users.id]
+  region_id bigint [ref: > region.id]
+}
+
+Table user_pref_feature {
+  id bigint [pk]
+  user_id bigint [ref: > users.id]
+  feature_id bigint [ref: > feature.id]
+}
+
+Table wishlist {
+  id bigint [pk]
+  user_id bigint [ref: > users.id]
+  popup_id bigint [ref: > popup.id]
+  created_at timestamp
+}
+
+Table review {
+  id bigint [pk]
+  popup_id bigint [ref: > popup.id]
+  user_id bigint [ref: > users.id]
+  rating int
+  content text
+  created_at timestamp
+}
+

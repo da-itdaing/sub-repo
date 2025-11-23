@@ -6,6 +6,15 @@
 **목적**: React + Vite 기반의 팝업스토어 정보 플랫폼 프론트엔드  
 **기술 스택**: React 19, Vite 7, Tailwind CSS 4, React Query, Zustand, Axios
 
+## 🌐 배포 개요
+
+- **Live URL**: [`https://aischool.daitdaing.com`](https://aischool.daitdaing.com) (AWS ACM + Nginx Reverse Proxy)
+- **API 문서**: [`https://da-itdaing.github.io/sub-repo/#/`](https://da-itdaing.github.io/sub-repo/#/) – main 브랜치 GitHub Actions로 자동 배포
+- **정적 자산 배포**: `npm run build` → `dist/` 산출물 + `public/` PWA 파일을 `/var/www/itdaing-app`으로 복사 후 `sudo systemctl reload nginx`
+- **백엔드 실행**: AMI 빌드 시 `itdaing-backend.service`(systemd)가 포함되어 EC2 부팅과 동시에 `app.jar` 기동
+- **AI 서버**: LangGraph + FastAPI (포트 9000) – PostgresSaver + pgvector 연동, 현재 실험 환경
+- **인프라 요약**: AWS RDS(PostgreSQL), Backend EC2 내 Self-hosted Redis, S3(이미지), Secrets Manager + Parameter Store(IAM Role 연동), Bastion Host를 통한 Private Subnet 접근, 별도 EC2 LangGraph 서버, S3 + CloudFront 정적 배포 계획
+
 ## ✅ 완료된 작업
 
 ### 1. 개발 환경 설정
@@ -85,14 +94,21 @@ itdaing-app/
 ## 🚀 실행 중인 서버
 
 ### 백엔드 서버
-- **상태**: ✅ 실행 중
+- **상태**: ✅ 실행 중 (systemd 서비스)
 - **포트**: 8080
-- **프로파일**: `local` (PostgreSQL RDS 연결)
-- **로그 위치**: `/tmp/backend-startup.log`
-- **시작 명령어**:
+- **프로파일**: `prod` (RDS)
+- **서비스명**: `itdaing-backend.service` (AMI 이미지에 내장, 부팅 시 자동 실행)
+- **로그 확인**: `sudo journalctl -u itdaing-backend -f`
+- **시작/중지**:
+  ```bash
+  sudo systemctl start itdaing-backend
+  sudo systemctl stop itdaing-backend
+  sudo systemctl status itdaing-backend
+  ```
+- **수동 실행(유지보수용)**:
   ```bash
   cd /home/ubuntu/itdaing
-  ./gradlew bootRun --args='--spring.profiles.active=local'
+  java -jar app.jar --spring.profiles.active=prod
   ```
 - **상태 확인**:
   ```bash
@@ -100,20 +116,21 @@ itdaing-app/
   curl http://localhost:8080/api/popups
   ```
 
-### 프론트엔드 서버
-- **상태**: ✅ 실행 중
-- **포트**: 3000
-- **Node 버전**: v20.19.5 (nvm)
-- **로그 위치**: `/tmp/frontend-startup.log`
-- **시작 명령어**:
+### Nginx Reverse Proxy / 정적 호스팅
+- **상태**: ✅ 실행 중 (`nginx.service`)
+- **역할**:
+  - `/` : `/var/www/itdaing-app` 정적 자산(PWA 포함) 서빙
+  - `/api` : `http://localhost:8080` Spring Boot로 프록시
+  - HTTPS: AWS ACM 인증서가 부착된 ALB에서 종료 후 Nginx로 전달
+- **정적 파일 갱신**
   ```bash
-  cd /home/ubuntu/itdaing-app
-  export NVM_DIR="$HOME/.nvm"
-  source "$NVM_DIR/nvm.sh"
-  nvm use
-  npm run dev
+  npm run build
+  sudo rm -rf /var/www/itdaing-app/*
+  sudo cp -R dist/* /var/www/itdaing-app/
+  sudo cp public/offline.html /var/www/itdaing-app/
+  sudo systemctl reload nginx
   ```
-- **접속 URL**: http://localhost:3000
+- **향후 계획**: S3 + CloudFront 도입 후 Nginx는 API 프록시 전용으로 경량화
 
 ## 🔧 백엔드 API 응답 구조
 
@@ -179,36 +196,47 @@ itdaing-app/
 - [ ] Toast 알림 시스템 (`react-hot-toast`)
 - [ ] 무한 스크롤 (React Query `useInfiniteQuery`)
 - [ ] PWA 설정 (서비스 워커, 매니페스트)
+- [ ] LangGraph 챗봇 API 연동 (FastAPI 9000 → Backend Gateway → Frontend)
+
+## 🔄 2025-11-23 운영 체크리스트
+
+- ✅ `./gradlew clean build` / `./gradlew test` 전 구간 회귀 완료 (Spring Boot + H2 + Flyway)
+- ✅ `./gradlew generateOpenApiDocs` 실행 → `docs/openapi.json`, `build/openapi/openapi.yaml` 최신화 (GitHub Pages 워크플로 대상 산출물)
+- ✅ GitHub Actions `publish-openapi.yml` 점검: JDK 21 + Gradle + gh-pages 배포 플로우 정상, deploy key/GITHUB_TOKEN 이중 플랜 유지
+- ⏳ 프론트엔드 배포물은 차기 변경분 확정 후 `npm run build && npm run preview` → `/var/www/itdaing-app` 복사 + `systemctl reload nginx` 순서로 진행
+- 📋 배포 직전 체크리스트
+  1. `sudo systemctl status itdaing-backend` (재시작 필요 시 `restart`)
+  2. `sudo systemctl status langgraph-chatbot` (9000 포트 FastAPI)
+  3. `redis-cli ping` (Self-hosted Redis 헬스 확인)
+  4. `aws s3 sync` 또는 `cp` 절차로 정적 자산 교체 후 Slack/Notion 공유
+  5. `gh workflow run publish-openapi.yml` (필요 시 수동 트리거)
 
 ## 🛠 유용한 명령어
 
 ### 서버 관리
 ```bash
-# 포트 8080 프로세스 종료
-sudo fuser -k 8080/tcp
+# systemd 서비스
+sudo systemctl restart itdaing-backend
+sudo systemctl restart langgraph-chatbot
+sudo systemctl reload nginx
+sudo systemctl status itdaing-backend
 
-# 포트 3000 프로세스 종료
-lsof -ti:3000 | xargs kill -9
-
-# 백엔드 재시작
+# 백엔드 수동 실행(유지보수용)
 cd /home/ubuntu/itdaing
-./gradlew bootRun --args='--spring.profiles.active=local' > /tmp/backend-startup.log 2>&1 &
-
-# 프론트엔드 재시작 (nvm 포함)
-cd /home/ubuntu/itdaing-app
-export NVM_DIR="$HOME/.nvm"
-source "$NVM_DIR/nvm.sh"
-nvm use
-npm run dev > /tmp/frontend-startup.log 2>&1 &
+java -jar app.jar --spring.profiles.active=prod > /tmp/backend-startup.log 2>&1 &
 ```
 
 ### 로그 확인
 ```bash
-# 백엔드 로그 실시간 확인
-tail -f /tmp/backend-startup.log
+# 백엔드 로그 (systemd)
+sudo journalctl -u itdaing-backend -f
 
-# 프론트엔드 로그 실시간 확인
-tail -f /tmp/frontend-startup.log
+# 챗봇 로그
+sudo journalctl -u langgraph-chatbot -f
+
+# Nginx 액세스/에러 로그
+sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/error.log
 
 # API 테스트
 curl -s http://localhost:8080/api/popups | jq '.'
@@ -226,6 +254,20 @@ ls -lh dist/
 # 빌드 미리보기
 npm run preview
 ```
+
+## ☁️ 인프라 요약
+
+| 계층 | 사용 서비스 | 비고 |
+|------|-------------|------|
+| Reverse Proxy | AWS ACM + ALB + Nginx | HTTPS 종단, 정적 파일/PWA 서빙, `/api` 프록시 |
+| Compute | AWS EC2 (AMI) | `itdaing-backend.service`, `langgraph-chatbot.service` systemd 유닛 |
+| Bastion | AWS EC2 (Public) | Private 서브넷으로의 SSH 게이트웨이 |
+| Database | Amazon RDS PostgreSQL 15 + pgvector | 트랜잭션/임베딩 저장 |
+| Cache | Self-hosted Redis 7.x (Backend EC2) | 세션/캐시/Rate Limit |
+| Storage | Amazon S3 | 이미지 업로드, 향후 정적 자산 배포 |
+| Secrets | AWS Secrets Manager + Parameter Store | EC2 IAM Role을 통해 환경 변수 주입 |
+| AI | LangGraph + FastAPI (9000, 별도 EC2) | PostgresSaver + pgvector, Gateway 통해 통합 예정 |
+| CDN (Plan) | S3 + CloudFront | 정적 자산 글로벌 캐싱 예정 |
 
 ## 📚 참고 문서
 

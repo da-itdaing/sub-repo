@@ -25,6 +25,7 @@
 # ============================================
 .cursor/
 .cursor-server/
+.vscode/
 .vscode-server/
 .dbclient/
 .dotnet/

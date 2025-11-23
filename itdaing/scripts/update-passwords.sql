@@ -1,17 +1,37 @@
--- 비밀번호 해시 업데이트 스크립트
--- 주의: 이 해시는 "pass!1234"를 BCrypt로 인코딩한 것입니다
--- 실제 운영 환경에서는 백엔드에서 생성한 해시를 사용해야 합니다
+-- 테스트 계정 비밀번호 초기화 스크립트
+-- ---------------------------------------------------------------
+-- 모든 테스트 계정(admin1 / seller1 / consumer1)의 비밀번호를
+-- 고정 문자열(Test1234!)의 BCrypt 해시로 재설정합니다.
+--
+-- ✅ 사용 방법
+--   PGPASSWORD=<db_password> psql \
+--     -h <db_host> -p <db_port> -U <db_user> -d <db_name> \
+--     -f scripts/update-passwords.sql
+--
+-- ⚠️ 주의
+--   • 운영 계정에는 절대 사용하지 마십시오.
+--   • 반드시 VPN/Private EC2 안에서만 실행하세요.
+--   • 해시 문자열은 고정 값입니다. (salt 포함)
+--
 
--- BCrypt 해시 생성 방법:
--- Spring Boot 애플리케이션에서 BCryptPasswordEncoder를 사용하여 생성
--- 예: passwordEncoder.encode("pass!1234")
+-- BCrypt 해시 생성 근거:
+-- python3 - <<'PY'
+-- import bcrypt
+-- password = b'Test1234!'
+-- salt = b'$2b$10$C6UzMDM.H6dfI/f/IKcEeO'
+-- print(bcrypt.hashpw(password, salt).decode())
+-- PY
 
--- 임시 해시 (테스트용 - 실제로는 백엔드에서 생성해야 함)
--- 이 해시는 DevDataSeed에서 사용하는 것과 동일한 방식으로 생성되어야 합니다
+BEGIN;
 
--- 기존 해시 확인
-SELECT login_id, LEFT(password, 30) as password_prefix FROM users WHERE login_id IN ('admin1', 'seller1', 'consumer1');
+UPDATE users
+SET password = '$2b$10$C6UzMDM.H6dfI/f/IKcEeO3Y7aWTJOT7z9na4cLsCQb8rUAT80/8a'
+WHERE login_id IN ('admin1', 'seller1', 'consumer1');
 
--- 비밀번호 해시는 백엔드에서 생성해야 하므로, 여기서는 확인만 수행
--- 실제 업데이트는 백엔드 애플리케이션을 통해 수행해야 합니다
+COMMIT;
+
+-- sanity check
+SELECT login_id, LEFT(password, 4) AS hash_prefix
+FROM users
+WHERE login_id IN ('admin1', 'seller1', 'consumer1');
 

@@ -6,6 +6,7 @@ import { z } from 'zod';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { ROUTES } from '@/routes/paths';
+import SignupStepHeader from '@/components/signup/SignupStepHeader';
 
 // Zod 검증 스키마
 const signupStep1Schema = z.object({
@@ -46,116 +47,143 @@ const SignupStep1 = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Header hideSearchBar />
       
-      <main className="flex-1 flex items-center justify-center bg-gray-50 py-12">
-        <div className="w-full max-w-[480px] mx-auto px-6">
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-center mb-8">회원가입</h2>
+      <main className="flex-1 py-10">
+        <div className="w-full max-w-[500px] md:max-w-[760px] mx-auto px-5">
+          <div className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-gray-100 md:p-8">
+            <SignupStepHeader
+              currentStep={1}
+              onBack={() => navigate(ROUTES.login)}
+              onExit={() => navigate(ROUTES.home)}
+            />
+
+            <div className="mt-6 space-y-2 text-center md:text-left">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">STEP 1 · 기본 정보</p>
+              <h2 className="text-2xl font-bold text-gray-900">계정을 만들어볼까요?</h2>
+              <p className="text-sm text-gray-500">
+                로그인에 사용할 계정 정보를 입력해주세요. <br />이후 언제든 선호 정보를 수정할 수 있어요.
+              </p>
+            </div>
 
             {/* User Type Selection */}
-            <div className="flex justify-center mb-6">
-              <div className="relative bg-[#e5e5e5] rounded-[30px] h-[48px] flex items-center px-1.5 w-[280px]">
-                <div
-                  className="absolute h-[38px] bg-white rounded-[30px] shadow-sm transition-all duration-300 ease-in-out"
-                  style={{
-                    width: 'calc(50% - 3px)',
-                    left: userType === 'consumer' ? '6px' : 'calc(50% + 3px)',
-                  }}
-                />
+            <div className="mt-8">
+              <p className="text-sm font-semibold text-gray-800 mb-3">가입 유형 선택</p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { key: 'consumer', label: '소비자', description: '팝업을 찾고 찜하기' },
+                  { key: 'seller', label: '판매자', description: '팝업 등록 및 관리' },
+                ].map((option) => {
+                  const isActive = userType === option.key;
+                  return (
                 <button
                   type="button"
-                  onClick={() => setUserType('consumer')}
-                  className={`relative z-10 flex-1 h-[38px] rounded-[30px] transition-colors duration-300 ${
-                    userType === 'consumer' ? 'text-black' : 'text-gray-500'
-                  }`}
-                >
-                  소비자
+                      key={option.key}
+                      onClick={() => setUserType(option.key)}
+                      className={`rounded-2xl border px-4 py-4 text-left transition ${
+                        isActive ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 hover:border-primary/40'
+                      }`}
+                    >
+                      <p className="text-base font-semibold">{option.label}</p>
+                      <p className="text-xs text-gray-500 mt-1">{option.description}</p>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setUserType('seller')}
-                  className={`relative z-10 flex-1 h-[38px] rounded-[30px] transition-colors duration-300 ${
-                    userType === 'seller' ? 'text-black' : 'text-gray-500'
-                  }`}
-                >
-                  판매자
-                </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
+              <div className="grid gap-4">
               <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">이메일</label>
                 <input
                   {...register('email')}
                   type="email"
-                  placeholder="이메일"
-                  className="w-full h-[48px] rounded-lg border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    placeholder="example@daitdaing.com"
+                    className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-primary focus:outline-none"
                 />
                 {errors.email && <p className="text-xs text-primary mt-1">{errors.email.message}</p>}
               </div>
 
+                <div className="grid gap-4 md:grid-cols-2">
               <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">아이디</label>
                 <input
                   {...register('loginId')}
                   type="text"
-                  placeholder="아이디"
-                  className="w-full h-[48px] rounded-lg border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      placeholder="itdaing_fan"
+                      className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-primary focus:outline-none"
                 />
                 {errors.loginId && <p className="text-xs text-primary mt-1">{errors.loginId.message}</p>}
               </div>
-
               <div>
-                <input
-                  {...register('password')}
-                  type="password"
-                  placeholder="비밀번호 (8자 이상)"
-                  className="w-full h-[48px] rounded-lg border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-                {errors.password && <p className="text-xs text-primary mt-1">{errors.password.message}</p>}
-              </div>
-
-              <div>
-                <input
-                  {...register('passwordConfirm')}
-                  type="password"
-                  placeholder="비밀번호 확인"
-                  className="w-full h-[48px] rounded-lg border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-                {errors.passwordConfirm && <p className="text-xs text-primary mt-1">{errors.passwordConfirm.message}</p>}
-              </div>
-
-              <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">이름</label>
                 <input
                   {...register('name')}
                   type="text"
-                  placeholder="이름"
-                  className="w-full h-[48px] rounded-lg border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      placeholder="홍길동"
+                      className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-primary focus:outline-none"
                 />
                 {errors.name && <p className="text-xs text-primary mt-1">{errors.name.message}</p>}
+                  </div>
               </div>
 
               <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">닉네임</label>
                 <input
                   {...register('nickname')}
                   type="text"
-                  placeholder="닉네임"
-                  className="w-full h-[48px] rounded-lg border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    placeholder="광주 팝업러버"
+                    className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-primary focus:outline-none"
                 />
                 {errors.nickname && <p className="text-xs text-primary mt-1">{errors.nickname.message}</p>}
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">비밀번호</label>
+                    <input
+                      {...register('password')}
+                      type="password"
+                      placeholder="영문, 숫자 포함 8자 이상"
+                      className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                    />
+                    {errors.password && <p className="text-xs text-primary mt-1">{errors.password.message}</p>}
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">비밀번호 확인</label>
+                    <input
+                      {...register('passwordConfirm')}
+                      type="password"
+                      placeholder="다시 입력해주세요"
+                      className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                    />
+                    {errors.passwordConfirm && (
+                      <p className="text-xs text-primary mt-1">{errors.passwordConfirm.message}</p>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-[52px] rounded-lg bg-primary hover:bg-primary/90 text-white font-semibold text-lg transition-colors disabled:opacity-50 mt-6"
+                className="w-full rounded-2xl bg-primary py-3 text-base font-semibold text-white transition hover:bg-primary/90 disabled:opacity-50"
               >
-                {userType === 'consumer' ? '다음 단계' : '회원가입'}
+                {userType === 'consumer' ? '다음 단계로' : '회원가입 완료'}
               </button>
             </form>
           </div>
+
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.home)}
+            className="mt-6 w-full rounded-2xl border border-gray-200 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-100"
+          >
+            가입 취소하고 홈으로 돌아가기
+          </button>
         </div>
       </main>
 

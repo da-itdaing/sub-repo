@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useKakaoLoader } from 'react-kakao-maps-sdk';
 import AppRouter from './routes';
 import { useAuthStore } from './store/authStore';
 import { fetchKakaoMapKey } from './utils/kakaoMapLoader';
+import { ToastProvider } from '@/components/ui/ToastProvider';
+import { LoginPromptProvider } from '@/components/ui/LoginPromptProvider';
 
 // React Query 클라이언트 생성
 const queryClient = new QueryClient({
@@ -22,14 +24,16 @@ const KakaoLoader = ({ appkey }) => {
 };
 
 function App() {
-  const initialize = useAuthStore((state) => state.initialize);
   const [kakaoKey, setKakaoKey] = useState('');
   const [keyError, setKeyError] = useState(null);
 
   // 앱 시작 시 토큰 복원
+  const initRef = useRef(false);
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    if (initRef.current) return;
+    initRef.current = true;
+    useAuthStore.getState().initialize();
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -80,7 +84,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <KakaoLoader appkey={kakaoKey} />
+      <LoginPromptProvider>
+        <ToastProvider>
       <AppRouter />
+        </ToastProvider>
+      </LoginPromptProvider>
     </QueryClientProvider>
   );
 }

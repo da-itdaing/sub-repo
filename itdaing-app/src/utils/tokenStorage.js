@@ -4,6 +4,7 @@
 
 const ACCESS_TOKEN_KEY = 'accessToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
+const USER_ROLE_KEY = 'userRole';
 
 /**
  * Access Token을 가져옵니다
@@ -51,6 +52,20 @@ export function setAccessToken(accessToken) {
 export function clearTokens() {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
+export function setUserRole(role) {
+  if (role) {
+    localStorage.setItem(USER_ROLE_KEY, role);
+  }
+}
+
+export function getUserRole() {
+  return localStorage.getItem(USER_ROLE_KEY);
+}
+
+export function clearUserRole() {
+  localStorage.removeItem(USER_ROLE_KEY);
 }
 
 /**

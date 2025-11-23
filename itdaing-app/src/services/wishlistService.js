@@ -19,7 +19,9 @@ export const getMyWishlist = async (params = {}) => {
  * @param {number} popupId
  */
 export const addToWishlist = async (popupId) => {
-  await apiClient.post('/wishlist', null, { params: { popupId } });
+  // POST /api/wishlist?popupId={popupId}
+  // apiClient는 이미 baseURL(/api)을 가지고 있으므로 /wishlist로 요청
+  await apiClient.post(`/wishlist?popupId=${popupId}`, null);
 };
 
 /**

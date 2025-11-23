@@ -1,64 +1,59 @@
 # 기술 스택
 
-## 🔧 백엔드
+## 🔧 백엔드 (현재 운영)
 
-- **Spring Boot** 3.5.7
-- **Java** 21
-- **PostgreSQL** 15 + pgvector (AWS RDS)
-- **Redis** 7.x - 캐싱 및 세션 관리
-- **AWS S3** - 이미지 스토리지
-- **Gradle** (Kotlin DSL)
-
----
-
-## 💻 프론트엔드 v2 (itdaing-app - JavaScript 전환)
-
-### 핵심 스택
-- **React** 19.2.0
-- **Vite** 7.0.0
-- **JavaScript** (TypeScript에서 전환)
-- **React Router** v7.9.6
-
-### UI/스타일링
-- **Tailwind CSS** v4.1.0 (Pure CSS 기반)
-- **Lucide React** - 아이콘
-
-### 상태 관리
-- **Zustand** - 클라이언트 상태 관리
-- **React Query (TanStack Query)** - 서버 상태 관리
-
-### HTTP & 폼
-- **Axios** - HTTP 클라이언트
-- **React Hook Form** - 폼 관리
-- **Zod** - 스키마 검증
-
-### 특징
-- ✅ 완전한 JavaScript 전환
-- ✅ React 19의 최신 기능 활용
-- ✅ Tailwind CSS v4 Pure (CSS 기반)
-- ✅ 간결한 상태 관리 (Zustand)
+| 계층 | 사용 기술 | 비고 |
+|------|-----------|------|
+| 애플리케이션 | Spring Boot 3.5.7 (Java 21), Gradle (Kotlin DSL) | REST API, JWT 인증, OpenAPI |
+| 데이터베이스 | PostgreSQL 15 + pgvector (**AWS RDS**) | 트랜잭션 + 임베딩 저장, 다중 AZ |
+| 캐시/세션 | Redis 7.x (**Backend EC2 내부 설치**) | 세션, 캐시, Rate Limiting |
+| 스토리지 | AWS S3 | 이미지/정적 자원 업로드, presigned URL |
+| 메시징/잡 | Spring Scheduler, Application Events | 배치/캐시 무효화 등 |
+| 보안 | AWS Secrets Manager + SSM Parameter Store | systemd EnvironmentFile로 주입 |
+| 배포 | AMI(+systemd) + Nginx Reverse Proxy | `itdaing-backend.service` 자동 실행 |
+| 접근제어 | Bastion Host + Security Group | Private Subnet 자산 접근 통제 |
 
 ---
 
-## 💻 프론트엔드 v1 (itdaing-web - TypeScript 버전)
+## 💻 프론트엔드 (itdaing-app)
 
-### 핵심 스택
-- **React** 18.3.1
-- **TypeScript** 5.9.3
-- **Vite** 6.3.5
-- **React Router** v6
+| 영역 | 스택 | 설명 |
+|------|------|------|
+| 프레임워크 | React 19 · Vite 7 · JavaScript | 완전 JS 전환, React Router v7 |
+| 상태 관리 | Zustand (Client) · React Query (Server) | Lightweight + 캐싱 |
+| UI/스타일 | Tailwind CSS v4 (Pure) · Lucide Icons | Safe-area · PWA 친화 |
+| HTTP/검증 | Axios · React Hook Form · Zod | API wrapper + 런타임 검증 |
+| 빌드/배포 | `npm run build` → Nginx 정적 루트 복사 | Service Worker + offline.html 포함 |
+| 기타 | Kakao Map SDK, Kakao OAuth | 지역 탐색/지도 렌더링 |
 
-### UI/스타일링
-- **Tailwind CSS**
-- **Radix UI** - 컴포넌트 라이브러리
+> ⚠️ `itdaing-web` (React 18 + TypeScript 버전)은 레거시 레퍼런스로만 유지하고 있습니다.
 
-### 상태 관리
-- **Context API** - 클라이언트 상태
-- **React Query** - 서버 상태
+---
 
-### 특징
-- ⚠️ TypeScript에서 부분 JavaScript 전환 시도
-- ⚠️ 진행 중단 상태
+## 🤖 AI / 챗봇 (별도 EC2)
+
+- **LangGraph**: 대화 플로우 및 툴 호출 구성
+- **FastAPI (Port 9000)**: REST/WebSocket 엔드포인트
+- **PostgresSaver + pgvector**: 문서/대화 임베딩 저장소 (RDS 공유)
+- **배포**: 전용 EC2 인스턴스에 systemd/Docker로 기동, Gateway → FastAPI → LLM/Vector DB 체계
+
+---
+
+## ☁️ 인프라 & 네트워크
+
+```text
+User Browser → CloudFront(예정) → ACM+ALB → Nginx(EC2)
+                          ├─ / (React PWA 정적 파일)
+                          └─ /api (Spring Boot 8080)
+Spring Boot (EC2) ── Redis(Local) ── AWS RDS (PostgreSQL/pgvector)
+                                   └─ S3 (이미지)
+LangGraph FastAPI (별도 EC2) ── RDS (pgvector)
+Bastion Host → Private Subnet (Backend EC2, Redis)
+```
+
+- **Reverse Proxy**: Nginx (EC2) + AWS ACM 인증서가 연결된 ALB
+- **정적 배포**: 현재 Nginx + EBS, 추후 S3 + CloudFront로 이전 예정
+- **모니터링**: `journalctl`, CloudWatch Logs/Alarms (준비 중)
 
 ---
 
@@ -154,6 +149,30 @@ dependencies {
   }
 }
 ```
+
+---
+
+## ☁️ 인프라 & 배포
+
+| 구성 | 기술 | 비고 |
+|------|------|------|
+| Reverse Proxy | **Nginx + AWS ACM** | HTTPS 종단, `/` 정적 파일 + `/api` 백엔드 라우팅 |
+| Compute | **AWS EC2** | Bastion을 통한 접속, AMI 기반 Auto Scaling 계획 |
+| Database | **Amazon RDS (PostgreSQL + pgvector)** | 트랜잭션 + 임베딩 저장 |
+| Cache/Session | **Self-hosted Redis 7.x (EC2)** | Backend 인스턴스에 직접 설치, 세션/캐시/Rate Limit |
+| Secrets | **Secrets Manager + SSM Parameter Store** | IAM Role 기반 런타임 주입 |
+| Storage | **Amazon S3** | 이미지 업로드, 정적 리소스 |
+| CDN (Plan) | **S3 + CloudFront** | 정적 자산 글로벌 캐싱(예정) |
+| Delivery | `npm run build` → `cp dist/* /usr/share/nginx/html` | PWA 산출물 포함 |
+
+---
+
+## 🤖 AI / 챗봇 스택 (실험)
+
+- **LangGraph**로 대화 플로우 관리, **FastAPI** 서버(포트 9000)에서 API 제공 (별도 EC2 인스턴스)
+- **PostgresSaver + pgvector**를 활용하여 임베딩/대화 로그를 PostgreSQL에 저장
+- 백엔드/프론트엔드와의 통합은 API Gateway → Backend → Front 흐름으로 확장 예정
+- Swagger(OpenAPI) 문서는 main 브랜치에서 GitHub Actions가 [`https://da-itdaing.github.io/sub-repo/#/`](https://da-itdaing.github.io/sub-repo/#/) 로 배포
 
 ---
 

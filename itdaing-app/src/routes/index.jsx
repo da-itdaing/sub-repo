@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { ROUTES } from './paths';
 import ProtectedRoute from './ProtectedRoute';
 
@@ -9,15 +9,33 @@ import SignupStep1 from '@/pages/SignupStep1';
 import SignupStep2 from '@/pages/SignupStep2';
 import PopupDetailPage from '@/pages/PopupDetailPage';
 import NearbyExplorePage from '@/pages/NearbyExplorePage';
+import SearchPage from '@/pages/SearchPage';
 import MyPage from '@/pages/MyPage';
 import MyFavoritesPage from '@/pages/MyFavoritesPage';
 import NotFoundPage from '@/pages/NotFoundPage';
+import ReviewWritePage from '@/pages/ReviewWritePage';
 
 // Seller Pages
 import SellerDashboardPage from '@/pages/seller/SellerDashboardPage';
 import SellerPopupsPage from '@/pages/seller/SellerPopupsPage';
 import SellerProfilePage from '@/pages/seller/SellerProfilePage';
 import SellerPopupCreatePage from '@/pages/seller/SellerPopupCreatePage';
+import SellerLayout from '@/layouts/seller/SellerLayout';
+
+// Admin
+import AdminLayout from '@/layouts/admin/AdminLayout';
+import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
+
+const SELLER_ROUTE_SEGMENTS = {
+  dashboard: 'dashboard',
+  popups: 'popups',
+  profile: 'profile',
+  popupCreate: 'popups/create',
+};
+
+const ADMIN_ROUTE_SEGMENTS = {
+  dashboard: 'dashboard',
+};
 
 /**
  * React Router 설정
@@ -44,16 +62,24 @@ const router = createBrowserRouter([
     element: <PopupDetailPage />,
   },
   {
+    path: ROUTES.reviewWritePattern,
+    element: (
+      <ProtectedRoute>
+        <ReviewWritePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: ROUTES.nearby,
     element: <NearbyExplorePage />,
   },
   {
+    path: ROUTES.search,
+    element: <SearchPage />,
+  },
+  {
     path: ROUTES.mypage,
-    element: (
-      <ProtectedRoute>
-        <MyPage />
-      </ProtectedRoute>
-    ),
+    element: <MyPage />,
   },
   {
     path: ROUTES.mypageFavorites,
@@ -63,38 +89,53 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
-  // Seller Routes
   {
-    path: ROUTES.seller.dashboard,
+    path: ROUTES.seller.root,
     element: (
-      <ProtectedRoute>
-        <SellerDashboardPage />
+      <ProtectedRoute requiredRoles={['SELLER']} forbiddenPath={ROUTES.home}>
+        <SellerLayout />
       </ProtectedRoute>
     ),
+    children: [
+  {
+        index: true,
+        element: <Navigate to={ROUTES.seller.dashboard} replace />,
+      },
+      {
+        path: SELLER_ROUTE_SEGMENTS.dashboard,
+        element: <SellerDashboardPage />,
+      },
+      {
+        path: SELLER_ROUTE_SEGMENTS.popups,
+        element: <SellerPopupsPage />,
+      },
+      {
+        path: SELLER_ROUTE_SEGMENTS.profile,
+        element: <SellerProfilePage />,
+      },
+      {
+        path: SELLER_ROUTE_SEGMENTS.popupCreate,
+        element: <SellerPopupCreatePage />,
+      },
+    ],
   },
   {
-    path: ROUTES.seller.popups,
+    path: ROUTES.admin.root,
     element: (
-      <ProtectedRoute>
-        <SellerPopupsPage />
+      <ProtectedRoute requiredRoles={['ADMIN']} forbiddenPath={ROUTES.home}>
+        <AdminLayout />
       </ProtectedRoute>
     ),
+    children: [
+      {
+        index: true,
+        element: <Navigate to={ROUTES.admin.dashboard} replace />,
   },
   {
-    path: ROUTES.seller.profile,
-    element: (
-      <ProtectedRoute>
-        <SellerProfilePage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: ROUTES.seller.popupCreate,
-    element: (
-      <ProtectedRoute>
-        <SellerPopupCreatePage />
-      </ProtectedRoute>
-    ),
+        path: ADMIN_ROUTE_SEGMENTS.dashboard,
+        element: <AdminDashboardPage />,
+      },
+    ],
   },
   {
     path: '*',

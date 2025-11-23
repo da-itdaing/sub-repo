@@ -12,8 +12,8 @@ const BottomNav = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-[#3d3d3d] text-white border-t border-gray-800 z-50 pb-safe">
-      <div className="w-full max-w-[540px] md:max-w-[1200px] mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-gray-800 bg-[#3d3d3d] pb-safe text-white" style={{ position: 'fixed', bottom: 0 }}>
+      <div className="mx-auto w-full max-w-[540px] md:max-w-[1200px]">
         <div className="flex justify-around items-center h-14 md:h-20">
           <Link 
             to={ROUTES.nearby}

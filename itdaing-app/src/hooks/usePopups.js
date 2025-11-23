@@ -41,10 +41,11 @@ export const usePopupReviews = (popupId) => {
  * @param {Object} searchParams - 검색 파라미터
  */
 export const useSearchPopups = (searchParams = {}) => {
+  const hasParams = Object.keys(searchParams || {}).length > 0;
   return useQuery({
     queryKey: ['popups-search', searchParams],
     queryFn: () => searchPopups(searchParams),
-    enabled: !!searchParams,
+    enabled: hasParams,
   });
 };
 

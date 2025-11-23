@@ -8,6 +8,13 @@
 [![Tech Stack](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql)](https://www.postgresql.org/)
 [![Tech Stack](https://img.shields.io/badge/Redis-7.x-DC382D?logo=redis)](https://redis.io/)
 
+## 🌐 서비스 링크 & 문서
+
+- 프로덕션: [`https://aischool.daitdaing.com/`](https://aischool.daitdaing.com/)  
+  - ACM SSL 인증서를 적용한 Nginx 리버스 프록시에서 React PWA 정적 산출물과 API를 동시에 제공
+- API 문서: [`https://da-itdaing.github.io/sub-repo/#/`](https://da-itdaing.github.io/sub-repo/#/) (main 브랜치에서 GitHub Actions로 OpenAPI 배포)
+
+
 ## 📁 프로젝트 구조 (test/fe 브랜치)
 
 ```
@@ -36,7 +43,7 @@
 │   ├── QUICK_START.md    # 빠른 시작 가이드
 │   └── package.json      # NPM 패키지 설정
 │
-├── itdaing-web/          # 레거시 프론트 (React 18 + TS) - 마이그레이션 레퍼런스
+├── itdaing-web/          # 레거시 프론트 (React 18 + TS) - 마이그레이션 레퍼런스 (현재는 추적/배포 대상 아님)
 │   ├── src/              # 기존 Seller/Admin Dashboard
 │   ├── public/           # 정적 파일
 │   └── package.json      # NPM 패키지 설정
@@ -46,6 +53,7 @@
 # 비교 포커스:
 # - dev/be → dev/fe → main 순으로 동기화
 # - test/fe는 dev/fe 기반 QA/핫픽스 전용
+# - itdaing-web은 레거시 레퍼런스로만 유지, 배포/기능 개발은 itdaing-app 중심
 ```
 
 ## 🌿 브랜치 전략
@@ -92,13 +100,32 @@ cd ~/itdaing-app && nvm use && npm run dev
 ## 📚 기술 스택
 
 ### 백엔드
-Spring Boot 3.5.7 · Java 21 · PostgreSQL 15 · Redis 7.x · AWS S3
+- Spring Boot 3.5.7 · Java 21
+- PostgreSQL 15 (AWS RDS) + pgvector 확장
+- Redis 7.x (세션 + 캐시 + 레이트리밋)
+- Gradle + OpenAPI (Swagger) 문서 자동 생성
 
 ### 프론트엔드 v2 (itdaing-app - 현재)
-React 19 · Vite 7 · JavaScript · Zustand · React Query · Tailwind CSS v4
+- React 19 · Vite 7 · Tailwind CSS v4 · React Query · Zustand
+- Kakao Map SDK, Kakao 로그인, PWA(Service Worker + offline.html)
+- npm run build → Nginx 정적 호스팅, PWA asset copy
 
-### 프론트엔드 v1 (itdaing-web)
-React 18 · Vite 6 · TypeScript → JavaScript · Radix UI
+### 프론트엔드 v1 (itdaing-web, 레거시)
+- React 18 · Vite 6 · TypeScript · Radix UI
+- 현재는 기능 참고용으로만 유지 (신규 작업 없음)
+
+### 인프라 & 배포
+- Nginx (ACM 인증서) 리버스 프록시로 HTTPS 종단 및 정적 파일 서빙
+- AWS EC2: AMI 기반 Auto Scaling 그룹으로 백엔드 운영 예정
+- Bastion Host를 통해서만 프라이빗 서브넷 서버 접근
+- AWS Secrets Manager + Systems Manager Parameter Store + EC2 IAM Role로 민감 정보 관리
+- 현재는 Nginx에 정적 파일을 `npm run build` → `cp dist/* /usr/share/nginx/html` 방식으로 배포, PWA 파일 포함
+- 향후 S3 + CloudFront 무중단 배포 계획 수립 중
+
+### AI / 챗봇 서비스 (WIP)
+- LangGraph + FastAPI 기반 챗봇을 9000 포트에서 별도 운영 테스트
+- PostgresSaver + pgvector를 활용해 대화/문서 임베딩 저장
+- API Gateway 구성이 확정되면 main 브랜치 아키텍처 문서에 상세화 예정
 
 **상세 비교**: [docs/TECH_STACK.md](docs/TECH_STACK.md)
 
@@ -113,6 +140,15 @@ Frontend (3000) → Vite Proxy → Backend (8080)
 ```
 
 **상세 정보**: [itdaing-app/docs/ARCHITECTURE.md](itdaing-app/docs/ARCHITECTURE.md)
+
+## 🚀 배포 파이프라인 (현재)
+
+1. `npm run build` (itdaing-app) → `dist/` + `public/`의 PWA 자산 생성  
+2. Nginx 서버(ACM HTTPS)로 산출물을 `cp -R dist/* /usr/share/nginx/html` 형태로 복사  
+3. Service Worker, manifest, offline.html까지 함께 배포하여 PWA 기능 유지  
+4. 백엔드는 `java -jar itdaing/app.jar` 또는 AMI 기반 Auto Scaling 그룹으로 구동  
+5. Secrets Manager / Parameter Store 값을 EC2 IAM Role이 주입하여 민감정보를 로컬에 남기지 않음  
+6. 차후 S3 + CloudFront를 도입해 정적 리소스를 CDN 으로 제공할 예정
 
 ## 📋 커밋 규칙
 
@@ -169,62 +205,3 @@ git commit -m "📝 문서: API 엔드포인트 문서화"
 ## 📄 라이선스
 
 사내 프로젝트
-
-## 👥 팀 소개
-
-<table>
-  <tbody>
-    <tr>
-      <td align="center">
-        <a href="https://github.com/dorae222">
-          <img src="https://avatars.githubusercontent.com/dorae222" width="100px;" alt="도형준 아바타"/><br />
-          <sub><b>도형준 · Infra PM</b></sub>
-        </a>
-        <br /><small>인프라 엔지니어 / AWS·배포 총괄 PM</small><br />
-        <img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonwebservices&logoColor=white" />
-        <img src="https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" />
-        <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" />
-      </td>
-      <td align="center">
-        <a href="https://github.com/Jongha611">
-          <img src="https://avatars.githubusercontent.com/Jongha611" width="100px;" alt="김종하 아바타"/><br />
-          <sub><b>김종하 · AI Lead</b></sub>
-        </a>
-        <br /><small>LangGraph 챗봇 · FastAPI 설계 · PostgreSQL 연동</small><br />
-        <img src="https://img.shields.io/badge/LangGraph-000000?style=for-the-badge&logo=python&logoColor=white" />
-        <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
-        <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
-      </td>
-      <td align="center">
-        <a href="https://github.com/ChaeRi0609">
-          <img src="https://avatars.githubusercontent.com/ChaeRi0609" width="100px;" alt="황채리 아바타"/><br />
-          <sub><b>황채리 · Frontend Lead</b></sub>
-        </a>
-        <br /><small>React 19 + Tailwind v4 기반 프론트엔드</small><br />
-        <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
-        <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
-        <img src="https://img.shields.io/badge/Tailwind%20CSS-0EA5E9?style=for-the-badge&logo=tailwindcss&logoColor=white" />
-      </td>
-    </tr>
-    <tr>
-      <td align="center">
-        <a href="https://github.com/jangjuya">
-          <img src="https://avatars.githubusercontent.com/jangjuya" width="100px;" alt="장주찬 아바타"/><br />
-          <sub><b>장주찬 · Backend Lead</b></sub>
-        </a>
-        <br /><small>Spring Boot · JWT 인증 · 운영 API</small><br />
-        <img src="https://img.shields.io/badge/Spring%20Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" />
-        <img src="https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=openjdk&logoColor=white" />
-        <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
-      </td>
-      <td align="center">
-        <img src="https://placehold.co/100x100?text=Design" width="100px;" alt="정현희 아바타"/><br />
-        <sub><b>정현희 · Product Designer</b></sub>
-        <br /><small>Figma 기반 디자인 시스템 · UI/UX 가이드</small><br />
-        <img src="https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white" />
-        <img src="https://img.shields.io/badge/Design%20System-111827?style=for-the-badge&logoColor=white" />
-      </td>
-    </tr>
-  </tbody>
-</table>
-
