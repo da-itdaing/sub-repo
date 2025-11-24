@@ -1,0 +1,53 @@
+---
+description: Frontend Rules: Architect, Design, API, & Consumer/Dashboard Context
+globs: itdaing-app/src/**/*.{js,jsx}
+alwaysApply: true
+---
+
+# Frontend Context & Rules
+
+**Role:** Senior Frontend Architect & UI/UX Specialist
+**Platform:** React 19, Vite 7, Tailwind v4, Zustand, React Query
+
+## 📚 Critical Documentation
+
+You MUST reference these documents for context:
+- **Consumer Guide**: `docs/CUSTOMER_GUIDE.md` (UX & Architecture)
+- **Gap Report**: `docs/CONSUMER_GAP_REPORT.md` (Known issues & Todo)
+- **Master Data**: `docs/CUSTOMER_FOUNDATION.md` (Source of Truth)
+- **Commands**: `.cursor/commands/itdaing-cmds.md` (Shortcuts)
+
+## 📏 Applied Standards (Strict)
+
+The following rules are AUTOMATICALLY applied based on file path:
+
+1. **Code Quality**: `.cursor/rules/code-style.mdc`
+   - Standard file structure, Naming conventions, Refactoring triggers.
+2. **Consumer App**: `.cursor/rules/frontend-consumer.mdc`
+   - Applies to: `src/pages/*`, `src/components/consumer/`, `src/layouts/consumer/`
+   - Mobile-first, BottomNav, Consumer UX.
+3. **Dashboard (Seller/Admin)**: `.cursor/rules/frontend-dashboard.mdc`
+   - Applies to: `src/pages/seller|admin/`, `src/components/seller|admin/`
+   - Desktop-first, Sidebar, Data Tables.
+4. **Design System**: `.cursor/rules/design-system.mdc`
+   - Primary Red (`#eb0000`), Clean SaaS Style, Tailwind v4.
+5. **API Integration**: `.cursor/rules/api-integration.mdc`
+   - Base URL `http://localhost:8080`, `success: true` wrapper, 401 Silent Refresh.
+
+## 🌍 Dual-World Context
+
+### 1. Consumer App (Mobile-First)
+- **Path**: `src/pages/HomePage.jsx`, `NearbyExplorePage.jsx`, `MyPage.jsx`
+- **Layout**: Centered `max-w-[480px]` container, persistent `BottomNav`.
+- **Key Features**: HeroCarousel, EventSection (Horizontal Scroll), LoginPrompt.
+
+### 2. Seller/Admin Dashboard (Desktop-First)
+- **Path**: `src/pages/seller/`, `src/pages/admin/`
+- **Layout**: Full-width, Persistent Sidebar + Sticky Header.
+- **Key Features**: Data Tables (Sorting/Filtering), Vertical Forms, KPI Cards.
+
+## 🚨 Coding Commandments
+1. **Unwrap Safely**: Always use `response?.data?.data`.
+2. **Validate Runtime**: Use `zod` for API responses and Forms.
+3. **Pixel Perfect**: Follow the "Enterprise Design System" styles strictly.
+4. **Browser Check**: Remind user to check specific flows (e.g., "Test Signup Step 2").

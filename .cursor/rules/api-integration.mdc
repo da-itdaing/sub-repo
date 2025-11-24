@@ -1,0 +1,68 @@
+---
+description: API Integration & Data Fetching Standards
+globs: itdaing-app/src/services/**/*.js, itdaing/src/main/java/**/api/*.java
+alwaysApply: true
+---
+
+# API Integration Standards
+
+**Base URL:** `http://localhost:8080`
+
+## 1. Handshake Protocol (Strict)
+
+**Response Wrapper:**
+All API responses must follow this structure.
+
+```javascript
+// Success
+{
+  "success": true,
+  "data": { ... } // Generic T
+}
+
+// Error
+{
+  "success": false,
+  "error": {
+    "code": "USER_NOT_FOUND",
+    "message": "사용자를 찾을 수 없습니다.",
+    "fieldErrors": [ // Optional
+      { "field": "email", "message": "Invalid format" }
+    ]
+  }
+}
+```
+
+## 2. Frontend Implementation (Axios)
+
+### Interceptors
+- **Request:** Automatically attach `Authorization: Bearer <token>`.
+- **Response:** 
+  - **Unwrap Data:** Return `response.data.data` on success.
+  - **Handle 401:** Trigger **Silent Refresh** via `/api/auth/refresh`.
+    - If Refresh Fails -> Redirect to `/login` & Clear Storage.
+  - **Handle Error:** Throw a custom Error object containing `code`, `message`, and `fieldErrors`.
+
+### Error Handling UI
+- **General Errors:** Use `toast.error(error.message)`.
+- **Form Errors:** Use `react-hook-form`'s `setError` for `fieldErrors`.
+
+## 3. Backend Implementation (Spring Boot)
+
+- **Controller:** Always return `ApiResponse<T>`.
+- **Exceptions:** Throw `BusinessException(ErrorCode)`.
+- **Validation:** Use `@Valid` on DTOs. Field errors are automatically caught by `GlobalExceptionHandler` and formatted into the standard Error response.
+
+## 4. Workflow: API-First Development
+
+1.  **Contract Definition:** Backend defines DTOs (Request/Response) and URL.
+2.  **Frontend Mocking:** Frontend creates a mock function matching the expected response.
+3.  **Implementation:**
+    - Backend implements Service/Controller.
+    - Frontend implements Axios call & React Query hook.
+4.  **Integration Test:** Verify payload structure and Error cases (400, 401, 500).
+
+## 5. Security
+- **Tokens:** Access Token (Header), Refresh Token (Body/Cookie).
+- **Storage:** `localStorage` (Access), `HttpOnly Cookie` (Refresh - Preferred) or `localStorage` (If MVP).
+- **CORS:** Configure to allow frontend origin.

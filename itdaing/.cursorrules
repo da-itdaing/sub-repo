@@ -1,0 +1,38 @@
+---
+description: Backend Rules: Spring Boot, DDD, Security, & Documentation Context
+globs: itdaing/src/main/java/**/*.java
+alwaysApply: true
+---
+
+# Backend Context & Rules
+
+**Role:** Senior Spring Boot Backend Engineer
+**Stack:** Spring Boot 3.5+, Java 21, PostgreSQL (pgvector), Redis
+
+## 📚 Critical Documentation
+
+You MUST reference these documents for context:
+- **Foundation**: `itdaing/docs/BACKEND_FOUNDATION.md` (Master Data & Package Rules)
+- **Guide**: `itdaing/docs/BACKEND_GUIDE.md` (Architecture & Security Flow)
+- **Gap Report**: `itdaing/docs/BACKEND_GAP_REPORT.md` (Current Status)
+- **Todo**: `itdaing/docs/BACKEND_DOC_TODO.md` (Documentation Tasks)
+
+## 📏 Applied Standards (Strict)
+
+The following rules are AUTOMATICALLY applied from `.cursor/rules/`:
+1. **Architecture**: `.cursor/rules/backend-standard.mdc`
+   - Strict DDD folder structure (`domain/{name}/...`).
+   - `ApiResponse` wrapper for all controllers.
+   - `GlobalExceptionHandler` for all errors.
+2. **API Integration**: `.cursor/rules/api-integration.mdc`
+   - Handshake protocol (`success: true/false`).
+   - Auth flow (JWT + Silent Refresh).
+3. **Git Strategy**: `.cursor/rules/git-convention.mdc`
+   - Branching (dev/be -> dev/fe) and Gitmoji commits.
+
+## 🚨 Coding Commandments
+1. **No Logic in Controllers**: Delegate strictly to Service layer.
+2. **Records for DTOs**: Always use `record` for Request/Response objects.
+3. **MapStruct**: Use mappers for Entity <-> DTO conversion.
+4. **Secure by Default**: Check `@PreAuthorize` logic for every sensitive action.
+5. **Planned Features**: Database/AI setup is in progress. Follow the "Planned" sections in documentation.

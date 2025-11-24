@@ -1,0 +1,51 @@
+---
+description: Universal React Code Style & Best Practices
+globs: itdaing-app/src/**/*.{js,jsx}
+alwaysApply: true
+---
+
+# Code Style & Quality Standards
+
+**Language**: JavaScript (ES6+)
+**Framework**: React 19
+
+## 1. Complexity Management (Anti-Spaghetti)
+- **Max Lines**: **200 lines** per file.
+  - *Action*: Split into sub-components or custom hooks.
+- **Hook Separation**:
+  - UI Components: Render logic ONLY.
+  - Custom Hooks: Business logic, Effects, API calls.
+- **Guard Clauses**: Use early returns to avoid nesting.
+
+## 2. Naming Conventions
+- **Components**: `PascalCase` (e.g., `UserProfile.jsx`)
+- **Functions/Hooks**: `camelCase` (e.g., `useAuth`, `handleSubmit`)
+- **Constants**: `UPPER_SNAKE_CASE` (e.g., `MAX_ITEMS_PER_PAGE`)
+- **Event Handlers**: `handle` + Event (e.g., `handleClick`)
+- **Props**: `on` + Event (e.g., `onClick`)
+
+## 3. Documentation (Korean)
+- **Language**: **Korean (한글)** only.
+- **Intent**: Explain *Why*, not *What*.
+  ```javascript
+  // ❌ Bad: 카운터 1 증가
+  // ✅ Good: 중복 클릭 방지를 위해 카운터 증가
+  ```
+
+## 4. File Structure
+1. **Imports**: (React -> Libs -> Internal -> Assets)
+2. **Component**: `const Component = () => {`
+3.  **Hooks/State**: `useQuery`, `useState`
+4.  **Derived State**: `const isValid = ...`
+5.  **Effects**: `useEffect` (Minimize use)
+6.  **Render**: `return (...)`
+
+## 5. Safety & Validation
+- **Null Checks**: Use optional chaining `?.` (e.g., `data?.user?.name`).
+- **Validation**: Use **Zod** for all Forms and API responses.
+- **Prop Types**: Not enforced (JS), but clear naming is required.
+
+## 6. Refactoring Triggers
+- `useState` > 5 vars → `useReducer` or Custom Hook.
+- `useEffect` deps > 4 → Check logic (likely too complex).
+- Deep JSX indentation (> 3 tabs) → Extract Sub-component.

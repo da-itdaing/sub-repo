@@ -1,0 +1,42 @@
+---
+description: Seller & Admin Dashboard Architecture (Desktop-First)
+globs: itdaing-app/src/**/seller/**/*.{js,jsx}, itdaing-app/src/**/admin/**/*.{js,jsx}
+alwaysApply: true
+---
+
+# Dashboard Standards (Seller/Admin)
+
+**Context**: B2B SaaS Dashboard (Management, Analytics, Approval)
+**Target Device**: Desktop (1280px+ optimized, 1024px supported)
+
+## 1. Layout Strategy
+- **Viewport**: Full-width fluid layout.
+- **Structure**:
+  - **Sidebar**: Fixed left navigation (Collapsible).
+  - **Header**: Global search, User profile, Notifications.
+  - **Content**: Padding `p-6` or `p-8`.
+- **Grid**: 12-column system for forms and analytics cards.
+
+## 2. Visual Language
+- **Tone**: Professional, Clean, Data-dense.
+- **Primary Color**: `#eb0000` (Accents/Actions), Slate/Gray (Structure).
+- **Components**:
+  - **Tables**: Sorting, Filtering, Pagination, Row Selection.
+  - **Forms**: Vertical alignment, Field groups, Validation messages.
+  - **KPI Cards**: Trend indicators, Big numbers.
+  - **Charts**: Simple line/bar charts (Recharts/Chart.js).
+
+## 3. State Management
+- **Auth**: Strict Role-Based Access Control (RBAC).
+  - Seller cannot access Admin routes.
+- **Data**: Aggressive caching for static data, manual refetch for tables.
+
+## 4. Coding Patterns
+- **Tables**: Reusable `Table` component with compound components pattern.
+- **Forms**: `react-hook-form` + `zod` schema validation.
+- **Modals**: Slide-overs (Drawers) for complex edits, Centered modals for confirmations.
+
+## 5. Key Files
+- `src/layouts/seller/SellerLayout.jsx`
+- `src/layouts/admin/AdminLayout.jsx`
+- `src/components/seller/dashboard/KpiCard.jsx`

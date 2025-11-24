@@ -1,0 +1,53 @@
+---
+description: Git Branching Strategy & Commit Conventions
+globs: "**/*"
+alwaysApply: true
+---
+
+# Git & GitHub Strategy
+
+## 1. Branch Strategy
+
+| Branch | Scope | Role |
+| :--- | :--- | :--- |
+| **main** | Global | **Production**. Stable, deployable code. |
+| **dev/be** | `itdaing/` | **Backend Staging**. Source of truth for API/DB. |
+| **dev/fe** | `itdaing-app/` | **Integration Staging**. Absorbs Backend changes. |
+| **test/fe** | `itdaing-app/` | **QA/Hotfix**. Experimental features & bug fixes. |
+
+## 2. Sync Workflow
+
+Maintain strict synchronization to avoid drift.
+
+1.  **Main -> Backend:**
+    - `git checkout dev/be`
+    - `git merge --ff-only main` (After Prod Release)
+2.  **Backend -> Frontend:**
+    - `git checkout dev/fe`
+    - `git merge --ff-only dev/be` (Regularly to get API updates)
+3.  **Frontend -> QA:**
+    - `git checkout test/fe`
+    - `git merge --ff-only dev/fe` (Before starting new feature)
+
+## 3. Commit Convention (Gitmoji)
+
+Format: `[Gitmoji] [Type]: [Korean Description]`
+
+| Emoji | Type | Description |
+| :--- | :--- | :--- |
+| ✨ | `feat` | New feature |
+| 🐛 | `fix` | Bug fix |
+| ♻️ | `refactor` | Code restructuring |
+| 💄 | `style` | UI/CSS changes |
+| 📝 | `docs` | Documentation |
+| 🔧 | `chore` | Config/Tooling |
+| 🚀 | `deploy` | Deployment |
+
+**Example:**
+`✨ feat: 팝업 상세 페이지 퍼블리싱 완료`
+
+## 4. Pull Requests (PR)
+
+- **Title:** Same as Commit Convention.
+- **Review:** At least 1 approval required.
+- **Merge:** Squash & Merge preferred for clean history.

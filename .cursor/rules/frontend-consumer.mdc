@@ -1,0 +1,47 @@
+---
+description: Consumer App Architecture & Standards (Mobile-First)
+globs: itdaing-app/src/pages/*.{js,jsx}, itdaing-app/src/**/consumer/**/*.{js,jsx}, itdaing-app/src/**/popup/**/*.{js,jsx}, itdaing-app/src/**/map/**/*.{js,jsx}, itdaing-app/src/layouts/consumer/**/*.{js,jsx}
+alwaysApply: true
+---
+
+# Consumer App Standards (Mobile-First)
+
+**Context**: B2C Mobile Web App (Discovery, Wishlist, Reviews)
+**Target Device**: Mobile (375px - 480px width preference)
+
+## 1. Layout Strategy
+- **Viewport**: Constrained container `max-w-[480px]` centered on desktop.
+- **Background**: `bg-gray-50` outside, White inside container.
+- **Navigation**:
+  - **BottomNav**: Fixed at bottom (`pb-safe` required).
+  - **Header**: Sticky top (`h-[50px]` or `h-[60px]`).
+- **Scroll**:
+  - Hide scrollbars where possible (`scrollbar-hide`).
+  - Use horizontal swiping for categories/cards.
+
+## 2. Visual Language
+- **Primary Color**: `#eb0000` (Brand Red).
+- **Typography**:
+  - High contrast, legible on small screens.
+  - Large tap targets (min 44px).
+- **Components**:
+  - **Cards**: `EventCard`, `HorizontalBanner`.
+  - **Lists**: Infinite scroll preferred over pagination.
+  - **Modals**: Bottom Sheet or centered dialogs.
+
+## 3. State Management
+- **Auth**: `useLoginPrompt` for gated actions (Wishlist, Review).
+- **Data**: `usePopups`, `useMasterData` (React Query).
+- **Persist**: `localStorage` for tokens, Session storage for search filters.
+
+## 4. Coding Patterns
+- **Hooks**: Use `useToast()` for user feedback.
+- **Routing**: `react-router-dom` v7.
+- **Error Handling**:
+  - Toast message for API errors.
+  - Redirect to Login for 401.
+
+## 5. Key Files
+- `src/layouts/consumer/BottomNav.jsx`
+- `src/components/popup/EventCard.jsx`
+- `src/pages/HomePage.jsx`

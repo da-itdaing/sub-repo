@@ -1,0 +1,85 @@
+---
+description: Design System & UI/UX Guidelines (Seller/Admin Dashboard)
+globs: itdaing-app/src/**/*.{js,jsx}
+alwaysApply: true
+---
+
+# Design System Standards (Seller/Admin)
+
+**Persona:** Senior Product Designer / Design System Lead  
+**Target Audience:** Sellers & Admins (B2B SaaS feel)
+
+## 1. Core Principles
+- **Clarity over Decoration:** Reduce visual noise. Data density is allowed but must be scannable.
+- **Consistency First:** Reuse patterns. Think in systems.
+- **Task-Oriented:** Optimize for monitoring, editing, and analytics.
+- **Feedback-Rich:** Clear visual states for save, fail, loading, and filters.
+
+## 2. Visual Language
+
+### Colors
+- **Primary Brand:** `#eb0000` (Key actions, highlights).
+- **Neutrals:** Gray scale for backgrounds, borders, and text.
+- **Semantic:**
+  - ✅ Success: Green
+  - ⚠️ Warning: Amber
+  - ❌ Error: Red
+  - ℹ️ Info: Blue
+
+### Typography
+- **Page Title:** 24–28px, Medium/Semibold.
+- **Section Title:** 18–20px.
+- **Body:** 14–16px.
+- **Meta/Captions:** 12–13px.
+- **Constraint:** Limit font weights to Regular/Medium/Semibold.
+
+### Surfaces
+- **Elevation:** Subtle shadows, 8–12px border-radius.
+- **Layout:** Card-based grouping. Light dividers instead of heavy borders.
+
+## 3. Layout Strategy
+- **Responsive:** Desktop-first (1280–1440px target), support down to 1024px.
+- **Global Shell:**
+  - **Sidebar:** Persistent, Icon + Label, Active State (Bg + Border).
+  - **Header:** Page Title, Search, Global Actions.
+  - **Content:** Max-width for forms, Full-width for tables/analytics.
+- **Spacing:** 8px grid system. Generous padding (24–32px) on desktop.
+
+## 4. Component Patterns
+
+### Tables (Core Pattern)
+- Support Sorting & Inline Filters.
+- "Reset Filters" action.
+- Appropriate row density (Work-friendly).
+- Checkboxes for selection.
+
+### Forms
+- Vertical layout with groupings.
+- Consistent label alignment.
+- Validation: Helper text, Error states, Success confirmation.
+- Avoid multi-step unless necessary.
+
+### Filters
+- Top area: Search + Key Filters + Primary Actions.
+- Filter Chips or Bar for common dimensions (Status, Date, Owner).
+
+### Charts & Analytics
+- Functional, minimal styles.
+- **KPI Cards:** Display key metrics above charts or graphs.
+- Clearly labeled Axes and Legends.
+
+## 5. Interaction & States
+
+**Design for ALL States:**
+1.  **Empty:** Explanation + Primary Action ("Create your first...").
+2.  **Loading:** Skeletons for structure, Spinners for actions.
+3.  **Error:** Friendly message + Retry option.
+4.  **Success:** Toast/Inline message (Non-blocking).
+
+**Destructive Actions:**
+- Require Confirmation Modal.
+- Use Primary Red `#eb0000` sparingly for high-attention/destructive acts.
+
+## 6. Implementation Guide
+- Map designs to **React Components** and **Tailwind CSS v4**.
+- Describe UI in terms of Regions (Sidebar, Content), Components (Table, Modal), and States.

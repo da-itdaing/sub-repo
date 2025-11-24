@@ -1,0 +1,390 @@
+> Task :compileJava UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :compileTestJava UP-TO-DATE
+> Task :processTestResources UP-TO-DATE
+> Task :testClasses UP-TO-DATE
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+
+> Task :test
+
+Repository 스모크 & DBML 일관성 테스트 > Repository 빈이 최소 1개 이상 로딩되어야 한다 PASSED
+
+Repository 스모크 & DBML 일관성 테스트 > DBML 파일에 핵심 칼럼 키워드가 포함되어야 한다 PASSED
+
+Repository 스모크 & DBML 일관성 테스트 > DBML 파일이 존재하고 핵심 테이블 키워드를 포함해야 한다 PASSED
+
+ApprovalRecordRepositoryTest > 승인_기록을_저장하고_조회할_수_있다() PASSED
+
+UploadControllerTest > uploadImages_returnsList() PASSED
+
+UploadServiceTest > uploadImages_validImages_ok() PASSED
+
+UploadServiceTest > uploadImages_rejectsUnsupportedContentType() PASSED
+
+UploadServiceTest > uploadImages_rejectsTooLarge() PASSED
+
+LocalImageStorageTest > store_savesToDisk_andReturnsUrl() PASSED
+
+S3ImageStorageTest > store_callsS3_andBuildsCdnUrl() PASSED
+
+ZoneAreaRepositoryTest > 구역을 저장하고 조회할 수 있다 PASSED
+
+ZoneCellRepositoryTest > 존 셀을 저장하고 조회할 수 있다 (owner/lat/lng 필수) PASSED
+
+ZoneCellRepositoryTest > 구역별로 존 목록을 조회할 수 있다 PASSED
+
+GeoAreaControllerTest > GET /api/geo/areas - 구역 목록(ADMIN) PASSED
+
+GeoAreaControllerTest > POST /api/geo/areas - 구역 생성(ADMIN) PASSED
+
+GeoZoneControllerTest > GET /api/geo/zones/me - 내가 만든 존 목록(SELLER) PASSED
+
+GeoZoneControllerTest > GET /api/geo/zones?areaId - 특정 구역의 존 목록(ADMIN) PASSED
+
+GeoZoneControllerTest > PATCH /api/geo/zones/{id}/status - 존 상태 변경(ADMIN) PASSED
+
+GeoZoneControllerTest > POST /api/geo/zones - 존 생성(SELLER) PASSED
+
+CategoryRepositoryTest > 카테고리를_저장하고_조회할_수_있다() PASSED
+
+FeatureRepositoryTest > 특징을_저장하고_조회할_수_있다() PASSED
+
+RegionRepositoryTest > 지역을_저장하고_조회할_수_있다() PASSED
+
+StyleRepositoryTest > 스타일을_저장하고_조회할_수_있다() PASSED
+
+MasterQueryController 통합 테스트 - JSON 응답 검증 > GET /api/master/regions - 실제 JSON 응답 생성 검증 SKIPPED
+
+MasterQueryController 통합 테스트 - JSON 응답 검증 > GET /api/master/regions - 빈 응답이 아님을 보장 SKIPPED
+
+MasterQueryController 통합 테스트 - JSON 응답 검증 > GET /api/master/regions - Content-Type 헤더 확인 SKIPPED
+
+MasterQueryControllerTest > 특징 목록 조회 - 성공 SKIPPED
+
+MasterQueryControllerTest > 카테고리 목록 조회 - 필터 없음 (전체) SKIPPED
+
+MasterQueryControllerTest > 테스트 컨텍스트에 HttpMessageConverter가 등록되어 있는지 확인 SKIPPED
+
+MasterQueryControllerTest > 스타일 목록 조회 - 성공 SKIPPED
+
+MasterQueryControllerTest > Standalone MockMvc로 실제 JSON 응답 생성 확인 SKIPPED
+
+MasterQueryControllerTest > 지역 목록 조회 - 성공 SKIPPED
+
+MasterQueryControllerTest > Standalone MockMvc로 전체 ApiResponse 구조 검증 SKIPPED
+
+AnnouncementRepositoryTest > 공지사항을_저장하고_조회할_수_있다() PASSED
+
+MessageAttachmentRepositoryTest > 메시지 첨부파일을 저장하고 조회할 수 있다 (Users 타임스탬프 + 필수 컬럼 채움) PASSED
+
+MessageRepositoryTest > 메시지를 저장하고 조회할 수 있다 (Thread NOT NULL + Users 타임스탬프 세팅) PASSED
+
+MessageControllerTest > GET /api/inquiries/{id} - 스레드 상세(메시지 페이지) PASSED
+
+MessageControllerTest > GET /api/inquiries - 스레드 목록 조회 PASSED
+
+MessageControllerTest > DELETE /api/inquiries/messages/{id} - 소프트 삭제 PASSED
+
+MessageControllerTest > POST /api/inquiries - 스레드 생성 + 첫 메시지 전송 PASSED
+
+MessageControllerTest > POST /api/inquiries/{id}/reply - 답장 전송 PASSED
+
+SellerNoticeServiceTest > getNotices: 팝업이 존재하면 공지 페이지를 반환한다 PASSED
+
+SellerNoticeServiceTest > createNotice: 판매자가 존재하지 않으면 EntityNotFoundException 발생 PASSED
+
+SellerNoticeServiceTest > createNotice: 판매자/팝업이 존재하면 공지를 저장하고 응답을 반환한다 PASSED
+
+SellerNoticeServiceTest > getNotices: 팝업이 없으면 EntityNotFoundException 발생 PASSED
+
+SellerNoticeServiceTest > createNotice: 팝업이 존재하지 않으면 EntityNotFoundException 발생 PASSED
+
+EventLogCategoryRepositoryTest > 카테고리_이벤트_로그를_저장하고_조회할_수_있다() PASSED
+
+EventLogRepositoryTest > 이벤트_로그를_저장하고_조회할_수_있다() PASSED
+
+MetricDailyCategoryRepositoryTest > 카테고리_일일_메트릭을_저장하고_조회할_수_있다() PASSED
+
+MetricDailyPopupRepositoryTest > 동일한_팝업과_날짜_조합은_중복_저장할_수_없다() PASSED
+
+MetricDailyPopupRepositoryTest > 팝업_일일_메트릭을_저장하고_조회할_수_있다() PASSED
+
+PopupCategoryRepositoryTest > 팝업_카테고리를_저장하고_조회할_수_있다() PASSED
+
+PopupFeatureRepositoryTest > 팝업_특징을_저장하고_조회할_수_있다() PASSED
+
+PopupImageRepositoryTest > 팝업_이미지를_저장하고_조회할_수_있다() PASSED
+
+PopupRepositoryTest > 팝업에_카테고리와_특징과_이미지를_연결할_수_있다() PASSED
+
+PopupRepositoryTest > 판매자_ID로_팝업을_조회할_수_있다() PASSED
+
+PopupRepositoryTest > 팝업을_저장하고_조회할_수_있다() PASSED
+
+PopupCommandControllerTest > 판매자가 팝업을 등록할 수 있다 PASSED
+
+PopupCommandControllerTest > 판매자가 팝업을 삭제할 수 있다 PASSED
+
+PopupCommandControllerTest > 판매자가 팝업을 수정할 수 있다 PASSED
+
+PopupCommandServiceTest > 팝업 등록 시 관련 엔티티가 저장된다 PASSED
+
+PopupCommandServiceTest > 소유하지 않은 셀로 팝업 등록 시 예외가 발생한다 PASSED
+
+PopupCommandServiceTest > 다른 판매자가 팝업을 삭제하면 예외가 발생한다 PASSED
+
+PopupCommandServiceTest > 팝업을 삭제할 수 있다 PASSED
+
+PopupCommandServiceTest > 팝업 정보를 수정할 수 있다 PASSED
+
+PopupCommandServiceTest > 다른 판매자가 팝업을 수정하면 예외가 발생한다 PASSED
+
+DailyConsumerRecommendationRepositoryTest > 동일한_소비자_날짜_팝업_조합은_중복_저장할_수_없다() PASSED
+
+DailyConsumerRecommendationRepositoryTest > 일일_소비자_추천을_저장하고_조회할_수_있다() PASSED
+
+DailySellerRecommendationRepositoryTest > 일일_판매자_추천을_저장하고_조회할_수_있다() PASSED
+
+UserRecoDissmissalRepositoryTest > 사용자_추천_무시를_저장하고_조회할_수_있다() PASSED
+
+RecoControllerTest > CONSUMER 권한으로 일일 추천 조회 시 정상 응답을 반환한다 PASSED
+
+RecoControllerTest > limit이 너무 크면 safeLimit(최대 50)으로 제한되어 서비스가 호출된다 PASSED
+
+DailyRecommendationServiceTest > 추천 조회 시 중복 팝업은 제거되고 limit 개수만 반환된다 PASSED
+
+DailyRecommendationServiceTest > 추천에 popup이 null인 항목은 필터링된다 PASSED
+
+SellerPopupControllerTest > 판매자 소유 팝업 목록을 조회한다 PASSED
+
+SellerProfileControllerTest > 판매자 프로필 조회 - 성공(프로필 존재) PASSED
+
+SellerProfileControllerTest > 판매자 프로필 업서트 - 성공 PASSED
+
+SellerProfileControllerTest > 판매자 프로필 조회 - 성공(프로필 없음: 초기 상태) PASSED
+
+SellerProfileRepositoryTest > 판매자_프로필을_저장하고_조회할_수_있다() PASSED
+
+ReviewImageRepositoryTest > 리뷰_이미지를_저장하고_조회할_수_있다() PASSED
+
+ReviewRepositoryTest > 리뷰를_저장하고_조회할_수_있다() PASSED
+
+ReviewRepositoryTest > 동일한_소비자와_팝업에_대해_중복_리뷰를_작성할_수_없다() PASSED
+
+WishlistRepositoryTest > 동일한_사용자와_팝업_조합은_중복_저장할_수_없다() PASSED
+
+WishlistRepositoryTest > 위시리스트를_저장하고_조회할_수_있다() PASSED
+
+ReviewCommandControllerTest > 소비자가 리뷰를 삭제할 수 있다 PASSED
+
+ReviewCommandControllerTest > 소비자가 리뷰를 수정할 수 있다 PASSED
+
+ReviewCommandControllerTest > 소비자가 리뷰를 작성할 수 있다 PASSED
+
+ReviewCommandServiceTest > 리뷰 작성자가 리뷰를 삭제할 수 있다 PASSED
+
+ReviewCommandServiceTest > 같은 팝업에 중복 리뷰를 작성할 수 없다 PASSED
+
+ReviewCommandServiceTest > 판매자는 리뷰를 작성할 수 없다 PASSED
+
+ReviewCommandServiceTest > 다른 사용자가 리뷰를 삭제할 수 없다 PASSED
+
+ReviewCommandServiceTest > 다른 사용자가 리뷰를 수정할 수 없다 PASSED
+
+ReviewCommandServiceTest > 관리자가 리뷰를 삭제할 수 있다 PASSED
+
+ReviewCommandServiceTest > 리뷰를 수정할 수 있다 PASSED
+
+ReviewCommandServiceTest > 소비자가 리뷰를 작성할 수 있다 PASSED
+
+WishlistServiceTest > addToWishlist: 유저/팝업이 존재하고 기존 위시가 없으면 새로 저장한다 PASSED
+
+WishlistServiceTest > addToWishlist: 팝업이 없으면 EntityNotFoundException 발생 PASSED
+
+WishlistServiceTest > removeFromWishlist: 위시가 없으면 조용히 넘어간다 PASSED
+
+WishlistServiceTest > addToWishlist: 이미 위시에 있으면 save 호출하지 않는다 PASSED
+
+WishlistServiceTest > getMyWishlist: Repository에서 조회한 결과를 페이지로 반환한다 PASSED
+
+WishlistServiceTest > removeFromWishlist: 위시가 있으면 삭제한다 PASSED
+
+WishlistServiceTest > addToWishlist: 유저가 없으면 EntityNotFoundException 발생 PASSED
+
+AdminUserControllerTest > 관리자 - 계정 상태 변경 성공 PASSED
+
+AdminUserControllerTest > 관리자 - 소비자 계정 조회 성공 (role + status) PASSED
+
+AdminUserControllerTest > 관리자 - 판매자 계정 조회 성공 (status 없이) PASSED
+
+AuthControllerLoginTest > 관리자 로그인 성공 - 200 OK, 토큰과 역할 반환 FAILED
+    java.lang.IllegalStateException: Failed to load ApplicationContext for [WebMergedContextConfiguration@52d9f281 testClass = com.da.itdaing.domain.user.api.AuthControllerLoginTest, locations = [], classes = [com.da.itdaing.ItdaingServerApplication], contextInitializerClasses = [], activeProfiles = [], propertySourceDescriptors = [PropertySourceDescriptor[locations=[], ignoreResourceNotFound=false, name=null, propertySourceFactory=null, encoding=null]], propertySourceProperties = ["storage.provider=test", "org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTestContextBootstrapper=true"], contextCustomizers = [org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@18245eb0, org.springframework.boot.test.autoconfigure.OverrideAutoConfigurationContextCustomizerFactory$DisableAutoConfigurationContextCustomizer@48c35007, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.filter.TypeExcludeFiltersContextCustomizer@725f024, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@28705024, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@6e16b8b5, [ImportsContextCustomizer@387742a9 key = [org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientWebSecurityAutoConfiguration, org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration, org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.HttpEncodingAutoConfiguration, org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration, org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyAutoConfiguration, org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration, org.springframework.boot.autoconfigure.hateoas.HypermediaAutoConfiguration, org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration, org.springframework.boot.autoconfigure.data.web.SpringDataWebAutoConfiguration, org.springframework.boot.test.autoconfigure.web.reactive.WebTestClientAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcAutoConfiguration, org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcSecurityConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebClientAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebDriverAutoConfiguration, org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration, com.da.itdaing.global.error.GlobalExceptionHandler, org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration, org.springframework.boot.autoconfigure.jsonb.JsonbAutoConfiguration, org.springframework.boot.autoconfigure.freemarker.FreeMarkerAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration, org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration, org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration, org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration]], org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@94f6bfb, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@60b71e8f, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@439a8f59, org.springframework.test.context.bean.override.BeanOverrideContextCustomizer@7395b9ca, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@db46a1fb], resourceBasePath = "src/main/webapp", contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]
+        at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:180)
+        at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130)
+        at org.springframework.test.context.bean.override.BeanOverrideTestExecutionListener.injectFields(BeanOverrideTestExecutionListener.java:99)
+        at org.springframework.test.context.bean.override.BeanOverrideTestExecutionListener.prepareTestInstance(BeanOverrideTestExecutionListener.java:70)
+        at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260)
+        at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:159)
+        at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:184)
+        at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+        at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
+        at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+        at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1708)
+        at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+        at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+        at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:151)
+        at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:174)
+        at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+        at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)
+        at java.base/java.util.Optional.orElseGet(Optional.java:364)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+        Caused by:
+        org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'authController' defined in file [/home/ubuntu/itdaing/build/classes/java/main/com/da/itdaing/domain/user/api/AuthController.class]: Unsatisfied dependency expressed through constructor parameter 1: No qualifying bean of type 'com.da.itdaing.domain.user.service.UserDashboardService' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {}
+            at app//org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+            at app//org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+            at app//org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+            at app//org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+            at app//org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+            at app//org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+            at app//org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+            at app//org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+            at app//org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+            at app//org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+            at app//org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+            at app//org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+            at app//org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+            at app//org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:990)
+            at app//org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:627)
+            at app//org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+            at app//org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+            at app//org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+            at app//org.springframework.boot.test.context.SpringBootContextLoader.lambda$loadContext$3(SpringBootContextLoader.java:144)
+            at app//org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:58)
+            at app//org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:46)
+            at app//org.springframework.boot.SpringApplication.withHook(SpringApplication.java:1461)
+            at app//org.springframework.boot.test.context.SpringBootContextLoader$ContextLoaderHook.run(SpringBootContextLoader.java:563)
+            at app//org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:144)
+            at app//org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:110)
+            at app//org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:225)
+            at app//org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:152)
+            ... 19 more
+
+            Caused by:
+            org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'com.da.itdaing.domain.user.service.UserDashboardService' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {}
+                at app//org.springframework.beans.factory.support.DefaultListableBeanFactory.raiseNoMatchingBeanFound(DefaultListableBeanFactory.java:2314)
+                at app//org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1733)
+                at app//org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+                at app//org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+                at app//org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+                ... 45 more
+
+AuthControllerLoginTest > 판매자 로그인 성공 - 200 OK, 토큰과 역할 반환 FAILED
+    java.lang.IllegalStateException: ApplicationContext failure threshold (1) exceeded: skipping repeated attempt to load context for [WebMergedContextConfiguration@52d9f281 testClass = com.da.itdaing.domain.user.api.AuthControllerLoginTest, locations = [], classes = [com.da.itdaing.ItdaingServerApplication], contextInitializerClasses = [], activeProfiles = [], propertySourceDescriptors = [PropertySourceDescriptor[locations=[], ignoreResourceNotFound=false, name=null, propertySourceFactory=null, encoding=null]], propertySourceProperties = ["storage.provider=test", "org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTestContextBootstrapper=true"], contextCustomizers = [org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@18245eb0, org.springframework.boot.test.autoconfigure.OverrideAutoConfigurationContextCustomizerFactory$DisableAutoConfigurationContextCustomizer@48c35007, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.filter.TypeExcludeFiltersContextCustomizer@725f024, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@28705024, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@6e16b8b5, [ImportsContextCustomizer@387742a9 key = [org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientWebSecurityAutoConfiguration, org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration, org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.HttpEncodingAutoConfiguration, org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration, org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyAutoConfiguration, org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration, org.springframework.boot.autoconfigure.hateoas.HypermediaAutoConfiguration, org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration, org.springframework.boot.autoconfigure.data.web.SpringDataWebAutoConfiguration, org.springframework.boot.test.autoconfigure.web.reactive.WebTestClientAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcAutoConfiguration, org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcSecurityConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebClientAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebDriverAutoConfiguration, org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration, com.da.itdaing.global.error.GlobalExceptionHandler, org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration, org.springframework.boot.autoconfigure.jsonb.JsonbAutoConfiguration, org.springframework.boot.autoconfigure.freemarker.FreeMarkerAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration, org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration, org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration, org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration]], org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@94f6bfb, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@60b71e8f, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@439a8f59, org.springframework.test.context.bean.override.BeanOverrideContextCustomizer@7395b9ca, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@db46a1fb], resourceBasePath = "src/main/webapp", contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]
+        at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:145)
+        at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130)
+        at org.springframework.test.context.bean.override.BeanOverrideTestExecutionListener.injectFields(BeanOverrideTestExecutionListener.java:99)
+        at org.springframework.test.context.bean.override.BeanOverrideTestExecutionListener.prepareTestInstance(BeanOverrideTestExecutionListener.java:70)
+        at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260)
+        at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:159)
+        at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:184)
+        at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+        at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
+        at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+        at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1708)
+        at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+        at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+        at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:151)
+        at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:174)
+        at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+        at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)
+        at java.base/java.util.Optional.orElseGet(Optional.java:364)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+AuthControllerLoginTest > 로그인 실패 - 잘못된 자격증명(아이디/비번 불일치) 401 FAILED
+    java.lang.IllegalStateException: ApplicationContext failure threshold (1) exceeded: skipping repeated attempt to load context for [WebMergedContextConfiguration@52d9f281 testClass = com.da.itdaing.domain.user.api.AuthControllerLoginTest, locations = [], classes = [com.da.itdaing.ItdaingServerApplication], contextInitializerClasses = [], activeProfiles = [], propertySourceDescriptors = [PropertySourceDescriptor[locations=[], ignoreResourceNotFound=false, name=null, propertySourceFactory=null, encoding=null]], propertySourceProperties = ["storage.provider=test", "org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTestContextBootstrapper=true"], contextCustomizers = [org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@18245eb0, org.springframework.boot.test.autoconfigure.OverrideAutoConfigurationContextCustomizerFactory$DisableAutoConfigurationContextCustomizer@48c35007, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.filter.TypeExcludeFiltersContextCustomizer@725f024, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@28705024, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@6e16b8b5, [ImportsContextCustomizer@387742a9 key = [org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientWebSecurityAutoConfiguration, org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration, org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.HttpEncodingAutoConfiguration, org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration, org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyAutoConfiguration, org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration, org.springframework.boot.autoconfigure.hateoas.HypermediaAutoConfiguration, org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration, org.springframework.boot.autoconfigure.data.web.SpringDataWebAutoConfiguration, org.springframework.boot.test.autoconfigure.web.reactive.WebTestClientAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcAutoConfiguration, org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcSecurityConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebClientAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebDriverAutoConfiguration, org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration, com.da.itdaing.global.error.GlobalExceptionHandler, org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration, org.springframework.boot.autoconfigure.jsonb.JsonbAutoConfiguration, org.springframework.boot.autoconfigure.freemarker.FreeMarkerAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration, org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration, org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration, org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration]], org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@94f6bfb, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@60b71e8f, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@439a8f59, org.springframework.test.context.bean.override.BeanOverrideContextCustomizer@7395b9ca, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@db46a1fb], resourceBasePath = "src/main/webapp", contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]
+        at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:145)
+        at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130)
+        at org.springframework.test.context.bean.override.BeanOverrideTestExecutionListener.injectFields(BeanOverrideTestExecutionListener.java:99)
+        at org.springframework.test.context.bean.override.BeanOverrideTestExecutionListener.prepareTestInstance(BeanOverrideTestExecutionListener.java:70)
+        at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260)
+        at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:159)
+        at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:184)
+        at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+        at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
+        at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+        at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1708)
+        at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+        at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+        at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:151)
+        at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:174)
+        at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+        at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)
+        at java.base/java.util.Optional.orElseGet(Optional.java:364)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+AuthControllerLoginTest > 소비자 로그인 성공 - 200 OK, 토큰과 역할 반환 FAILED
+    java.lang.IllegalStateException: ApplicationContext failure threshold (1) exceeded: skipping repeated attempt to load context for [WebMergedContextConfiguration@52d9f281 testClass = com.da.itdaing.domain.user.api.AuthControllerLoginTest, locations = [], classes = [com.da.itdaing.ItdaingServerApplication], contextInitializerClasses = [], activeProfiles = [], propertySourceDescriptors = [PropertySourceDescriptor[locations=[], ignoreResourceNotFound=false, name=null, propertySourceFactory=null, encoding=null]], propertySourceProperties = ["storage.provider=test", "org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTestContextBootstrapper=true"], contextCustomizers = [org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@18245eb0, org.springframework.boot.test.autoconfigure.OverrideAutoConfigurationContextCustomizerFactory$DisableAutoConfigurationContextCustomizer@48c35007, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.filter.TypeExcludeFiltersContextCustomizer@725f024, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@28705024, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@6e16b8b5, [ImportsContextCustomizer@387742a9 key = [org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientWebSecurityAutoConfiguration, org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration, org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.HttpEncodingAutoConfiguration, org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration, org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyAutoConfiguration, org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration, org.springframework.boot.autoconfigure.hateoas.HypermediaAutoConfiguration, org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration, org.springframework.boot.autoconfigure.data.web.SpringDataWebAutoConfiguration, org.springframework.boot.test.autoconfigure.web.reactive.WebTestClientAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcAutoConfiguration, org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcSecurityConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebClientAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebDriverAutoConfiguration, org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration, com.da.itdaing.global.error.GlobalExceptionHandler, org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration, org.springframework.boot.autoconfigure.jsonb.JsonbAutoConfiguration, org.springframework.boot.autoconfigure.freemarker.FreeMarkerAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration, org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration, org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration, org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration]], org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@94f6bfb, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@60b71e8f, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@439a8f59, org.springframework.test.context.bean.override.BeanOverrideContextCustomizer@7395b9ca, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@db46a1fb], resourceBasePath = "src/main/webapp", contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]
+        at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:145)
+        at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130)
+        at org.springframework.test.context.bean.override.BeanOverrideTestExecutionListener.injectFields(BeanOverrideTestExecutionListener.java:99)
+        at org.springframework.test.context.bean.override.BeanOverrideTestExecutionListener.prepareTestInstance(BeanOverrideTestExecutionListener.java:70)
+        at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260)
+        at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:159)
+        at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:184)
+        at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+        at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
+        at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+        at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1708)
+        at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+        at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+        at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:151)
+        at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:174)
+        at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+        at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)
+        at java.base/java.util.Optional.orElseGet(Optional.java:364)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+AuthControllerLoginTest > 로그인 실패 - 비활성/잠금 계정 403 FAILED
+    java.lang.IllegalStateException: ApplicationContext failure threshold (1) exceeded: skipping repeated attempt to load context for [WebMergedContextConfiguration@52d9f281 testClass = com.da.itdaing.domain.user.api.AuthControllerLoginTest, locations = [], classes = [com.da.itdaing.ItdaingServerApplication], contextInitializerClasses = [], activeProfiles = [], propertySourceDescriptors = [PropertySourceDescriptor[locations=[], ignoreResourceNotFound=false, name=null, propertySourceFactory=null, encoding=null]], propertySourceProperties = ["storage.provider=test", "org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTestContextBootstrapper=true"], contextCustomizers = [org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@18245eb0, org.springframework.boot.test.autoconfigure.OverrideAutoConfigurationContextCustomizerFactory$DisableAutoConfigurationContextCustomizer@48c35007, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.filter.TypeExcludeFiltersContextCustomizer@725f024, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@28705024, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@6e16b8b5, [ImportsContextCustomizer@387742a9 key = [org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientWebSecurityAutoConfiguration, org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration, org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.HttpEncodingAutoConfiguration, org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration, org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyAutoConfiguration, org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration, org.springframework.boot.autoconfigure.hateoas.HypermediaAutoConfiguration, org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration, org.springframework.boot.autoconfigure.data.web.SpringDataWebAutoConfiguration, org.springframework.boot.test.autoconfigure.web.reactive.WebTestClientAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcAutoConfiguration, org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcSecurityConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebClientAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebDriverAutoConfiguration, org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration, com.da.itdaing.global.error.GlobalExceptionHandler, org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration, org.springframework.boot.autoconfigure.jsonb.JsonbAutoConfiguration, org.springframework.boot.autoconfigure.freemarker.FreeMarkerAutoConfiguration, org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration, org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration, org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration, org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration]], org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@94f6bfb, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@60b71e8f, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@439a8f59, org.springframework.test.context.bean.override.BeanOverrideContextCustomizer@7395b9ca, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@db46a1fb], resourceBasePath = "src/main/webapp", contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]
+        at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:145)
+        at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130)
+        at org.springframework.test.context.bean.override.BeanOverrideTestExecutionListener.injectFields(BeanOverrideTestExecutionListener.java:99)
+        at org.springframework.test.context.bean.override.BeanOverrideTestExecutionListener.prepareTestInstance(BeanOverrideTestExecutionListener.java:70)
+        at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260)
+        at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:159)
+        at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:184)
+        at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+        at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
+        at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+        at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1708)
+        at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+        at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+        at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:151)
+        at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:174)
+        at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+        at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)
+        at java.base/java.util.Optional.orElseGet(Optional.java:364)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+110 tests completed, 5 failed, 10 skipped
+
+> Task :test FAILED
+5 actionable tasks: 1 executed, 4 up-to-date
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':test'.
+> There were failing tests. See the report at: file:///home/ubuntu/itdaing/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 51s
