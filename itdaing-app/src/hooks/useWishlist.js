@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyWishlist, addToWishlist, removeFromWishlist } from '@/services/wishlistService';
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/hooks/useToast';
+import { useFavoriteStore } from '@/store/favoriteStore';
 
 /**
  * 위시리스트 조회 훅
@@ -9,14 +11,46 @@ import { useToast } from '@/hooks/useToast';
  */
 export const useMyWishlist = (params = { page: 0, size: 40 }) => {
   const { isAuthenticated, role } = useAuthStore();
+  const setFavorites = useFavoriteStore((state) => state.setFavorites);
+  const clearFavorites = useFavoriteStore((state) => state.clearFavorites);
+  const { addToast } = useToast();
   const isConsumer = isAuthenticated && role === 'CONSUMER';
 
-  return useQuery({
+  const queryResult = useQuery({
     queryKey: ['my-wishlist', params],
     queryFn: () => getMyWishlist(params),
     enabled: isConsumer,
     retry: false,
+    onError: (error) => {
+      addToast({
+        title: '관심 목록을 불러오지 못했습니다.',
+        description: error?.message || '잠시 후 다시 시도해주세요.',
+        variant: 'error',
+      });
+    },
   });
+
+  useEffect(() => {
+    if (!isConsumer) {
+      clearFavorites();
+      return;
+    }
+    const items = queryResult.data?.content ?? [];
+    if (items.length === 0) {
+      setFavorites([]);
+      return;
+    }
+    const ids = items
+      .map((item) => {
+        if (!item) return null;
+        if (item.popup?.id) return item.popup.id;
+        return item.id ?? item.popupId ?? null;
+      })
+      .filter((id) => id != null);
+    setFavorites(ids);
+  }, [isConsumer, queryResult.data, clearFavorites, setFavorites]);
+
+  return queryResult;
 };
 
 /**

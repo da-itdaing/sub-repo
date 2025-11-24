@@ -1,13 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { getPopups, getPopupById, getPopupReviews, searchPopups } from '@/services/popupService';
+import { normalizePopup, isPopupActive } from '@/utils/popupUtils';
 
 /**
  * 팝업 목록 조회 훅
+ * @param {Object} options - 추가 파라미터 (예: includeEnded)
  */
-export const usePopups = () => {
+export const usePopups = (options = {}) => {
   return useQuery({
-    queryKey: ['popups'],
-    queryFn: getPopups,
+    queryKey: ['popups', options],
+    queryFn: async () => {
+      const data = await getPopups(options);
+      const normalized = (data ?? []).map(normalizePopup);
+      if (options.includeEnded) {
+        return normalized;
+      }
+      return normalized.filter(isPopupActive);
+    },
     staleTime: 5 * 60 * 1000, // 5분
   });
 };

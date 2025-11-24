@@ -6,11 +6,17 @@ import apiClient from '@/api/client';
 
 /**
  * 팝업 목록 조회
+ * @param {Object} params - 추가 필터 (예: includeEnded)
  * @returns {Promise<Array>}
  */
-export const getPopups = async () => {
+export const getPopups = async (params = {}) => {
   try {
-    const response = await apiClient.get('/popups');
+    const response = await apiClient.get('/popups', {
+      params: {
+        includeEnded: false,
+        ...params,
+      },
+    });
     return Array.isArray(response) ? response : [];
   } catch (error) {
     console.error('Failed to fetch popups:', error);

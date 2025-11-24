@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { User, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { ROUTES } from '@/routes/paths';
 import SearchBar from '@/components/common/SearchBar';
+import { getMyProfile } from '@/services/authService';
 
 /**
  * Header 컴포넌트
@@ -12,6 +14,20 @@ import SearchBar from '@/components/common/SearchBar';
 const Header = ({ hideSearchBar = false }) => {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
+
+  const { data: profile } = useQuery({
+    queryKey: ['my-profile'],
+    queryFn: getMyProfile,
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const avatar = useMemo(() => {
+    if (!profile || !profile.profileImage?.url) {
+      return null;
+    }
+    return profile.profileImage.url;
+  }, [profile]);
 
   const handleLogoClick = () => {
     navigate(ROUTES.home);
@@ -51,10 +67,22 @@ const Header = ({ hideSearchBar = false }) => {
           <div className="flex items-center gap-1 md:gap-2">
             <button
               onClick={handleLoginClick}
-              className="shrink-0 p-1.5 md:p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label={isAuthenticated ? "Profile" : "Login"}
+              className="shrink-0 p-1 md:p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+              aria-label={isAuthenticated ? 'Profile' : 'Login'}
             >
-              <User className="w-5 h-5 md:w-8 md:h-8" />
+              {isAuthenticated && avatar ? (
+                <img
+                  src={avatar}
+                  alt={profile?.nickname || '프로필'}
+                  className="h-8 w-8 md:h-10 md:w-10 rounded-full object-cover border border-gray-200"
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = '/placeholder-user.png';
+                  }}
+                />
+              ) : (
+                <User className="w-5 h-5 md:w-7 md:h-7 text-gray-700" />
+              )}
             </button>
             {!isAuthenticated && (
               <button

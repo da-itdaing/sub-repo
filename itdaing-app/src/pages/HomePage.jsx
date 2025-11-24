@@ -10,6 +10,7 @@ import { usePopups } from '@/hooks/usePopups';
 import { useMasterData } from '@/hooks/useMasterData';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
+import { normalizePopup, isPopupActive } from '@/utils/popupUtils';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -30,71 +31,45 @@ const HomePage = () => {
   };
 
   const normalizedPopups = useMemo(() => {
-    const now = new Date();
-    return (popups ?? [])
-      .filter((popup) => {
-        const endDate = popup.endDate ? new Date(popup.endDate) : null;
-        // endDate가 있고 현재보다 과거라면 종료된 것으로 간주하여 필터링
-        if (endDate && now > endDate) return false;
-        return true;
-      })
-      .map((popup) => {
-        const startDate = popup.startDate ? new Date(popup.startDate) : null;
-        const endDate = popup.endDate ? new Date(popup.endDate) : null;
-        let status = 'unknown';
-        if (startDate && now < startDate) status = 'upcoming';
-        else if (startDate && endDate && now >= startDate && now <= endDate) status = 'ongoing';
-        else if (endDate && now > endDate) status = 'ended';
-
-        const address = `${popup.address || ''} ${popup.locationName || ''}`;
-        let primaryRegion = gwangjuRegions.find((region) => address.includes(region)) || '기타';
-        if (!address) {
-          primaryRegion = '기타';
-        }
-
-        const categoryTag = popup.styleTags?.[0] || popup.category || popup.homeDisplay?.categoryTag || '전체';
-
-        return {
-          ...popup,
-          status,
-          primaryRegion,
-          categoryTag,
-        };
-      });
+    return (popups ?? []).map((popup) => {
+      const normalized = normalizePopup(popup);
+      const address = `${normalized.address || ''} ${normalized.locationName || ''}`.trim();
+      let primaryRegion = gwangjuRegions.find((region) => address.includes(region)) || '기타';
+      if (!address) {
+        primaryRegion = '기타';
+      }
+      const categoryTag =
+        normalized.styleTags?.[0] ||
+        normalized.category ||
+        normalized.categoryTag ||
+        normalized.homeDisplay?.categoryTag ||
+        '전체';
+      return {
+        ...normalized,
+        primaryRegion,
+        categoryTag,
+      };
+    });
   }, [gwangjuRegions, popups]);
 
   const heroItems = useMemo(() => normalizedPopups.slice(0, 7), [normalizedPopups]);
 
   const openingSoonPopups = useMemo(() => {
-    const now = new Date();
-    const filtered = normalizedPopups.filter((popup) => {
-      // 종료된 팝업 제외
-      const endDate = popup.endDate ? new Date(popup.endDate) : null;
-      if (endDate && now > endDate) return false;
-      return popup.status === 'upcoming';
-    });
+    const filtered = normalizedPopups.filter((popup) => popup.runtimeStatus === 'upcoming');
     return filtered.length > 0 ? filtered : [];
   }, [normalizedPopups]);
 
   const localPopups = useMemo(() => {
-    const now = new Date();
-    const filtered = normalizedPopups.filter((popup) => {
-      // 종료된 팝업 제외
-      const endDate = popup.endDate ? new Date(popup.endDate) : null;
-      if (endDate && now > endDate) return false;
-      return gwangjuRegions.includes(popup.primaryRegion);
-    });
+    const filtered = normalizedPopups.filter(
+      (popup) => isPopupActive(popup) && gwangjuRegions.includes(popup.primaryRegion)
+    );
     return filtered.length > 0 ? filtered : [];
   }, [gwangjuRegions, normalizedPopups]);
 
   const categoryPopups = useMemo(() => {
-    const now = new Date();
-    const filtered = normalizedPopups.filter((popup) => {
-      // 종료된 팝업 제외
-      const endDate = popup.endDate ? new Date(popup.endDate) : null;
-      if (endDate && now > endDate) return false;
-      return popup.categoryTag && popup.categoryTag !== '전체';
-    });
+    const filtered = normalizedPopups.filter(
+      (popup) => isPopupActive(popup) && popup.categoryTag && popup.categoryTag !== '전체'
+    );
     return filtered.length > 0 ? filtered : [];
   }, [normalizedPopups]);
 

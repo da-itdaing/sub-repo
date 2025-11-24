@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, Heart, LogOut, Sparkles } from 'lucide-react';
+import { ChevronLeft, Heart, LogOut, Sparkles, UserCog, FileText, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -12,6 +12,9 @@ import { useMyWishlist } from '@/hooks/useWishlist';
 import { usePopups } from '@/hooks/usePopups';
 import { ROUTES } from '@/routes/paths';
 import { getImageUrl } from '@/utils/imageUtils';
+import { normalizePopup, isPopupActive } from '@/utils/popupUtils';
+
+import CalendarSection from '@/components/common/CalendarSection';
 
 const TAB_LIST = [
   { key: 'recommend', label: '맞춤 추천' },
@@ -20,54 +23,11 @@ const TAB_LIST = [
   { key: 'schedule', label: '일정' },
 ];
 
-const normalizePopup = (popupLike) => {
-  if (!popupLike) return null;
-  const popup = popupLike.popup ?? popupLike;
-  const id = popup.id ?? popupLike.popupId ?? popupLike.id;
-  if (!id) return null;
-
-  const thumbnail = popup.thumbnail || popup.thumbnailImageUrl || popup.heroImageUrl || popup.imageUrl;
-
-  return {
-    ...popup,
-    id,
-    title: popup.title || popup.name || popup.popupName || '이름 없는 팝업',
-    thumbnail: getImageUrl(thumbnail, '/placeholder-popup.png'),
-    address: popup.address || popup.locationName || popup.region || '위치 미정',
-    isFavorite: true,
-  };
-};
-
-const CompactRecommendationCard = ({ popup }) => (
-  <div className="flex gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
-    <div className="h-20 w-20 overflow-hidden rounded-xl bg-gray-100">
-      <img
-        src={popup.thumbnail || '/placeholder-popup.png'}
-        alt={popup.title}
-        className="h-full w-full object-cover"
-        onError={(e) => {
-          e.currentTarget.src = '/placeholder-popup.png';
-        }}
-      />
-    </div>
-    <div className="flex flex-1 flex-col justify-between text-sm text-gray-700">
-      <div>
-        <p className="text-xs font-semibold text-primary uppercase">
-          {popup.status === 'upcoming' ? '오픈 예정' : popup.status === 'ongoing' ? '진행 중' : '종료'}
-        </p>
-        <p className="mt-0.5 line-clamp-2 font-semibold text-gray-900">{popup.title}</p>
-      </div>
-      <p className="text-xs text-gray-500">
-        {popup.startDate} ~ {popup.endDate}
-      </p>
-    </div>
-  </div>
-);
-
 const MyPage = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, role } = useAuthStore();
   const [activeTab, setActiveTab] = useState('recommend');
+  const [recommendVisibleCount, setRecommendVisibleCount] = useState(8);
   const { data: profile } = useQuery({
     queryKey: ['my-profile'],
     queryFn: getMyProfile,
@@ -78,40 +38,70 @@ const MyPage = () => {
 
   const favoritePopups = useMemo(() => {
     return (wishlistData?.content ?? [])
-      .map(normalizePopup)
-      .filter(Boolean)
-      .map((popup) => ({ ...popup, isFavorite: true }));
+      .map((item) => {
+        const target = item?.popup ?? item;
+        if (!target) return null;
+        const normalized = normalizePopup(target);
+        if (!normalized?.id) return null;
+        const thumbnail = getImageUrl(
+          normalized.thumbnail || normalized.thumbnailImageUrl || normalized.heroImageUrl,
+          '/placeholder-popup.png'
+        );
+        return { ...normalized, thumbnail, isFavorite: true };
+      })
+      .filter((popup) => popup && isPopupActive(popup));
   }, [wishlistData]);
 
   const recommendations = useMemo(() => {
     if (!popups || popups.length === 0) return [];
-    const now = new Date();
-    const activePopups = popups.filter((popup) => {
-      const endDate = popup.endDate ? new Date(popup.endDate) : null;
-      if (endDate && now > endDate) return false;
-      return true;
-    });
-
     const preferredIds = profile?.recommendations ?? [];
+    const activePopups = popups.filter(isPopupActive);
+    let result = [];
+
     if (preferredIds.length > 0) {
-      return activePopups.filter((popup) => preferredIds.includes(popup.id)).slice(0, 6);
+      result = activePopups.filter((popup) => preferredIds.includes(popup.id));
     }
-    return activePopups.slice(0, 6);
+
+    if (result.length === 0) {
+      result = activePopups.slice(0, 10);
+    }
+
+    return result;
   }, [popups, profile?.recommendations]);
 
+  useEffect(() => {
+    setRecommendVisibleCount(8);
+  }, [recommendations.length]);
+
+  const displayedRecommendations = useMemo(() => {
+    if (recommendations.length === 0) return [];
+    return recommendations.slice(0, Math.min(recommendVisibleCount, recommendations.length));
+  }, [recommendations, recommendVisibleCount]);
+
+  const canLoadMore = displayedRecommendations.length < recommendations.length;
+  const fullyExpanded = displayedRecommendations.length === recommendations.length;
+
   const stats = {
-    favorites: favoritePopups.length,
     recommendations: recommendations.length,
-    regions: profile?.regions?.length ?? 0,
-    interests: profile?.interests?.length ?? profile?.categoryPreferences?.length ?? 0,
+    favorites: favoritePopups.length,
   };
+
+  const preferenceChips = [
+    {
+      key: 'regions',
+      title: '선호 지역',
+      items: (profile?.regions ?? []).slice(0, 3),
+      emptyLabel: '관심 지역을 설정해보세요',
+    },
+    {
+      key: 'interests',
+      title: '선호 취향',
+      items: (profile?.interests ?? profile?.categoryPreferences ?? []).slice(0, 3),
+      emptyLabel: '관심 취향을 설정해보세요',
+    },
+  ];
 
   const displayName = profile?.nickname || user?.nickname || profile?.name || user?.name || '게스트';
-
-  const handleLogout = () => {
-    logout();
-    navigate(ROUTES.home);
-  };
 
   if (!isAuthenticated) {
     return (
@@ -144,145 +134,282 @@ const MyPage = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
 
-      <main className="flex-1 w-full max-w-[540px] md:max-w-[1080px] mx-auto px-4 md:px-8 py-8 space-y-8">
-        <section className="rounded-3xl bg-white shadow-sm ring-1 ring-gray-100">
-          <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-4 md:px-6">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              aria-label="뒤로 가기"
-              className="rounded-full border border-gray-200 p-2 text-gray-500 transition hover:bg-gray-50"
+      <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto px-4 md:px-8 py-8 space-y-8">
+        {/* 프로필 섹션 */}
+        <section className="rounded-3xl bg-white shadow-sm ring-1 ring-gray-100 overflow-hidden">
+          <div className="relative bg-linear-to-r from-gray-900 to-gray-800 px-6 py-8 text-white">
+            <div className="flex items-start justify-between mb-6">
+              <button onClick={() => navigate(-1)} className="p-1 hover:bg-white/10 rounded-full transition">
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button 
+                onClick={() => navigate(ROUTES.mypageSettings)}
+                className="p-1.5 bg-white/10 rounded-full hover:bg-white/20 transition backdrop-blur-sm"
+              >
+                <UserCog className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex flex-col md:flex-row md:items-center gap-6">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-white/10 border-2 border-white/30 overflow-hidden">
+                  <img 
+                    src={profile?.profileImage?.url || '/placeholder-user.png'} 
+                    alt="profile" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      if (e.target.src.endsWith('/placeholder-user.png')) return;
+                      e.target.src = '/placeholder-user.png';
+                    }}
+                  />
+                </div>
+                <span className="absolute bottom-0 right-0 w-6 h-6 bg-primary border-2 border-gray-900 rounded-full flex items-center justify-center">
+                  <span className="sr-only">Active</span>
+                </span>
+              </div>
+              
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold mb-1">반가워요, {displayName}님! 👋</h1>
+                <p className="text-white/70 text-sm mb-4">
+                  {profile?.regions?.length > 0 
+                    ? `선호 지역: ${profile.regions.join(', ')}`
+                    : '관심 지역을 설정하고 맞춤 추천을 받아보세요'}
+                </p>
+                
+                <div className="flex flex-wrap gap-2">
+                  {profile?.interests?.slice(0, 3).map((tag, i) => (
+                    <span key={i} className="px-2.5 py-1 bg-white/10 rounded-full text-xs font-medium backdrop-blur-sm">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+        {/* 통계 */}
+        <div className="grid grid-cols-2 gap-3 border-y border-gray-100 px-4 py-4">
+          {[
+            { key: 'recommendations', label: '맞춤 추천', value: stats.recommendations },
+            { key: 'favorites', label: '관심 팝업', value: stats.favorites },
+          ].map((item) => (
+            <div
+              key={item.key}
+              className="rounded-2xl border border-gray-100 bg-white/70 px-4 py-3 text-center shadow-sm"
             >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <div className="flex-1 text-left">
-              <p className="text-xs text-gray-500">반가워요, {displayName}님</p>
-              <h1 className="text-2xl font-bold text-gray-900">나의 다잇다잉</h1>
-              <p className="text-xs text-gray-500">
-                {profile?.regions?.join(', ') || '관심 지역을 설정해보세요'}
-              </p>
+              <p className="text-xs text-gray-500">{item.label}</p>
+              <p className="text-2xl font-bold text-gray-900">{item.value}</p>
             </div>
-          </div>
+          ))}
+        </div>
 
-          <div className="px-5 pb-5 pt-4 md:px-6">
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
-              <div className="rounded-2xl bg-gray-50 p-4">
-                <p className="text-xs text-gray-500">관심 팝업</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.favorites}</p>
-              </div>
-              <div className="rounded-2xl bg-gray-50 p-4">
-                <p className="text-xs text-gray-500">추천 큐레이션</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.recommendations}</p>
-              </div>
-              <div className="rounded-2xl bg-gray-50 p-4">
-                <p className="text-xs text-gray-500">관심 지역</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.regions}</p>
-              </div>
-              <div className="rounded-2xl bg-gray-50 p-4">
-                <p className="text-xs text-gray-500">선호 카테고리</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.interests}</p>
-              </div>
+        {/* 선호 정보 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 px-4 py-4 bg-gray-50 border-t border-gray-100">
+          {preferenceChips.map((group) => (
+            <div key={group.key} className="rounded-2xl bg-white/80 p-3 shadow-sm">
+              <p className="text-xs font-semibold text-gray-500 mb-2">{group.title}</p>
+              {group.items.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {group.items.map((chip, idx) => {
+                    const label =
+                      typeof chip === 'string'
+                        ? chip
+                        : chip?.name ?? chip?.label ?? '';
+                    if (!label) return null;
+                    return (
+                      <span
+                        key={`${group.key}-${label}-${idx}`}
+                        className="rounded-full bg-gray-900 text-white text-xs font-medium px-3 py-1"
+                      >
+                        {label}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400">{group.emptyLabel}</p>
+              )}
             </div>
-          </div>
-
-          <nav className="px-6 pb-4 border-t border-gray-100">
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3">
-              {TAB_LIST.map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                    activeTab === tab.key
-                      ? 'bg-primary text-white shadow'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </nav>
+          ))}
+        </div>
         </section>
-
-        {activeTab === 'recommend' && (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-900">
-              <Sparkles className="w-4 h-4 text-primary" />
-              오늘의 추천
-            </h2>
-            {popupLoading ? (
-              <div className="rounded-2xl bg-white p-8 text-center text-sm text-gray-500 shadow-sm border">
-                추천 데이터를 불러오는 중입니다...
-              </div>
-            ) : recommendations.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-                {recommendations.map((popup) => (
-                  <EventCard key={`recommend-${popup.id}`} popup={popup} />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl bg-white p-8 text-center text-sm text-gray-500 shadow-sm border">
-                추천 데이터가 아직 없습니다. 관심 카테고리를 설정하면 더 나은 큐레이션을 받을 수 있어요.
-              </div>
-            )}
-          </section>
-        )}
-
-        {activeTab === 'favorites' && (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-900">
-              <Heart className="w-4 h-4 text-primary" />
-              관심 팝업
-            </h2>
-            {wishlistLoading ? (
-              <div className="rounded-2xl bg-white p-8 text-center text-sm text-gray-500 shadow-sm border">
-                관심 팝업을 불러오는 중입니다...
-              </div>
-            ) : favoritePopups.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-                {favoritePopups.map((popup) => (
-                  <EventCard key={`favorite-${popup.id}`} popup={popup} />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl bg-white p-8 text-center text-sm text-gray-500 shadow-sm border">
-                관심 등록한 팝업이 없습니다. 마음에 드는 팝업을 찜해보세요!
-              </div>
-            )}
-          </section>
-        )}
-
-        {activeTab === 'reviews' && (
-          <section className="rounded-3xl bg-white p-8 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold mb-2 text-gray-900">내 후기</h2>
-            <div className="flex flex-col items-center justify-center py-10">
-              <p className="text-sm text-gray-500">아직 작성한 후기가 없습니다.</p>
+      
+      {/* 탭 영역 */}
+      <section className="rounded-3xl bg-white shadow-sm ring-1 ring-gray-100">
+        <nav className="px-6">
+          <div className="grid grid-cols-2 gap-2 md:flex md:gap-8 md:justify-start">
+            {TAB_LIST.map((tab) => (
               <button
-                onClick={() => navigate(ROUTES.home)}
-                className="mt-4 px-6 py-2 bg-primary text-white rounded-full text-sm font-semibold hover:bg-primary/90 transition"
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap w-full md:w-auto ${
+                  activeTab === tab.key
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
               >
-                팝업 방문하고 후기 쓰기
+                {tab.label}
               </button>
-            </div>
-          </section>
-        )}
+            ))}
+          </div>
+        </nav>
 
-        {activeTab === 'schedule' && (
-          <section className="rounded-3xl bg-white p-8 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold mb-2 text-gray-900">일정</h2>
-            <div className="flex flex-col items-center justify-center py-10">
-              <p className="text-sm text-gray-500">예정된 방문 일정이 없습니다.</p>
-              <button
-                onClick={() => navigate(ROUTES.nearby)}
-                className="mt-4 px-6 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-semibold hover:bg-gray-200 transition"
-              >
-                주변 팝업 둘러보기
-              </button>
+        <div className="border-t border-gray-100 px-3 md:px-6 py-6 min-h-[300px]">
+          {activeTab === 'recommend' && (
+            <section className="space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold flex items-center gap-2 text-gray-900">
+                  <Sparkles className="w-5 h-5 text-primary fill-primary" />
+                  오늘의 맞춤 추천
+                </h2>
+                <span className="text-xs text-gray-500">종료된 팝업 제외</span>
+              </div>
+              
+              {popupLoading ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="aspect-3/4 bg-gray-100 rounded-2xl animate-pulse" />
+                  ))}
+                </div>
+              ) : recommendations.length > 0 ? (
+                <div className="relative">
+                  {/* 데스크톱: 4열 그리드 (더보기 버튼 추가 가능) */}
+                  <div className="hidden md:grid grid-cols-4 gap-5">
+                    {displayedRecommendations.map((popup) => (
+                      <EventCard key={`recommend-pc-${popup.id}`} popup={popup} />
+                    ))}
+                  </div>
+
+                  {/* 모바일: 가로 스크롤 슬라이더 */}
+                  <div className="md:hidden flex gap-4 overflow-x-auto pb-4 snap-x scrollbar-hide px-1">
+                    {displayedRecommendations.map((popup) => (
+                      <div key={`recommend-mo-${popup.id}`} className="w-[160px] shrink-0 snap-start">
+                        <EventCard popup={popup} variant="compact" />
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {recommendations.length > 8 && (
+                    <div className="mt-6 flex flex-col gap-2 md:flex-row md:justify-center md:items-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRecommendVisibleCount((prev) =>
+                            Math.min(prev + 4, recommendations.length)
+                          )
+                        }
+                        disabled={!canLoadMore}
+                        className={`w-full md:w-auto px-5 py-2 rounded-full border text-sm font-medium transition flex items-center justify-center gap-1 ${
+                          canLoadMore
+                            ? 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                            : 'border-gray-100 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        더보기 <ChevronRight className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRecommendVisibleCount(fullyExpanded ? 8 : recommendations.length)
+                        }
+                        className={`w-full md:w-auto px-5 py-2 rounded-full text-sm font-medium shadow-sm transition ${
+                          fullyExpanded
+                            ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            : 'bg-primary/10 text-primary hover:bg-primary/20'
+                        }`}
+                      >
+                        {fullyExpanded ? '접기' : '전체보기'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-white p-10 text-center border border-gray-100">
+                  <p className="text-gray-500 mb-4">추천할 만한 진행 중인 팝업이 없습니다.</p>
+                  <button 
+                    onClick={() => navigate(ROUTES.search)}
+                    className="px-5 py-2 bg-gray-900 text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition"
+                  >
+                    모든 팝업 둘러보기
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
+
+          {activeTab === 'favorites' && (
+            <section className="space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold flex items-center gap-2 text-gray-900">
+                  <Heart className="w-5 h-5 text-primary fill-primary" />
+                  내가 찜한 팝업
+                </h2>
+                <button 
+                  onClick={() => navigate(ROUTES.mypageFavorites)}
+                  className="text-xs font-semibold text-gray-500 hover:text-gray-900"
+                >
+                  전체보기
+                </button>
+              </div>
+
+              {wishlistLoading ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="aspect-3/4 bg-gray-100 rounded-2xl animate-pulse" />
+                  ))}
+                </div>
+              ) : favoritePopups.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {favoritePopups.slice(0, 8).map((popup) => (
+                    <EventCard key={`favorite-${popup.id}`} popup={popup} />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-white p-10 text-center border border-gray-100">
+                  <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Heart className="w-6 h-6 text-gray-300" />
+                  </div>
+                  <p className="text-gray-900 font-medium mb-1">아직 찜한 팝업이 없어요</p>
+                  <p className="text-xs text-gray-500 mb-4">마음에 드는 팝업을 발견하면 하트를 눌러보세요!</p>
+                  <button
+                    onClick={() => navigate(ROUTES.home)}
+                    className="px-5 py-2 border border-gray-200 rounded-full text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    인기 팝업 구경하기
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
+
+          {activeTab === 'reviews' && (
+            <section className="animate-fade-in">
+              <div className="rounded-3xl bg-white p-8 shadow-sm border border-gray-100 text-center">
+                <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-8 h-8 text-primary" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900 mb-2">작성한 후기 관리</h2>
+                <p className="text-sm text-gray-500 mb-6">
+                  다녀온 팝업의 후기를 작성하고<br />다른 사람들과 경험을 공유해보세요.
+                </p>
+                <button
+                  onClick={() => navigate(ROUTES.mypageReviews)}
+                  className="px-8 py-3 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20"
+                >
+                  내 후기 전체보기
+                </button>
+              </div>
+            </section>
+          )}
+
+          {activeTab === 'schedule' && (
+            <div className="animate-fade-in">
+              <CalendarSection popups={favoritePopups} />
             </div>
-          </section>
-        )}
-      </main>
+          )}
+        </div>
+      </section>
+    </main>
 
       <Footer />
       <BottomNav />
@@ -291,4 +418,3 @@ const MyPage = () => {
 };
 
 export default MyPage;
-

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MapPin, Calendar, Clock, Star, Heart, Pencil } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -13,6 +13,8 @@ import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/hooks/useToast';
 import { useLoginPrompt } from '@/hooks/useLoginPrompt';
 import { ROUTES } from '@/routes/paths';
+import { useFavoriteStore } from '@/store/favoriteStore';
+import { runtimeStatusLabel } from '@/utils/popupUtils';
 
 const PopupDetailPage = () => {
   const { id } = useParams();
@@ -22,8 +24,11 @@ const PopupDetailPage = () => {
   const { addToast } = useToast();
   const { openLoginPrompt } = useLoginPrompt();
   const role = useAuthStore((state) => state.role);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
+  const hydrated = useFavoriteStore((state) => state.hydrated);
+  const favoriteSet = useFavoriteStore((state) => state.favoriteIds);
+  const addFavorite = useFavoriteStore((state) => state.addFavorite);
+  const removeFavorite = useFavoriteStore((state) => state.removeFavorite);
 
   // 팝업 상세 조회
   const { data: popup, isLoading } = usePopupById(id);
@@ -31,9 +36,10 @@ const PopupDetailPage = () => {
   // 리뷰 조회
   const { data: reviews = [] } = usePopupReviews(id);
 
-  useEffect(() => {
-    setIsFavorite(Boolean(popup?.isFavorite));
-  }, [popup?.isFavorite]);
+  const isFavorite = useMemo(() => {
+    if (!popup?.id) return false;
+    return hydrated ? favoriteSet.has(popup.id) : Boolean(popup?.isFavorite);
+  }, [favoriteSet, hydrated, popup?.id, popup?.isFavorite]);
 
   const handleFavoriteToggle = async () => {
     if (!popup?.id) return;
@@ -62,7 +68,11 @@ const PopupDetailPage = () => {
         await addToWishlist(popup.id);
         addToast({ title: '관심 목록에 추가되었습니다.' });
       }
-      setIsFavorite((prev) => !prev);
+      if (isFavorite) {
+        removeFavorite(popup.id);
+      } else {
+        addFavorite(popup.id);
+      }
       queryClient.invalidateQueries({ queryKey: ['my-wishlist'] });
     } catch (error) {
       console.error('popup detail wishlist error', error);
@@ -117,6 +127,7 @@ const PopupDetailPage = () => {
 
   const gallery = getImageUrls(popup.gallery || popup.imageUrls || []);
   const mainImage = gallery[0] || getImageUrl(popup.thumbnail || popup.thumbnailImageUrl, '/placeholder-popup.png');
+  const statusLabel = popup?.runtimeStatus ? runtimeStatusLabel[popup.runtimeStatus] : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -141,6 +152,11 @@ const PopupDetailPage = () => {
             <div>
               <h1 className="text-3xl font-bold mb-2">{popup.title}</h1>
               {popup.subtitle && <p className="text-gray-500">{popup.subtitle}</p>}
+              {statusLabel && (
+                <span className="inline-flex items-center gap-2 mt-2 rounded-full bg-gray-900/90 px-3 py-1 text-xs font-semibold text-white">
+                  {statusLabel}
+                </span>
+              )}
             </div>
             <button
               type="button"

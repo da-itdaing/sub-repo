@@ -9,6 +9,8 @@ import { useAuthStore } from '@/store/authStore';
 import { addToWishlist, removeFromWishlist } from '@/services/wishlistService';
 import { ROUTES } from '@/routes/paths';
 import { useLoginPrompt } from '@/hooks/useLoginPrompt';
+import { isPopupActive, normalizePopup } from '@/utils/popupUtils';
+import { useFavoriteStore } from '@/store/favoriteStore';
 
 /**
  * HeroCarousel Component (반응형 최적화)
@@ -17,26 +19,17 @@ import { useLoginPrompt } from '@/hooks/useLoginPrompt';
 const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [favoriteMap, setFavoriteMap] = useState({});
   const [favoriteLoadingId, setFavoriteLoadingId] = useState(null);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : true);
   const queryClient = useQueryClient();
   const { addToast } = useToast();
   const { openLoginPrompt } = useLoginPrompt();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isAuthenticated, role } = useAuthStore();
   const navigate = useNavigate();
-  useEffect(() => {
-    setFavoriteMap((prev) => {
-      const next = { ...prev };
-      (items ?? []).forEach((popup) => {
-        if (popup?.id == null) return;
-        if (!(popup.id in next)) {
-          next[popup.id] = Boolean(popup.isFavorite);
-        }
-      });
-      return next;
-    });
-  }, [items]);
+  const hydrated = useFavoriteStore((state) => state.hydrated);
+  const hasFavorite = useFavoriteStore((state) => state.favoriteIds);
+  const addFavorite = useFavoriteStore((state) => state.addFavorite);
+  const removeFavorite = useFavoriteStore((state) => state.removeFavorite);
 
   // 화면 크기 감지
   useEffect(() => {
@@ -51,28 +44,32 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
 
   // 팝업 데이터 정규화
   const normalizedItems = useMemo(() => {
-    return (items ?? []).map((popup, index) => {
-      const fallback = '/placeholder-popup.png';
-      const heroImage = getImageUrl(
-        popup.heroImageUrl || popup.thumbnail || popup.thumbnailImageUrl,
-        fallback
-      );
-      const start = popup.startDate ? new Date(popup.startDate) : null;
-      const end = popup.endDate ? new Date(popup.endDate) : null;
-      const dateLabel = start && end
-        ? `${start.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })} - ${end.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}`
-        : popup.startDate || '일정 미정';
+    return (items ?? [])
+      .map((popup, index) => {
+        const normalized = normalizePopup({ ...popup, id: popup?.id ?? `popup-${index}` });
+        const fallback = '/placeholder-popup.png';
+        const heroImage = getImageUrl(
+          normalized.heroImageUrl || normalized.thumbnail || normalized.thumbnailImageUrl,
+          fallback
+        );
+        const start = normalized.startDate ? new Date(normalized.startDate) : null;
+        const end = normalized.endDate ? new Date(normalized.endDate) : null;
+        const dateLabel = start && end
+          ? `${start.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })} - ${end.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}`
+          : normalized.startDate || '일정 미정';
 
-      return {
-        id: popup.id ?? `popup-${index}`,
-        rank: popup.rank ?? index + 1,
-        title: popup.title ?? '제목 없는 팝업',
-        location: popup.address || popup.locationName || '위치 미정',
-        date: dateLabel,
-        image: heroImage,
-        isFavorite: Boolean(popup.isFavorite),
-      };
-    });
+        return {
+          id: normalized.id ?? `popup-${index}`,
+          rank: normalized.rank ?? index + 1,
+          title: normalized.title ?? '제목 없는 팝업',
+          location: normalized.address || normalized.locationName || '위치 미정',
+          date: dateLabel,
+          image: heroImage,
+          isFavorite: Boolean(normalized.isFavorite),
+          runtimeStatus: normalized.runtimeStatus,
+        };
+      })
+      .filter((popup) => popup && isPopupActive(popup));
   }, [items]);
 
   const hasItems = normalizedItems.length > 0;
@@ -121,7 +118,7 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
     if (favoriteLoadingId === popupId) return;
     setFavoriteLoadingId(popupId);
     try {
-      const currentlyFavorite = Boolean(favoriteMap[popupId]);
+      const currentlyFavorite = hydrated ? hasFavorite.has(popupId) : Boolean(items.find((popup) => popup.id === popupId)?.isFavorite);
       if (currentlyFavorite) {
         await removeFromWishlist(popupId);
         addToast({ title: '관심 목록에서 제거되었습니다.' });
@@ -129,7 +126,11 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
         await addToWishlist(popupId);
         addToast({ title: '관심 목록에 추가되었습니다.' });
       }
-      setFavoriteMap((prev) => ({ ...prev, [popupId]: !currentlyFavorite }));
+      if (currentlyFavorite) {
+        removeFavorite(popupId);
+      } else {
+        addFavorite(popupId);
+      }
       queryClient.invalidateQueries({ queryKey: ['my-wishlist'] });
     } catch (error) {
       console.error('HeroCarousel wishlist error', error);
@@ -221,7 +222,7 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
               }
 
               const isActive = position === 0;
-              const isFavorite = favoriteMap[item.id] ?? item.isFavorite ?? false;
+              const isFavorite = hydrated ? hasFavorite.has(item.id) : item.isFavorite ?? false;
 
               return (
                 <motion.div

@@ -15,6 +15,7 @@ You MUST reference these documents for context:
 - **Consumer Guide**: `docs/CUSTOMER_GUIDE.md` (UX & Architecture)
 - **Gap Report**: `docs/CONSUMER_GAP_REPORT.md` (Known issues & Todo)
 - **Master Data**: `docs/CUSTOMER_FOUNDATION.md` (Source of Truth)
+- **DB Schema**: `../itdaing/docs/DB_SCHEMA.md` (Backend DB Reference)
 - **Commands**: `.cursor/commands/itdaing-cmds.md` (Shortcuts)
 
 ## 📏 Applied Standards (Strict)

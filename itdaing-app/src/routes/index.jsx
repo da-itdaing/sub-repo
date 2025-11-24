@@ -12,6 +12,8 @@ import NearbyExplorePage from '@/pages/NearbyExplorePage';
 import SearchPage from '@/pages/SearchPage';
 import MyPage from '@/pages/MyPage';
 import MyFavoritesPage from '@/pages/MyFavoritesPage';
+import MyReviewsPage from '@/pages/MyReviewsPage';
+import MySettingsPage from '@/pages/MySettingsPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import ReviewWritePage from '@/pages/ReviewWritePage';
 
@@ -86,6 +88,22 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <MyFavoritesPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: ROUTES.mypageReviews,
+    element: (
+      <ProtectedRoute>
+        <MyReviewsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: ROUTES.mypageSettings,
+    element: (
+      <ProtectedRoute>
+        <MySettingsPage />
       </ProtectedRoute>
     ),
   },
