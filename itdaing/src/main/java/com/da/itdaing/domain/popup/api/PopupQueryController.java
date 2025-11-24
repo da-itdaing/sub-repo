@@ -40,6 +40,13 @@ public class PopupQueryController {
             이 API는 인증이 필요하지 않으며, 모든 사용자가 접근할 수 있습니다.
             반환되는 팝업은 승인 상태가 APPROVED인 것들만 포함됩니다.
             """,
+        parameters = {
+            @Parameter(
+                name = "includeEnded",
+                description = "종료된 팝업까지 모두 포함할지 여부 (기본값: false)",
+                example = "false"
+            )
+        },
         security = {}
     )
     @ApiResponses({
@@ -89,8 +96,10 @@ public class PopupQueryController {
         )
     })
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PopupSummaryResponse>>> getPopups() {
-        return ResponseEntity.ok(ApiResponse.success(popupQueryService.getPopups()));
+    public ResponseEntity<ApiResponse<List<PopupSummaryResponse>>> getPopups(
+        @RequestParam(defaultValue = "false") boolean includeEnded
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(popupQueryService.getPopups(includeEnded)));
     }
 
     @Operation(

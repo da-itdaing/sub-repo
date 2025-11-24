@@ -1,26 +1,30 @@
 // src/main/java/com/da/itdaing/domain/file/api/UploadController.java
 package com.da.itdaing.domain.file.api;
 
+import java.util.List;
+
+import org.springframework.http.MediaType;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.da.itdaing.domain.file.dto.UploadDtos.UploadImageResponse;
 import com.da.itdaing.domain.file.dto.UploadDtos.UploadImagesResponse;
 import com.da.itdaing.domain.file.service.UploadService;
 import com.da.itdaing.global.web.ApiResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.security.Principal;
-import java.util.List;
 
 /**
  * 파일 업로드 API 컨트롤러
@@ -177,7 +181,7 @@ public class UploadController {
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiResponse<UploadImagesResponse> uploadImages(
-        Principal principal,
+        @AuthenticationPrincipal Long userId,
         @Parameter(
             description = "업로드할 이미지 파일 목록 (최대 10개, 각 10MB 이하)",
             required = true,
@@ -185,8 +189,7 @@ public class UploadController {
         )
         @RequestPart("images") @NotEmpty List<MultipartFile> images
     ) {
-        Long userId = principal != null ? Long.valueOf(principal.getName()) : null;
-        List<UploadImageResponse> list = uploadService.uploadImages(images, userId);
+        List<UploadImageResponse> list = uploadService.uploadImages(images, userId, "general");
         return ApiResponse.success(UploadImagesResponse.builder().files(list).build());
     }
 }

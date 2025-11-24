@@ -31,12 +31,13 @@ public class S3ImageStorage implements ImageStorage {
             String original = file.getOriginalFilename();
             String ext = StringUtils.getFilenameExtension(original);
             String yyyyMmDd = LocalDate.now().toString();
+            long ownerId = userId != null ? userId : 0L;
 
             // S3 key: 타입별 경로 분리
             // 형식: {baseDir}/{type}/{userId}/{date}/{uuid}.{ext}
             String normalizedType = (type != null && !type.isEmpty()) ? type : "general";
             String key = "%s/%s/%d/%s/%s.%s".formatted(
-                props.getBaseDir(), normalizedType, userId, yyyyMmDd, UUID.randomUUID(), ext != null ? ext : "bin"
+                props.getBaseDir(), normalizedType, ownerId, yyyyMmDd, UUID.randomUUID(), ext != null ? ext : "bin"
             );
 
             PutObjectRequest req = PutObjectRequest.builder()

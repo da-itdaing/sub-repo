@@ -2,6 +2,7 @@ package com.da.itdaing.domain.user.service;
 
 import com.da.itdaing.domain.file.dto.ImagePayload;
 import com.da.itdaing.domain.file.service.DefaultImageProvider;
+import com.da.itdaing.domain.common.enums.UserStatus;
 import com.da.itdaing.domain.master.entity.Category;
 import com.da.itdaing.domain.master.entity.Feature;
 import com.da.itdaing.domain.master.entity.Region;
@@ -12,6 +13,7 @@ import com.da.itdaing.domain.master.repository.RegionRepository;
 import com.da.itdaing.domain.master.repository.StyleRepository;
 import com.da.itdaing.domain.seller.entity.SellerProfile;
 import com.da.itdaing.domain.seller.repository.SellerProfileRepository;
+import com.da.itdaing.domain.social.repository.WishlistRepository;
 import com.da.itdaing.domain.user.dto.AuthDto;
 import com.da.itdaing.domain.user.entity.*;
 import com.da.itdaing.domain.user.exception.AuthException;
@@ -56,6 +58,7 @@ public class AuthService {
     private final UserPrefRegionRepository userPrefRegionRepository;
     private final UserPrefFeatureRepository userPrefFeatureRepository;
     private final DefaultImageProvider defaultImageProvider;
+    private final WishlistRepository wishlistRepository;
 
     /**
      * 소비자 회원가입
@@ -324,6 +327,43 @@ public class AuthService {
             user.updateProfileImage(resolved.url(), resolved.key());
         }
         return AuthDto.UserProfileResponse.from(user);
+    }
+
+    @Transactional
+    public AuthDto.UserProfileResponse updateProfile(Long userId, AuthDto.ProfileUpdateRequest request) {
+        Users user = userRepository.findById(userId)
+            .orElseThrow(() -> new AuthException(ErrorCode.USER_NOT_FOUND));
+
+        user.updateProfile(
+            normalizeText(request.getName()),
+            normalizeText(request.getNickname()),
+            request.getAgeGroup(),
+            normalizeMbti(request.getMbti())
+        );
+
+        return AuthDto.UserProfileResponse.from(user);
+    }
+
+    @Transactional
+    public void deleteAccount(Long userId) {
+        Users user = userRepository.findById(userId)
+            .orElseThrow(() -> new AuthException(ErrorCode.USER_NOT_FOUND));
+        if (user.getStatus() != UserStatus.INACTIVE) {
+            user.changeStatus(UserStatus.INACTIVE);
+        }
+        refreshTokenRepository.deleteAllByUserId(userId);
+        wishlistRepository.deleteAllByUserId(userId);
+    }
+
+    private String normalizeText(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private String normalizeMbti(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        return value.trim().toUpperCase();
     }
 
     private void assignDefaultProfileImageIfEmpty(Users user) {

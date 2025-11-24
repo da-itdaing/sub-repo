@@ -23,6 +23,7 @@
 # ============================================
 # IDE 및 개발 도구
 # ============================================
+.cursor/
 .cursor-server/
 .vscode/
 .vscode-server/
@@ -87,6 +88,7 @@ itdaing/db_backup_*.sql
 itdaing/src/main/resources/application-local.yml
 
 # IDE 캐시
+itdaing/.cursor/
 
 # 임시 파일
 itdaing/tmp/

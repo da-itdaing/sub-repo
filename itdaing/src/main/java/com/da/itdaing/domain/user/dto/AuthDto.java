@@ -1,13 +1,26 @@
 package com.da.itdaing.domain.user.dto;
 
-import com.da.itdaing.domain.common.enums.UserRole;
-import com.da.itdaing.domain.user.entity.Users;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.*;
-import lombok.*;
-
 import java.util.List;
 import java.util.Locale;
+
+import com.da.itdaing.domain.common.enums.UserRole;
+import com.da.itdaing.domain.common.enums.UserStatus;
+import com.da.itdaing.domain.user.entity.Users;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 public class AuthDto {
 
@@ -281,6 +294,16 @@ public class AuthDto {
             allowableValues = {"CONSUMER", "SELLER", "ADMIN"})
         private UserRole role;
 
+        @Schema(description = "나이대(10단위)", example = "20")
+        private Integer ageGroup;
+
+        @Schema(description = "MBTI", example = "ENFP")
+        private String mbti;
+
+        @Schema(description = "계정 상태", example = "ACTIVE",
+            allowableValues = {"ACTIVE", "INACTIVE"})
+        private UserStatus status;
+
         @Schema(description = "프로필 이미지 정보")
         private com.da.itdaing.domain.file.dto.ImagePayload profileImage;
 
@@ -291,12 +314,37 @@ public class AuthDto {
                 .name(user.getName())
                 .nickname(user.getNickname())
                 .role(user.getRole())
+                .ageGroup(user.getAgeGroup())
+                .mbti(user.getMbti())
+                .status(user.getStatus())
                 .profileImage(com.da.itdaing.domain.file.dto.ImagePayload.builder()
                     .url(user.getProfileImageUrl())
                     .key(user.getProfileImageKey())
                     .build())
                 .build();
         }
+    }
+
+    @Getter @Builder
+    @NoArgsConstructor @AllArgsConstructor
+    @Schema(description = "내 프로필 수정 요청")
+    public static class ProfileUpdateRequest {
+        @Schema(description = "이름", example = "김소비")
+        @Size(max = 100, message = "이름은 100자 이하여야 합니다")
+        private String name;
+
+        @Schema(description = "닉네임", example = "소비왕")
+        @Size(max = 100, message = "닉네임은 100자 이하여야 합니다")
+        private String nickname;
+
+        @Schema(description = "나이대(10단위)", example = "20")
+        @Min(value = 10, message = "나이대는 10 이상이어야 합니다")
+        @Max(value = 90, message = "나이대는 90 이하여야 합니다")
+        private Integer ageGroup;
+
+        @Schema(description = "MBTI", example = "ENFP")
+        @Size(max = 4, message = "MBTI는 최대 4자 입니다")
+        private String mbti;
     }
 
     @Getter @Builder @NoArgsConstructor @AllArgsConstructor

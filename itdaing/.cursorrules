@@ -13,6 +13,7 @@ alwaysApply: true
 
 You MUST reference these documents for context:
 - **Foundation**: `itdaing/docs/BACKEND_FOUNDATION.md` (Master Data & Package Rules)
+- **DB Schema**: `itdaing/docs/DB_SCHEMA.md` (Database Tables & Relationships)
 - **Guide**: `itdaing/docs/BACKEND_GUIDE.md` (Architecture & Security Flow)
 - **Gap Report**: `itdaing/docs/BACKEND_GAP_REPORT.md` (Current Status)
 - **Todo**: `itdaing/docs/BACKEND_DOC_TODO.md` (Documentation Tasks)
