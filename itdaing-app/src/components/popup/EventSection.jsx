@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import EventCard from './EventCard';
+import { isPopupActive } from '@/utils/popupUtils';
 
 const EventSection = ({
   title,
@@ -9,50 +10,65 @@ const EventSection = ({
   initialShow = 4,
   filterType,
   customFilterOptions,
+  hideEnded = true, // 종료된 팝업 기본적으로 숨김
+  maxItems = 20,    // 최대 표시 개수 (무한 로딩 아님)
 }) => {
   const [visibleCount, setVisibleCount] = useState(initialShow);
   const [expanded, setExpanded] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('전체');
   const scrollRef = useRef(null);
-  const [scrollState, setScrollState] = useState({ canLeft: false, canRight: false, current: 1 });
-  const MAX_ITEMS = 20; // 최대 표시 개수 제한
 
+  // 필터 초기화
   useEffect(() => {
     setVisibleCount(initialShow);
     setExpanded(false);
     setSelectedFilter('전체');
   }, [initialShow, popups.length, filterType]);
 
+  // 필터 옵션 생성
   const filterOptions = useMemo(() => {
     if (Array.isArray(customFilterOptions) && customFilterOptions.length > 0) {
       return customFilterOptions;
     }
     if (!filterType || popups.length === 0) return [];
-    const raw = popups
-      .map((popup) => {
+    
+    const raw = popups.map((popup) => {
         if (filterType === 'region') {
-          return popup.primaryRegion || popup.regionTag || popup.location?.split?.(' ')?.[0];
+        // 광주 5개구 필터링
+        const region = popup.primaryRegion || popup.regionTag || popup.location?.split?.(' ')?.[0];
+        if (['동구', '서구', '남구', '북구', '광산구', '광주'].some(r => region?.includes(r))) {
+          return region;
+        }
+        return null;
         }
         if (filterType === 'category') {
           return popup.categoryTag || popup.categories?.[0];
         }
         return null;
-      })
-      .filter(Boolean);
+    }).filter(Boolean);
+
     const unique = Array.from(new Set(raw));
     return ['전체', ...unique];
   }, [customFilterOptions, filterType, popups]);
 
+  // 필터링 + 종료 팝업 제거 로직
   const filteredPopups = useMemo(() => {
-    if (selectedFilter === '전체') return popups;
+    let result = popups;
+
+    // 1. 종료된 팝업 필터링
+    if (hideEnded) {
+      result = result.filter(isPopupActive);
+    }
+
+    // 2. 선택된 필터 적용
+    if (selectedFilter !== '전체') {
     if (filterType === 'region') {
-      return popups.filter((popup) => {
+        result = result.filter((popup) => {
         const region = popup.primaryRegion || popup.regionTag || popup.location?.split?.(' ')?.[0];
         return region === selectedFilter;
       });
-    }
-    if (filterType === 'category') {
-      return popups.filter((popup) => {
+      } else if (filterType === 'category') {
+        result = result.filter((popup) => {
         if (popup.categoryTag) return popup.categoryTag === selectedFilter;
         if (Array.isArray(popup.categories)) {
           return popup.categories.some((cat) => cat === selectedFilter);
@@ -60,55 +76,26 @@ const EventSection = ({
         return false;
       });
     }
-    return popups;
-  }, [filterType, popups, selectedFilter]);
-
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-    if (filteredPopups.length === 0) {
-      setScrollState({ canLeft: false, canRight: false, current: 0 });
-      return;
     }
 
-    const updateScrollState = () => {
-      const { scrollLeft, scrollWidth, clientWidth } = container;
-      const maxScroll = scrollWidth - clientWidth;
-      const canLeft = scrollLeft > 8;
-      const canRight = maxScroll > 8 && scrollLeft < maxScroll - 8;
+    return result;
+  }, [filterType, popups, selectedFilter, hideEnded]);
 
-      const cards = Array.from(container.querySelectorAll('[data-card-index]'));
-      let current = 1;
-      const containerLeft = container.getBoundingClientRect().left;
-      cards.forEach((card, index) => {
-        const rect = card.getBoundingClientRect();
-        const relativeLeft = rect.left - containerLeft;
-        if (relativeLeft <= rect.width / 2 + 12) {
-          current = index + 1;
-        }
-      });
-
-      setScrollState({ canLeft, canRight, current });
-    };
-
-    updateScrollState();
-    container.addEventListener('scroll', updateScrollState);
-    window.addEventListener('resize', updateScrollState);
-    return () => {
-      container.removeEventListener('scroll', updateScrollState);
-      window.removeEventListener('resize', updateScrollState);
-    };
-  }, [filteredPopups]);
-
+  // 보여줄 팝업 리스트 계산
   const displayedPopups = useMemo(() => {
-    if (expanded) return filteredPopups.slice(0, MAX_ITEMS);
-    return filteredPopups.slice(0, Math.min(visibleCount, MAX_ITEMS));
-  }, [expanded, filteredPopups, visibleCount]);
+    // 모바일에서는 전체(가로 스크롤), 데스크톱에서는 visibleCount만큼만
+    // 하지만 여기서는 displayedPopups를 렌더링에 사용하므로,
+    // 모바일용 리스트는 별도로 처리하거나 CSS로 제어함.
+    // 현재 구조상 displayedPopups는 데스크톱 그리드용.
+    
+    if (expanded) return filteredPopups.slice(0, maxItems);
+    return filteredPopups.slice(0, Math.min(visibleCount, maxItems));
+  }, [expanded, filteredPopups, visibleCount, maxItems]);
 
-  const hasMore = filteredPopups.length > visibleCount && !expanded && visibleCount < MAX_ITEMS;
+  const hasMore = filteredPopups.length > visibleCount && !expanded && visibleCount < maxItems;
 
   const handleLoadMore = () => {
-    setVisibleCount((prev) => Math.min(prev + 4, Math.min(filteredPopups.length, MAX_ITEMS)));
+    setVisibleCount((prev) => Math.min(prev + 4, Math.min(filteredPopups.length, maxItems)));
   };
 
   const handleToggleExpand = () => {
@@ -120,46 +107,44 @@ const EventSection = ({
     }
   };
 
-  const handleScroll = (direction) => {
-    const container = scrollRef.current;
-    if (!container) return;
-    const amount = direction === 'left' ? -220 : 220;
-    container.scrollBy({ left: amount, behavior: 'smooth' });
-  };
-
   return (
     <section className="mb-10">
+      {/* 헤더 영역 */}
       <div className="flex flex-col gap-2 mb-4">
         <div className="flex items-baseline justify-between gap-2">
-          <h2 className="text-xl font-bold tracking-tight">{title}</h2>
+          <h2 className="text-xl font-bold tracking-tight text-gray-900">{title}</h2>
           <span className="text-xs font-semibold text-gray-400">
             {Math.min(displayedPopups.length, filteredPopups.length)} / {filteredPopups.length}
           </span>
         </div>
         {description && <p className="text-sm text-gray-500">{description}</p>}
+        
         {filterOptions.length > 0 && (
           <FilterChips options={filterOptions} value={selectedFilter} onChange={setSelectedFilter} />
         )}
-        <div className="w-full h-px bg-linear-to-r from-gray-200 via-gray-100 to-transparent" />
+        
+        {/* 구분선 */}
+        <div className="w-full h-px bg-linear-to-r from-gray-200 via-gray-100 to-transparent mt-2" />
       </div>
 
-      {displayedPopups.length > 0 ? (
+      {filteredPopups.length > 0 ? (
         <>
-          {/* 데스크톱: 4열 그리드 */}
-          <div className="hidden md:grid grid-cols-4 gap-4">
+          {/* 데스크톱: 그리드 뷰 */}
+          <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {displayedPopups.map((popup) => (
               <EventCard key={popup.id} popup={popup} />
             ))}
           </div>
 
-          {/* 모바일: 가로 스크롤 (filteredPopups 전체 사용) */}
+          {/* 모바일: 슬라이더 (가로 스크롤) */}
+          {/* 모바일에서는 전체 리스트를 스크롤로 보여줌 (최대 maxItems) */}
           <div className="md:hidden">
             <div
               ref={scrollRef}
-              className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
+              className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4"
             >
-              {filteredPopups.slice(0, MAX_ITEMS).map((popup, index) => (
-                <div key={popup.id} data-card-index={index} className="w-[42%] shrink-0 snap-start">
+              {filteredPopups.slice(0, maxItems).map((popup, index) => (
+                <div key={popup.id} data-card-index={index} className="w-[42%] min-w-[160px] shrink-0 snap-start">
                   <EventCard popup={popup} />
                 </div>
               ))}
@@ -167,34 +152,36 @@ const EventSection = ({
           </div>
         </>
       ) : (
-        <div className="text-center py-12 text-gray-500">표시할 팝업이 없습니다.</div>
+        <div className="py-12 text-center">
+          <p className="text-sm text-gray-500">진행 중인 팝업이 없습니다.</p>
+        </div>
       )}
 
-      {/* 더보기/전체보기 버튼 (데스크톱만) */}
+      {/* 더보기 버튼 (데스크톱 전용) */}
       {filteredPopups.length > 0 && (
-        <div className="mt-4 hidden md:flex flex-col items-center gap-2">
-          <div className="w-full flex items-center justify-center gap-2">
-            {hasMore && (
-              <button
-                type="button"
-                onClick={handleLoadMore}
-                className="px-4 py-1.5 rounded-full border border-gray-300 bg-white text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1"
-              >
-                더보기 <ChevronDown className="w-3 h-3" />
-              </button>
-            )}
-            {filteredPopups.length > initialShow && (
-              <button
-                type="button"
-                onClick={handleToggleExpand}
-                className={`px-5 py-1.5 rounded-full text-xs font-bold text-white shadow-sm transition-colors ${
-                  expanded ? 'bg-gray-800 hover:bg-gray-700' : 'bg-primary hover:bg-primary/90'
-                }`}
-              >
-                {expanded ? '접기' : '전체보기'}
-              </button>
-            )}
-          </div>
+        <div className="mt-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-center">
+          {hasMore && (
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              className="w-full md:w-auto px-5 py-2 rounded-full border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors flex items-center justify-center gap-1"
+            >
+              더보기 <ChevronDown className="w-4 h-4" />
+            </button>
+          )}
+          {filteredPopups.length > initialShow && (
+            <button
+              type="button"
+              onClick={handleToggleExpand}
+              className={`w-full md:w-auto px-5 py-2 rounded-full text-sm font-medium shadow-sm transition-all ${
+                expanded
+                  ? 'bg-gray-800 text-white hover:bg-gray-700'
+                  : 'bg-primary/10 text-primary hover:bg-primary/20'
+              }`}
+            >
+              {expanded ? '접기' : '전체보기'}
+            </button>
+          )}
         </div>
       )}
     </section>
@@ -204,18 +191,17 @@ const EventSection = ({
 export default EventSection;
 
 const FilterChips = ({ options, value, onChange }) => {
-  const displayOptions = options;
   return (
-    <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 scrollbar-hide">
-      {displayOptions.map((option) => (
+    <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+      {options.map((option) => (
         <button
           key={option}
           type="button"
           onClick={() => onChange(option)}
-          className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold transition-all ${
+          className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all border ${
             value === option
-              ? 'bg-gray-900 text-white shadow-md scale-105'
-              : 'bg-white text-gray-700 border border-gray-300 hover:border-gray-400'
+              ? 'bg-gray-900 text-white border-gray-900 shadow-md scale-105'
+              : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
           }`}
         >
           {option}
@@ -224,4 +210,3 @@ const FilterChips = ({ options, value, onChange }) => {
     </div>
   );
 };
-

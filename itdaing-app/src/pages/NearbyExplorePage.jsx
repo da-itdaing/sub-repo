@@ -7,6 +7,7 @@ import KakaoMap from '@/components/map/KakaoMap';
 import EventCard from '@/components/popup/EventCard';
 import { usePopups } from '@/hooks/usePopups';
 import { useMasterData } from '@/hooks/useMasterData';
+import { isPopupActive } from '@/utils/popupUtils';
 
 // 광주광역시 중심 좌표
 const GWANGJU_CENTER = { lat: 35.14667451156048, lng: 126.92227158987355 };
@@ -71,13 +72,11 @@ const NearbyExplorePage = () => {
 
   // 필터링된 팝업 목록
   const filteredPopups = useMemo(() => {
-    const now = new Date();
     return popups
       .filter((popup) => {
-        // 종료된 팝업 제외
-        const endDate = popup.endDate ? new Date(popup.endDate) : null;
-        if (endDate && now > endDate) return false;
-
+        if (!isPopupActive(popup)) {
+          return false;
+        }
         // 지역 필터
         if (selectedRegion !== 'ALL') {
           const popupRegion = getPopupRegion(popup);
@@ -222,13 +221,13 @@ const NearbyExplorePage = () => {
 
           {/* 더보기/전체보기 버튼 (데스크톱만) */}
           {filteredPopups.length > 0 && (
-            <div className="mt-4 hidden md:flex flex-col items-center gap-2">
-              <div className="w-full flex items-center justify-center gap-2">
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <div className="w-full flex flex-col gap-2 md:flex-row md:items-center md:justify-center">
                 {hasMore && (
                   <button
                     type="button"
                     onClick={handleLoadMore}
-                    className="px-4 py-1.5 rounded-full border border-gray-300 bg-white text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1"
+                    className="w-full md:w-auto px-4 py-1.5 rounded-full border border-gray-300 bg-white text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
                   >
                     더보기 <ChevronDown className="w-3 h-3" />
                   </button>
@@ -237,15 +236,15 @@ const NearbyExplorePage = () => {
                   <button
                     type="button"
                     onClick={handleToggleExpand}
-                    className={`px-5 py-1.5 rounded-full text-xs font-bold text-white shadow-sm transition-colors ${
+                    className={`w-full md:w-auto px-5 py-1.5 rounded-full text-xs font-bold text-white shadow-sm transition-colors ${
                       expanded ? 'bg-gray-800 hover:bg-gray-700' : 'bg-primary hover:bg-primary/90'
                     }`}
                   >
                     {expanded ? '접기' : '전체보기'}
                   </button>
-              )}
+                )}
+              </div>
             </div>
-          </div>
           )}
         </div>
       </main>

@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/layout/BottomNav';
@@ -13,6 +14,7 @@ const SearchPage = () => {
   const keyword = searchParams.get('keyword') ?? '';
   const trimmedKeyword = keyword.trim();
   const hasKeyword = trimmedKeyword.length > 0;
+  const scrollRef = useRef(null);
 
   const { data: searchResult, isLoading } = useSearchPopups(
     hasKeyword ? { keyword: trimmedKeyword, size: 24 } : {}
@@ -23,11 +25,13 @@ const SearchPage = () => {
     if (!searchResult) return [];
     
     const now = new Date();
+    // KST 기준 날짜 문자열 (YYYY-MM-DD)
+    const todayStr = now.toISOString().split('T')[0];
     const list = Array.isArray(searchResult.content) ? searchResult.content : Array.isArray(searchResult) ? searchResult : [];
     
     return list.filter((popup) => {
-      const endDate = popup.endDate ? new Date(popup.endDate) : null;
-      if (endDate && now > endDate) return false;
+      // endDate < today (종료된 팝업) 제거
+      if (popup.endDate && popup.endDate < todayStr) return false;
       return true;
     });
   }, [hasKeyword, searchResult]);
@@ -73,7 +77,7 @@ const SearchPage = () => {
           </div>
         ) : popups.length === 0 ? (
           <div className="rounded-3xl bg-white p-10 text-center text-sm text-gray-500 shadow-sm">
-            '{trimmedKeyword}'에 해당하는 팝업을 찾지 못했습니다.
+            '{trimmedKeyword}'에 해당하는 진행 중인 팝업을 찾지 못했습니다.
           </div>
         ) : (
           <section className="space-y-4">
@@ -83,12 +87,28 @@ const SearchPage = () => {
                 {popups.length} result
               </span>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            
+            {/* 데스크톱: 그리드 */}
+            <div className="hidden md:grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {popups.map((popup) => (
                 <div key={popup.id} className="h-full">
                   <EventCard popup={popup} onCardClick={handleCardClick} />
                 </div>
               ))}
+            </div>
+
+            {/* 모바일: 가로 슬라이드 (Snap) */}
+            <div className="md:hidden relative">
+              <div 
+                ref={scrollRef}
+                className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-5 px-5"
+              >
+                {popups.map((popup) => (
+                  <div key={popup.id} className="w-[260px] shrink-0 snap-start">
+                    <EventCard popup={popup} onCardClick={handleCardClick} />
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         )}

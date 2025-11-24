@@ -23,13 +23,13 @@ const ImageUploader = ({ images = [], onChange, maxImages = 5 }) => {
     setIsUploading(true);
     try {
       const uploadPromises = files.map((file) => uploadImage(file));
-      const newUrls = await Promise.all(uploadPromises);
-      onChange([...images, ...newUrls]);
+      const newImages = await Promise.all(uploadPromises); // Returns objects {url, key}
+      onChange([...images, ...newImages]);
     } catch (error) {
       console.error('Image upload error:', error);
       addToast({
         title: '이미지 업로드 실패',
-        description: '잠시 후 다시 시도해주세요.',
+        description: error?.message || '잠시 후 다시 시도해주세요.',
         variant: 'error',
       });
     } finally {
@@ -54,18 +54,28 @@ const ImageUploader = ({ images = [], onChange, maxImages = 5 }) => {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {images.map((url, index) => (
-          <div key={`${url}-${index}`} className="relative h-20 w-20 overflow-hidden rounded-xl border border-gray-200">
-            <img src={url} alt={`review-${index}`} className="h-full w-full object-cover" />
+        {images.map((img, index) => {
+          // images can be array of strings (legacy) or objects {url, key}
+          const src = typeof img === 'string' ? img : img.url;
+          const key = typeof img === 'string' ? `${img}-${index}` : img.key || `${img.url}-${index}`;
+          
+          return (
+            <div key={key} className="relative h-20 w-20 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+              <img 
+                src={src} 
+                alt={`review-${index}`} 
+                className="h-full w-full object-cover aspect-square" 
+              />
             <button
               type="button"
               onClick={() => removeImage(index)}
-              className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
+                className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white hover:bg-black/70 transition-colors"
             >
               <X className="h-3 w-3" />
             </button>
           </div>
-        ))}
+          );
+        })}
 
         {images.length < maxImages && (
           <button

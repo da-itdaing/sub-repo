@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { MapPin, Heart } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getImageUrl } from '@/utils/imageUtils';
 import { ROUTES } from '@/routes/paths';
@@ -8,13 +8,14 @@ import { addToWishlist, removeFromWishlist } from '@/services/wishlistService';
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/hooks/useToast';
 import { useLoginPrompt } from '@/hooks/useLoginPrompt';
+import { useFavoriteStore } from '@/store/favoriteStore';
+import { runtimeStatusLabel } from '@/utils/popupUtils';
 
 /**
  * EventCard 컴포넌트 (캐러셀 스타일 적용)
  * 팝업 카드 - 이미지 위 오버레이 스타일
  */
 const EventCard = ({ popup, variant = 'default', onCardClick }) => {
-  const [isFavorite, setIsFavorite] = useState(Boolean(popup?.isFavorite));
   const [isProcessing, setIsProcessing] = useState(false);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const role = useAuthStore((state) => state.role);
@@ -23,6 +24,10 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
   const { addToast } = useToast();
   const { openLoginPrompt } = useLoginPrompt();
   const isCompact = variant === 'compact';
+  const hydrated = useFavoriteStore((state) => state.hydrated);
+  const favoriteFromStore = useFavoriteStore((state) => (popup?.id ? state.favoriteIds.has(popup.id) : false));
+  const addFavorite = useFavoriteStore((state) => state.addFavorite);
+  const removeFavorite = useFavoriteStore((state) => state.removeFavorite);
   
   const thumbnailUrl = getImageUrl(popup.thumbnail || popup.thumbnailImageUrl, '/placeholder-popup.png');
   const start = popup.startDate ? new Date(popup.startDate) : null;
@@ -30,6 +35,19 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
   const dateLabel = start && end
     ? `${start.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })} - ${end.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}`
     : popup.startDate || '일정 미정';
+  const isFavorite = hydrated ? favoriteFromStore : Boolean(popup?.isFavorite);
+  const statusLabel = useMemo(() => {
+    if (popup?.runtimeStatus) {
+      return runtimeStatusLabel[popup.runtimeStatus] ?? runtimeStatusLabel.default;
+    }
+    return popup?.status === 'upcoming'
+      ? '오픈 예정'
+      : popup?.status === 'ongoing'
+      ? '진행 중'
+      : popup?.status === 'ended'
+      ? '종료'
+      : popup?.status || null;
+  }, [popup]);
 
   const handleFavoriteToggle = async (e) => {
     e.preventDefault();
@@ -39,16 +57,17 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
       const shouldLogin = await openLoginPrompt({
         description: '관심 팝업은 로그인 후 이용 가능합니다.\n지금 로그인하시겠습니까?',
       });
+      if (shouldLogin) {
+        navigate(ROUTES.login);
+      }
+      return;
+    }
+
     if (role && role !== 'CONSUMER') {
       addToast({
         title: '관심 팝업은 소비자 계정에서만 이용 가능합니다.',
         variant: 'error',
       });
-      return;
-    }
-      if (shouldLogin) {
-        navigate(ROUTES.login);
-      }
       return;
     }
 
@@ -62,8 +81,17 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
         await addToWishlist(popup.id);
         addToast({ title: '관심 목록에 추가되었습니다.' });
       }
-      setIsFavorite(!isFavorite);
+      if (isFavorite) {
+        removeFavorite(popup.id);
+      } else {
+        addFavorite(popup.id);
+      }
+      
+      // 캐시 무효화: 위시리스트, 팝업 목록, 개별 팝업, 대시보드 등
       queryClient.invalidateQueries({ queryKey: ['my-wishlist'] });
+      queryClient.invalidateQueries({ queryKey: ['popups'] });
+      queryClient.invalidateQueries({ queryKey: ['popup', popup.id] });
+      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
     } catch (err) {
       console.error('wishlist error', err);
       addToast({ title: '관심 목록 처리 실패', description: err.message || '다시 시도해주세요.', variant: 'error' });
@@ -84,15 +112,18 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
       <div
         className={`relative w-full ${
           isCompact ? 'h-48 md:h-60' : 'aspect-3/4'
-        } overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1`}
+        } overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1 bg-gray-100`}
       >
         {/* 이미지 */}
           <img
             src={thumbnailUrl}
             alt={popup.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
             onError={(e) => {
+              if (e.currentTarget.src.endsWith('/placeholder-popup.png')) return; // Loop prevention
               e.currentTarget.src = '/placeholder-popup.png';
+              e.currentTarget.onerror = null; // Final safeguard
             }}
           />
         
@@ -114,11 +145,11 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
         </button>
 
         {/* 상태 배지 */}
-          {popup.status && (
+        {statusLabel && (
           <div className="absolute top-2 left-2 px-2 py-0.5 bg-white/90 rounded-full text-[10px] font-bold text-gray-900 shadow-sm">
-              {popup.status === 'upcoming' ? '오픈 예정' : popup.status === 'ongoing' ? '진행 중' : '종료'}
+            {statusLabel}
           </div>
-          )}
+        )}
 
         {/* 텍스트 정보 */}
         <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1">

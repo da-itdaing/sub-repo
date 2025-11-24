@@ -66,3 +66,21 @@ export const getMyProfile = async () => {
   return response;
 };
 
+export const updateMyProfile = async (payload) => {
+  const response = await apiClient.put('/users/me', payload);
+  return response;
+};
+
+export const deleteMyAccount = async () => {
+  await apiClient.delete('/users/me');
+};
+
+export const getMyPreferences = async () => {
+  const response = await apiClient.get('/consumers/me/preferences');
+  return response;
+};
+
+export const updateMyPreferences = async (payload) => {
+  await apiClient.put('/consumers/me/preferences', payload);
+};
+

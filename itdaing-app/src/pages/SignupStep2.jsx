@@ -20,6 +20,11 @@ const SignupStep2 = () => {
   // 마스터 데이터 조회
   const { categories, regions, styles, features, isLoading: masterLoading } = useMasterData();
 
+  // 광주 5개구 필터링 (DB 중복/불필요 데이터 제거)
+  const filteredRegions = regions.filter(r => 
+    ['동구', '서구', '남구', '북구', '광산구'].includes(r.name)
+  );
+
   useEffect(() => {
     // localStorage에서 1단계 데이터 가져오기
     const data = localStorage.getItem('signupData');
@@ -179,7 +184,7 @@ const SignupStep2 = () => {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-3">
-                    {regions.map((region) => (
+                    {filteredRegions.map((region) => (
                       <button
                         key={region.id}
                         onClick={() => {

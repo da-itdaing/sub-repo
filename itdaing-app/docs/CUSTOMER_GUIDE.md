@@ -18,7 +18,7 @@
 | Pages (`src/pages`) | Route-level shells (HomePage, LoginPage, NearbyExplorePage, PopupDetailPage, MyPage, Signup steps) | Use React Query hooks and shared components; maintain `max-w-[540px]/[1200px]` alignment. |
 | Components (`src/components`) | HeroCarousel, EventSection, HorizontalBanner, BottomNav, Footer, Header, ReviewWritePage, MyPage tabs | Must hydrate from master data or API payloads; no hardcoded chips/resgions. |
 | Hooks (`src/hooks`) | `useMasterData`, `usePopups`, `useAuthInitialization` | Wrap React Query fetchers with caching and selection limits enforcement. |
-| Services (`src/services`) | `authService`, `popupService`, `reviewService`, `wishlistService` (TBD) | Axios clients hitting `/api/**` via Vite proxy; unify ApiResponse handling. |
+| Services (`src/services`) | `authService`, `popupService`, `reviewService`, `wishlistService` | Axios clients hitting `/api/**` via Vite proxy; unify ApiResponse handling. |
 | Backend | Spring Boot controllers → services → repositories | Redis caches master data & refresh tokens; PostgreSQL stores popups, favorites, reviews. |
 
 **Auth Flow:** Login → `authService.login` → access/refresh tokens stored in localStorage → Axios interceptor attaches `Authorization` header → on 401 try `/api/auth/refresh` → update Zustand store → re-run original request.
@@ -44,13 +44,14 @@
 - Tabs: 설명 / 지도 / 후기. “후기 작성하기” button enters `ReviewWritePage`.
 - Heart button toggles favorites; requires login. Unauthed press triggers modal: “로그인 후 이용 가능합니다. 지금 로그인할까요?”
 - Review tab shows distribution bars + individual cards; login-gated actions for create/edit/delete.
-- `ReviewWritePage`는 평점 + 텍스트 입력 + **이미지 업로드** 후 `createReview` API를 호출하고, 성공 시 상세 페이지로 돌아가도록 구성한다.
+- `ReviewWritePage`: 평점 + 텍스트 + **이미지 업로드** 후 `createReview` API 호출. 성공 시 상세 페이지로 리다이렉트되며, React Query 캐시가 무효화되어 새 리뷰가 즉시 표시됩니다.
 
 ### MyPage
-- Tabs: 맞춤 추천 · 관심 팝업 · 내 후기 · 일정 (itdaing-web 참조). 각 탭은 동일한 카드/통계 스타일을 공유한다.
-- Favorites tab uses same EventCard visuals; data must sync with wishlist backend (`GET /api/wishlist`).
-- Stats row: 관심 팝업/추천 큐레이션/관심 지역/선호 카테고리 숫자 표기, Logout 버튼은 헤더에 위치.
-- Review & 일정 탭은 빈 상태 + CTA (향후 리뷰 작성 + 캘린더 연동)로 구성.
+- Tabs: 맞춤 추천 · 관심 팝업 · 내 후기 · 일정. 각 탭은 동일한 카드/통계 스타일을 공유한다.
+- **Favorites**: uses same EventCard visuals; data syncs with wishlist backend (`GET /api/wishlist`).
+- **Schedule**: `CalendarSection` 컴포넌트를 통해 관심 팝업의 일정(시작~종료)을 캘린더에 시각화. 날짜 클릭 시 해당 일자에 운영 중인 팝업 목록 노출.
+- **Reviews**: `/mypage/reviews` 서브페이지로 이동하여 내가 작성한 리뷰 목록 확인 및 관리.
+- **Settings**: `/mypage/settings` 서브페이지에서 프로필 이미지 변경 및 로그아웃 수행.
 - **Guest View**: If unauthenticated, show a "Login Required" placeholder with a login button instead of redirecting.
 
 ### Nearby Explore
@@ -64,10 +65,11 @@
 | Feature | Endpoint(s) | Frontend Modules |
 | --- | --- | --- |
 | Master data | `GET /api/master/categories`, `styles`, `regions`, `features` | `src/hooks/useMasterData.js`, consumed by Signup/MyPage filters |
-| Favorites | (TBD) e.g., `POST /api/wishlist/{popupId}` / `DELETE` / `GET /api/wishlist` | `EventCard`, `PopupDetailPage`, `MyPageFavorites` |
-| Reviews | `POST /api/popups/{id}/reviews`, `PUT /api/reviews/{id}`, `DELETE /api/reviews/{id}`, `GET /api/popups/{id}/reviews` | `PopupDetailPage`, `ReviewWritePage`, React Query cache invalidation |
+| Favorites | `POST /api/wishlist?popupId=...` / `DELETE` / `GET` | `EventCard`, `PopupDetailPage`, `MyPageFavorites` |
+| Reviews | `POST /api/popups/{id}/reviews`, `PUT`, `DELETE`, `GET` | `PopupDetailPage`, `ReviewWritePage`, `MyReviewsPage` |
 | Nearby map | `GET /api/popups/search` with region/category filters | `NearbyExplorePage`, map markers |
-| Image Upload | `POST /api/upload` (Multipart) | `src/services/uploadService.js`, `ImageUploader.jsx` |
+| Image Upload | `POST /api/uploads/images` (Multipart) | `src/services/uploadService.js`, `ImageUploader.jsx` |
+| Profile | `GET /api/users/me`, `PUT /api/users/me/profile-image` | `MyPage`, `MySettingsPage` |
 
 ---
 
@@ -77,6 +79,7 @@
 2. **`CUSTOMER_GUIDE.md` (this file)** – experience + architectural mapping.
 3. **`CONSUMER_GAP_REPORT.md`** – findings from implementation audits (Plan Step 3 & 4).
 4. **`CONSUMER_DOC_TODO.md`** – running checklist for doc tasks (mirrors seller TODO doc).
+5. **`DB_SCHEMA.md`** – Backend PostgreSQL schema reference.
 
 All docs must stay under `/home/ubuntu/itdaing-app/docs` and cross-link to relevant code.
 
@@ -88,9 +91,9 @@ All docs must stay under `/home/ubuntu/itdaing-app/docs` and cross-link to relev
 - Favorites/Review 등 보호된 액션은 `useAuthStore().isAuthenticated`를 확인하고, 비로그인 시 로그인 확인 다이얼로그(추후 Bottom Sheet)로 유도한다.
 - 헤더, 셀러/관리자 레이아웃 상단 모두 `로그아웃` 버튼을 제공하며 클릭 시 홈으로 이동한다.
 
-## ✅ Next Steps
-1. Implement image upload in `ReviewWritePage`.
-2. Fix popup status logic (KST).
-3. Improve MyPage guest experience.
-4. Optimize layout scrolling (white space fix).
-5. Implement Search Auto-complete.
+## ✅ Completed Features (v1.0)
+1. Image upload in `ReviewWritePage` (S3 integration).
+2. Wishlist sync (frontend <-> backend) with visual feedback.
+3. MyPage sub-pages (Reviews, Settings) and Calendar view.
+4. Guest view handling in MyPage.
+5. Search Auto-complete (Planned next).

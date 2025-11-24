@@ -15,7 +15,7 @@ export const uploadImage = async (file) => {
     },
   });
   
-  // response 구조: { files: [{ url: "...", ... }] }
-  return response.files[0].url;
+  // response 구조: { files: [{ url: "...", key: "..." }] }
+  return response.files[0];
 };
 
