@@ -430,6 +430,26 @@ public class AuthController {
         return ApiResponse.success(response);
     }
 
+    @PutMapping(
+        value = "/users/me",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ApiResponse<AuthDto.UserProfileResponse> updateMyProfile(
+        Authentication authentication,
+        @Valid @RequestBody AuthDto.ProfileUpdateRequest request
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+        return ApiResponse.success(authService.updateProfile(userId, request));
+    }
+
+    @DeleteMapping("/users/me")
+    public ApiResponse<Void> deleteMyAccount(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        authService.deleteAccount(userId);
+        return ApiResponse.success();
+    }
+
     @Operation(
         summary = "내 대시보드 데이터 조회",
         description = "위시리스트, 추천, 최근 본 팝업 등 소비자 마이페이지 구성을 위한 정보를 반환합니다.",

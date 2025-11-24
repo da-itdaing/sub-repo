@@ -25,7 +25,7 @@ public class WishlistController {
     @PostMapping
     @PreAuthorize("hasRole('CONSUMER')")
     public ApiResponse<Void> addToWishlist(
-        @AuthenticationPrincipal(expression = "id") Long userId,
+        @AuthenticationPrincipal Long userId,
         @RequestParam Long popupId
     ) {
         wishlistService.addToWishlist(userId, popupId);
@@ -40,7 +40,7 @@ public class WishlistController {
     @DeleteMapping("/{popupId}")
     @PreAuthorize("hasRole('CONSUMER')")
     public ApiResponse<Void> removeFromWishlist(
-        @AuthenticationPrincipal(expression = "id") Long userId,
+        @AuthenticationPrincipal Long userId,
         @PathVariable Long popupId
     ) {
         wishlistService.removeFromWishlist(userId, popupId);
@@ -54,7 +54,7 @@ public class WishlistController {
     @GetMapping
     @PreAuthorize("hasRole('CONSUMER')")
     public ApiResponse<Page<PopupSummaryResponse>> getMyWishlist(
-        @AuthenticationPrincipal(expression = "id") Long userId,
+        @AuthenticationPrincipal Long userId,
         Pageable pageable
     ) {
         Page<PopupSummaryResponse> page = wishlistService.getMyWishlist(userId, pageable);

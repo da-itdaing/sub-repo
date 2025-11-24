@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.nio.file.*;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -27,11 +28,12 @@ public class LocalImageStorage implements ImageStorage {
         try {
             String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
             String yyyyMmDd = LocalDate.now().toString();
+            long ownerId = userId != null ? userId : 0L;
 
             // 저장소 상 key(상대경로) = baseDir/{type}/{userId}/yyyy-MM-dd/uuid.ext
             String normalizedType = (type != null && !type.isEmpty()) ? type : "general";
             String key = "%s/%s/%d/%s/%s.%s".formatted(
-                props.getBaseDir(), normalizedType, userId, yyyyMmDd, UUID.randomUUID(), ext != null ? ext : "bin"
+                props.getBaseDir(), normalizedType, ownerId, yyyyMmDd, UUID.randomUUID(), ext != null ? ext : "bin"
             );
 
             // 실제 파일 시스템 경로: root + key
@@ -48,7 +50,7 @@ public class LocalImageStorage implements ImageStorage {
                 .contentType(file.getContentType())
                 .size(file.getSize())
                 .build();
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new RuntimeException("Local upload failed", e);
         }
     }
@@ -58,6 +60,6 @@ public class LocalImageStorage implements ImageStorage {
         try {
             Path p = Paths.get(props.getRoot()).resolve(key).normalize();
             Files.deleteIfExists(p);
-        } catch (Exception ignored) {}
+        } catch (IOException ignored) {}
     }
 }

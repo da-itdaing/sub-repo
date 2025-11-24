@@ -31,11 +31,6 @@ public class MasterQueryService {
     private final CategoryRepository categoryRepository;
     private final FeatureRepository featureRepository;
 
-    private final RegionMapper regionMapper;
-    private final StyleMapper styleMapper;
-    private final CategoryMapper categoryMapper;
-    private final FeatureMapper featureMapper;
-
     /**
      * 모든 지역 조회
      */

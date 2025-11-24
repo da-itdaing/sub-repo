@@ -8,6 +8,7 @@ import com.da.itdaing.domain.master.repository.CategoryRepository;
 import com.da.itdaing.domain.master.repository.FeatureRepository;
 import com.da.itdaing.domain.master.repository.RegionRepository;
 import com.da.itdaing.domain.master.repository.StyleRepository;
+import com.da.itdaing.domain.user.dto.PreferenceResponse;
 import com.da.itdaing.domain.user.dto.PreferenceUpdateRequest;
 import com.da.itdaing.domain.user.entity.*;
 import com.da.itdaing.domain.user.repository.*;
@@ -16,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -40,8 +40,7 @@ public class PreferenceService {
     private final UserPrefFeatureRepository userPrefFeatureRepository;
 
     @Transactional
-    public void updateMyPreferences(PreferenceUpdateRequest req, Principal principal) {
-        Long userId = Long.parseLong(principal.getName());
+    public void updateMyPreferences(PreferenceUpdateRequest req, Long userId) {
         Users user = userRepository.findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
 
@@ -60,6 +59,34 @@ public class PreferenceService {
         if (req.featureIds() != null) {
             replaceFeatures(user, dedup(req.featureIds()));
         }
+    }
+
+    @Transactional(readOnly = true)
+    public PreferenceResponse getMyPreferences(Long userId) {
+        Users user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
+
+        List<Long> categories = userPrefCategoryRepository.findAllByUser_Id(user.getId()).stream()
+            .map(row -> row.getCategory().getId())
+            .filter(Objects::nonNull)
+            .toList();
+
+        List<Long> styles = userPrefStyleRepository.findAllByUser_Id(user.getId()).stream()
+            .map(row -> row.getStyle().getId())
+            .filter(Objects::nonNull)
+            .toList();
+
+        List<Long> regions = userPrefRegionRepository.findAllByUser_Id(user.getId()).stream()
+            .map(row -> row.getRegion().getId())
+            .filter(Objects::nonNull)
+            .toList();
+
+        List<Long> features = userPrefFeatureRepository.findAllByUser_Id(user.getId()).stream()
+            .map(row -> row.getFeature().getId())
+            .filter(Objects::nonNull)
+            .toList();
+
+        return new PreferenceResponse(categories, styles, regions, features);
     }
 
     private List<Long> dedup(List<Long> ids) {
