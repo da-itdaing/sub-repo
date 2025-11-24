@@ -21,7 +21,7 @@ _Last Updated: 2025-11-24_
 - ✅ **CRUD**: Basic operations implemented.
 - ✅ **Search**: Spatial query (`ST_DWithin`) working.
 - ⚠️ **Vector Search**: `pgvector` integration is planned but not fully exposed to API.
-- ⚠️ **Status Logic**: "Ended" filtering logic needs to be strictly enforced in QueryDSL.
+- ✅ **Status Logic**: `/api/popups` 기본 응답에서 종료된 팝업을 제외하고 `includeEnded=true` 플래그로 과거 데이터를 명시적으로 조회하도록 정비 완료.
 
 ## 4. Database & AI (Pending Setup)
 - 🛑 **DB Connection**: PostgreSQL connection setup is NOT complete.
@@ -30,8 +30,8 @@ _Last Updated: 2025-11-24_
 
 ## 5. Reviews & Wishlist
 - ✅ **Entities**: Tables exist.
-- ⚠️ **API**: Endpoints defined but need rigorous testing with frontend.
-- ⚠️ **Image Upload**: S3 integration for Review Images needs verification.
+- ✅ **API**: Wishlist 컨트롤러가 `Long` principal을 직접 주입하도록 수정되어 POST/DELETE/GET 호출 시 인증 오류가 제거되었다.
+- ✅ **Image Upload**: `/api/uploads/images` 재점검 완료 (S3 업로드, 10MB/10개 제한, MIME 검증, 에러 메시지 일원화).
 
 ## 6. Documentation
 - ✅ **Swagger**: Available at `/swagger-ui/index.html`.

@@ -67,4 +67,6 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
         @Param("userId") Long userId,
         @Param("popupIds") Collection<Long> popupIds
     );
+
+    void deleteAllByUserId(Long userId);
 }

@@ -1,20 +1,27 @@
 package com.da.itdaing.domain.social.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.da.itdaing.domain.file.dto.ImagePayload;
 import com.da.itdaing.domain.popup.dto.PopupSummaryResponse;
 import com.da.itdaing.domain.popup.entity.Popup;
+import com.da.itdaing.domain.popup.entity.PopupImage;
+import com.da.itdaing.domain.popup.repository.PopupImageRepository;
 import com.da.itdaing.domain.popup.repository.PopupRepository;
 import com.da.itdaing.domain.social.entity.Wishlist;
 import com.da.itdaing.domain.social.repository.WishlistRepository;
 import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.domain.user.repository.UserRepository;
 import com.da.itdaing.global.error.exception.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +31,7 @@ public class WishlistService {
     private final WishlistRepository wishlistRepository;
     private final PopupRepository popupRepository;
     private final UserRepository userRepository;
+    private final PopupImageRepository popupImageRepository;
 
     public void addToWishlist(Long userId, Long popupId) {
         Users user = userRepository.findById(userId)
@@ -62,7 +70,34 @@ public class WishlistService {
 
     @Transactional(readOnly = true)
     public Page<PopupSummaryResponse> getMyWishlist(Long userId, Pageable pageable) {
+        // 페이지 요청에 널값 보호 로직 추가 가능하지만, Spring Data JPA가 기본 처리함
+        // 만약 pageable이 null이면 기본값 사용하도록 방어
+        if (pageable == null) {
+            pageable = Pageable.ofSize(40).withPage(0);
+        }
+        
         Page<Wishlist> page = wishlistRepository.findByUserIdWithPopup(userId, pageable);
+
+        // 위시리스트가 비어있으면 빈 페이지 반환
+        if (page.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 1. 팝업 ID 목록 추출
+        List<Long> popupIds = page.getContent().stream()
+            .map(w -> w.getPopup().getId())
+            .toList();
+
+        // 2. 썸네일 이미지 배치 조회
+        // (isThumbnail=true 인 이미지들을 가져옴)
+        Map<Long, PopupImage> thumbnailsByPopupId = popupImageRepository.findByPopupIdIn(popupIds)
+            .stream()
+            .filter(img -> Boolean.TRUE.equals(img.getIsThumbnail()))
+            .collect(Collectors.toMap(
+                img -> img.getPopup().getId(),
+                img -> img,
+                (existing, replacement) -> existing // 중복 시 기존 것 유지
+            ));
 
         return page.map(w -> {
             Popup p = w.getPopup();
@@ -91,6 +126,16 @@ public class WishlistService {
             String startDate = p.getStartDate() != null ? p.getStartDate().toString() : null;
             String endDate = p.getEndDate() != null ? p.getEndDate().toString() : null;
 
+            // 썸네일 매핑
+            PopupImage thumbnailImage = thumbnailsByPopupId.get(p.getId());
+            ImagePayload thumbnail = null;
+            if (thumbnailImage != null) {
+                thumbnail = ImagePayload.builder()
+                    .url(thumbnailImage.getImageUrl())
+                    .key(thumbnailImage.getImageKey())
+                    .build();
+            }
+
             return new PopupSummaryResponse(
                 p.getId(),
                 p.getName(),
@@ -107,16 +152,17 @@ public class WishlistService {
                 startDate,
                 endDate,
                 p.getOperatingTime(),
-                List.of(),          // operatingHours (간단 버전에서는 비워둠)
+                List.of(),          // operatingHours
                 p.getDescription(),
                 p.getViewCount(),
-                p.getFavoriteCount(),                 // favoriteCount
+                p.getFavoriteCount(),
                 List.of(),          // categoryIds
                 List.of(),          // featureIds
                 List.of(),          // styleTags
-                null,               // thumbnail
+                thumbnail,          // thumbnail
                 List.of(),          // gallery
                 null,               // reviewSummary
+                true,               // isFavorite
                 createdAt,
                 updatedAt
             );

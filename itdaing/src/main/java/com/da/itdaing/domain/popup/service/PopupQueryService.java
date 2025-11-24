@@ -1,5 +1,21 @@
 package com.da.itdaing.domain.popup.service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
 import com.da.itdaing.domain.file.dto.ImagePayload;
 import com.da.itdaing.domain.popup.dto.PopupOperatingHourResponse;
 import com.da.itdaing.domain.popup.dto.PopupReviewAuthorResponse;
@@ -27,22 +43,9 @@ import com.da.itdaing.domain.social.repository.ReviewRepository;
 import com.da.itdaing.domain.user.entity.Users;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -60,8 +63,16 @@ public class PopupQueryService {
     private final ReviewImageRepository reviewImageRepository;
     private final EntityManager entityManager;
 
-    public List<PopupSummaryResponse> getPopups() {
+    public List<PopupSummaryResponse> getPopups(boolean includeEnded) {
         List<Popup> popups = popupRepository.findAllWithZoneAndSeller();
+
+        if (!includeEnded) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            popups = popups.stream()
+                .filter(p -> p.getEndDate() == null || !p.getEndDate().isBefore(today))
+                .toList();
+        }
+
         return mapToSummaryResponses(popups);
     }
 
@@ -84,8 +95,11 @@ public class PopupQueryService {
     }
 
     public List<PopupReviewResponse> getReviewsByPopup(Long popupId) {
-        popupRepository.findById(popupId).orElseThrow(() -> new PopupNotFoundException(popupId));
-        List<Review> reviews = reviewRepository.findByPopupIdWithRelations(popupId);
+        Long targetPopupId = Objects.requireNonNull(popupId, "popupId must not be null");
+        if (!popupRepository.existsById(targetPopupId)) {
+            throw new PopupNotFoundException(targetPopupId);
+        }
+        List<Review> reviews = reviewRepository.findByPopupIdWithRelations(targetPopupId);
         return mapToReviewResponses(reviews);
     }
 
@@ -114,8 +128,13 @@ public class PopupQueryService {
         if (request.getStartDate() != null) {
             builder.and(popup.startDate.goe(request.getStartDate()));
         }
+        // endDate가 null인 경우: 기본적으로 오늘 이후에 종료되는 팝업만 노출 (종료된 팝업 필터링)
+        // 사용자가 명시적으로 endDate를 지정한 경우에는 해당 조건만 적용
         if (request.getEndDate() != null) {
             builder.and(popup.endDate.loe(request.getEndDate()));
+        } else {
+            // 기본 필터링: 현재 날짜(오늘) 이후에 종료되거나 오늘 종료되는 팝업만 조회
+            builder.and(popup.endDate.goe(java.time.LocalDate.now()));
         }
 
         // 지역 필터 (ZoneArea ID)
@@ -155,7 +174,10 @@ public class PopupQueryService {
             .limit(pageable.getPageSize())
             .fetch();
 
-        List<PopupSummaryResponse> responses = mapToSummaryResponses(popups);
+        List<PopupSummaryResponse> responses = Objects.requireNonNull(
+            mapToSummaryResponses(popups),
+            "Popup summary mapping must not be null"
+        );
         return new PageImpl<>(responses, pageable, total);
     }
 
@@ -272,6 +294,7 @@ public class PopupQueryService {
             thumbnail,
             gallery,
             reviewSummary,
+            false, // isFavorite (기본값)
             createdAt,
             updatedAt
         );
@@ -306,7 +329,7 @@ public class PopupQueryService {
         int sum = 0;
 
         for (Review review : reviews) {
-            int rating = review.getRating() != null ? review.getRating() : 0;
+            int rating = resolveRating(review);
             sum += rating;
             if (rating >= 1 && rating <= 5) {
                 distribution[rating - 1]++;
@@ -347,7 +370,7 @@ public class PopupQueryService {
                         .build())
                     .toList();
                 PopupReviewAuthorResponse author = buildReviewAuthor(review.getConsumer());
-                int rating = review.getRating() != null ? review.getRating() : 0;
+                int rating = resolveRating(review);
                 String date = formatReviewDate(review.getCreatedAt());
                 return new PopupReviewResponse(
                     review.getId(),
@@ -393,5 +416,13 @@ public class PopupQueryService {
 
     private String formatReviewDate(LocalDateTime createdAt) {
         return createdAt != null ? createdAt.format(REVIEW_DATE_FORMATTER) : null;
+    }
+
+    private int resolveRating(Review review) {
+        if (review == null) {
+            return 0;
+        }
+        Byte rawRating = review.getRating();
+        return rawRating != null ? rawRating.intValue() : 0;
     }
 }

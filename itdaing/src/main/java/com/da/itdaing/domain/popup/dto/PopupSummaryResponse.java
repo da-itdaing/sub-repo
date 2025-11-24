@@ -29,6 +29,7 @@ public record PopupSummaryResponse(
     ImagePayload thumbnail,
     List<ImagePayload> gallery,
     PopupReviewSummaryResponse reviewSummary,
+    Boolean isFavorite,
     String createdAt,
     String updatedAt
 ) {
