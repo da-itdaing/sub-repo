@@ -14,9 +14,11 @@ import {
   Stars,
   Megaphone,
   CalendarClock,
+  Bot,
 } from 'lucide-react';
 import { ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/authStore';
+import ChatbotButton from '@/components/common/ChatbotButton';
 
 const NAV_ITEMS = [
   {
@@ -56,14 +58,6 @@ const NAV_ITEMS = [
     description: '서비스 업데이트 소식',
     path: `${ROUTES.seller.root}/notices`,
     icon: Megaphone,
-    disabled: true,
-  },
-  {
-    label: '메시지',
-    description: '문의, 알림 메시지 모아보기',
-    path: `${ROUTES.seller.root}/messages`,
-    icon: MessageSquare,
-    disabled: true,
   },
 ];
 
@@ -226,7 +220,7 @@ const SellerLayout = () => {
 
       {/* Main */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="border-b border-white/60 bg-white/90 px-4 py-4 shadow-sm backdrop-blur md:px-8">
+        <header className="relative z-20 border-b border-white/60 bg-white/90 px-4 py-4 shadow-sm backdrop-blur md:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
@@ -246,6 +240,11 @@ const SellerLayout = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {/* 챗봇 버튼 (헤더 통합용) */}
+              <div className="relative">
+                 <ChatbotButton mode="header" />
+              </div>
+
               <button className="rounded-2xl border border-gray-200 p-2 text-gray-600 transition hover:border-gray-300">
                 <MessageSquare className="h-5 w-5" />
               </button>

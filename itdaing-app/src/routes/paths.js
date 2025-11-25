@@ -17,6 +17,7 @@ export const ROUTES = {
   // 탐색
   nearby: '/nearby',
   search: '/search',
+  chatbot: '/chatbot',
   
   // 마이페이지
   mypage: '/mypage',
@@ -32,6 +33,7 @@ export const ROUTES = {
     popups: '/seller/popups',
     popupCreate: '/seller/popups/create',
     popupEdit: (id) => `/seller/popups/${id}/edit`,
+    notices: '/seller/notices',
   },
 
   // Admin 대시보드

@@ -140,7 +140,7 @@ const SellerDashboardPage = () => {
           </div>
           <Link
             to={ROUTES.seller.popupCreate}
-            className="inline-flex items-center gap-2 rounded-2xl border border-primary/30 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5"
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary/90"
           >
             <PlusCircle className="h-4 w-4" />
             새 팝업 등록

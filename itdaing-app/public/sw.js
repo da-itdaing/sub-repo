@@ -1,5 +1,5 @@
 /* Da-Itdaing PWA Service Worker */
-const VERSION = 'v2.0';
+const VERSION = 'v2.1';
 const CACHE_NAME = 'daitdaing-' + VERSION;
 const RUNTIME_CACHE = 'runtime-' + VERSION;
 

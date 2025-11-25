@@ -177,7 +177,7 @@ const EventSection = ({
         </span>
         
         {totalCount > 4 && (
-          <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2">
              {/* 더보기 버튼 (회색) */}
             <button
               type="button"

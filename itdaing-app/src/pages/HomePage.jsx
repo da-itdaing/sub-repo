@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { ArrowUp } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/layout/BottomNav';
@@ -26,9 +25,9 @@ const HomePage = () => {
     return matched?.length === DISTRICTS.length ? matched : DISTRICTS;
   }, [masterRegions]);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  // const scrollToTop = () => {
+  //   window.scrollTo({ top: 0, behavior: 'smooth' });
+  // };
 
   const normalizedPopups = useMemo(() => {
     return (popups ?? []).map((popup) => {
@@ -135,7 +134,6 @@ const HomePage = () => {
               }
               popups={openingSoonPopups}
               description="이번 달에 문을 여는 팝업을 미리 확인하세요."
-              customFilterOptions={['전체', ...gwangjuRegions]}
             />
 
             <EventSection
@@ -165,25 +163,6 @@ const HomePage = () => {
       <Footer />
       <BottomNav />
 
-      {/* Scroll to Top Button */}
-      <button
-        onClick={scrollToTop}
-        className="fixed bottom-16 md:bottom-24 w-10 h-10 md:w-14 md:h-14 bg-primary rounded-full shadow-lg hover:bg-primary/90 transition-colors flex items-center justify-center z-40"
-        style={{ 
-          right: 'max(1rem, calc((100vw - min(540px, 100vw)) / 2 + 1rem))',
-        }}
-        aria-label="Scroll to top"
-      >
-        <ArrowUp className="w-5 h-5 md:w-7 md:h-7 text-white" />
-      </button>
-      
-      <style>{`
-        @media (min-width: 768px) {
-          button[aria-label="Scroll to top"] {
-            right: max(2rem, calc((100vw - 1200px) / 2 + 2rem)) !important;
-          }
-        }
-      `}</style>
     </div>
   );
 };

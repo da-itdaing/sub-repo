@@ -16,12 +16,14 @@ import MyReviewsPage from '@/pages/MyReviewsPage';
 import MySettingsPage from '@/pages/MySettingsPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import ReviewWritePage from '@/pages/ReviewWritePage';
+import ChatbotPage from '@/pages/ChatbotPage';
 
 // Seller Pages
 import SellerDashboardPage from '@/pages/seller/SellerDashboardPage';
 import SellerPopupsPage from '@/pages/seller/SellerPopupsPage';
 import SellerProfilePage from '@/pages/seller/SellerProfilePage';
 import SellerPopupCreatePage from '@/pages/seller/SellerPopupCreatePage';
+import SellerNoticesPage from '@/pages/seller/SellerNoticesPage';
 import SellerLayout from '@/layouts/seller/SellerLayout';
 
 // Admin
@@ -33,6 +35,7 @@ const SELLER_ROUTE_SEGMENTS = {
   popups: 'popups',
   profile: 'profile',
   popupCreate: 'popups/create',
+  notices: 'notices',
 };
 
 const ADMIN_ROUTE_SEGMENTS = {
@@ -78,6 +81,10 @@ const router = createBrowserRouter([
   {
     path: ROUTES.search,
     element: <SearchPage />,
+  },
+  {
+    path: ROUTES.chatbot,
+    element: <ChatbotPage />,
   },
   {
     path: ROUTES.mypage,
@@ -134,6 +141,10 @@ const router = createBrowserRouter([
       {
         path: SELLER_ROUTE_SEGMENTS.popupCreate,
         element: <SellerPopupCreatePage />,
+      },
+      {
+        path: SELLER_ROUTE_SEGMENTS.notices,
+        element: <SellerNoticesPage />,
       },
     ],
   },

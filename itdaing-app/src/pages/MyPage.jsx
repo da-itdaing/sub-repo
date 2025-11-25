@@ -7,12 +7,12 @@ import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/layout/BottomNav';
 import EventCard from '@/components/popup/EventCard';
 import { useAuthStore } from '@/store/authStore';
-import { getMyProfile } from '@/services/authService';
+import { getMyProfile, getMyPreferences } from '@/services/authService';
 import { useMyWishlist } from '@/hooks/useWishlist';
 import { usePopups } from '@/hooks/usePopups';
 import { ROUTES } from '@/routes/paths';
-import { getImageUrl } from '@/utils/imageUtils';
-import { normalizePopup, isPopupActive } from '@/utils/popupUtils';
+import { normalizePopup, isPopupActive, resolvePopupThumbnail } from '@/utils/popupUtils';
+import { useMasterData } from '@/hooks/useMasterData';
 
 import CalendarSection from '@/components/common/CalendarSection';
 
@@ -25,7 +25,7 @@ const TAB_LIST = [
 
 const MyPage = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout, role } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const [activeTab, setActiveTab] = useState('recommend');
   const [recommendVisibleCount, setRecommendVisibleCount] = useState(8);
   const { data: profile } = useQuery({
@@ -33,8 +33,14 @@ const MyPage = () => {
     queryFn: getMyProfile,
     enabled: isAuthenticated,
   });
+  const { data: preferenceData } = useQuery({
+    queryKey: ['my-preferences'],
+    queryFn: getMyPreferences,
+    enabled: isAuthenticated,
+  });
   const { data: wishlistData, isLoading: wishlistLoading } = useMyWishlist({ page: 0, size: 40 });
   const { data: popups = [], isLoading: popupLoading } = usePopups();
+  const { categories, styles } = useMasterData();
 
   const favoritePopups = useMemo(() => {
     return (wishlistData?.content ?? [])
@@ -43,10 +49,7 @@ const MyPage = () => {
         if (!target) return null;
         const normalized = normalizePopup(target);
         if (!normalized?.id) return null;
-        const thumbnail = getImageUrl(
-          normalized.thumbnail || normalized.thumbnailImageUrl || normalized.heroImageUrl,
-          '/placeholder-popup.png'
-        );
+        const thumbnail = resolvePopupThumbnail(normalized);
         return { ...normalized, thumbnail, isFavorite: true };
       })
       .filter((popup) => popup && isPopupActive(popup));
@@ -86,18 +89,54 @@ const MyPage = () => {
     favorites: favoritePopups.length,
   };
 
+  const categoryNameMap = useMemo(() => {
+    const map = new Map();
+    (categories ?? []).forEach((category) => {
+      if (category?.id != null && category?.name) {
+        map.set(category.id, category.name);
+      }
+    });
+    return map;
+  }, [categories]);
+
+  const styleNameMap = useMemo(() => {
+    const map = new Map();
+    (styles ?? []).forEach((style) => {
+      if (style?.id != null && style?.name) {
+        map.set(style.id, style.name);
+      }
+    });
+    return map;
+  }, [styles]);
+
+  const preferredCategories = useMemo(() => {
+    if (!preferenceData?.interestCategoryIds) return [];
+    return preferenceData.interestCategoryIds
+      .map((id) => categoryNameMap.get(id))
+      .filter(Boolean)
+      .slice(0, 3);
+  }, [preferenceData, categoryNameMap]);
+
+  const preferredStyles = useMemo(() => {
+    if (!preferenceData?.styleIds) return [];
+    return preferenceData.styleIds
+      .map((id) => styleNameMap.get(id))
+      .filter(Boolean)
+      .slice(0, 3);
+  }, [preferenceData, styleNameMap]);
+
   const preferenceChips = [
     {
-      key: 'regions',
-      title: '선호 지역',
-      items: (profile?.regions ?? []).slice(0, 3),
-      emptyLabel: '관심 지역을 설정해보세요',
+      key: 'categories',
+      title: '선호 카테고리',
+      items: preferredCategories,
+      emptyLabel: '관심 카테고리를 설정해보세요',
     },
     {
-      key: 'interests',
-      title: '선호 취향',
-      items: (profile?.interests ?? profile?.categoryPreferences ?? []).slice(0, 3),
-      emptyLabel: '관심 취향을 설정해보세요',
+      key: 'styles',
+      title: '선호 스타일',
+      items: preferredStyles,
+      emptyLabel: '관심 스타일을 설정해보세요',
     },
   ];
 
@@ -137,7 +176,7 @@ const MyPage = () => {
       <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto px-4 md:px-8 py-8 space-y-8">
         {/* 프로필 섹션 */}
         <section className="rounded-3xl bg-white shadow-sm ring-1 ring-gray-100 overflow-hidden">
-          <div className="relative bg-linear-to-r from-gray-900 to-gray-800 px-6 py-8 text-white">
+          <div className="relative bg-gradient-to-r from-[#FFC1DF] via-[#FFD8EA] to-[#FFC1DF] px-6 py-8 text-white">
             <div className="flex items-start justify-between mb-6">
               <button onClick={() => navigate(-1)} className="p-1 hover:bg-white/10 rounded-full transition">
                 <ChevronLeft className="w-6 h-6" />

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, LogOut, Camera, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { ArrowLeft, Camera, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import BottomNav from '@/components/layout/BottomNav';
@@ -19,6 +19,7 @@ import { uploadImage } from '@/services/uploadService';
 import { useMasterData } from '@/hooks/useMasterData';
 
 const AGE_GROUPS = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+const GWANGJU_DISTRICTS = ['동구', '서구', '남구', '북구', '광산구'];
 
 const MySettingsPage = () => {
   const navigate = useNavigate();
@@ -42,6 +43,30 @@ const MySettingsPage = () => {
   });
 
   const { categories, regions, styles, features, isLoading: masterLoading } = useMasterData();
+
+  const uniqueCategories = useMemo(() => {
+    if (!Array.isArray(categories)) return [];
+    const seen = new Set();
+    return categories.filter((category) => {
+      const label = category?.name?.trim();
+      if (!label || seen.has(label)) {
+        return false;
+      }
+      seen.add(label);
+      return true;
+    });
+  }, [categories]);
+
+  const gwangjuRegions = useMemo(() => {
+    if (!Array.isArray(regions)) return [];
+    const regionMap = regions.reduce((acc, region) => {
+      if (region?.name) {
+        acc[region.name] = region;
+      }
+      return acc;
+    }, {});
+    return GWANGJU_DISTRICTS.map((name) => regionMap[name]).filter(Boolean);
+  }, [regions]);
 
   const { data: profile } = useQuery({
     queryKey: ['my-profile'],
@@ -89,12 +114,6 @@ const MySettingsPage = () => {
       });
     }
   }, [preferenceData]);
-
-  const handleLogout = () => {
-    logout();
-    navigate(ROUTES.home);
-    addToast({ title: '로그아웃 되었습니다.' });
-  };
 
   const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
@@ -194,9 +213,9 @@ const MySettingsPage = () => {
   }
 
   const preferenceGroups = [
-    { title: '관심 카테고리', field: 'interestCategoryIds', items: categories },
+    { title: '관심 카테고리', field: 'interestCategoryIds', items: uniqueCategories },
     { title: '선호 스타일', field: 'styleIds', items: styles },
-    { title: '선호 지역', field: 'regionIds', items: regions },
+    { title: '선호 지역', field: 'regionIds', items: gwangjuRegions },
     { title: '편의 시설', field: 'featureIds', items: features },
   ];
 
@@ -204,7 +223,7 @@ const MySettingsPage = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header hideSearchBar />
       
-      <main className="flex-1 w-full max-w-[720px] mx-auto px-5 py-8 space-y-6">
+      <main className="flex-1 w-full max-w-[720px] mx-auto px-5 pt-8 pb-24 space-y-6">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="p-1 rounded-full hover:bg-gray-100">
             <ArrowLeft className="w-6 h-6 text-gray-700" />
@@ -311,10 +330,10 @@ const MySettingsPage = () => {
                     key={item.id}
                     type="button"
                     onClick={() => handlePreferenceToggle(field, item.id)}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition border ${
                       prefForm[field]?.includes(item.id)
-                        ? 'bg-gray-900 text-white shadow-sm'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-[#EB0000] text-white border-[#EB0000] shadow-sm'
+                        : 'bg-white text-[oklch(0.373_0.034_259.733)] border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     {item.name}
@@ -328,7 +347,7 @@ const MySettingsPage = () => {
           ))}
         </section>
 
-        <section className="flex flex-col gap-3 md:flex-row">
+        <section>
           <button
             type="button"
             onClick={handleSaveAll}
@@ -336,14 +355,6 @@ const MySettingsPage = () => {
             className="w-full rounded-2xl bg-primary py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90 disabled:opacity-50"
           >
             {isSaving ? '저장 중...' : '변경사항 저장'}
-          </button>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full rounded-2xl border border-gray-200 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 flex items-center justify-center gap-2"
-          >
-            <LogOut className="h-4 w-4" />
-            로그아웃
           </button>
         </section>
 
