@@ -33,6 +33,7 @@ export const ROUTES = {
     popups: '/seller/popups',
     popupCreate: '/seller/popups/create',
     popupEdit: (id) => `/seller/popups/${id}/edit`,
+    notices: '/seller/notices',
   },
 
   // Admin 대시보드

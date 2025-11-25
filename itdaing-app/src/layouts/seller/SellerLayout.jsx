@@ -58,7 +58,6 @@ const NAV_ITEMS = [
     description: '서비스 업데이트 소식',
     path: `${ROUTES.seller.root}/notices`,
     icon: Megaphone,
-    disabled: true,
   },
 ];
 
