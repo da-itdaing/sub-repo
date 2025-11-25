@@ -86,7 +86,7 @@ function App() {
       <KakaoLoader appkey={kakaoKey} />
       <LoginPromptProvider>
         <ToastProvider>
-      <AppRouter />
+          <AppRouter />
         </ToastProvider>
       </LoginPromptProvider>
     </QueryClientProvider>

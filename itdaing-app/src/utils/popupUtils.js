@@ -1,3 +1,5 @@
+import { getImageUrl } from './imageUtils';
+
 const KST_OFFSET = '+09:00';
 
 const parseDate = (value) => {
@@ -58,5 +60,29 @@ export const isPopupActive = (popup) => {
   if (!popup) return false;
   const status = popup.runtimeStatus ?? getRuntimeStatus(popup);
   return status !== 'ended';
+};
+
+export const resolvePopupThumbnail = (popup, fallback = '/placeholder-popup.png') => {
+  if (!popup) return fallback;
+  const candidates = [
+    popup.thumbnail,
+    popup.thumbnailImageUrl,
+    popup.heroImageUrl,
+    popup.imageUrl,
+    popup?.homeDisplay?.thumbnail,
+    popup?.homeDisplay?.image,
+    popup?.homeDisplay?.imageUrl,
+    Array.isArray(popup.images) ? popup.images[0] : null,
+    Array.isArray(popup.imageUrls) ? popup.imageUrls[0] : null,
+  ];
+
+  for (const candidate of candidates) {
+    const url = getImageUrl(candidate, '');
+    if (url) {
+      return url;
+    }
+  }
+
+  return fallback;
 };
 

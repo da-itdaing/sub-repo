@@ -135,7 +135,6 @@ const HomePage = () => {
               }
               popups={openingSoonPopups}
               description="이번 달에 문을 여는 팝업을 미리 확인하세요."
-              customFilterOptions={['전체', ...gwangjuRegions]}
             />
 
             <EventSection

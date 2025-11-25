@@ -159,7 +159,7 @@ const EventSection = ({
 
       {/* 더보기 버튼 (데스크톱 전용) */}
       {filteredPopups.length > 0 && (
-        <div className="mt-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-center">
+        <div className="mt-6 hidden md:flex md:flex-row md:items-center md:justify-center gap-2">
           {hasMore && (
             <button
               type="button"
@@ -200,8 +200,8 @@ const FilterChips = ({ options, value, onChange }) => {
           onClick={() => onChange(option)}
           className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all border ${
             value === option
-              ? 'bg-gray-900 text-white border-gray-900 shadow-md scale-105'
-              : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
+              ? 'bg-[#EB0000] text-white border-[#EB0000] shadow-md scale-105'
+              : 'bg-white text-[oklch(0.373_0.034_259.733)] border-gray-200 hover:border-gray-300'
           }`}
         >
           {option}
