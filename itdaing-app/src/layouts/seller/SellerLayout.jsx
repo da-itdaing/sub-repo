@@ -42,16 +42,14 @@ const NAV_ITEMS = [
   {
     label: '일정 관리',
     description: '운영 캘린더 정리',
-    path: `${ROUTES.seller.root}/calendar`,
+    path: ROUTES.seller.calendar,
     icon: CalendarClock,
-    disabled: true,
   },
   {
     label: '리뷰 관리',
     description: '고객 리뷰 확인 및 응대',
-    path: `${ROUTES.seller.root}/reviews`,
+    path: ROUTES.seller.reviews,
     icon: Stars,
-    disabled: true,
   },
   {
     label: '공지사항',
