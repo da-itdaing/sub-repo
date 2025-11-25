@@ -10,7 +10,6 @@ import { useMasterData } from '@/hooks/useMasterData';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
 import { normalizePopup, isPopupActive } from '@/utils/popupUtils';
-import ChatbotButton from '@/components/chatbot/ChatbotButton';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -25,6 +24,10 @@ const HomePage = () => {
       .map((region) => region.name);
     return matched?.length === DISTRICTS.length ? matched : DISTRICTS;
   }, [masterRegions]);
+
+  // const scrollToTop = () => {
+  //   window.scrollTo({ top: 0, behavior: 'smooth' });
+  // };
 
   const normalizedPopups = useMemo(() => {
     return (popups ?? []).map((popup) => {
@@ -159,19 +162,7 @@ const HomePage = () => {
 
       <Footer />
       <BottomNav />
-      <ChatbotButton />
 
-      {/*
-        Legacy scroll-to-top button preserved for quick revert if needed.
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-16 md:bottom-24 w-10 h-10 md:w-14 md:h-14 bg-primary rounded-full shadow-lg hover:bg-primary/90 transition-colors flex items-center justify-center z-40"
-          style={{ right: 'max(1rem, calc((100vw - min(540px, 100vw)) / 2 + 1rem))' }}
-          aria-label="Scroll to top"
-        >
-          <ArrowUp className="w-5 h-5 md:w-7 md:h-7 text-white" />
-        </button>
-      */}
     </div>
   );
 };

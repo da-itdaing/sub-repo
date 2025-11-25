@@ -7,8 +7,7 @@ import BottomNav from '@/components/layout/BottomNav';
 import { ROUTES } from '@/routes/paths';
 import { getMyWishlist } from '@/services/wishlistService';
 import EventCard from '@/components/popup/EventCard';
-import { normalizePopup, isPopupActive } from '@/utils/popupUtils';
-import { getImageUrl } from '@/utils/imageUtils';
+import { normalizePopup, isPopupActive, resolvePopupThumbnail } from '@/utils/popupUtils';
 
 const MyFavoritesPage = () => {
   const navigate = useNavigate();
@@ -24,10 +23,7 @@ const MyFavoritesPage = () => {
         const target = item?.popup ?? item;
         const normalized = normalizePopup(target);
         if (!normalized?.id) return null;
-        const thumbnail = getImageUrl(
-          normalized.thumbnail || normalized.thumbnailImageUrl || normalized.heroImageUrl,
-          '/placeholder-popup.png'
-        );
+        const thumbnail = resolvePopupThumbnail(normalized);
         return { ...normalized, thumbnail, isFavorite: true };
       })
       .filter((popup) => popup && isPopupActive(popup));

@@ -6,6 +6,7 @@ import { useAuthStore } from './store/authStore';
 import { fetchKakaoMapKey } from './utils/kakaoMapLoader';
 import { ToastProvider } from '@/components/ui/ToastProvider';
 import { LoginPromptProvider } from '@/components/ui/LoginPromptProvider';
+import ChatbotButton from '@/components/common/ChatbotButton';
 
 // React Query 클라이언트 생성
 const queryClient = new QueryClient({
@@ -86,7 +87,9 @@ function App() {
       <KakaoLoader appkey={kakaoKey} />
       <LoginPromptProvider>
         <ToastProvider>
-          <AppRouter />
+          <>
+            <AppRouter />
+          </>
         </ToastProvider>
       </LoginPromptProvider>
     </QueryClientProvider>

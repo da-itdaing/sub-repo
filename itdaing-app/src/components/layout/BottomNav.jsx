@@ -14,7 +14,7 @@ const BottomNav = () => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 w-full  bg-[#3d3d3d] pb-safe text-white" style={{ position: 'fixed', bottom: 0 }}>
       <div className="mx-auto w-full max-w-[540px] md:max-w-[1200px]">
-        <div className="flex justify-around items-center h-18 md:h-20">
+        <div className="flex justify-around items-center h-16 md:h-22">
           <Link 
             to={ROUTES.nearby}
             className={`flex flex-col items-center gap-0.5 md:gap-2 hover:opacity-80 transition-opacity flex-1 ${
