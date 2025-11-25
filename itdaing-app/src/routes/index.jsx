@@ -16,6 +16,7 @@ import MyReviewsPage from '@/pages/MyReviewsPage';
 import MySettingsPage from '@/pages/MySettingsPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import ReviewWritePage from '@/pages/ReviewWritePage';
+import ChatbotPage from '@/pages/ChatbotPage';
 
 // Seller Pages
 import SellerDashboardPage from '@/pages/seller/SellerDashboardPage';
@@ -78,6 +79,10 @@ const router = createBrowserRouter([
   {
     path: ROUTES.search,
     element: <SearchPage />,
+  },
+  {
+    path: ROUTES.chatbot,
+    element: <ChatbotPage />,
   },
   {
     path: ROUTES.mypage,

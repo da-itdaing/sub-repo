@@ -17,6 +17,7 @@ export const ROUTES = {
   // 탐색
   nearby: '/nearby',
   search: '/search',
+  chatbot: '/chatbot',
   
   // 마이페이지
   mypage: '/mypage',
