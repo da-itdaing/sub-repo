@@ -29,6 +29,8 @@ import SellerLayout from '@/layouts/seller/SellerLayout';
 // Admin
 import AdminLayout from '@/layouts/admin/AdminLayout';
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
+import AdminUsersPage from '@/pages/admin/AdminUsersPage';
+import AdminUserProfilePage from '@/pages/admin/AdminUserProfilePage';
 
 const SELLER_ROUTE_SEGMENTS = {
   dashboard: 'dashboard',
@@ -40,6 +42,8 @@ const SELLER_ROUTE_SEGMENTS = {
 
 const ADMIN_ROUTE_SEGMENTS = {
   dashboard: 'dashboard',
+  users: 'users',
+  userDetail: 'users/:id',
 };
 
 /**
@@ -163,6 +167,14 @@ const router = createBrowserRouter([
   {
         path: ADMIN_ROUTE_SEGMENTS.dashboard,
         element: <AdminDashboardPage />,
+      },
+      {
+        path: ADMIN_ROUTE_SEGMENTS.users,
+        element: <AdminUsersPage />,
+      },
+      {
+        path: ADMIN_ROUTE_SEGMENTS.userDetail,
+        element: <AdminUserProfilePage />,
       },
     ],
   },
