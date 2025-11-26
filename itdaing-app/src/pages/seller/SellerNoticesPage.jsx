@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
+import { ROUTES } from '@/routes/paths';
 
 const SellerNoticesPage = () => {
+  const navigate = useNavigate();
   // Mock Data
   const [notices, setNotices] = useState([
     {
@@ -174,6 +177,7 @@ const SellerNoticesPage = () => {
 
           <button
             type="button"
+            onClick={() => navigate(ROUTES.seller.noticeCreate)}
             className="inline-flex items-center gap-1 rounded-full bg-[#EB0000] px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-[#c90000]"
           >
             <Plus className="h-4 w-4" />
@@ -208,9 +212,10 @@ const SellerNoticesPage = () => {
             {paginatedNotices.map((notice) => (
               <tr
                 key={notice.id}
-                className="border-b border-dashed border-gray-200 hover:bg-gray-50"
+                onClick={() => navigate(ROUTES.seller.noticeDetail(notice.id))}
+                className="border-b border-dashed border-gray-200 hover:bg-gray-50 cursor-pointer"
               >
-                <td className="py-4 pl-4">
+                <td className="py-4 pl-4" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     className="h-4 w-4 rounded border-gray-300 text-[#EB0000] focus:ring-[#EB0000]"
