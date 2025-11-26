@@ -31,6 +31,8 @@ import AdminLayout from '@/layouts/admin/AdminLayout';
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminUserProfilePage from '@/pages/admin/AdminUserProfilePage';
+import AdminZonesPage from '@/pages/admin/AdminZonesPage';
+import AdminZoneCreatePage from '@/pages/admin/AdminZoneCreatePage';
 
 const SELLER_ROUTE_SEGMENTS = {
   dashboard: 'dashboard',
@@ -44,6 +46,8 @@ const ADMIN_ROUTE_SEGMENTS = {
   dashboard: 'dashboard',
   users: 'users',
   userDetail: 'users/:id',
+  zones: 'zones',
+  zoneCreate: 'zones/create',
 };
 
 /**
@@ -175,6 +179,14 @@ const router = createBrowserRouter([
       {
         path: ADMIN_ROUTE_SEGMENTS.userDetail,
         element: <AdminUserProfilePage />,
+      },
+      {
+        path: ADMIN_ROUTE_SEGMENTS.zones,
+        element: <AdminZonesPage />,
+      },
+      {
+        path: ADMIN_ROUTE_SEGMENTS.zoneCreate,
+        element: <AdminZoneCreatePage />,
       },
     ],
   },

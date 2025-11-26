@@ -42,7 +42,6 @@ const NAV_ITEMS = [
     description: '존 / 지역 운영 설정',
     path: ROUTES.admin.zones,
     icon: Map,
-    disabled: true,
   },
 ];
 

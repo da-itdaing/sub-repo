@@ -42,6 +42,7 @@ export const ROUTES = {
     dashboard: '/admin/dashboard',
     users: '/admin/users',
     zones: '/admin/zones',
+    zoneCreate: '/admin/zones/create',
     approvals: '/admin/approvals',
   },
 };
