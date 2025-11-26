@@ -19,9 +19,29 @@ const queryClient = new QueryClient({
   },
 });
 
-const KakaoLoader = ({ appkey }) => {
-  useKakaoLoader({ appkey, libraries: ['services', 'clusterer', 'drawing'] });
-  return null;
+const KakaoLoader = ({ appkey, children }) => {
+  const [loading, error] = useKakaoLoader({ 
+    appkey, 
+    libraries: ['services', 'clusterer', 'drawing'] 
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-600">
+        <p>지도를 불러오는 중 오류가 발생했습니다.</p>
+      </div>
+    );
+  }
+
+  return children;
 };
 
 function App() {
@@ -84,14 +104,13 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <KakaoLoader appkey={kakaoKey} />
-      <LoginPromptProvider>
-        <ToastProvider>
-          <>
+      <KakaoLoader appkey={kakaoKey}>
+        <LoginPromptProvider>
+          <ToastProvider>
             <AppRouter />
-          </>
-        </ToastProvider>
-      </LoginPromptProvider>
+          </ToastProvider>
+        </LoginPromptProvider>
+      </KakaoLoader>
     </QueryClientProvider>
   );
 }
