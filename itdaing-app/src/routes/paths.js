@@ -31,6 +31,8 @@ export const ROUTES = {
     dashboard: '/seller/dashboard',
     profile: '/seller/profile',
     popups: '/seller/popups',
+    calendar: '/seller/calendar',
+    reviews: '/seller/reviews',
     popupCreate: '/seller/popups/create',
     popupEdit: (id) => `/seller/popups/${id}/edit`,
     notices: '/seller/notices',

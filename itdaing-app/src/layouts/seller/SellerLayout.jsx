@@ -7,14 +7,12 @@ import {
   LayoutDashboard,
   Store,
   MessageSquare,
-  Settings,
   ChevronDown,
   Plus,
   User2,
   Stars,
   Megaphone,
   CalendarClock,
-  Bot,
 } from 'lucide-react';
 import { ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/authStore';
@@ -63,16 +61,21 @@ const SellerLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const isSidebarExpanded = !isSidebarCollapsed || isSidebarOpen;
+
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+
   const displayName = user?.name || user?.nickname || user?.loginId || '판매자';
   const roleLabel = user?.role === 'SELLER' ? '판매자 계정' : '계정';
   const initials = displayName.charAt(0).toUpperCase();
+
+  /** 사이드바용 로그아웃 기능 */
   const handleLogout = () => {
     logout();
     navigate(ROUTES.home);
   };
 
+  /** 네비게이션 렌더링 */
   const renderNavItem = (item) => {
     const Icon = item.icon;
     const isDisabled = !!item.disabled;
@@ -128,8 +131,10 @@ const SellerLayout = () => {
     );
   };
 
+  /** 사이드바 */
   const Sidebar = (
     <aside className="flex h-full flex-col border-r border-white/5 bg-linear-to-b from-[#252529] via-[#1c1c1f] to-[#121214] text-white">
+      {/* 로고 */}
       <div className={clsx('flex items-center gap-3 px-4 pb-6 pt-8', !isSidebarExpanded && 'justify-center')}>
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff235b] text-base font-semibold text-white">
           DA
@@ -142,13 +147,19 @@ const SellerLayout = () => {
         )}
       </div>
 
-      <div className="flex-1 space-y-1 overflow-y-auto px-2">{NAV_ITEMS.map(renderNavItem)}</div>
+      {/* 메뉴 */}
+      <div className="flex-1 space-y-1 overflow-y-auto px-2">
+        {NAV_ITEMS.map(renderNavItem)}
+      </div>
 
+      {/* 하단 영역 (팝업등록 + 로그아웃) */}
       <div className="space-y-4 px-4 pb-6 pt-4">
+        {/* 팝업 등록 */}
         {isSidebarExpanded && (
           <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-black/30 backdrop-blur">
             <p className="text-sm font-semibold text-white">새 팝업 등록</p>
             <p className="mt-1 text-xs text-white/70">디자이너 큐레이션 기반 제안을 추가해보세요.</p>
+
             <NavLink
               to={ROUTES.seller.popupCreate}
               className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-semibold text-[#c4006b] shadow-sm transition hover:bg-white/90"
@@ -159,6 +170,8 @@ const SellerLayout = () => {
             </NavLink>
           </div>
         )}
+
+        {/* ⭐ 사이드바 로그아웃 버튼 유지 */}
         <button
           type="button"
           onClick={handleLogout}
@@ -175,7 +188,7 @@ const SellerLayout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-100 text-gray-900">
-      {/* Mobile Overlay */}
+      {/* 모바일 오버레이 */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
@@ -183,7 +196,7 @@ const SellerLayout = () => {
         />
       )}
 
-      {/* Sidebar */}
+      {/* 사이드바 */}
       <div
         className={clsx(
           'fixed inset-y-0 left-0 z-50 transform shadow-2xl transition-[transform,width] lg:static lg:translate-x-0',
@@ -191,61 +204,45 @@ const SellerLayout = () => {
           isSidebarExpanded ? 'w-72' : 'w-20',
           'bg-[#1c1c1f]'
         )}
-        onMouseEnter={() => {
-          if (!isSidebarOpen) {
-            setIsSidebarCollapsed(false);
-          }
-        }}
-        onMouseLeave={() => {
-          if (!isSidebarOpen) {
-            setIsSidebarCollapsed(true);
-          }
-        }}
+        onMouseEnter={() => !isSidebarOpen && setIsSidebarCollapsed(false)}
+        onMouseLeave={() => !isSidebarOpen && setIsSidebarCollapsed(true)}
       >
-        <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between px-6 pt-6 lg:hidden">
-            <span className="text-lg font-semibold text-white">메뉴</span>
-            <button
-              className="rounded-full border border-white/20 p-2 text-white transition hover:bg-white/10"
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          {Sidebar}
-        </div>
+        {Sidebar}
       </div>
 
-      {/* Main */}
+      {/* 메인 */}
       <div className="flex flex-1 flex-col overflow-hidden">
+        {/* 헤더 */}
         <header className="relative z-20 border-b border-white/60 bg-white/90 px-4 py-4 shadow-sm backdrop-blur md:px-8">
           <div className="flex items-center justify-between">
+            {/* 왼쪽 섹션 */}
             <div className="flex items-center gap-3">
+              {/* 사이드바 버튼 */}
               <button
                 className="rounded-2xl border border-gray-200 p-2 text-gray-700 transition hover:border-gray-300 lg:hidden"
                 onClick={() => setIsSidebarOpen(true)}
               >
                 <Menu className="h-5 w-5" />
               </button>
+
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-sm font-bold text-white lg:h-11 lg:w-11">
                   DA
                 </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Itdaing Seller</p>
-                  <p className="text-lg font-semibold text-gray-900">대시보드</p>
-                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {/* 챗봇 버튼 (헤더 통합용) */}
-              <div className="relative">
-                 <ChatbotButton mode="header" />
-              </div>
 
+            {/* 오른쪽 섹션 */}
+            <div className="flex items-center gap-2">
+              {/* 챗봇 버튼 */}
+              <ChatbotButton mode="header" />
+
+              {/* 메세지 버튼 */}
               <button className="rounded-2xl border border-gray-200 p-2 text-gray-600 transition hover:border-gray-300">
                 <MessageSquare className="h-5 w-5" />
               </button>
+
+              {/* 사용자 정보 */}
               <div className="flex items-center gap-2 rounded-2xl border border-gray-200 px-3 py-1.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary">
                   {initials}
@@ -256,17 +253,13 @@ const SellerLayout = () => {
                 </div>
                 <ChevronDown className="h-4 w-4 text-gray-400" />
               </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="rounded-2xl border border-gray-200 px-3 py-1.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
-              >
-                로그아웃
-              </button>
+
+              {/* ⭐ 헤더 로그아웃 버튼은 삭제됨 */}
             </div>
           </div>
         </header>
 
+        {/* 페이지 콘텐츠 */}
         <main className="flex-1 overflow-y-auto px-4 py-6 md:px-8 lg:px-10">
           <Outlet />
         </main>
@@ -276,4 +269,3 @@ const SellerLayout = () => {
 };
 
 export default SellerLayout;
-

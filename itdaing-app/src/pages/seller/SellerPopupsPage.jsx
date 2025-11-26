@@ -131,6 +131,8 @@ const SellerPopupsPage = () => {
     <div className="space-y-6">
       <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
         <div className="flex flex-wrap gap-4">
+          
+          {/* 검색 */}
           <div className="relative flex-1 min-w-[220px]">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
@@ -138,32 +140,42 @@ const SellerPopupsPage = () => {
               placeholder="팝업명 검색"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-10 py-2 text-sm focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-10 py-2 text-sm 
+              focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
+
+          {/* 운영 상태 */}
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded-2xl border border-gray-200 px-4 py-2 text-sm text-gray-700 focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="rounded-2xl border border-gray-200 border-r-2 border-r-gray-300 bg-white px-4 py-2 text-sm text-gray-700
+            focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
-            <option value="전체">전체 상태</option>
+            <option value="전체">운영 상태</option>
             <option value="진행 중">진행 중</option>
             <option value="오픈 예정">오픈 예정</option>
             <option value="종료">종료</option>
           </select>
+
+          {/* 승인 상태 */}
           <select
             value={approvalFilter}
             onChange={(event) => setApprovalFilter(event.target.value)}
-            className="rounded-2xl border border-gray-200 px-4 py-2 text-sm text-gray-700 focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="rounded-2xl border border-gray-200 border-r-2 border-r-gray-300 bg-white px-4 py-2 text-sm text-gray-700
+            focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
-            <option value="전체">전체 승인</option>
+            <option value="전체">승인 상태</option>
             <option value="완료">승인 완료</option>
             <option value="대기">승인 대기</option>
             <option value="반려">승인 반려</option>
           </select>
+
+          {/* 새 팝업 등록 버튼 */}
           <Link
             to={ROUTES.seller.popupCreate}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary/90"
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white 
+            shadow-lg shadow-primary/30 hover:bg-primary/90"
           >
             <PlusCircle className="h-4 w-4" />
             새 팝업 등록
@@ -172,30 +184,32 @@ const SellerPopupsPage = () => {
       </section>
 
       <section className="rounded-3xl border border-white/80 bg-white shadow-sm shadow-slate-200/60">
+        
+        {/* 상단 바 */}
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div className="text-sm text-gray-500">
-            총{' '}
-            <span className="font-semibold text-gray-900">
-              {filteredPopups.length.toLocaleString()}
-            </span>
-            개의 팝업
+            총 <span className="font-semibold text-gray-900">{filteredPopups.length.toLocaleString()}</span>개의 팝업
           </div>
           <Link to={ROUTES.seller.dashboard} className="text-xs font-semibold text-gray-500 hover:text-gray-900">
             대시보드
           </Link>
         </div>
 
+        {/* 리스트 */}
         <div className="divide-y divide-gray-100">
           {filteredPopups.length > 0 ? (
             filteredPopups.map((popup) => (
               <div key={popup.id} className="p-6 transition hover:bg-slate-50/60">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  
+                  {/* 왼쪽 정보 */}
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-lg font-semibold text-gray-900">{popup.title}</h3>
                       {getStatusBadge(popup.status)}
                       {getApprovalBadge(popup.approvalStatus)}
                     </div>
+
                     <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-gray-500">
                       <span className="inline-flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-gray-400" />
@@ -207,12 +221,12 @@ const SellerPopupsPage = () => {
                       </span>
                     </div>
 
-                    {popup.approvalStatus === '반려' && popup.rejectionReason ? (
+                    {popup.approvalStatus === '반려' && popup.rejectionReason && (
                       <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50/70 p-3 text-sm text-rose-700">
                         <strong className="mr-1">반려 사유</strong>
                         {popup.rejectionReason}
                       </div>
-                    ) : null}
+                    )}
 
                     <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-600">
                       <span className="inline-flex items-center gap-1">
@@ -230,6 +244,8 @@ const SellerPopupsPage = () => {
                       )}
                     </div>
                   </div>
+
+                  {/* 오른쪽 버튼 */}
                   <div className="flex items-center gap-2">
                     <button className="rounded-2xl border border-blue-100 p-2 text-blue-600 transition hover:bg-blue-50">
                       <Edit className="h-5 w-5" />
@@ -242,7 +258,9 @@ const SellerPopupsPage = () => {
               </div>
             ))
           ) : (
-            <div className="p-12 text-center text-sm text-gray-500">검색 조건에 맞는 팝업이 없습니다.</div>
+            <div className="p-12 text-center text-sm text-gray-500">
+              검색 조건에 맞는 팝업이 없습니다.
+            </div>
           )}
         </div>
       </section>
@@ -251,4 +269,3 @@ const SellerPopupsPage = () => {
 };
 
 export default SellerPopupsPage;
-

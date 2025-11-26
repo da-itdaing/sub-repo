@@ -24,6 +24,8 @@ import SellerPopupsPage from '@/pages/seller/SellerPopupsPage';
 import SellerProfilePage from '@/pages/seller/SellerProfilePage';
 import SellerPopupCreatePage from '@/pages/seller/SellerPopupCreatePage';
 import SellerNoticesPage from '@/pages/seller/SellerNoticesPage';
+import SellerReviewsPage from '@/pages/seller/SellerReviewsPage';
+import SellerCalendarPage from '@/pages/seller/SellerCalendarPage';
 import SellerLayout from '@/layouts/seller/SellerLayout';
 
 // Admin
@@ -39,6 +41,8 @@ const SELLER_ROUTE_SEGMENTS = {
   popups: 'popups',
   profile: 'profile',
   popupCreate: 'popups/create',
+  calendar: 'calendar',
+  reviews: 'reviews',
   notices: 'notices',
 };
 
@@ -141,6 +145,14 @@ const router = createBrowserRouter([
       {
         path: SELLER_ROUTE_SEGMENTS.popups,
         element: <SellerPopupsPage />,
+      },
+      {
+        path: SELLER_ROUTE_SEGMENTS.calendar,
+        element: <SellerCalendarPage />,
+      },
+      {
+        path: SELLER_ROUTE_SEGMENTS.reviews,
+        element: <SellerReviewsPage />,
       },
       {
         path: SELLER_ROUTE_SEGMENTS.profile,
