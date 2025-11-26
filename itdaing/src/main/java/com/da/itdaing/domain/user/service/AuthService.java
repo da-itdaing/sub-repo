@@ -66,14 +66,41 @@ public class AuthService {
      */
     @Transactional
     public AuthDto.SignupResponse signupConsumer(AuthDto.SignupConsumerRequest request) {
-        // 이메일 중복 체크
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new AuthException(ErrorCode.DUPLICATE_EMAIL);
-        }
+        // 🔎 1. 들어온 값 로깅
+        log.info("[SIGNUP_DEBUG] signupConsumer called: email={}, loginId={}",
+            request.getEmail(), request.getLoginId());
 
-        // 아이디 중복 체크
-        if (userRepository.existsByLoginId(request.getLoginId())) {
-            throw new AuthException(ErrorCode.DUPLICATE_LOGIN_ID);
+        // 🔎 2. existsByEmail / existsByLoginId 결과 먼저 변수로 받기
+        boolean emailExists = userRepository.existsByEmail(request.getEmail());
+        boolean loginIdExists = userRepository.existsByLoginId(request.getLoginId());
+
+        log.info("[SIGNUP_DEBUG] existsByEmail={}, existsByLoginId={}",
+            emailExists, loginIdExists);
+
+        // 🔎 3. 중복이라 판단될 때, 실제로 어떤 유저들이 있는지 덤프
+        if (emailExists || loginIdExists) {
+            userRepository.findAll().stream()
+                .filter(u ->
+                    (request.getEmail() != null && u.getEmail() != null &&
+                        u.getEmail().equalsIgnoreCase(request.getEmail())) ||
+                        (request.getLoginId() != null && u.getLoginId() != null &&
+                            u.getLoginId().equals(request.getLoginId()))
+                )
+                .forEach(u -> log.info(
+                    "[SIGNUP_DEBUG] matched user row: id={}, email={}, loginId={}, status={}",
+                    u.getId(), u.getEmail(), u.getLoginId(), u.getStatus()
+                ));
+
+            // 원래 로직 그대로 유지
+            if (emailExists) {
+                log.warn("[SIGNUP_DEBUG] DUPLICATE_EMAIL detected for email={}", request.getEmail());
+                throw new AuthException(ErrorCode.DUPLICATE_EMAIL);
+            }
+
+            if (loginIdExists) {
+                log.warn("[SIGNUP_DEBUG] DUPLICATE_LOGIN_ID detected for loginId={}", request.getLoginId());
+                throw new AuthException(ErrorCode.DUPLICATE_LOGIN_ID);
+            }
         }
 
         // 선호 ID 리스트 중복 제거 및 검증
@@ -103,7 +130,7 @@ public class AuthService {
             throw new EntityNotFoundException(ErrorCode.ENTITY_NOT_FOUND, "존재하지 않는 지역이 포함되어 있습니다");
         }
 
-        List<Feature> features = featureRepository.findAllById(featureIds); // ← 추가
+        List<Feature> features = featureRepository.findAllById(featureIds);
         if (features.size() != featureIds.size()) {
             throw new EntityNotFoundException(ErrorCode.ENTITY_NOT_FOUND, "존재하지 않는 편의사항이 포함되어 있습니다");
         }
@@ -117,27 +144,27 @@ public class AuthService {
 
         // 선호 정보 벌크 저장
         List<UserPrefCategory> userPrefCategories = categories.stream()
-                .map(category -> UserPrefCategory.builder()
-                        .user(user)
-                        .category(category)
-                        .build())
-                .toList();
+            .map(category -> UserPrefCategory.builder()
+                .user(user)
+                .category(category)
+                .build())
+            .toList();
         userPrefCategoryRepository.saveAll(userPrefCategories);
 
         List<UserPrefStyle> userPrefStyles = styles.stream()
-                .map(style -> UserPrefStyle.builder()
-                        .user(user)
-                        .style(style)
-                        .build())
-                .toList();
+            .map(style -> UserPrefStyle.builder()
+                .user(user)
+                .style(style)
+                .build())
+            .toList();
         userPrefStyleRepository.saveAll(userPrefStyles);
 
         List<UserPrefRegion> userPrefRegions = regions.stream()
-                .map(region -> UserPrefRegion.builder()
-                        .user(user)
-                        .region(region)
-                        .build())
-                .toList();
+            .map(region -> UserPrefRegion.builder()
+                .user(user)
+                .region(region)
+                .build())
+            .toList();
         userPrefRegionRepository.saveAll(userPrefRegions);
 
         List<UserPrefFeature> userPrefFeatures = features.stream()
@@ -149,13 +176,13 @@ public class AuthService {
         userPrefFeatureRepository.saveAll(userPrefFeatures);
 
         log.info("Consumer signed up with preferences: userId={}, email={}, categories={}, styles={}, regions={}, features={}",
-                user.getId(), user.getEmail(), categoryIds.size(), styleIds.size(), regionIds.size(), features.size());
+            user.getId(), user.getEmail(), categoryIds.size(), styleIds.size(), regionIds.size(), features.size());
 
         return AuthDto.SignupResponse.builder()
-                .userId(user.getId())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .build();
+            .userId(user.getId())
+            .email(user.getEmail())
+            .role(user.getRole())
+            .build();
     }
 
     /**
