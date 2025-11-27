@@ -42,4 +42,6 @@ public interface PopupRepository extends JpaRepository<Popup, Long> {
     Page<Popup> findByApprovalStatus(ApprovalStatus status, Pageable pageable);
 
     List<Popup> findTop8ByApprovalStatusOrderByViewCountDesc(ApprovalStatus status);
+
+    List<Popup> findAllBySeller_Id(Long sellerId);
 }

@@ -1,8 +1,11 @@
 package com.da.itdaing.domain.metric.service;
 
+import com.da.itdaing.domain.metric.dto.TopPopupViewsResponse;
 import com.da.itdaing.domain.metric.dto.ViewEventRequest;
 import com.da.itdaing.domain.metric.dto.ViewsTimeseriesResponse;
 import com.da.itdaing.domain.metric.dto.ViewsTimeseriesResponse.Point;
+import com.da.itdaing.domain.metric.dto.TopPopupViewsResponse;
+import com.da.itdaing.domain.metric.dto.TopPopupViewsResponse.Item;
 import com.da.itdaing.domain.metric.entity.EventLog;
 import com.da.itdaing.domain.metric.entity.MetricDailyPopup;
 import com.da.itdaing.domain.metric.repository.EventLogRepository;
@@ -21,7 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.Principal;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +42,63 @@ public class MetricService {
     private final StringRedisTemplate redis;
     private static final DateTimeFormatter DAY = DateTimeFormatter.BASIC_ISO_DATE; // yyyyMMdd
     private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
+
+    @Transactional(readOnly = true)
+    public TopPopupViewsResponse getTopViewsForSeller(Long sellerId, int limit) {
+        // limit 방어
+        int topN = (limit <= 0) ? 5 : limit;
+
+        // 1) 이 판매자가 가진 팝업 전부 조회
+        List<Popup> popups = popupRepository.findAllBySeller_Id(sellerId);
+        if (popups.isEmpty()) {
+            LocalDate today = LocalDate.now(ZONE);
+            return new TopPopupViewsResponse(today, List.of(), List.of());
+        }
+
+        LocalDate today = LocalDate.now(ZONE);
+
+        // 2) 오늘 날짜 기준 metric_daily_popup에서 오늘 views 가져오기
+        List<Long> popupIds = popups.stream()
+            .map(Popup::getId)
+            .toList();
+
+        var todayRows = metricDailyPopupRepository
+            .findAllByPopup_IdInAndDate(popupIds, today);
+
+        Map<Long, Long> todayViewsByPopupId = todayRows.stream()
+            .collect(Collectors.toMap(
+                r -> r.getPopup().getId(),
+                r -> r.getViews().longValue()  // ★ 여기서 Long으로 변환
+            ));
+
+        // 3) 공통 Item 리스트 생성 (각 팝업별 totalViews / todayViews 매핑)
+        List<TopPopupViewsResponse.Item> items = popups.stream()
+            .map(p -> {
+                long totalViews = p.getViewCount() != null ? p.getViewCount() : 0L;
+                long todayViews = todayViewsByPopupId.getOrDefault(p.getId(), 0L);
+                return new Item(
+                    p.getId(),
+                    p.getName(),
+                    totalViews,
+                    todayViews
+                );
+            })
+            .toList();
+
+        // 4) 전체 누적 조회수 TOP N
+        List<Item> topByTotal = items.stream()
+            .sorted(Comparator.comparingLong(Item::totalViews).reversed())
+            .limit(topN)
+            .toList();
+
+        // 5) 오늘 조회수 TOP N
+        List<Item> topByToday = items.stream()
+            .sorted(Comparator.comparingLong(Item::todayViews).reversed())
+            .limit(topN)
+            .toList();
+
+        return new TopPopupViewsResponse(today, topByTotal, topByToday);
+    }
 
     @Transactional
     public void recordView(ViewEventRequest req, Principal principal) {

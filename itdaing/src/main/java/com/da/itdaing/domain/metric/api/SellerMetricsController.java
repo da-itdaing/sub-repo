@@ -1,6 +1,7 @@
 // SellerMetricsController.java
 package com.da.itdaing.domain.metric.api;
 
+import com.da.itdaing.domain.metric.dto.TopPopupViewsResponse;
 import com.da.itdaing.domain.metric.dto.ViewsTimeseriesResponse;
 import com.da.itdaing.domain.metric.service.MetricService;
 import com.da.itdaing.global.web.ApiResponse;
@@ -30,6 +31,17 @@ public class SellerMetricsController {
     ) {
         Long sellerId = Long.parseLong(principal.getName());
         var data = metricService.getViewsForSeller(popupId, granularity, from, to, sellerId);
+        return ApiResponse.ok(data);
+    }
+
+    @GetMapping("/views/top")
+    @PreAuthorize("hasRole('SELLER')")
+    public ApiResponse<TopPopupViewsResponse> getTopViews(
+        @RequestParam(defaultValue = "5") int limit,
+        Principal principal
+    ) {
+        Long sellerId = Long.parseLong(principal.getName());
+        var data = metricService.getTopViewsForSeller(sellerId, limit);
         return ApiResponse.ok(data);
     }
 }
