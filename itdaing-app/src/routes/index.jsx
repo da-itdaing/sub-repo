@@ -24,6 +24,8 @@ import SellerPopupsPage from '@/pages/seller/SellerPopupsPage';
 import SellerProfilePage from '@/pages/seller/SellerProfilePage';
 import SellerPopupCreatePage from '@/pages/seller/SellerPopupCreatePage';
 import SellerNoticesPage from '@/pages/seller/SellerNoticesPage';
+import SellerNoticeCreatePage from '@/pages/seller/SellerNoticeCreatePage';
+import SellerNoticeDetailPage from '@/pages/seller/SellerNoticeDetailPage';
 import SellerReviewsPage from '@/pages/seller/SellerReviewsPage';
 import SellerCalendarPage from '@/pages/seller/SellerCalendarPage';
 import SellerLayout from '@/layouts/seller/SellerLayout';
@@ -35,6 +37,7 @@ import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminUserProfilePage from '@/pages/admin/AdminUserProfilePage';
 import AdminZonesPage from '@/pages/admin/AdminZonesPage';
 import AdminZoneCreatePage from '@/pages/admin/AdminZoneCreatePage';
+import AdminApprovalsPage from '@/pages/admin/AdminApprovalsPage';
 
 const SELLER_ROUTE_SEGMENTS = {
   dashboard: 'dashboard',
@@ -44,6 +47,9 @@ const SELLER_ROUTE_SEGMENTS = {
   calendar: 'calendar',
   reviews: 'reviews',
   notices: 'notices',
+  noticeCreate: 'notices/create',
+  noticeDetail: 'notices/:id',
+  noticeEdit: 'notices/:id/edit',
 };
 
 const ADMIN_ROUTE_SEGMENTS = {
@@ -52,6 +58,7 @@ const ADMIN_ROUTE_SEGMENTS = {
   userDetail: 'users/:id',
   zones: 'zones',
   zoneCreate: 'zones/create',
+  approvals: 'approvals',
 };
 
 /**
@@ -166,6 +173,18 @@ const router = createBrowserRouter([
         path: SELLER_ROUTE_SEGMENTS.notices,
         element: <SellerNoticesPage />,
       },
+      {
+        path: SELLER_ROUTE_SEGMENTS.noticeCreate,
+        element: <SellerNoticeCreatePage />,
+      },
+      {
+        path: SELLER_ROUTE_SEGMENTS.noticeDetail,
+        element: <SellerNoticeDetailPage />,
+      },
+      {
+        path: SELLER_ROUTE_SEGMENTS.noticeEdit,
+        element: <SellerNoticeCreatePage />,
+      },
     ],
   },
   {
@@ -199,6 +218,10 @@ const router = createBrowserRouter([
       {
         path: ADMIN_ROUTE_SEGMENTS.zoneCreate,
         element: <AdminZoneCreatePage />,
+      },
+      {
+        path: ADMIN_ROUTE_SEGMENTS.approvals,
+        element: <AdminApprovalsPage />,
       },
     ],
   },

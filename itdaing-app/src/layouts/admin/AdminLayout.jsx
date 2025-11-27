@@ -33,7 +33,6 @@ const NAV_ITEMS = [
     description: '팝업 / 계정 검수',
     path: ROUTES.admin.approvals,
     icon: ShieldCheck,
-    disabled: true,
   },
   {
     label: '구역관리',
@@ -48,6 +47,8 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const { logout } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const isSidebarExpanded = !isSidebarCollapsed || sidebarOpen;
 
   const activeNav = useMemo(() => {
     const foundItem = NAV_ITEMS.find((item) => location.pathname.startsWith(item.path));
@@ -65,16 +66,23 @@ const AdminLayout = () => {
       return (
         <div
           key={item.label}
-          className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-gray-500/60"
+          className={clsx(
+            'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-gray-500/60',
+            isSidebarExpanded ? 'justify-start' : 'justify-center'
+          )}
         >
           <Icon className="h-5 w-5" />
-          <div className="flex-1">
-            <p className="font-semibold">{item.label}</p>
-            <p className="text-xs text-gray-500/60">{item.description}</p>
-          </div>
-          <span className="rounded-full bg-white/10 px-3 py-0.5 text-[10px] uppercase tracking-wide text-white/70">
-            Soon
-          </span>
+          {isSidebarExpanded && (
+            <>
+              <div className="flex-1">
+                <p className="font-semibold">{item.label}</p>
+                <p className="text-xs text-gray-500/60">{item.description}</p>
+              </div>
+              <span className="rounded-full bg-white/10 px-3 py-0.5 text-[10px] uppercase tracking-wide text-white/70">
+                Soon
+              </span>
+            </>
+          )}
         </div>
       );
     }
@@ -86,6 +94,7 @@ const AdminLayout = () => {
         className={({ isActive }) =>
           clsx(
             'group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition-all',
+            isSidebarExpanded ? 'justify-start' : 'justify-center',
             isActive
               ? 'bg-white text-primary shadow-lg shadow-primary/5'
               : 'text-gray-300 hover:bg-white/70 hover:text-gray-900'
@@ -94,10 +103,12 @@ const AdminLayout = () => {
         onClick={() => setSidebarOpen(false)}
       >
         <Icon className="h-5 w-5" />
-        <div className="flex-1">
-          <p className="font-semibold">{item.label}</p>
-          <p className="text-xs text-gray-400">{item.description}</p>
-        </div>
+        {isSidebarExpanded && (
+          <div className="flex-1">
+            <p className="font-semibold">{item.label}</p>
+            <p className="text-xs text-gray-400">{item.description}</p>
+          </div>
+        )}
       </NavLink>
     );
   };
@@ -105,14 +116,21 @@ const AdminLayout = () => {
   const Sidebar = (
     <aside className="flex h-full flex-col border-r border-white/5 bg-linear-to-b from-[#252529] via-[#1c1c1f] to-[#121214] text-white">
       {/* 상단 브랜드 영역 - SellerLayout 스타일과 통일 */}
-      <div className="flex items-center gap-3 px-4 pb-6 pt-8">
+      <div
+        className={clsx(
+          'flex items-center gap-3 px-4 pb-6 pt-8',
+          !isSidebarExpanded && 'justify-center'
+        )}
+      >
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff235b] text-base font-semibold text-white">
           AD
         </div>
-        <div>
-          <p className="text-lg font-semibold tracking-tight text-white">Itdaing Admin</p>
-          <p className="text-xs text-white/60">Admin Control Center</p>
-        </div>
+        {isSidebarExpanded && (
+          <div>
+            <p className="text-lg font-semibold tracking-tight text-white">Itdaing Admin</p>
+            <p className="text-xs text-white/60">Admin Control Center</p>
+          </div>
+        )}
       </div>
 
       {/* 네비게이션 아이템 */}
@@ -153,10 +171,13 @@ const AdminLayout = () => {
       {/* 사이드바 - SellerLayout과 유사한 스타일 */}
       <div
         className={clsx(
-          'fixed inset-y-0 left-0 z-50 transform shadow-2xl transition-transform lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 transform shadow-2xl transition-[transform,width] lg:static lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
-          'w-72 bg-[#1c1c1f]'
+          isSidebarExpanded ? 'w-72' : 'w-20',
+          'bg-[#1c1c1f]'
         )}
+        onMouseEnter={() => !sidebarOpen && setIsSidebarCollapsed(false)}
+        onMouseLeave={() => !sidebarOpen && setIsSidebarCollapsed(true)}
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between px-6 pt-6 lg:hidden">

@@ -25,6 +25,11 @@ const SellerNoticeCreatePage = () => {
     { id: 3, title: '[중장년 남성] 집밥에 진심인 남자들 : 제철 남도밥상' },
   ];
 
+  const selectedPopupName =
+    passedNotice?.popupName ||
+    myPopups.find((popup) => String(popup.id) === String(formData.popupId))?.title ||
+    '';
+
   // 수정 모드일 때 초기 데이터 로드 (Mock)
   useEffect(() => {
     if (isEditMode) {
@@ -73,17 +78,28 @@ const SellerNoticeCreatePage = () => {
     }
     
     // TODO: API 연동
-    console.log(isEditMode ? 'Updating Notice:' : 'Creating Notice:', formData);
-    alert(isEditMode ? '공지사항이 수정되었습니다.' : '공지사항이 등록되었습니다.');
-    navigate(isEditMode ? ROUTES.seller.noticeDetail(id) : ROUTES.seller.notices);
+  console.log(isEditMode ? 'Updating Notice:' : 'Creating Notice:', formData);
+  alert(isEditMode ? '공지사항이 수정되었습니다.' : '공지사항이 등록되었습니다.');
+
+  // 중요 체크 여부를 리스트 테이블에 반영하기 위해 수정 모드일 경우 상태 전달
+  if (isEditMode) {
+    navigate(ROUTES.seller.notices, {
+      state: {
+        updatedNotice: {
+          id,
+          isImportant: formData.isImportant,
+        },
+      },
+    });
+  } else {
+    navigate(ROUTES.seller.notices);
+  }
   };
 
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border border-white/80 bg-white p-8 shadow-sm shadow-slate-200/60">
-        <h2 className="mb-8 text-xl font-bold text-[#EB0000]">
-          {isEditMode ? '공지사항 수정' : '공지사항 작성'}
-        </h2>
+        <h2 className="mb-8 text-xl font-bold text-[#EB0000]">공지사항</h2>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* 제목 & 중요 체크박스 */}
@@ -111,23 +127,29 @@ const SellerNoticeCreatePage = () => {
             </div>
           </div>
 
-          {/* 팝업명 선택 */}
+          {/* 팝업명 선택 / 표시 */}
           <div className="flex items-center gap-6 border-b border-gray-200 pb-6">
             <label className="w-16 text-sm font-bold text-gray-900">팝업명</label>
             <div className="flex-1">
-              <select
-                name="popupId"
-                value={formData.popupId}
-                onChange={handleChange}
-                className="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-[#EB0000] focus:outline-none focus:ring-1 focus:ring-[#EB0000]"
-              >
-                <option value="">팝업 선택</option>
-                {myPopups.map((popup) => (
-                  <option key={popup.id} value={popup.id}>
-                    {popup.title}
-                  </option>
-                ))}
-              </select>
+              {isEditMode ? (
+                <div className="inline-flex min-w-[260px] items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-800">
+                  {selectedPopupName || '선택된 팝업'}
+                </div>
+              ) : (
+                <select
+                  name="popupId"
+                  value={formData.popupId}
+                  onChange={handleChange}
+                  className="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-[#EB0000] focus:outline-none focus:ring-1 focus:ring-[#EB0000]"
+                >
+                  <option value="">팝업 선택</option>
+                  {myPopups.map((popup) => (
+                    <option key={popup.id} value={popup.id}>
+                      {popup.title}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 

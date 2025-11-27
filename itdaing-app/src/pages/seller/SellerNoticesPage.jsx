@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import { ROUTES } from '@/routes/paths';
 
 const SellerNoticesPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   // Mock Data
   const [notices, setNotices] = useState([
     {
@@ -97,6 +98,18 @@ const SellerNoticesPage = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // 수정 페이지에서 돌아올 때 중요 여부 업데이트 반영
+  useEffect(() => {
+    const updated = location.state?.updatedNotice;
+    if (!updated) return;
+
+    setNotices((prev) =>
+      prev.map((n) =>
+        n.id === updated.id ? { ...n, isImportant: updated.isImportant } : n
+      )
+    );
+  }, [location.state]);
 
   // Filter logic
   const filteredNotices = notices.filter((notice) =>

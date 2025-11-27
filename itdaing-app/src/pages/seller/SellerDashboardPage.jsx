@@ -75,7 +75,7 @@ const StatusCard = ({ title, stats }) => {
           return (
             <div key={i} className="flex flex-col items-center gap-2">
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-xs font-medium text-gray-500">{stat.label}</span>
+                <span className="text-sm font-semibold text-gray-500">{stat.label}</span>
                 <Icon className={clsx("w-4 h-4", stat.iconColor)} />
               </div>
               <span className="text-3xl font-bold text-gray-900">{stat.count}</span>
@@ -109,7 +109,7 @@ const ViewsChart = ({ popups }) => {
   }
 
   return (
-    <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm flex flex-col h-[320px]">
+    <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm flex flex-col h-[362px]">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-rose-600">조회수 TOP {topPopups.length}</h3>
         <span className="text-xs text-gray-400">최근 누적 조회수 기준</span>
@@ -122,17 +122,17 @@ const ViewsChart = ({ popups }) => {
 
           return (
             <div key={p.id} className="space-y-1">
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <span className="truncate max-w-[180px]" title={p.title}>
+              <div className="flex items-center justify-between text-sm text-gray-500">
+                <span className="truncate max-w-[180px] font-semibold" title={p.title}>
                   {p.title}
                 </span>
                 <span className="font-medium text-gray-700">
                   {numberFormatter.format(value)}회
                 </span>
               </div>
-              <div className="h-2.5 w-full rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-4.5 w-full rounded-full bg-gray-100 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-indigo-500 transition-[width] duration-500"
+                  className="h-full rounded-full bg-gradient-to-r from-[#EB0000] to-[#FF6B6B] transition-[width] duration-500"
                   style={{ width: `${width}%` }}
                 />
               </div>
@@ -251,9 +251,9 @@ const SellerDashboardPage = () => {
             <select 
               value={filterOpStatus}
               onChange={(e) => setFilterOpStatus(e.target.value)}
-              className="rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-rose-500"
+              className="rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-rose-500 "
             >
-              <option value="ALL">운영상태 전체</option>
+              <option value="ALL">운영상태</option>
               <option value="ONGOING">진행 중</option>
               <option value="UPCOMING">오픈 예정</option>
               <option value="UNKNOWN">-</option>
@@ -264,7 +264,7 @@ const SellerDashboardPage = () => {
               onChange={(e) => setFilterAppStatus(e.target.value)}
               className="rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-rose-500"
             >
-              <option value="ALL">승인상태 전체</option>
+              <option value="ALL">승인상태</option>
               <option value="APPROVED">완료</option>
               <option value="REJECTED">반려</option>
               <option value="PENDING">대기</option>
