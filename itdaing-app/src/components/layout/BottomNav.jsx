@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Home, MapPin, User } from 'lucide-react';
 import { ROUTES } from '@/routes/paths';
-import ChatbotButton from '@/components/common/ChatbotButton';
+import { ChatbotLauncherButton } from '@/chatbot';
 
 /**
  * BottomNav 컴포넌트
@@ -15,7 +15,7 @@ const BottomNav = () => {
   return (
     <>
       {/* 소비자용 플로팅 챗봇 버튼 */}
-      <ChatbotButton mode="floating" />
+      <ChatbotLauncherButton mode="floating" target="consumer" />
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 w-full bg-[#3d3d3d] pb-safe text-white">
         <div className="mx-auto w-full max-w-[540px] md:max-w-[1200px]">
@@ -57,4 +57,3 @@ const BottomNav = () => {
 };
 
 export default BottomNav;
-

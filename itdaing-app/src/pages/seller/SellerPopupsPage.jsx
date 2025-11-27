@@ -133,20 +133,22 @@ const SellerPopupsPage = () => {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h2 className="text-xl font-bold text-[#EB0000]">팝업 관리</h2>
 
-          <div className="flex w-full flex-wrap gap-4 md:justify-end">
-            {/* 검색 */}
-            <div className="relative flex-1 min-w-[180px]">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          {/* 검색창 - 공지사항 페이지와 동일한 스타일 */}
+          <div className="flex flex-1 max-w-xl mx-auto w-full relative">
+            <div className="relative w-full">
               <input
                 type="text"
                 placeholder="팝업명 검색"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-10 py-2 text-sm 
-                focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-full border border-gray-300 py-2 pl-4 pr-10 text-sm placeholder:text-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
               />
+              <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-primary" />
             </div>
+          </div>
 
+          {/* 오른쪽 필터 + 버튼 영역 */}
+          <div className="flex flex-wrap items-center gap-3 md:justify-end">
             {/* 운영 상태 */}
             <select
               value={statusFilter}

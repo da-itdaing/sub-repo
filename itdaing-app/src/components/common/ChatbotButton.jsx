@@ -1,7 +1,12 @@
 import { useCallback, useState } from 'react';
 import { MessageCircle, X, Bot } from 'lucide-react';
 
-const ChatbotButton = ({ mode = 'floating' }) => {
+/**
+ * 공통 챗봇 버튼 UI 컴포넌트
+ * - 기본 동작은 내부 상태(open)에 따라 미니 패널을 열고 닫는 것
+ * - onClickOverride prop이 전달되면, 패널 대신 해당 콜백을 우선 실행한다.
+ */
+const ChatbotButton = ({ mode = 'floating', onClickOverride }) => {
   const [open, setOpen] = useState(false);
 
   const toggleOpen = useCallback(() => {
@@ -14,18 +19,21 @@ const ChatbotButton = ({ mode = 'floating' }) => {
 
   // 1. 헤더 모드 (판매자 페이지 등)
   if (mode === 'header') {
+    const handleClick = onClickOverride ?? toggleOpen;
+
     return (
       <div className="relative">
         <button
           type="button"
-          onClick={toggleOpen}
+          onClick={handleClick}
           className="rounded-2xl border border-gray-200 p-2 text-gray-600 transition hover:border-gray-300 hover:text-primary"
           aria-label="챗봇 열기"
         >
           <Bot className="h-5 w-5" />
         </button>
 
-        {open && (
+        {/* onClickOverride가 있는 경우에는 내부 패널은 사용하지 않는다 */}
+        {onClickOverride ? null : open && (
           <div className="absolute right-0 top-full mt-2 w-80 z-50 bg-white rounded-2xl shadow-xl border border-gray-100 origin-top-right">
              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <div>
@@ -64,11 +72,14 @@ const ChatbotButton = ({ mode = 'floating' }) => {
   }
 
   // 2. 플로팅 모드 (소비자 메인 페이지 등)
+  const handleFloatingClick = onClickOverride ?? toggleOpen;
+
   return (
     <div className="fixed bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 w-full max-w-[540px] md:max-w-[1200px] px-5 md:px-8 pointer-events-none z-40">
       <div className="flex justify-end">
         <div className="relative pointer-events-auto">
-          {open && (
+          {/* onClickOverride가 있는 경우에는 내부 패널은 사용하지 않는다 */}
+          {onClickOverride ? null : open && (
             <div className="absolute bottom-16 right-0 w-72 max-w-[calc(100vw-2.5rem)] md:max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-100">
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                 <div>
@@ -105,7 +116,7 @@ const ChatbotButton = ({ mode = 'floating' }) => {
 
           <button
             type="button"
-            onClick={toggleOpen}
+            onClick={handleFloatingClick}
             className="w-12 h-12 md:w-14 md:h-14 bg-[#EB0000] text-white rounded-full shadow-lg hover:bg-[#d60000] transition-colors flex items-center justify-center"
             aria-label="챗봇 열기"
             aria-expanded={open}

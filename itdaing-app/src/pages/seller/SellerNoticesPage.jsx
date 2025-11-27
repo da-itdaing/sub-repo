@@ -206,9 +206,9 @@ const SellerNoticesPage = () => {
                   setSearchTerm(e.target.value);
                   setCurrentPage(1); // Reset to page 1 on search
                 }}
-                className="w-full rounded-full border border-[#EB0000] py-2 pl-4 pr-10 focus:outline-none focus:ring-1 focus:ring-[#EB0000]"
+                className="w-full rounded-full border border-gray-300 py-2 pl-4 pr-10 text-sm placeholder:text-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
               />
-              <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#EB0000]" />
+              <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-primary" />
             </div>
           </div>
 

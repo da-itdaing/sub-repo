@@ -111,29 +111,36 @@ const SellerReviewsPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* 상단 필터 & 셀렉트 */}
+      {/* 타이틀 & 팝업 선택 영역 (공지사항 페이지 형태와 유사하게 분리) */}
       <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold text-gray-900">리뷰 관리</h2>
-
-          <div className="flex items-center gap-3">
-            {/* <span className="text-sm font-medium text-gray-700">팝업 선택</span> */}
-            <select
-              value={selectedPopupId}
-              onChange={handleChangePopup}
-              className="min-w-[200px] rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              {MOCK_POPUPS.map((popup) => (
-                <option key={popup.id} value={popup.id}>
-                  {popup.title}
-                </option>
-              ))}
-            </select>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          {/* 타이틀 + 셀렉트 박스를 한 줄에 밀착 배치 */}
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-xl font-bold text-[#EB0000]">리뷰 관리</h2>
+            <div className="relative w-full max-w-xs">
+              <select
+                value={selectedPopupId}
+                onChange={handleChangePopup}
+                className="w-full appearance-none rounded-full border border-gray-300 py-2 pl-4 pr-10 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              >
+                {MOCK_POPUPS.map((popup) => (
+                  <option key={popup.id} value={popup.id}>
+                    {popup.title}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
+            </div>
           </div>
-        </div>
 
-        {/* 요약 카드 */}
-        <div className="mt-6 flex flex-col gap-4 md:flex-row">
+          {/* 우측 여백 확보용 (향후 필터 추가 시 사용 가능) */}
+          <div className="h-0 w-0 md:h-auto md:w-auto" />
+        </div>
+      </section>
+
+      {/* 리뷰 요약 지표 영역 (평균 평점 / 총 리뷰 수 / 별점 분포) */}
+      <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
+        <div className="flex flex-col gap-4 md:flex-row">
           {/* 평균 평점 카드 */}
           <div className="rounded-2xl border border-gray-200 bg-gray-50 px-6 py-4 text-center md:w-64">
             <p className="text-sm font-semibold text-gray-500">평균 평점</p>
@@ -151,24 +158,24 @@ const SellerReviewsPage = () => {
 
           {/* 별점 분포 카드 (가로로 더 넓게) */}
           <div className="rounded-2xl border border-gray-200 bg-gray-50 px-6 py-4 md:flex-1">
-            <p className="text-xs font-semibold text-gray-500 mb-2">별점 분포</p>
+            <p className="mb-2 text-xs font-semibold text-gray-500">별점 분포</p>
             <div className="space-y-1.5">
               {[5, 4, 3, 2, 1].map((rating) => {
                 const count = ratingCounts[rating];
                 const ratio = totalReviews ? (count / totalReviews) * 100 : 0;
                 return (
                   <div key={rating} className="flex items-center gap-2">
-                    <span className="w-10 text-xs text-gray-500 flex items-center gap-0.5">
+                    <span className="flex w-10 items-center gap-0.5 text-xs text-gray-500">
                       {rating}
                       <Star className="h-3 w-3 text-[#EB0000]" fill="#EB0000" />
                     </span>
-                    <div className="flex-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                    <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-gray-200">
                       <div
                         className="h-full rounded-full bg-[#EB0000] transition-all"
                         style={{ width: `${ratio}%` }}
                       />
                     </div>
-                    <span className="w-6 text-xs text-gray-500 text-right">{count}</span>
+                    <span className="w-6 text-right text-xs text-gray-500">{count}</span>
                   </div>
                 );
               })}
