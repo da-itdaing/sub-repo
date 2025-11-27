@@ -20,5 +20,8 @@ public interface MetricDailyPopupRepository extends JpaRepository<MetricDailyPop
              and m.date between :from and :to
            """)
     long sumViewsBetween(Long popupId, LocalDate from, LocalDate to);
+
+    List<MetricDailyPopup> findAllByPopup_IdInAndDate(List<Long> popupIds, LocalDate date);
+
 }
 
