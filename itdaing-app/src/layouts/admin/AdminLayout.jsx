@@ -10,7 +10,6 @@ import {
   X,
   Bell,
   ChevronDown,
-  LogOut,
 } from 'lucide-react';
 import { ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/authStore';
@@ -46,8 +45,10 @@ const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuthStore();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+
   const isSidebarExpanded = !isSidebarCollapsed || sidebarOpen;
 
   const activeNav = useMemo(() => {
@@ -97,7 +98,7 @@ const AdminLayout = () => {
             isSidebarExpanded ? 'justify-start' : 'justify-center',
             isActive
               ? 'bg-white text-primary shadow-lg shadow-primary/5'
-              : 'text-gray-300 hover:bg-white/70 hover:text-gray-900'
+              : 'text-white-300 hover:bg-white/70 hover:text-gray-900'
           )
         }
         onClick={() => setSidebarOpen(false)}
@@ -115,7 +116,7 @@ const AdminLayout = () => {
 
   const Sidebar = (
     <aside className="flex h-full flex-col border-r border-white/5 bg-linear-to-b from-[#252529] via-[#1c1c1f] to-[#121214] text-white">
-      {/* 상단 브랜드 영역 - SellerLayout 스타일과 통일 */}
+      {/* 상단 브랜드 영역 */}
       <div
         className={clsx(
           'flex items-center gap-3 px-4 pb-6 pt-8',
@@ -125,6 +126,7 @@ const AdminLayout = () => {
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff235b] text-base font-semibold text-white">
           AD
         </div>
+
         {isSidebarExpanded && (
           <div>
             <p className="text-lg font-semibold tracking-tight text-white">Itdaing Admin</p>
@@ -133,12 +135,12 @@ const AdminLayout = () => {
         )}
       </div>
 
-      {/* 네비게이션 아이템 */}
+      {/* 메뉴 */}
       <div className="flex-1 space-y-1 overflow-y-auto px-2">
         {NAV_ITEMS.map(renderNavItem)}
       </div>
 
-      {/* 하단 로그아웃 영역 - SellerLayout 스타일과 유사하게 */}
+      {/* 로그아웃 버튼 */}
       <div className="space-y-4 px-4 pb-6 pt-4 mt-auto">
         <button
           type="button"
@@ -146,10 +148,26 @@ const AdminLayout = () => {
             logout();
             navigate(ROUTES.home);
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+          className={clsx(
+            'flex w-full items-center justify-start rounded-2xl px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10',
+            !isSidebarExpanded && 'justify-center px-0'
+          )}
+          aria-label="로그아웃"
         >
-          <LogOut className="h-4 w-4" />
-          <span className="text-xs uppercase tracking-wide">로그아웃</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M15 3h-6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" />
+            <path d="M10 12h10" />
+            <path d="m17 9 3 3-3 3" />
+          </svg>
         </button>
 
         <div className="text-xs text-white/40">
@@ -168,7 +186,7 @@ const AdminLayout = () => {
         />
       )}
 
-      {/* 사이드바 - SellerLayout과 유사한 스타일 */}
+      {/* 사이드바 */}
       <div
         className={clsx(
           'fixed inset-y-0 left-0 z-50 transform shadow-2xl transition-[transform,width] lg:static lg:translate-x-0',
@@ -182,6 +200,7 @@ const AdminLayout = () => {
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between px-6 pt-6 lg:hidden">
             <span className="text-base font-semibold text-white">관리 메뉴</span>
+
             <button
               onClick={() => setSidebarOpen(false)}
               className="rounded-full border border-white/20 p-2 text-white transition hover:bg-white/10"
@@ -194,7 +213,7 @@ const AdminLayout = () => {
         </div>
       </div>
 
-      {/* 메인 영역 */}
+      {/* 메인 */}
       <div className="flex flex-1 flex-col">
         {/* 헤더 */}
         <header className="sticky top-0 z-20 border-b border-white/50 bg-white/90 backdrop-blur">
@@ -214,7 +233,7 @@ const AdminLayout = () => {
               </div>
             </div>
 
-            {/* 오른쪽 아이콘 + 프로필 */}
+            {/* 우측 */}
             <div className="flex items-center gap-3">
               <button className="rounded-2xl border border-gray-200 p-2 text-gray-600 transition hover:border-gray-300">
                 <Bell className="h-5 w-5" />
@@ -234,7 +253,7 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        {/* 페이지 컨텐츠 */}
+        {/* 콘텐츠 */}
         <main className="flex-1 overflow-y-auto px-4 py-6 md:px-8 lg:px-10">
           <Outlet />
         </main>

@@ -72,28 +72,48 @@ const SellerNoticeCreatePage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.popupId || !formData.content) {
-      alert('필수 항목을 모두 입력해주세요.');
-      return;
-    }
-    
-    // TODO: API 연동
-  console.log(isEditMode ? 'Updating Notice:' : 'Creating Notice:', formData);
-  alert(isEditMode ? '공지사항이 수정되었습니다.' : '공지사항이 등록되었습니다.');
-
-  // 중요 체크 여부를 리스트 테이블에 반영하기 위해 수정 모드일 경우 상태 전달
-  if (isEditMode) {
-    navigate(ROUTES.seller.notices, {
-      state: {
-        updatedNotice: {
-          id,
-          isImportant: formData.isImportant,
-        },
-      },
-    });
-  } else {
-    navigate(ROUTES.seller.notices);
+  // 신규 작성일 때만 필수 항목 체크, 수정 시에는 자유롭게 저장 가능
+  if (
+    !isEditMode &&
+    (!formData.title || !formData.popupId || !formData.content)
+  ) {
+    alert('필수 항목을 모두 입력해주세요.');
+    return;
   }
+
+    // TODO: API 연동
+    console.log(isEditMode ? 'Updating Notice:' : 'Creating Notice:', formData);
+    alert(isEditMode ? '공지사항이 수정되었습니다.' : '공지사항이 등록되었습니다.');
+
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+    if (isEditMode) {
+      // 중요 체크 여부를 리스트 테이블에 반영
+      navigate(ROUTES.seller.notices, {
+        state: {
+          updatedNotice: {
+            id,
+            isImportant: formData.isImportant,
+          },
+        },
+      });
+    } else {
+      // 신규 공지 등록 시 목록에 추가할 데이터 전달
+      const selectedPopup =
+        myPopups.find((popup) => String(popup.id) === String(formData.popupId)) ?? null;
+
+      navigate(ROUTES.seller.notices, {
+        state: {
+          createdNotice: {
+            id: `notice-${Date.now()}`,
+            isImportant: formData.isImportant,
+            popupName: selectedPopup?.title || '선택된 팝업',
+            title: formData.title,
+            date: today,
+          },
+        },
+      });
+    }
   };
 
   return (

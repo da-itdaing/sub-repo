@@ -86,7 +86,7 @@ const SellerLayout = () => {
             isSidebarExpanded ? 'justify-start' : 'justify-center',
             isActive
               ? 'bg-white text-primary shadow-lg shadow-primary/5'
-              : 'text-gray-500 hover:bg-white/70 hover:text-gray-900'
+              : 'text-white-500 hover:bg-white/70 hover:text-gray-900'
           )
         }
         title={isSidebarExpanded ? undefined : item.label}
@@ -96,7 +96,6 @@ const SellerLayout = () => {
         {isSidebarExpanded && (
           <div className="flex-1">
             <p className="font-semibold">{item.label}</p>
-            <p className="text-xs text-gray-400">{item.description}</p>
           </div>
         )}
       </NavLink>
@@ -116,12 +115,6 @@ const SellerLayout = () => {
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff235b] text-base font-semibold text-white">
           DA
         </div>
-        {isSidebarExpanded && (
-          <div>
-            <p className="text-lg font-semibold tracking-tight text-white">셀러 허브</p>
-            <p className="text-xs text-white/50">Seller Control Center</p>
-          </div>
-        )}
       </div>
 
       {/* 메뉴 */}
@@ -129,7 +122,7 @@ const SellerLayout = () => {
         {NAV_ITEMS.map(renderNavItem)}
       </div>
 
-      {/* 하단 버튼들 */}
+      {/* 하단 버튼 */}
       <div className="space-y-4 px-4 pb-6 pt-4">
         {isSidebarExpanded && (
           <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-black/30 backdrop-blur">
@@ -149,14 +142,29 @@ const SellerLayout = () => {
           </div>
         )}
 
+        {/* 🔥 SVG 왼쪽 고정된 로그아웃 버튼 */}
         <button
           onClick={handleLogout}
           className={clsx(
-            'flex w-full items-center justify-center gap-2 rounded-2xl border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10',
+            'flex w-full items-center justify-start rounded-2xl px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10',
             !isSidebarExpanded && 'justify-center px-0'
           )}
+          aria-label="로그아웃"
         >
-          <span className="text-xs uppercase tracking-wide">로그아웃</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M15 3h-6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" />
+            <path d="M10 12h10" />
+            <path d="m17 9 3 3-3 3" />
+          </svg>
         </button>
       </div>
     </aside>
@@ -225,7 +233,7 @@ const SellerLayout = () => {
           </div>
         </header>
 
-        {/* 콘텐츠 영역 */}
+        {/* 콘텐츠 */}
         <main className="flex-1 overflow-y-auto px-4 py-6 md:px-8 lg:px-10 min-h-0">
           <Outlet />
         </main>

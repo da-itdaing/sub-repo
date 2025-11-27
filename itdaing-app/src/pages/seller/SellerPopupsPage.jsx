@@ -130,56 +130,59 @@ const SellerPopupsPage = () => {
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
-        <div className="flex flex-wrap gap-4">
-          
-          {/* 검색 */}
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="팝업명 검색"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-10 py-2 text-sm 
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <h2 className="text-xl font-bold text-[#EB0000]">팝업 관리</h2>
+
+          <div className="flex w-full flex-wrap gap-4 md:justify-end">
+            {/* 검색 */}
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="팝업명 검색"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-10 py-2 text-sm 
+                focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            {/* 운영 상태 */}
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="rounded-2xl border border-gray-200 border-r-2 border-r-gray-300 bg-white px-4 py-2 text-sm text-gray-700
               focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
+            >
+              <option value="전체">운영 상태</option>
+              <option value="진행 중">진행 중</option>
+              <option value="오픈 예정">오픈 예정</option>
+              <option value="종료">종료</option>
+            </select>
+
+            {/* 승인 상태 */}
+            <select
+              value={approvalFilter}
+              onChange={(event) => setApprovalFilter(event.target.value)}
+              className="rounded-2xl border border-gray-200 border-r-2 border-r-gray-300 bg-white px-4 py-2 text-sm text-gray-700
+              focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="전체">승인 상태</option>
+              <option value="완료">승인 완료</option>
+              <option value="대기">승인 대기</option>
+              <option value="반려">승인 반려</option>
+            </select>
+
+            {/* 새 팝업 등록 버튼 */}
+            <Link
+              to={ROUTES.seller.popupCreate}
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white 
+              shadow-lg shadow-primary/30 hover:bg-primary/90"
+            >
+              <PlusCircle className="h-4 w-4" />
+              새 팝업 등록
+            </Link>
           </div>
-
-          {/* 운영 상태 */}
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded-2xl border border-gray-200 border-r-2 border-r-gray-300 bg-white px-4 py-2 text-sm text-gray-700
-            focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="전체">운영 상태</option>
-            <option value="진행 중">진행 중</option>
-            <option value="오픈 예정">오픈 예정</option>
-            <option value="종료">종료</option>
-          </select>
-
-          {/* 승인 상태 */}
-          <select
-            value={approvalFilter}
-            onChange={(event) => setApprovalFilter(event.target.value)}
-            className="rounded-2xl border border-gray-200 border-r-2 border-r-gray-300 bg-white px-4 py-2 text-sm text-gray-700
-            focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="전체">승인 상태</option>
-            <option value="완료">승인 완료</option>
-            <option value="대기">승인 대기</option>
-            <option value="반려">승인 반려</option>
-          </select>
-
-          {/* 새 팝업 등록 버튼 */}
-          <Link
-            to={ROUTES.seller.popupCreate}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white 
-            shadow-lg shadow-primary/30 hover:bg-primary/90"
-          >
-            <PlusCircle className="h-4 w-4" />
-            새 팝업 등록
-          </Link>
         </div>
       </section>
 

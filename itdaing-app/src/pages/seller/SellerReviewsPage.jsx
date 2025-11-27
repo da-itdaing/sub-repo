@@ -117,7 +117,7 @@ const SellerReviewsPage = () => {
           <h2 className="text-lg font-semibold text-gray-900">리뷰 관리</h2>
 
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-700">팝업 선택</span>
+            {/* <span className="text-sm font-medium text-gray-700">팝업 선택</span> */}
             <select
               value={selectedPopupId}
               onChange={handleChangePopup}

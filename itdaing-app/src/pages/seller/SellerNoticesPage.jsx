@@ -99,17 +99,41 @@ const SellerNoticesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // 수정 페이지에서 돌아올 때 중요 여부 업데이트 반영
+  // 생성/수정 페이지에서 돌아올 때 중요 여부 및 신규 공지 반영
   useEffect(() => {
     const updated = location.state?.updatedNotice;
-    if (!updated) return;
+    const created = location.state?.createdNotice;
 
-    setNotices((prev) =>
-      prev.map((n) =>
-        n.id === updated.id ? { ...n, isImportant: updated.isImportant } : n
-      )
-    );
-  }, [location.state]);
+    if (!updated && !created) return;
+
+    setNotices((prev) => {
+      let next = [...prev];
+
+      // 중요 여부 수정 반영
+      if (updated) {
+        next = next.map((n) =>
+          n.id === updated.id ? { ...n, isImportant: updated.isImportant } : n
+        );
+      }
+
+      // 신규 공지 추가 (목록 상단에 추가)
+      if (created) {
+        const maxNo = next.reduce((max, n) => (typeof n.no === 'number' ? Math.max(max, n.no) : max), 0);
+        next = [
+          {
+            ...created,
+            no: maxNo + 1,
+          },
+          ...next,
+        ];
+      }
+
+      return next;
+    });
+
+    // state 초기화 (뒤로가기 등에서 중복 적용 방지)
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state, location.pathname, navigate]);
 
   // Filter logic
   const filteredNotices = notices.filter((notice) =>
@@ -191,7 +215,7 @@ const SellerNoticesPage = () => {
           <button
             type="button"
             onClick={() => navigate(ROUTES.seller.noticeCreate)}
-            className="inline-flex items-center gap-1 rounded-full bg-[#EB0000] px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-[#c90000]"
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary/90"
           >
             <Plus className="h-4 w-4" />
             공지 등록
@@ -215,7 +239,7 @@ const SellerNoticesPage = () => {
                   onChange={handleSelectAll}
                 />
               </th>
-              <th className="w-20 py-3 text-center text-sm font-medium">No.</th>
+              <th className="w-20 py-3 text-center text-sm font-medium"></th>
               <th className="w-1/4 py-3 text-center text-sm font-medium">팝업명</th>
               <th className="py-3 text-center text-sm font-medium">제목</th>
               <th className="w-32 py-3 pr-4 text-center text-sm font-medium">게시 일자</th>
@@ -242,7 +266,9 @@ const SellerNoticesPage = () => {
                       중요
                     </span>
                   ) : (
-                    <span className="text-sm text-gray-900 font-semibold">{notice.no}</span>
+                    <span className="inline-block rounded-full border border-emerald-500 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                      일반
+                    </span>
                   )}
                 </td>
                 <td className="py-4 text-center text-sm text-gray-600">
