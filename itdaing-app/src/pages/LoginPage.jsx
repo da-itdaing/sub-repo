@@ -85,7 +85,7 @@ const LoginPage = () => {
             <div
               className="absolute h-[38px] bg-white rounded-[30px] shadow-sm transition-all duration-300 ease-in-out"
               style={{
-                width: 'calc(50% - 3px)',
+                width: 'calc(50% - 8px)',
                 left: userType === 'consumer' ? '6px' : 'calc(50% + 3px)',
               }}
             />

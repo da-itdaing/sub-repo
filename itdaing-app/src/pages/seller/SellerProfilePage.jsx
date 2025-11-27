@@ -38,9 +38,9 @@ const SellerProfilePage = () => {
             <h2 className="text-2xl font-semibold text-gray-900">{formData.name || '판매자'}</h2>
             <p className="text-sm text-gray-500">{formData.email}</p>
           </div>
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+          {/* <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
             기본 정보
-          </span>
+          </span> */}
         </div>
       </section>
 
