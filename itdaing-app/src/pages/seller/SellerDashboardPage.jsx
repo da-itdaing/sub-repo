@@ -1,270 +1,378 @@
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { AlertTriangle, CalendarDays, Eye, Heart, MapPin, PlusCircle } from 'lucide-react';
+import { 
+  CheckCircle2, 
+  Clock, 
+  XCircle, 
+  FileText,
+  ChevronRight,
+  ChevronLeft,
+  Plus
+} from 'lucide-react';
 import { ROUTES } from '@/routes/paths';
 import { getSellerDashboard } from '@/services/sellerService';
 
+/* ----------------------- FORMATTERS ----------------------- */
+
 const numberFormatter = new Intl.NumberFormat('ko-KR');
+const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
 
-const STATUS_BADGE = {
-  APPROVED: {
-    label: '승인 완료',
-    className: 'bg-emerald-50 text-emerald-700',
-  },
-  PENDING: {
-    label: '승인 대기',
-    className: 'bg-amber-50 text-amber-700',
-  },
-  REJECTED: {
-    label: '반려됨',
-    className: 'bg-rose-50 text-rose-700',
-  },
-  DRAFT: {
-    label: '임시 저장',
-    className: 'bg-gray-100 text-gray-600',
-  },
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-';
+  return dateFormatter.format(new Date(dateStr))
+    .replace(/\./g, '-')
+    .replace(/\s/g, '')
+    .slice(0, -1);
 };
 
-const formatDateRange = (startDate, endDate) => {
-  if (!startDate && !endDate) {
-    return '일정 미정';
-  }
-
-  const formatter = new Intl.DateTimeFormat('ko', {
-    month: '2-digit',
-    day: '2-digit',
-  });
-
-  if (!startDate) {
-    return `${formatter.format(new Date(endDate))} 종료`;
-  }
-
-  if (!endDate) {
-    return `${formatter.format(new Date(startDate))} 시작`;
-  }
-
-  return `${formatter.format(new Date(startDate))} - ${formatter.format(new Date(endDate))}`;
+const formatPeriod = (start, end) => {
+  if (!start || !end) return '-';
+  return `${formatDate(start)} ~ ${formatDate(end)}`;
 };
+
+/* ----------------------- CONSTANTS ----------------------- */
+
+const APPROVAL_STATUS = {
+  APPROVED: { label: '완료', color: 'text-green-600', icon: CheckCircle2 },
+  PENDING: { label: '대기', color: 'text-amber-500', icon: Clock },
+  REJECTED: { label: '반려', color: 'text-rose-600', icon: XCircle },
+  DRAFT: { label: '대기', color: 'text-gray-400', icon: Clock },
+};
+
+const OPERATION_STATUS = {
+  ONGOING: { label: '진행 중', color: 'text-green-600', icon: CheckCircle2 },
+  UPCOMING: { label: '예정 중', color: 'text-amber-500', icon: Clock },
+  ENDED: { label: '종료', color: 'text-rose-600', icon: XCircle },
+  UNKNOWN: { label: '-', color: 'text-gray-400', icon: null },
+};
+
+const getOperationStatus = (start, end) => {
+  if (!start || !end) return 'UNKNOWN';
+  const now = new Date();
+  const s = new Date(start);
+  const e = new Date(end);
+
+  if (now < s) return 'UPCOMING';
+  if (now > e) return 'ENDED';
+  return 'ONGOING';
+};
+
+/* ----------------------- COMPONENTS ----------------------- */
+
+const StatusCard = ({ title, stats }) => {
+  return (
+    <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+      <h3 className="text-lg font-bold text-rose-600 mb-6">{title}</h3>
+      <div className="flex justify-between items-center px-2">
+        {stats.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <div key={i} className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-xs font-medium text-gray-500">{stat.label}</span>
+                <Icon className={clsx("w-4 h-4", stat.iconColor)} />
+              </div>
+              <span className="text-3xl font-bold text-gray-900">{stat.count}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const ViewsChart = ({ popups }) => {
+  // 조회수 기준 상위 N개만 사용
+  const topPopups = useMemo(() => {
+    return [...popups]
+      .sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0))
+      .slice(0, 5);
+  }, [popups]);
+
+  const maxView = topPopups.reduce(
+    (max, p) => Math.max(max, p.viewCount ?? 0),
+    0
+  );
+
+  if (!topPopups.length || maxView === 0) {
+    return (
+      <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm flex flex-col h-[320px] justify-center items-center text-sm text-gray-500">
+        조회수 데이터가 아직 없습니다.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm flex flex-col h-[320px]">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-rose-600">조회수 TOP {topPopups.length}</h3>
+        <span className="text-xs text-gray-400">최근 누적 조회수 기준</span>
+      </div>
+
+      <div className="flex-1 space-y-3 overflow-hidden">
+        {topPopups.map((p) => {
+          const value = p.viewCount ?? 0;
+          const width = maxView ? Math.max(8, (value / maxView) * 100) : 0;
+
+          return (
+            <div key={p.id} className="space-y-1">
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span className="truncate max-w-[180px]" title={p.title}>
+                  {p.title}
+                </span>
+                <span className="font-medium text-gray-700">
+                  {numberFormatter.format(value)}회
+                </span>
+              </div>
+              <div className="h-2.5 w-full rounded-full bg-gray-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-indigo-500 transition-[width] duration-500"
+                  style={{ width: `${width}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+/* ----------------------- PAGE ----------------------- */
 
 const SellerDashboardPage = () => {
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
+  const navigate = useNavigate();
+  const [filterOpStatus, setFilterOpStatus] = useState('ALL');
+  const [filterAppStatus, setFilterAppStatus] = useState('ALL');
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+
+  const { data, isLoading } = useQuery({
     queryKey: ['sellerDashboard'],
     queryFn: getSellerDashboard,
     staleTime: 5 * 60 * 1000,
   });
 
-  const profile = data?.profile;
-  const stats = data?.stats;
   const popups = data?.popups ?? [];
 
-  const popupStats = [
-    {
-      id: 'total',
-      title: '등록한 팝업',
-      value: numberFormatter.format(stats?.totalPopups ?? 0),
-      meta: `${numberFormatter.format(stats?.activePopups ?? 0)}건 운영 중`,
-      accent: 'bg-[#ffe5f3] text-[#c4006b]',
-    },
-    {
-      id: 'pending',
-      title: '승인 대기',
-      value: numberFormatter.format(stats?.pendingPopups ?? 0),
-      meta: '관리자 확인 중',
-      accent: 'bg-[#fff2da] text-[#a85500]',
-    },
-    {
-      id: 'rejected',
-      title: '반려됨',
-      value: numberFormatter.format(stats?.rejectedPopups ?? 0),
-      meta: '보완 필요',
-      accent: 'bg-[#ffe4e6] text-[#b42318]',
-    },
-    {
-      id: 'favorites',
-      title: '누적 찜',
-      value: numberFormatter.format(stats?.totalFavorites ?? 0),
-      meta: `${numberFormatter.format(stats?.totalViews ?? 0)}회 노출`,
-      accent: 'bg-[#ecf5ff] text-[#1d4ed8]',
-    },
-  ];
+  const stats = useMemo(() => {
+    return {
+      approval: {
+        approved: popups.filter(p => p.status === 'APPROVED').length,
+        pending: popups.filter(p => p.status === 'PENDING').length,
+        rejected: popups.filter(p => p.status === 'REJECTED').length,
+      },
+      operation: {
+        ongoing: popups.filter(p => getOperationStatus(p.startDate, p.endDate) === 'ONGOING').length,
+        upcoming: popups.filter(p => getOperationStatus(p.startDate, p.endDate) === 'UPCOMING').length,
+        ended: popups.filter(p => getOperationStatus(p.startDate, p.endDate) === 'ENDED').length,
+      },
+    };
+  }, [popups]);
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        {[...Array(3)].map((_, idx) => (
-          <div
-            key={idx}
-            className="h-40 animate-pulse rounded-3xl bg-gray-100"
-          />
-        ))}
-      </div>
-    );
-  }
+  const filteredPopups = useMemo(() => {
+    return popups.filter(p => {
+      const opKey = getOperationStatus(p.startDate, p.endDate);
+      const appStatus = p.status;
 
-  if (isError) {
-    return (
-      <div className="rounded-3xl border border-rose-100 bg-rose-50 p-6 text-sm text-rose-600">
-        <p className="font-semibold">대시보드 데이터를 불러오지 못했습니다.</p>
-        <p className="mt-1 text-rose-500">네트워크 상태를 확인한 뒤 다시 시도해 주세요.</p>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700"
-        >
-          다시 시도
-        </button>
-      </div>
-    );
-  }
+      const opMatch =
+        filterOpStatus === 'ALL' ||
+        (filterOpStatus === 'ONGOING' && opKey === 'ONGOING') ||
+        (filterOpStatus === 'UPCOMING' && opKey === 'UPCOMING') ||
+        (filterOpStatus === 'UNKNOWN' && opKey === 'UNKNOWN');
 
-  const topViewedPopups = [...popups]
-    .sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0))
-    .slice(0, 5);
+      const appMatch =
+        filterAppStatus === 'ALL' ||
+        (filterAppStatus === 'APPROVED' && appStatus === 'APPROVED') ||
+        (filterAppStatus === 'REJECTED' && appStatus === 'REJECTED') ||
+        (filterAppStatus === 'PENDING' && appStatus === 'PENDING');
+
+      return opMatch && appMatch;
+    });
+  }, [popups, filterOpStatus, filterAppStatus]);
+
+  const totalPages = Math.ceil(filteredPopups.length / ITEMS_PER_PAGE);
+  const paginatedPopups = filteredPopups.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
+
+  // Reset page on filter change
+  useMemo(() => setPage(1), [filterOpStatus, filterAppStatus]);
+
+  if (isLoading) return <div className="p-8 text-center">로딩 중...</div>;
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-3xl border border-white/70 bg-white p-6 shadow-sm shadow-slate-200/60">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">팝업 현황</p>
-            <p className="text-lg font-semibold text-gray-900">
-              {profile?.name ?? '판매자'}님의 플리마켓 활동 요약
-            </p>
+    <div className="space-y-6 pb-20">
+
+      {/* Top Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Status Cards */}
+        <div className="space-y-6 lg:col-span-5">
+          <StatusCard 
+            title="승인 현황"
+            stats={[
+              { label: '승인 완료', count: stats.approval.approved, icon: CheckCircle2, iconColor: 'text-green-500' },
+              { label: '승인 대기', count: stats.approval.pending, icon: Clock, iconColor: 'text-amber-500' },
+              { label: '승인 반려', count: stats.approval.rejected, icon: XCircle, iconColor: 'text-rose-500' },
+            ]}
+          />
+
+          <StatusCard 
+            title="팝업 현황"
+            stats={[
+              { label: '진행 중', count: stats.operation.ongoing, icon: CheckCircle2, iconColor: 'text-green-500' },
+              { label: '예정 중', count: stats.operation.upcoming, icon: Clock, iconColor: 'text-amber-500' },
+              { label: '종료', count: stats.operation.ended, icon: XCircle, iconColor: 'text-rose-500' },
+            ]}
+          />
+        </div>
+
+        {/* Views Chart */}
+        <div className="lg:col-span-7">
+          <ViewsChart popups={popups} />
+        </div>
+      </div>
+
+      {/* Bottom Section */}
+      <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+        
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+          <h3 className="text-lg font-bold text-rose-600">팝업 관리</h3>
+
+          <div className="flex items-center gap-3">
+            {/* Filters */}
+            <select 
+              value={filterOpStatus}
+              onChange={(e) => setFilterOpStatus(e.target.value)}
+              className="rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-rose-500"
+            >
+              <option value="ALL">운영상태 전체</option>
+              <option value="ONGOING">진행 중</option>
+              <option value="UPCOMING">오픈 예정</option>
+              <option value="UNKNOWN">-</option>
+            </select>
+
+            <select 
+              value={filterAppStatus}
+              onChange={(e) => setFilterAppStatus(e.target.value)}
+              className="rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-rose-500"
+            >
+              <option value="ALL">승인상태 전체</option>
+              <option value="APPROVED">완료</option>
+              <option value="REJECTED">반려</option>
+              <option value="PENDING">대기</option>
+            </select>
+
+            <button 
+              onClick={() => navigate(ROUTES.seller.popups)}
+              className="p-2 text-gray-400 hover:text-gray-600"
+              title="전체 보기"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[800px] border-collapse">
+            <thead>
+              <tr className="bg-[#333] text-white text-sm">
+                <th className="py-3 px-4 font-medium text-center rounded-tl-xl">팝업명</th>
+                <th className="py-3 px-4 font-medium text-center">운영 상태</th>
+                <th className="py-3 px-4 font-medium text-center">등록 일시</th>
+                <th className="py-3 px-4 font-medium text-center">운영 기간</th>
+                <th className="py-3 px-4 font-medium text-center">승인 상태</th>
+                <th className="py-3 px-4 font-medium text-center rounded-tr-xl">반려 사유</th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-gray-100 text-sm">
+              {paginatedPopups.length > 0 ? (
+                paginatedPopups.map(p => {
+                  const opKey = getOperationStatus(p.startDate, p.endDate);
+                  const opStatus = OPERATION_STATUS[opKey];
+                  const appStatus = APPROVAL_STATUS[p.status] || APPROVAL_STATUS.DRAFT;
+
+                  return (
+                    <tr key={p.id} className="hover:bg-gray-50">
+                      <td className="py-4 px-4 text-center font-medium text-gray-900 truncate max-w-[200px]">{p.title}</td>
+                      <td className="py-4 px-4 text-center">
+                        <span className={clsx(opStatus.color)}>{opStatus.label}</span>
+                      </td>
+                      <td className="py-4 px-4 text-center text-gray-500">
+                        {formatDate(p.createdAt)}
+                      </td>
+                      <td className="py-4 px-4 text-center text-gray-500">
+                        {formatPeriod(p.startDate, p.endDate)}
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <span className={clsx(appStatus.color)}>{appStatus.label}</span>
+                      </td>
+                      <td className="py-4 px-4 text-center flex justify-center">
+                        {p.status === 'REJECTED' ? (
+                          <FileText className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer" />
+                        ) : (
+                          <span className="text-gray-300">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-gray-500">
+                    데이터가 없습니다.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-6 flex items-center justify-between">
+          <div className="w-24" />
+
+          <div className="flex items-center gap-2">
+            <button 
+              disabled={page === 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <span className="text-sm font-medium text-gray-600">
+              {page} / {Math.max(1, totalPages)}
+            </span>
+
+            <button 
+              disabled={page === totalPages || totalPages === 0}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
           <Link
             to={ROUTES.seller.popupCreate}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary/90"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-[#d60000] transition-colors shadow-md shadow-red-100"
           >
-            <PlusCircle className="h-4 w-4" />
-            새 팝업 등록
+            <Plus className="w-4 h-4" />
+            팝업 등록
           </Link>
         </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {popupStats.map((card) => (
-            <div key={card.id} className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{card.title}</p>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{card.value}</p>
-              <p className="mt-1 text-xs text-gray-500">{card.meta}</p>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-3xl border border-white/70 bg-white p-6 shadow-sm shadow-slate-200/60">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">승인 현황</p>
-          <p className="text-lg font-semibold text-gray-900">관리자 검토 리스트</p>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl bg-amber-50/70 p-4 text-amber-900">
-              <p className="text-sm font-semibold">승인 대기</p>
-              <p className="mt-2 text-2xl font-bold">{numberFormatter.format(stats?.pendingPopups ?? 0)}</p>
-              <p className="mt-1 text-xs text-amber-800/70">심사 중인 플리마켓 부스</p>
-            </div>
-            <div className="rounded-2xl bg-rose-50/70 p-4 text-rose-900">
-              <p className="text-sm font-semibold">반려됨</p>
-              <p className="mt-2 text-2xl font-bold">{numberFormatter.format(stats?.rejectedPopups ?? 0)}</p>
-              <p className="mt-1 text-xs text-rose-800/70">보완이 필요한 항목</p>
-            </div>
-          </div>
-          <div className="mt-6 rounded-2xl border border-dashed border-gray-200 p-4 text-sm text-gray-500">
-            승인 과정에서 문의가 오면 운영팀 메시지함으로 안내드릴게요.
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-white/70 bg-white p-6 shadow-sm shadow-slate-200/60">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">조회수</p>
-          <p className="text-lg font-semibold text-gray-900">상위 노출 부스</p>
-          <div className="mt-4 space-y-3">
-            {topViewedPopups.length > 0 ? (
-              topViewedPopups.map((popup, index) => (
-                <div
-                  key={popup.id}
-                  className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50/60 px-4 py-3 text-sm text-gray-600"
-                >
-                  <div>
-                    <p className="font-semibold text-gray-900">
-                      {index + 1}. {popup.title}
-                    </p>
-                    <p className="text-xs text-gray-500">{formatDateRange(popup.startDate, popup.endDate)}</p>
-                  </div>
-                  <div className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-700">
-                    <Eye className="h-3.5 w-3.5" />
-                    {numberFormatter.format(popup.viewCount ?? 0)}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500">
-                아직 조회수 데이터가 없습니다.
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-3xl border border-white/70 bg-white p-6 shadow-sm shadow-slate-200/60">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">팝업 관리</p>
-            <p className="text-lg font-semibold text-gray-900">운영 리스트</p>
-          </div>
-          <Link to={ROUTES.seller.popups} className="text-xs font-semibold text-primary">
-            전체 보기
-          </Link>
-        </div>
-        <div className="mt-4 divide-y divide-gray-100">
-          {popups.length > 0 ? (
-            popups.slice(0, 6).map((popup) => {
-              const badge = STATUS_BADGE[popup.status] ?? STATUS_BADGE.DRAFT;
-              return (
-                <div key={popup.id} className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="text-base font-semibold text-gray-900">{popup.title}</p>
-                    <div className="mt-1 flex flex-wrap gap-3 text-sm text-gray-500">
-                      <span className="inline-flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4 text-gray-400" />
-                        {formatDateRange(popup.startDate, popup.endDate)}
-                      </span>
-                      {popup.cellName ? (
-                        <span className="inline-flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-gray-400" />
-                          {popup.cellName}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-gray-600">
-                    <span className={clsx('inline-flex rounded-full px-3 py-1', badge.className)}>{badge.label}</span>
-                    {popup.viewCount ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1">
-                        <Eye className="h-3.5 w-3.5" />
-                        {numberFormatter.format(popup.viewCount)}
-                      </span>
-                    ) : null}
-                    {popup.favoriteCount ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1">
-                        <Heart className="h-3.5 w-3.5" />
-                        {numberFormatter.format(popup.favoriteCount)}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="rounded-2xl border border-dashed border-gray-200 p-8 text-center text-sm text-gray-500">
-              등록된 팝업이 없습니다. 새 팝업을 등록해보세요.
-            </div>
-          )}
-        </div>
-      </section>
+      </div>
     </div>
   );
 };
