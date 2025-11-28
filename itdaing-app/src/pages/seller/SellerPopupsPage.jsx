@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
+import { useQuery } from '@tanstack/react-query';
+import { getMyPopups } from '@/services/sellerService';
 import {
   PlusCircle,
   Search,
@@ -8,30 +10,47 @@ import {
   ChevronRight,
   FileText,
   X,
-  CheckCircle2,
-  Clock,
-  XCircle,
 } from 'lucide-react';
 
 /* ----------------------- CONSTANTS & FORMATTERS ----------------------- */
 
 const APPROVAL_STATUS = {
-  '완료': { label: '완료', color: 'text-green-600' },
-  '대기': { label: '대기', color: 'text-amber-500' },
-  '반려': { label: '반려', color: 'text-rose-600' },
+  'APPROVED': { label: '완료', color: 'text-green-600' },
+  'PENDING': { label: '대기', color: 'text-amber-500' },
+  'REJECTED': { label: '반려', color: 'text-rose-600' },
 };
 
 const OPERATION_STATUS = {
-  '진행 중': { label: '진행 중', color: 'text-green-600' },
-  '오픈 예정': { label: '오픈 예정', color: 'text-amber-500' },
-  '종료': { label: '종료', color: 'text-rose-600' },
-  '-': { label: '-', color: 'text-gray-400' },
+  'ONGOING': { label: '진행 중', color: 'text-green-600' },
+  'UPCOMING': { label: '오픈 예정', color: 'text-amber-500' },
+  'ENDED': { label: '종료', color: 'text-rose-600' },
+  'UNKNOWN': { label: '-', color: 'text-gray-400' },
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getOperationStatus = (start, end) => {
+  if (!start || !end) return 'UNKNOWN';
+  const now = new Date();
+  const s = new Date(start);
+  const e = new Date(end);
+
+  if (now < s) return 'UPCOMING';
+  if (now > e) return 'ENDED';
+  return 'ONGOING';
 };
 
 const SellerPopupsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('전체');
-  const [approvalFilter, setApprovalFilter] = useState('전체');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [approvalFilter, setApprovalFilter] = useState('ALL');
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -40,88 +59,36 @@ const SellerPopupsPage = () => {
   // Modal state
   const [selectedRejection, setSelectedRejection] = useState(null);
 
-  // Mock Data
-  const popups = [
-    {
-      id: 1,
-      title: '여울원 팝업 IN 광주',
-      image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop',
-      status: '진행 중',
-      approvalStatus: '완료',
-      registeredAt: '2025-10-25',
-      startDate: '2025-10-31',
-      endDate: '2025-11-13',
-      views: 133,
-      favorites: 28,
-      reviews: 5,
-      rating: 4.5,
-    },
-    {
-      id: 2,
-      title: '충장 라온 페스타',
-      image: 'https://images.unsplash.com/photo-1531058020387-3be344556be6?q=80&w=2070&auto=format&fit=crop',
-      status: '진행 중',
-      approvalStatus: '완료',
-      registeredAt: '2025-04-20',
-      startDate: '2025-04-26',
-      endDate: '2025-12-31',
-      views: 199,
-      favorites: 45,
-      reviews: 12,
-      rating: 4.8,
-    },
-    {
-      id: 3,
-      title: '[중장년 남성] 집밥에 진심인 남자들 : 제철 남도밥상',
-      image: 'https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=2070&auto=format&fit=crop',
-      status: '오픈 예정',
-      approvalStatus: '완료',
-      registeredAt: '2025-11-01',
-      startDate: '2025-11-05',
-      endDate: '2025-12-10',
-      views: 158,
-      favorites: 14,
-      reviews: 0,
-      rating: 0,
-    },
-    {
-      id: 4,
-      title: '광주 충장로 도깨비장터 플리마켓 셀러 모집(11월15일)',
-      image: 'https://images.unsplash.com/photo-1605218427360-3639685862c8?q=80&w=2070&auto=format&fit=crop',
-      status: '-',
-      approvalStatus: '반려',
-      registeredAt: '2025-11-11',
-      startDate: '2025-11-15',
-      endDate: '2025-11-15',
-      views: 0,
-      favorites: 0,
-      reviews: 0,
-      rating: 0,
-      rejectionReason: '제출하신 사업자 등록증이 만료되었습니다. 유효기간을 확인 후 다시 제출해주세요.',
-    },
-    {
-      id: 5,
-      title: 'ACC 공동기획 〈셋!〉',
-      image: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070&auto=format&fit=crop',
-      status: '-',
-      approvalStatus: '대기',
-      registeredAt: '2025-12-01',
-      startDate: '2025-12-06',
-      endDate: '2025-12-07',
-      views: 0,
-      favorites: 0,
-      reviews: 0,
-      rating: 0,
-    },
-  ];
+  // Fetch Data
+  const { data: popups = [], isLoading, error } = useQuery({
+    queryKey: ['myPopups'],
+    queryFn: getMyPopups,
+    staleTime: 1000 * 60, // 1분
+  });
 
   // Filtering
-  const filteredPopups = popups.filter((popup) => {
-    const matchesSearch = popup.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === '전체' || popup.status === statusFilter;
-    const matchesApproval = approvalFilter === '전체' || popup.approvalStatus === approvalFilter;
-    return matchesSearch && matchesStatus && matchesApproval;
-  });
+  const filteredPopups = useMemo(() => {
+    return popups.filter((popup) => {
+      const opKey = getOperationStatus(popup.startDate, popup.endDate);
+      const appStatus = popup.status || 'PENDING';
+
+      const matchesSearch = popup.title.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = 
+        statusFilter === 'ALL' || 
+        (statusFilter === 'ONGOING' && opKey === 'ONGOING') ||
+        (statusFilter === 'UPCOMING' && opKey === 'UPCOMING') ||
+        (statusFilter === 'ENDED' && opKey === 'ENDED');
+
+      const matchesApproval = 
+        approvalFilter === 'ALL' || 
+        (approvalFilter === 'APPROVED' && appStatus === 'APPROVED') ||
+        (approvalFilter === 'PENDING' && appStatus === 'PENDING') ||
+        (approvalFilter === 'REJECTED' && appStatus === 'REJECTED');
+
+      return matchesSearch && matchesStatus && matchesApproval;
+    });
+  }, [popups, searchTerm, statusFilter, approvalFilter]);
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredPopups.length / itemsPerPage);
@@ -133,6 +100,14 @@ const SellerPopupsPage = () => {
       setCurrentPage(newPage);
     }
   };
+
+  if (isLoading) {
+    return <div className="p-12 text-center text-gray-500">데이터를 불러오는 중...</div>;
+  }
+
+  if (error) {
+    return <div className="p-12 text-center text-red-500">데이터를 불러오는데 실패했습니다.</div>;
+  }
 
   return (
     <div className="space-y-6 relative">
@@ -190,10 +165,10 @@ const SellerPopupsPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 focus:border-[#EB0000]/40 focus:outline-none focus:ring-2 focus:ring-[#EB0000]/20"
             >
-              <option value="전체">운영 상태</option>
-              <option value="진행 중">진행 중</option>
-              <option value="오픈 예정">오픈 예정</option>
-              <option value="종료">종료</option>
+              <option value="ALL">운영 상태</option>
+              <option value="ONGOING">진행 중</option>
+              <option value="UPCOMING">오픈 예정</option>
+              <option value="ENDED">종료</option>
             </select>
 
             <select
@@ -201,10 +176,10 @@ const SellerPopupsPage = () => {
               onChange={(e) => setApprovalFilter(e.target.value)}
               className="rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 focus:border-[#EB0000]/40 focus:outline-none focus:ring-2 focus:ring-[#EB0000]/20"
             >
-              <option value="전체">승인 상태</option>
-              <option value="완료">승인 완료</option>
-              <option value="대기">승인 대기</option>
-              <option value="반려">승인 반려</option>
+              <option value="ALL">승인 상태</option>
+              <option value="APPROVED">승인 완료</option>
+              <option value="PENDING">승인 대기</option>
+              <option value="REJECTED">승인 반려</option>
             </select>
 
             <Link
@@ -236,17 +211,18 @@ const SellerPopupsPage = () => {
             <tbody className="divide-y divide-gray-100 text-sm">
               {currentItems.length > 0 ? (
                 currentItems.map((popup) => {
-                  const opStatus = OPERATION_STATUS[popup.status] || OPERATION_STATUS['-'];
-                  const appStatus = APPROVAL_STATUS[popup.approvalStatus] || APPROVAL_STATUS['대기'];
+                  const opKey = getOperationStatus(popup.startDate, popup.endDate);
+                  const opStatus = OPERATION_STATUS[opKey] || OPERATION_STATUS['UNKNOWN'];
+                  const appStatus = APPROVAL_STATUS[popup.status] || APPROVAL_STATUS['PENDING'];
                   
                   return (
                     <tr key={popup.id} className="hover:bg-gray-50 transition-colors">
                       {/* Image */}
                       <td className="py-4 px-4 text-center">
                         <div className="relative aspect-square w-14 mx-auto overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
-                          {popup.image ? (
+                          {popup.thumbnail ? (
                             <img 
-                              src={popup.image} 
+                              src={popup.thumbnail} 
                               alt={popup.title} 
                               className="h-full w-full object-cover" 
                             />
@@ -266,13 +242,13 @@ const SellerPopupsPage = () => {
                       {/* Status */}
                       <td className="py-4 px-4 text-center">
                         <span className={opStatus.color}>
-                          {popup.status}
+                          {opStatus.label}
                         </span>
                       </td>
 
                       {/* Registered Date */}
                       <td className="py-4 px-4 text-center text-gray-500">
-                        {popup.registeredAt}
+                        {formatDate(popup.createdAt)}
                       </td>
 
                       {/* Duration */}
@@ -283,13 +259,13 @@ const SellerPopupsPage = () => {
                       {/* Approval Status */}
                       <td className="py-4 px-4 text-center">
                         <span className={appStatus.color}>
-                          {popup.approvalStatus}
+                          {appStatus.label}
                         </span>
                       </td>
 
                       {/* Rejection Reason */}
                       <td className="py-4 px-4 text-center flex justify-center items-center h-[88px]">
-                        {popup.approvalStatus === '반려' && popup.rejectionReason ? (
+                        {popup.status === 'REJECTED' && popup.rejectionReason ? (
                           <button
                             onClick={() => setSelectedRejection(popup.rejectionReason)}
                             className="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
