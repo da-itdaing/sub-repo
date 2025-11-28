@@ -44,7 +44,7 @@ const ReviewTab = ({ popup, reviews, onWriteClick }) => {
   };
 
   return (
-    <div className="pt-6 pb-20">
+    <div className="pt-6 pb-20 max-w-[960px] mx-auto px-6">
 
       {/* ⭐ 리뷰 통계 — 좌우정렬 + 중앙정렬 + 간격 증가 */}
       {summary.total > 0 && (
@@ -103,13 +103,15 @@ const ReviewTab = ({ popup, reviews, onWriteClick }) => {
         </button>
 
         <div className="relative" ref={dropdownRef}>
-          <button 
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-1 px-3 py-1.5 border border-gray-200 rounded text-xs text-gray-600 bg-white hover:bg-gray-50"
-          >
-            {sortLabel[sortOption]}
-            <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
+        <button 
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          className="flex items-center gap-1 px-3 py-1.5 border border-gray-200 rounded text-xs text-gray-600 bg-white hover:bg-gray-50 
+                    active:bg-[#eb0000] active:text-white"
+        >
+          {sortLabel[sortOption]}
+          <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+        </button>
+
 
           {isDropdownOpen && (
             <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-gray-100 rounded shadow-lg py-1">

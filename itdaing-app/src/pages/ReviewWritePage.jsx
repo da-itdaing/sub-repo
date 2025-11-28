@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Star, Plus, X } from 'lucide-react';
+import { ArrowLeft, Star, Plus, X, Camera } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { usePopupById } from '@/hooks/usePopups';
@@ -52,7 +52,7 @@ const ReviewWritePage = () => {
     }
   };
 
-  // 이미지 업로드 핸들러 (임시 구현 - 실제 업로드 로직 필요 시 API 연동)
+  // 이미지 업로드 핸들러
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     if (files.length + images.length > 3) {
@@ -60,7 +60,6 @@ const ReviewWritePage = () => {
       return;
     }
 
-    // 미리보기 URL 생성
     const newImages = files.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
@@ -73,32 +72,26 @@ const ReviewWritePage = () => {
   };
 
   const handleSubmit = async () => {
-    // 1. 별점 체크
     if (rating === 0) {
       addToast({ title: '별점을 선택해주세요.', variant: 'error' });
       return;
     }
-    // 2. 키워드 체크
     if (selectedKeywords.length === 0) {
       addToast({ title: '좋았던 점을 최소 1개 선택해주세요.', variant: 'error' });
       return;
     }
-    // 3. 내용 체크 (선택 사항일 수 있으나, 요청 내용상 작성칸 존재)
     if (!content.trim()) {
-        addToast({ title: '후기 내용을 입력해주세요.', variant: 'error' });
-        return;
+      addToast({ title: '후기 내용을 입력해주세요.', variant: 'error' });
+      return;
     }
 
     setIsSubmitting(true);
     try {
-      // TODO: 이미지 업로드 로직 (formData or S3 presigned url)
-      // 현재는 mock 서비스라 이미지 객체 자체를 넘기거나 무시함
-      
       await createReview(popupId, {
         rating,
         content,
-        keywords: selectedKeywords, // 백엔드 스펙에 맞춰 필드명 조정 필요
-        images: images.map(img => img.preview), // 임시: 미리보기 URL 전송
+        keywords: selectedKeywords,
+        images: images.map((img) => img.preview),
       });
 
       addToast({ title: '후기가 등록되었습니다.' });
@@ -129,7 +122,7 @@ const ReviewWritePage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Header hideSearchBar />
-      
+
       <main className="flex-1 w-full max-w-[600px] mx-auto px-5 py-8 pb-24">
         {/* Top Navigation */}
         <div className="flex items-center mb-6">
@@ -170,8 +163,8 @@ const ReviewWritePage = () => {
             어떤 점이 좋았나요? <span className="text-[#eb0000]">*</span>
           </h2>
           <p className="text-xs text-gray-500 mb-3">좋았던 점을 골라주세요. (최소 1개 - 최대 5개)</p>
-          
-          <div className="flex flex-wrap gap-2">
+
+          <div className="flex flex-wrap gap-3">
             {REVIEW_KEYWORDS.map((keyword) => {
               const isSelected = selectedKeywords.includes(keyword);
               return (
@@ -181,7 +174,7 @@ const ReviewWritePage = () => {
                   onClick={() => handleKeywordToggle(keyword)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                     isSelected
-                      ? 'border-gray-900 bg-gray-900 text-white'
+                      ? 'border-[#eb0000] bg-[#eb0000] text-white'
                       : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
                   }`}
                 >
@@ -210,10 +203,10 @@ const ReviewWritePage = () => {
 
         {/* 4. Image Upload */}
         <div className="mb-10">
-          <div className="flex gap-3 overflow-x-auto pb-2">
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {/* Upload Button */}
             {images.length < 3 && (
-              <label className="flex flex-col items-center justify-center w-24 h-24 border border-dashed border-gray-300 rounded-lg cursor-pointer shrink-0 hover:bg-gray-50 transition-colors">
+              <label className="flex flex-col items-center justify-center w-24 h-24 border border-dashed border-gray-300 rounded-xl cursor-pointer shrink-0 hover:bg-gray-50 transition-colors bg-white">
                 <input
                   type="file"
                   accept="image/*"
@@ -221,25 +214,31 @@ const ReviewWritePage = () => {
                   className="hidden"
                   onChange={handleImageUpload}
                 />
-                <div className="w-6 h-6 rounded-full border border-gray-400 flex items-center justify-center mb-1">
-                  <Plus className="w-4 h-4 text-gray-400" />
+                <div className="flex flex-col items-center gap-1">
+                  <Camera className="w-6 h-6 text-gray-400" />
+                  <span className="text-[10px] text-gray-400 font-medium">
+                    {images.length}/3
+                  </span>
                 </div>
-                <span className="text-xs text-gray-500">사진 첨부</span>
               </label>
             )}
 
             {/* Image Previews */}
             {images.map((img, index) => (
-              <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 shrink-0">
+              <div
+                key={index}
+                className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200 shrink-0 group"
+              >
                 <img
                   src={img.preview}
                   alt={`preview ${index}`}
                   className="w-full h-full object-cover"
                 />
+                {/* Delete Button */}
                 <button
                   type="button"
                   onClick={() => handleRemoveImage(index)}
-                  className="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70"
+                  className="absolute top-1.5 right-1.5 w-5 h-5 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -258,7 +257,7 @@ const ReviewWritePage = () => {
           {isSubmitting ? '저장 중...' : '저장하기'}
         </button>
       </main>
-      
+
       <Footer />
     </div>
   );
