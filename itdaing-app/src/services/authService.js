@@ -6,6 +6,7 @@ import apiClient from '@/api/client';
 
 /**
  * 로그인
+ * POST /api/auth/login
  * @param {string} loginId 
  * @param {string} password 
  * @returns {Promise<{accessToken: string, refreshToken: string}>}
@@ -20,7 +21,8 @@ export const login = async (loginId, password) => {
 
 /**
  * 소비자 회원가입
- * @param {Object} data - 회원가입 데이터
+ * POST /api/auth/signup/consumer
+ * @param {Object} data - SignupConsumerRequest
  * @returns {Promise<{userId: number, email: string, role: string}>}
  */
 export const signupConsumer = async (data) => {
@@ -30,7 +32,8 @@ export const signupConsumer = async (data) => {
 
 /**
  * 판매자 회원가입
- * @param {Object} data - 회원가입 데이터
+ * POST /api/auth/signup/seller
+ * @param {Object} data - SignupSellerRequest
  * @returns {Promise<{userId: number, email: string, role: string}>}
  */
 export const signupSeller = async (data) => {
@@ -40,6 +43,7 @@ export const signupSeller = async (data) => {
 
 /**
  * 로그아웃
+ * POST /api/auth/logout
  * @param {string} refreshToken 
  * @returns {Promise<void>}
  */
@@ -49,6 +53,7 @@ export const logout = async (refreshToken) => {
 
 /**
  * 토큰 갱신
+ * POST /api/auth/refresh
  * @param {string} refreshToken 
  * @returns {Promise<{accessToken: string, refreshToken: string}>}
  */
@@ -59,6 +64,7 @@ export const refreshToken = async (refreshToken) => {
 
 /**
  * 내 프로필 조회
+ * GET /api/users/me
  * @returns {Promise<{id: number, email: string, name: string, nickname: string, role: string}>}
  */
 export const getMyProfile = async () => {
@@ -66,21 +72,40 @@ export const getMyProfile = async () => {
   return response;
 };
 
+/**
+ * 내 프로필 수정 (소비자용 - 임시)
+ * 현재 백엔드에 소비자용 프로필 수정 API(/api/users/me PUT 등)가 명세되어 있지 않음.
+ * 판매자는 sellerService의 updateSellerProfile을 사용해야 함.
+ */
 export const updateMyProfile = async (payload) => {
-  const response = await apiClient.put('/users/me', payload);
-  return response;
+  // TODO: 백엔드 API 확인 필요 (현재 /api/users/me PUT 없음)
+  // 소비자 프로필 수정 기능 구현 시 백엔드 엔드포인트 요청 필요.
+  try {
+    // 혹시라도 있을지 모를 엔드포인트 시도 (404 예상)
+    const response = await apiClient.put('/users/me', payload);
+    return response;
+  } catch (error) {
+    console.warn('updateMyProfile failed: API endpoint might be missing.');
+    throw error; 
+  }
 };
 
 export const deleteMyAccount = async () => {
+  // openapi.json에 DELETE /users/me 없음. 확인 필요.
   await apiClient.delete('/users/me');
 };
 
+/**
+ * 소비자 선호 정보 조회 (openapi.json에 없음 - 확인 필요)
+ */
 export const getMyPreferences = async () => {
   const response = await apiClient.get('/consumers/me/preferences');
   return response;
 };
 
+/**
+ * 소비자 선호 정보 수정 (openapi.json에 없음 - 확인 필요)
+ */
 export const updateMyPreferences = async (payload) => {
   await apiClient.put('/consumers/me/preferences', payload);
 };
-

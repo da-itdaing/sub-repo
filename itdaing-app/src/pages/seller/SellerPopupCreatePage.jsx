@@ -1,34 +1,14 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
-import { Save, X, Upload, MapPin, Calendar, Clock } from 'lucide-react';
+import { MapPin, Calendar, Clock } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createPopup } from '@/services/sellerService';
+import { uploadImage } from '@/services/uploadService';
+import { useToast } from '@/hooks/useToast';
+import { useMasterData } from '@/hooks/useMasterData';
 
-const POPUP_CATEGORIES = [
-  '음식',
-  '악세사리',
-  '패션',
-  '공연/전시',
-  '건강',
-  '뷰티',
-  '반려동물',
-  '키즈',
-  '스포츠',
-];
-
-const CONSUMER_CATEGORIES = [
-  '혼자여도 좋은',
-  '친구와 함께',
-  '가족과 함께',
-  '연인과 함께',
-  '반려동물 동반 가능',
-  '독특한',
-  '로맨틱한',
-  '즐거운',
-  '차분한',
-  '분위기 좋은',
-  '아기자기한',
-];
-
+// TODO: 마스터 데이터 API 연동 후 대체 가능
 const AMENITIES = [
   '무료주차',
   '무료입장',
@@ -41,21 +21,43 @@ const AMENITIES = [
 
 const SellerPopupCreatePage = () => {
   const navigate = useNavigate();
+  const { addToast } = useToast();
+  const queryClient = useQueryClient();
+  const { categories, features, styles } = useMasterData();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    address: '',
-    detailAddress: '',
+    address: '', // activityRegion
+    addressDetail: '', // 상세 주소
     startDate: '',
     endDate: '',
     openingHours: '',
     contact: '',
-    category: '',
-    consumerCategories: [],
-    amenities: [],
+    categoryId: '', // 단일 선택
+    styleIds: [], // 다중 선택
+    featureIds: [], // 편의시설 등
     hashtags: '',
     description: '',
     thumbnail: null,
     images: [],
+    homepageUrl: '',
+    snsUrl: '',
+  });
+
+  const createPopupMutation = useMutation({
+    mutationFn: createPopup,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myPopups'] });
+      queryClient.invalidateQueries({ queryKey: ['sellerDashboard'] });
+      addToast({ title: '팝업이 성공적으로 등록되었습니다.', description: '관리자 승인 후 게시됩니다.' });
+      navigate(ROUTES.seller.popups);
+    },
+    onError: (error) => {
+      console.error(error);
+      addToast({ title: '등록 실패', description: error.message, variant: 'error' });
+      setIsSubmitting(false);
+    },
   });
 
   const handleChange = (event) => {
@@ -73,33 +75,83 @@ const SellerPopupCreatePage = () => {
     }
   };
 
-  const toggleCategory = (value) => {
+  const toggleCategory = (id) => {
     setFormData((prev) => ({
       ...prev,
-      category: prev.category === value ? '' : value,
+      categoryId: prev.categoryId === id ? '' : id,
     }));
   };
 
-  const toggleArrayItem = (field, value) => {
+  const toggleArrayItem = (field, id) => {
     setFormData((prev) => {
       const current = prev[field] || [];
       return {
         ...prev,
-        [field]: current.includes(value)
-          ? current.filter((item) => item !== value)
-          : [...current, value],
+        [field]: current.includes(id)
+          ? current.filter((item) => item !== id)
+          : [...current, id],
       };
     });
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // TODO: 실제 API 연동 시 formData 변환 필요 (hashtags 등)
-    alert('팝업이 등록되었습니다. 관리자 승인 후 게시됩니다.');
-    navigate(ROUTES.seller.dashboard);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      // 1. 이미지 업로드
+      let thumbnailUrl = '';
+      if (formData.thumbnail) {
+        const uploadRes = await uploadImage(formData.thumbnail);
+        thumbnailUrl = uploadRes.url;
+      }
+
+      const imageUrls = [];
+      if (formData.images.length > 0) {
+        for (const file of formData.images) {
+          const uploadRes = await uploadImage(file);
+          imageUrls.push(uploadRes.url);
+        }
+      }
+
+      // 2. 해시태그 처리
+      const tags = formData.hashtags
+        .split(/[\s,]+/)
+        .filter((tag) => tag.startsWith('#'))
+        .map((tag) => tag.slice(1)); // # 제거
+
+      // 3. API 요청 데이터 구성 (PopupCreateRequest)
+      const requestData = {
+        title: formData.title,
+        introduction: formData.description,
+        startDate: formData.startDate, // "YYYY-MM-DD"
+        endDate: formData.endDate,     // "YYYY-MM-DD"
+        openingTime: formData.openingHours, // "10:00~22:00" 등 자유 형식
+        location: formData.address,
+        addressDetail: formData.addressDetail,
+        latitude: 0, // TODO: 주소 -> 좌표 변환 로직 필요 (현재 0)
+        longitude: 0, // TODO: 주소 -> 좌표 변환 로직 필요 (현재 0)
+        thumbnail: thumbnailUrl,
+        images: imageUrls,
+        homepageUrl: formData.homepageUrl,
+        snsUrl: formData.snsUrl,
+        categoryId: formData.categoryId ? Number(formData.categoryId) : null,
+        styleIds: formData.styleIds,
+        featureIds: formData.featureIds,
+        tags: tags,
+      };
+
+      createPopupMutation.mutate(requestData);
+
+    } catch (error) {
+      console.error('Upload failed:', error);
+      addToast({ title: '이미지 업로드 실패', description: '다시 시도해주세요.', variant: 'error' });
+      setIsSubmitting(false);
+    }
   };
 
-  // 공통 버튼 스타일 (on/off)
+  // 공통 버튼 스타일
   const getButtonStyle = (isSelected) =>
     `rounded-full px-4 py-2 text-sm font-medium transition-colors border ${
       isSelected
@@ -145,14 +197,14 @@ const SellerPopupCreatePage = () => {
                 value={formData.address}
                 onChange={handleChange}
                 required
-                placeholder="주소를 입력해주세요."
+                placeholder="주소를 입력해주세요. (예: 광주광역시 동구 ...)"
                 className="w-full border-b border-gray-300 py-2 pl-6 text-sm focus:border-primary focus:outline-none"
               />
             </div>
             <input
               type="text"
-              name="detailAddress"
-              value={formData.detailAddress}
+              name="addressDetail"
+              value={formData.addressDetail}
               onChange={handleChange}
               placeholder="상세 주소를 입력해주세요."
               className="w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
@@ -208,88 +260,111 @@ const SellerPopupCreatePage = () => {
                 name="contact"
                 value={formData.contact}
                 onChange={handleChange}
-                required
-                placeholder="연락처 (010-1234-5678)"
+                placeholder="연락처 (선택)"
                 className="w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
               />
             </div>
           </div>
         </div>
 
-        {/* 4. 팝업 카테고리 */}
+        {/* 4. 팝업 카테고리 (단일) */}
         <div>
-          <label className="mb-3 block text-xs font-semibold text-gray-500">팝업 카테고리</label>
+          <label className="mb-3 block text-xs font-semibold text-gray-500">카테고리 (필수)</label>
           <div className="flex flex-wrap gap-2">
-            {POPUP_CATEGORIES.map((cat) => (
+            {categories?.map((cat) => (
               <button
-                key={cat}
+                key={cat.id}
                 type="button"
-                onClick={() => toggleCategory(cat)}
-                className={getButtonStyle(formData.category === cat)}
+                onClick={() => toggleCategory(cat.id)}
+                className={getButtonStyle(formData.categoryId === cat.id)}
               >
-                {cat}
+                {cat.name}
               </button>
             ))}
           </div>
         </div>
 
-        {/* 5. 소비자 카테고리 */}
+        {/* 5. 스타일 (다중) */}
         <div>
-          <label className="mb-3 block text-xs font-semibold text-gray-500">소비자 카테고리</label>
+          <label className="mb-3 block text-xs font-semibold text-gray-500">분위기/스타일 (다중 선택)</label>
           <div className="flex flex-wrap gap-2">
-            {CONSUMER_CATEGORIES.map((cat) => (
+            {styles?.map((style) => (
               <button
-                key={cat}
+                key={style.id}
                 type="button"
-                onClick={() => toggleArrayItem('consumerCategories', cat)}
-                className={getButtonStyle(formData.consumerCategories.includes(cat))}
+                onClick={() => toggleArrayItem('styleIds', style.id)}
+                className={getButtonStyle(formData.styleIds.includes(style.id))}
               >
-                {cat}
+                {style.name}
               </button>
             ))}
           </div>
         </div>
 
-        {/* 6. 편의사항 */}
+        {/* 6. 편의/특징 (다중) */}
         <div>
-          <label className="mb-3 block text-xs font-semibold text-gray-500">편의사항</label>
+          <label className="mb-3 block text-xs font-semibold text-gray-500">편의/특징</label>
           <div className="flex flex-wrap gap-2">
-            {AMENITIES.map((item) => (
+            {features?.map((feat) => (
               <button
-                key={item}
+                key={feat.id}
                 type="button"
-                onClick={() => toggleArrayItem('amenities', item)}
-                className={getButtonStyle(formData.amenities.includes(item))}
+                onClick={() => toggleArrayItem('featureIds', feat.id)}
+                className={getButtonStyle(formData.featureIds.includes(feat.id))}
               >
-                {item}
+                {feat.name}
               </button>
             ))}
           </div>
         </div>
 
-        {/* 7. 해시태그 */}
-        <div>
-          <label className="text-xs font-semibold text-gray-500">해시태그</label>
-          <input
-            type="text"
-            name="hashtags"
-            value={formData.hashtags}
-            onChange={handleChange}
-            placeholder="해시태그를 작성해 주세요. (예: #데이트 #핫플)"
-            className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
-          />
+        {/* 7. 해시태그 & 링크 */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <label className="text-xs font-semibold text-gray-500">해시태그</label>
+            <input
+              type="text"
+              name="hashtags"
+              value={formData.hashtags}
+              onChange={handleChange}
+              placeholder="#데이트 #핫플 (공백으로 구분)"
+              className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div>
+             <label className="text-xs font-semibold text-gray-500">홈페이지 URL</label>
+             <input
+               type="text"
+               name="homepageUrl"
+               value={formData.homepageUrl}
+               onChange={handleChange}
+               placeholder="https://"
+               className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
+             />
+          </div>
+          <div>
+             <label className="text-xs font-semibold text-gray-500">SNS URL</label>
+             <input
+               type="text"
+               name="snsUrl"
+               value={formData.snsUrl}
+               onChange={handleChange}
+               placeholder="https://instagram.com/..."
+               className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
+             />
+          </div>
         </div>
 
         {/* 8. 팝업 소개 */}
         <div>
-          <label className="text-xs font-semibold text-gray-500">팝업소개</label>
+          <label className="text-xs font-semibold text-gray-500">팝업소개 *</label>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
             rows={6}
             required
-            placeholder="팝업에 대한 설명을 작성해 주세요."
+            placeholder="팝업에 대한 설명을 상세하게 작성해 주세요."
             className="mt-2 w-full rounded-2xl border border-gray-200 bg-white p-4 text-sm focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
@@ -301,7 +376,7 @@ const SellerPopupCreatePage = () => {
             <div>
               <label className="text-xs font-semibold text-gray-500">썸네일 이미지 *</label>
               <div className="mt-2 flex items-center gap-3">
-                <div className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-500">
+                <div className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-500 truncate">
                   {formData.thumbnail ? formData.thumbnail.name : '파일을 선택하세요'}
                 </div>
                 <label className="cursor-pointer rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-600">
@@ -320,7 +395,7 @@ const SellerPopupCreatePage = () => {
             <div>
               <label className="text-xs font-semibold text-gray-500">추가 이미지</label>
               <div className="mt-2 flex items-center gap-3">
-                <div className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-500">
+                <div className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-500 truncate">
                   {formData.images.length > 0
                     ? `${formData.images.length}개 파일 선택됨`
                     : '파일을 선택하세요'}
@@ -344,9 +419,10 @@ const SellerPopupCreatePage = () => {
         <div className="flex justify-end pt-6">
           <button
             type="submit"
-            className="w-full rounded-lg bg-[#EB0000] py-3 text-base font-bold text-white shadow-md hover:bg-[#c90000] md:w-auto md:px-12"
+            disabled={isSubmitting}
+            className="w-full rounded-lg bg-[#EB0000] py-3 text-base font-bold text-white shadow-md hover:bg-[#c90000] md:w-auto md:px-12 disabled:opacity-70"
           >
-            작성
+            {isSubmitting ? '등록 중...' : '작성'}
           </button>
         </div>
       </form>
@@ -355,5 +431,3 @@ const SellerPopupCreatePage = () => {
 };
 
 export default SellerPopupCreatePage;
-
-

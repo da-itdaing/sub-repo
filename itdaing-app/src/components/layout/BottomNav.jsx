@@ -18,7 +18,7 @@ const BottomNav = () => {
       <ChatbotLauncherButton mode="floating" target="consumer" />
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 w-full bg-[#3d3d3d] pb-safe text-white">
-        <div className="mx-auto w-full max-w-[540px] md:max-w-[1200px]">
+        <div className="mx-auto w-full max-w-[500px] md:max-w-[1200px]">
           <div className="flex justify-around items-center h-16 md:h-22">
           <Link 
             to={ROUTES.nearby}

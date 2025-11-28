@@ -12,7 +12,7 @@ import {
   Plus
 } from 'lucide-react';
 import { ROUTES } from '@/routes/paths';
-import { getSellerDashboard } from '@/services/sellerService';
+import { getMyPopups } from '@/services/sellerService';
 
 /* ----------------------- FORMATTERS ----------------------- */
 
@@ -153,19 +153,19 @@ const SellerDashboardPage = () => {
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['sellerDashboard'],
-    queryFn: getSellerDashboard,
+  // getSellerDashboard 대신 getMyPopups 호출
+  const { data: popups = [], isLoading } = useQuery({
+    queryKey: ['myPopups'],
+    queryFn: getMyPopups,
     staleTime: 5 * 60 * 1000,
   });
 
-  const popups = data?.popups ?? [];
-
+  // 프론트엔드에서 통계 계산
   const stats = useMemo(() => {
     return {
       approval: {
         approved: popups.filter(p => p.status === 'APPROVED').length,
-        pending: popups.filter(p => p.status === 'PENDING').length,
+        pending: popups.filter(p => p.status === 'PENDING' || !p.status).length, // status 없으면 대기로 간주
         rejected: popups.filter(p => p.status === 'REJECTED').length,
       },
       operation: {
@@ -179,7 +179,7 @@ const SellerDashboardPage = () => {
   const filteredPopups = useMemo(() => {
     return popups.filter(p => {
       const opKey = getOperationStatus(p.startDate, p.endDate);
-      const appStatus = p.status;
+      const appStatus = p.status || 'PENDING'; // 기본값 설정
 
       const opMatch =
         filterOpStatus === 'ALL' ||

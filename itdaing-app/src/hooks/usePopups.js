@@ -24,12 +24,14 @@ export const usePopups = (options = {}) => {
 /**
  * 팝업 상세 조회 훅
  * @param {number} popupId 
+ * @param {Object} options - React Query 옵션
  */
-export const usePopupById = (popupId) => {
+export const usePopupById = (popupId, options = {}) => {
   return useQuery({
     queryKey: ['popup', popupId],
     queryFn: () => getPopupById(popupId),
     enabled: !!popupId && popupId > 0,
+    ...options,
   });
 };
 
@@ -57,4 +59,3 @@ export const useSearchPopups = (searchParams = {}) => {
     enabled: hasParams,
   });
 };
-

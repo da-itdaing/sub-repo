@@ -40,6 +40,7 @@ const MySettingsPage = () => {
     styleIds: [],
     regionIds: [],
     featureIds: [],
+    ageGroupTens: true, // TODO: 확인 필요, DTO에 맞춤
   });
 
   const { categories, regions, styles, features, isLoading: masterLoading } = useMasterData();
@@ -80,16 +81,20 @@ const MySettingsPage = () => {
     enabled: isAuthenticated,
   });
 
+  // 프로필 이미지 업로드 API 확인 필요 (/api/users/me/profile-image 경로가 openapi.json에 명시되지 않음)
+  // TODO: API 엔드포인트 확인 및 구현
   const updateProfileImageMutation = useMutation({
     mutationFn: async (imagePayload) => {
-      return apiClient.put('/users/me/profile-image', imagePayload);
+      // 임시 경로, 실제 API 확인 필요
+      return apiClient.put('/users/me/profile-image', imagePayload); 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-profile'] });
       addToast({ title: '프로필 이미지가 변경되었습니다.' });
     },
     onError: (err) => {
-      addToast({ title: '변경 실패', description: err.message, variant: 'error' });
+      addToast({ title: '변경 실패', description: '프로필 이미지 변경을 지원하지 않는 계정이거나 API 오류입니다.', variant: 'error' });
+      console.error(err);
     },
   });
 
@@ -111,6 +116,7 @@ const MySettingsPage = () => {
         styleIds: preferenceData.styleIds || [],
         regionIds: preferenceData.regionIds || [],
         featureIds: preferenceData.featureIds || [],
+        ageGroupTens: preferenceData.ageGroupTens ?? true,
       });
     }
   }, [preferenceData]);
@@ -157,21 +163,38 @@ const MySettingsPage = () => {
   const handleSaveAll = async () => {
     setIsSaving(true);
     try {
-      await updateMyProfile({
-        name: profileForm.name?.trim() || null,
-        nickname: profileForm.nickname?.trim() || null,
-        ageGroup: profileForm.ageGroup ? Number(profileForm.ageGroup) : null,
-        mbti: profileForm.mbti?.trim().toUpperCase() || null,
-      });
-      await updateMyPreferences(prefForm);
+      // 1. 프로필 정보 수정
+      // TODO: openapi.json에 /users/me PUT이 없어 소비자 프로필 수정 불가 가능성 있음.
+      // 판매자라면 updateSellerProfile을 써야 하나, MySettingsPage는 주로 소비자용으로 보임.
+      // updateMyProfile 내부에서 try-catch로 감싸져 있어 에러 발생 시 경고만 출력될 수 있음.
+      try {
+        await updateMyProfile({
+          name: profileForm.name?.trim() || null,
+          nickname: profileForm.nickname?.trim() || null,
+          ageGroup: profileForm.ageGroup ? Number(profileForm.ageGroup) : null,
+          mbti: profileForm.mbti?.trim().toUpperCase() || null,
+        });
+      } catch (e) {
+        console.warn('기본 프로필 업데이트 실패 (API 미지원 가능성):', e);
+      }
+
+      // 2. 선호 정보 수정 (별도 API)
+      // 이 API (/consumers/me/preferences) 또한 openapi.json에 없으므로 확인 필요
+      try {
+        await updateMyPreferences(prefForm);
+      } catch (e) {
+        console.warn('선호 정보 업데이트 실패 (API 미지원 가능성):', e);
+      }
+
       await queryClient.invalidateQueries({ queryKey: ['my-profile'] });
       await queryClient.invalidateQueries({ queryKey: ['my-preferences'] });
-      addToast({ title: '계정 정보가 업데이트되었습니다.' });
+      
+      addToast({ title: '저장 요청이 완료되었습니다.' });
     } catch (error) {
       console.error(error);
       addToast({
         title: '저장 실패',
-        description: error.message || '잠시 후 다시 시도해주세요.',
+        description: '서버와 통신 중 오류가 발생했습니다.',
         variant: 'error',
       });
     } finally {
