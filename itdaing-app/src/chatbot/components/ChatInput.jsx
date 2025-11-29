@@ -100,7 +100,7 @@ const ChatInput = forwardRef(({ onSend, disabled }, ref) => {
       </div>
     </div>
   );
-};
+});
 
 ChatInput.displayName = 'ChatInput';
 
