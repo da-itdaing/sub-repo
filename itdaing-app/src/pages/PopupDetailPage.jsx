@@ -222,23 +222,19 @@ const PopupDetailPage = () => {
           </button>
 
           <div className="flex items-center gap-2">
-            {/* 관심 버튼 */}
+            {/* 관심 버튼 (EventCard 스타일과 동일, 숫자 제거) */}
             <button
               type="button"
               onClick={handleFavoriteToggle}
               disabled={isFavoriteLoading}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition ${
-                isFavoriteUi
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-gray-200 text-gray-700 hover:bg-gray-50'
-              }`}
+              className="inline-flex items-center justify-center p-1.5 bg-white/90 rounded-full border border-gray-200 shadow-md hover:bg-white transition-colors disabled:opacity-60"
+              aria-label="관심 팝업"
             >
               <Heart
-                className={`h-4 w-4 transition-all ${
-                  isFavoriteUi ? 'fill-[#eb0000] text-[#eb0000]' : 'text-gray-500'
-                }`}
+                className="h-4 w-4"
+                fill={isFavoriteUi ? '#eb0000' : 'none'}
+                color={isFavoriteUi ? '#eb0000' : '#414141'}
               />
-              <span className="text-xs">{localFavoriteCount}</span>
             </button>
 
             {/* 조회수 */}

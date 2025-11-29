@@ -62,3 +62,41 @@ export const getCells = async (areaId = null, ownerId = null, status = null, pag
   }
 };
 
+/**
+ * 존 영역(Zone Area) 생성
+ * @param {Object} request ZoneArea 생성 요청 DTO
+ * @returns {Promise<Object>}
+ */
+export const createZoneArea = async (request) => {
+  // Step 4: 메서드 시그니처만 정의 (API 호출은 Step 5에서 구현)
+};
+
+/**
+ * 존 영역(Zone Area) 수정
+ * @param {number} id ZoneArea ID
+ * @param {Object} request ZoneArea 수정 요청 DTO
+ * @returns {Promise<Object>}
+ */
+export const updateZoneArea = async (id, request) => {
+  // Step 4: 메서드 시그니처만 정의 (API 호출은 Step 5에서 구현)
+};
+
+/**
+ * 존 셀(Zone Cell) 생성
+ * @param {Object} request ZoneCell 생성 요청 DTO
+ * @returns {Promise<Object>}
+ */
+export const createZoneCell = async (request) => {
+  // Step 4: 메서드 시그니처만 정의 (API 호출은 Step 5에서 구현)
+};
+
+/**
+ * 존 셀(Zone Cell) 수정
+ * @param {number} id ZoneCell ID
+ * @param {Object} request ZoneCell 수정 요청 DTO
+ * @returns {Promise<Object>}
+ */
+export const updateZoneCell = async (id, request) => {
+  // Step 4: 메서드 시그니처만 정의 (API 호출은 Step 5에서 구현)
+};
+

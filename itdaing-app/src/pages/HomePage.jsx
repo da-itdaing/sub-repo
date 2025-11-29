@@ -102,7 +102,7 @@ const HomePage = () => {
     <div className="min-h-screen flex flex-col bg-gray-100">
       <Header />
       
-      <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto bg-white">
+      <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto bg-white pt-14 md:pt-20 ">
         {/* Hero Carousel */}
         <div className="px-5 md:px-8 pt-5">
         <HeroCarousel items={heroItems} isLoading={isLoading} onSelect={handlePopupNavigate} />
@@ -133,7 +133,7 @@ const HomePage = () => {
                 </>
               }
               popups={openingSoonPopups}
-              description="이번 달에 문을 여는 팝업을 미리 확인하세요."
+              // description="이번 달에 문을 여는 팝업을 미리 확인하세요."
             />
 
             <EventSection

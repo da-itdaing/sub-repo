@@ -122,7 +122,7 @@ const NearbyExplorePage = () => {
     <div className="min-h-screen flex flex-col bg-gray-100">
       <Header />
       
-      <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto bg-white pb-8">
+      <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto bg-white pb-8 pt-14 md:pt-20 ">
         {/* 지도 영역 */}
         <div className="w-full">
           <div className="bg-white p-5 md:p-8 border-b border-gray-200">

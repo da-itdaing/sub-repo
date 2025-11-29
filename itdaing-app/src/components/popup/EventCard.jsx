@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { MapPin, Heart } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getImageUrl } from '@/utils/imageUtils';
 import { ROUTES } from '@/routes/paths';
@@ -36,6 +36,14 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
     ? `${start.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })} - ${end.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}`
     : popup.startDate || '일정 미정';
   const isFavorite = hydrated ? favoriteFromStore : Boolean(popup?.isFavorite);
+
+  // 상세 페이지와 동일하게, UI용 즐겨찾기 상태를 별도로 관리 (낙관적 업데이트)
+  const [isFavoriteUi, setIsFavoriteUi] = useState(isFavorite);
+
+  // popup 또는 전역 store 값이 바뀔 때 UI 상태 동기화
+  useEffect(() => {
+    setIsFavoriteUi(isFavorite);
+  }, [isFavorite, popup?.id]);
   const statusLabel = useMemo(() => {
     if (popup?.runtimeStatus) {
       return runtimeStatusLabel[popup.runtimeStatus] ?? runtimeStatusLabel.default;
@@ -48,6 +56,24 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
       ? '종료'
       : popup?.status || null;
   }, [popup]);
+
+  // 상태 뱃지 색상 (오픈 예정/진행중/종료 각각 진한 파스텔톤 + 흰 글씨)
+  const statusBadgeClass = useMemo(() => {
+    const runtime = popup?.runtimeStatus || popup?.status;
+    if (runtime === 'upcoming') {
+      // 오픈 예정: #48D4AA
+      return 'bg-[#3DAC8B] text-white';
+    }
+    if (runtime === 'ongoing') {
+      // 진행 중: #4DAAE3
+      return 'bg-[#4797C9] text-white';
+    }
+    if (runtime === 'ended') {
+      // 종료: #FF6969
+      return 'bg-[#C94747] text-white';
+    }
+    return 'bg-white/90 text-gray-900';
+  }, [popup?.runtimeStatus, popup?.status]);
 
   const handleFavoriteToggle = async (e) => {
     e.preventDefault();
@@ -72,6 +98,11 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
     }
 
     if (isProcessing) return;
+
+    // UI 먼저 토글 (빠른 피드백)
+    const prev = isFavoriteUi;
+    const next = !prev;
+    setIsFavoriteUi(next);
     setIsProcessing(true);
     try {
       if (isFavorite) {
@@ -94,6 +125,8 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
       queryClient.invalidateQueries({ queryKey: ['my-profile'] });
     } catch (err) {
       console.error('wishlist error', err);
+      // 실패 시 UI 롤백
+      setIsFavoriteUi(isFavorite);
       addToast({ title: '관심 목록 처리 실패', description: err.message || '다시 시도해주세요.', variant: 'error' });
     } finally {
       setIsProcessing(false);
@@ -130,34 +163,44 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
         {/* 오버레이 그라데이션 */}
         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
         
-        {/* 좋아요 버튼 */}
+        {/* 좋아요 버튼 (PopupDetailPage와 동일한 스타일, 배경은 항상 흰색) */}
         <button
           type="button"
           onClick={handleFavoriteToggle}
-          className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full shadow-md hover:bg-white transition-colors z-10"
+          disabled={isProcessing}
+          className={`
+            absolute top-2 right-2 inline-flex items-center justify-center 
+            p-1.5 
+            rounded-full shadow-md
+            transition-colors z-10
+            ${isFavoriteUi ? 'bg-[#FFCDCD]' : 'bg-white'}
+          `}
           aria-label="관심 팝업"
         >
-          <Heart
-            className="w-3.5 h-3.5"
-            fill={isFavorite ? '#eb0000' : 'none'}
-            color={isFavorite ? '#eb0000' : '#414141'}
+          <Heart 
+            className="w-4 h-4"
+            fill={isFavoriteUi ? '#DC3535' : 'none'}
+            color={isFavoriteUi ? '#DC3535' : '#414141'}
           />
         </button>
 
+
         {/* 상태 배지 */}
         {statusLabel && (
-          <div className="absolute top-2 left-2 px-2 py-0.5 bg-white/90 rounded-full text-[10px] font-bold text-gray-900 shadow-sm">
+          <div
+            className={`absolute top-2 left-2 px-4 py-1.5 rounded-full text-[12px] font-bold shadow-sm ${statusBadgeClass}`}
+          >
             {statusLabel}
           </div>
         )}
 
         {/* 텍스트 정보 */}
         <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1">
-          <h3 className="text-sm font-bold text-white leading-tight line-clamp-2">
+          <h3 className="text-lg font-bold text-white leading-tight line-clamp-2">
             {popup.title}
           </h3>
-          <p className="text-[10px] text-white/90">{dateLabel}</p>
-          <p className="flex items-center gap-0.5 text-[10px] text-white/85">
+          <p className="text-[13px] text-white/90">{dateLabel}</p>
+          <p className="flex items-center gap-0.5 text-[13px] text-white/85">
             <MapPin className="w-2.5 h-2.5" />
             <span className="line-clamp-1">{popup.address || popup.location || '위치 미정'}</span>
           </p>

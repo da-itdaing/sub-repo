@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
 import EventCard from './EventCard';
 import { isPopupActive } from '@/utils/popupUtils';
 
@@ -110,12 +109,12 @@ const EventSection = ({
   return (
     <section className="mb-10">
       {/* 헤더 영역 */}
-      <div className="flex flex-col gap-2 mb-4">
+      <div className="flex flex-col gap-3 mb-4">
         <div className="flex items-baseline justify-between gap-2">
-          <h2 className="text-xl font-bold tracking-tight text-gray-900">{title}</h2>
-          <span className="text-xs font-semibold text-gray-400">
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900">{title}</h2>
+          {/* <span className="text-xs font-semibold text-gray-400">
             {Math.min(displayedPopups.length, filteredPopups.length)} / {filteredPopups.length}
-          </span>
+          </span> */}
         </div>
         {description && <p className="text-sm text-gray-500">{description}</p>}
         
@@ -166,7 +165,7 @@ const EventSection = ({
               onClick={handleLoadMore}
               className="w-full md:w-auto px-5 py-2 rounded-full border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors flex items-center justify-center gap-1"
             >
-              더보기 <ChevronDown className="w-4 h-4" />
+              더보기
             </button>
           )}
           {filteredPopups.length > initialShow && (
@@ -193,20 +192,32 @@ export default EventSection;
 const FilterChips = ({ options, value, onChange }) => {
   return (
     <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-      {options.map((option) => (
-        <button
-          key={option}
-          type="button"
-          onClick={() => onChange(option)}
-          className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all border ${
-            value === option
-              ? 'bg-[#EB0000] text-white border-[#EB0000] shadow-md scale-105'
-              : 'bg-white text-[oklch(0.373_0.034_259.733)] border-gray-200 hover:border-gray-300'
-          }`}
-        >
-          {option}
-        </button>
-      ))}
+      {options.map((option) => {
+        const isActive = value === option;
+
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            className={`
+              shrink-0
+              px-4 py-2                      /* 버튼 가로/세로 */
+              rounded-full                   /* ➜ 더 둥글게! */
+              text-sm font-semibold          
+              border transition-all duration-200
+              ${
+                isActive
+                  ? 'bg-[#EB0000] text-white border-[#EB0000] shadow-sm' 
+                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+              }
+            `}
+          >
+            {option}
+          </button>
+        );
+      })}
     </div>
   );
 };
+

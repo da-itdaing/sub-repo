@@ -291,7 +291,7 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
           </div>
 
         {/* 페이지네이션 */}
-        <div className="mt-4 md:mt-6 flex items-center justify-center gap-1.5 md:gap-2">
+        {/* <div className="mt-4 md:mt-6 flex items-center justify-center gap-1.5 md:gap-2">
             {normalizedItems.map((_, idx) => (
               <button
               key={`dot-${idx}`}
@@ -304,7 +304,7 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
               aria-label={`슬라이드 ${idx + 1}`}
               />
             ))}
-        </div>
+        </div> */}
       </div>
     </section>
   );
