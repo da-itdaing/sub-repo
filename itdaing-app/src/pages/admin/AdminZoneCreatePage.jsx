@@ -1,329 +1,131 @@
-import { useEffect, useRef, useState } from "react";
-import { Map } from "react-kakao-maps-sdk";
-import { v4 as uuid } from "uuid";
-import { X } from "lucide-react";
+import { useState } from "react";
+import ZoneDrawingMap from "@/components/map/ZoneDrawingMap";
 
-export default function AdminZoneCreatePage() {
-  const mapRef = useRef(null);
-  const managerRef = useRef(null);
-  const draftPolygonRef = useRef(null);
+/**
+ * 관리자 존 생성 페이지 (Step 1: UI Only)
+ * - UI 및 레이아웃만 구현
+ * - 비즈니스 로직, API 호출, Drawing 관련 로직은 이후 단계에서 추가
+ */
 
-  const [zones, setZones] = useState([]);
-  const [cells, setCells] = useState([]);
+const REGIONS = [
+  { id: 1, name: "동구" },
+  { id: 2, name: "서구" },
+  { id: 3, name: "남구" },
+  { id: 4, name: "북구" },
+  { id: 5, name: "광산구" },
+];
 
-  const [mode, setMode] = useState(null); // "zone" | "cell" | null
-  const selectedZoneIdRef = useRef(null);
+const AdminZoneCreatePage = () => {
+  // UI 전용 폼 상태
+  const [zoneName, setZoneName] = useState("");
+  const [selectedRegionId, setSelectedRegionId] = useState(REGIONS[0]?.id ?? null);
 
-  /** --------------------------------
-   * DrawingManager 초기화
-   -------------------------------- */
-  const initializeDrawingManager = (map) => {
-    if (!window.kakao || !window.kakao.maps || managerRef.current) return;
-
-    managerRef.current = new window.kakao.maps.drawing.DrawingManager({
-      map,
-      drawingMode: [],
-      polygonOptions: {
-        draggable: true,
-        removable: true,
-        editable: true,
-        strokeWeight: 2,
-        strokeColor: "#eb0000",
-        fillColor: "#eb0000",
-        fillOpacity: 0.2,
-      },
-    });
-
-    // 도형 그리기 완료 시
-    window.kakao.maps.event.addListener(
-      managerRef.current,
-      "drawend",
-      (data) => {
-        draftPolygonRef.current = data.target;
-      }
-    );
+  // UI 상에서만 사용하는 버튼 핸들러 (실제 로직은 후속 단계에서 구현)
+  const handleStartDrawing = () => {
+    // TODO: 이후 Drawing 시작 로직 연결
   };
 
-  /** --------------------------------
-   * 도형 그리기 시작
-   -------------------------------- */
-  const startDrawing = () => {
-    if (!managerRef.current) return;
-
-    // 기존 임시 도형 제거
-    if (draftPolygonRef.current) {
-      draftPolygonRef.current.setMap(null);
-      draftPolygonRef.current = null;
-    }
-
-    managerRef.current.select(window.kakao.maps.drawing.OverlayType.POLYGON);
+  const handleSaveZone = () => {
+    // TODO: 이후 존 저장 로직(API 호출, GeoJSON 변환 등) 연결
   };
 
-  /** --------------------------------
-   * 존 추가
-   -------------------------------- */
-  const handleAddZone = () => {
-    setMode("zone");
-    startDrawing();
-  };
-
-  /** --------------------------------
-   * 셀 추가
-   -------------------------------- */
-  const handleAddCell = () => {
-    if (!zones.length) {
-      alert("먼저 존을 하나 이상 생성해 주세요.");
-      return;
-    }
-
-    if (!selectedZoneIdRef.current && zones.length > 0) {
-      selectedZoneIdRef.current = zones[zones.length - 1].id;
-    }
-
-    setMode("cell");
-    startDrawing();
-  };
-
-  /** --------------------------------
-   * 존 선택 → 셀 추가 가능
-   -------------------------------- */
-  const handleSelectZone = (zoneId) => {
-    selectedZoneIdRef.current = zoneId;
-  };
-
-  /** --------------------------------
-   * 🔥 모든 path 타입을 안전하게 변환하는 함수
-   -------------------------------- */
-  const normalizePath = (rawPath) => {
-    return rawPath.map((p) => {
-      // Case 1: LatLng 인스턴스
-      if (p.getLat && p.getLng) {
-        return { lat: p.getLat(), lng: p.getLng() };
-      }
-
-      // Case 2: DrawingManager editable polygon → {Ma, La}
-      if ("Ma" in p && "La" in p) {
-        return { lat: p.Ma, lng: p.La };
-      }
-
-      // Case 3: 일반 {lat, lng}
-      if ("lat" in p && "lng" in p) {
-        return { lat: p.lat, lng: p.lng };
-      }
-
-      console.warn("Unknown path point type:", p);
-      return { lat: 0, lng: 0 };
-    });
-  };
-
-  /** --------------------------------
-   * 도형 저장
-   -------------------------------- */
-  const saveCurrentDrawing = (type) => {
-    const currentType = type || mode;
-    if (!currentType) {
-      alert("먼저 존/셀 추가를 선택해주세요.");
-      return;
-    }
-
-    const tempPoly = draftPolygonRef.current;
-    if (!tempPoly) {
-      alert("먼저 도형을 그려주세요.");
-      return;
-    }
-
-    // 저장 전에 꼭 편집 종료
-    tempPoly.setEditable(false);
-
-    // 🔥 핵심: 어떤 타입이든 path 배열로 변환
-    const raw = tempPoly.getPath();
-    const rawArray = raw.getArray ? raw.getArray() : raw; // MVCArray → Array
-    const path = normalizePath(rawArray);
-
-    // 임시 도형 제거
-    tempPoly.setMap(null);
-    draftPolygonRef.current = null;
-
-    // 최종 확정 polygon 생성
-    const map = mapRef.current;
-    const finalPoly = new window.kakao.maps.Polygon({
-      map,
-      path: path.map((p) => new window.kakao.maps.LatLng(p.lat, p.lng)),
-      strokeWeight: 2,
-      strokeColor: "#EB0000",
-      fillColor: "#EB0000",
-      fillOpacity: 0.25,
-    });
-
-    finalPoly.setDraggable(false);
-    finalPoly.setEditable(false);
-
-    const id = uuid();
-
-    if (currentType === "zone") {
-      setZones((prev) => [
-        ...prev,
-        {
-          id,
-          name: `존 ${prev.length + 1}`,
-          path,
-          poly: finalPoly,
-        },
-      ]);
-
-      selectedZoneIdRef.current = id;
-    }
-
-    if (currentType === "cell") {
-      if (!selectedZoneIdRef.current) {
-        alert("저장할 존이 선택되지 않았습니다.");
-        return;
-      }
-
-      setCells((prev) => [
-        ...prev,
-        {
-          id,
-          zoneId: selectedZoneIdRef.current,
-          name: `셀 ${prev.length + 1}`,
-          path,
-          poly: finalPoly,
-        },
-      ]);
-    }
-
-    managerRef.current.cancel();
-    setMode(null);
-  };
-
-  /** --------------------------------
-   * 존 삭제
-   -------------------------------- */
-  const deleteZone = (zoneId) => {
-    const zone = zones.find((z) => z.id === zoneId);
-    if (!zone) return;
-
-    zone.poly.setMap(null);
-
-    const linkedCells = cells.filter((c) => c.zoneId === zoneId);
-    linkedCells.forEach((c) => c.poly.setMap(null));
-
-    setCells((prev) => prev.filter((c) => c.zoneId !== zoneId));
-    setZones((prev) => prev.filter((z) => z.id !== zoneId));
-
-    if (selectedZoneIdRef.current === zoneId) {
-      selectedZoneIdRef.current = null;
-    }
-  };
-
-  /** --------------------------------
-   * 셀 삭제
-   -------------------------------- */
-  const deleteCell = (cellId) => {
-    const cell = cells.find((c) => c.id === cellId);
-    if (!cell) return;
-
-    cell.poly.setMap(null);
-    setCells((prev) => prev.filter((c) => c.id !== cellId));
+  // ZoneDrawingMap으로부터 폴리곤 좌표를 전달받는 콜백 (현재는 placeholder)
+  const handlePolygonComplete = () => {
+    // TODO: 이후 폴리곤 좌표 상태 관리 및 검증 로직 추가
   };
 
   return (
-    <div className="w-full h-full flex">
-      {/* 지도 */}
-      <div className="flex-1 relative">
-        <Map
-          onCreate={(map) => {
-            mapRef.current = map;
-            initializeDrawingManager(map);
-          }}
-          center={{ lat: 35.1595, lng: 126.8526 }}
-          style={{ width: "100%", height: "100%" }}
-          level={7}
-        />
+    <div className="flex h-[calc(100vh-4rem)] gap-6 p-6 bg-gray-50">
+      {/* Left: Zone Create Form + Map */}
+      <div className="flex-[3] flex flex-col gap-4 min-w-0">
+        {/* Header & Form */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">존 생성</h1>
+              <p className="mt-1 text-xs text-gray-500">
+                지도에서 폴리곤을 그려 존 영역을 정의하고, 리전 정보를 설정하세요.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleStartDrawing}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Start Drawing
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveZone}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-[#eb0000] text-white hover:bg-red-700 transition-colors"
+              >
+                Save Zone
+              </button>
+            </div>
+          </div>
 
-        {/* 지도 위 버튼 */}
-        <div className="absolute top-4 left-4 flex flex-wrap gap-3 z-50">
-          <button
-            onClick={handleAddZone}
-            className="px-4 py-2 bg-white rounded-xl shadow font-semibold"
-          >
-            존 추가
-          </button>
+          {/* Zone Name & Region Select */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                존 이름
+              </label>
+              <input
+                type="text"
+                value={zoneName}
+                onChange={(e) => setZoneName(e.target.value)}
+                placeholder="예: 충장로 패션 거리 존"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#eb0000]/40"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                리전 선택
+              </label>
+              <select
+                value={selectedRegionId ?? ""}
+                onChange={(e) => setSelectedRegionId(Number(e.target.value))}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#eb0000]/40"
+              >
+                {REGIONS.map((region) => (
+                  <option key={region.id} value={region.id}>
+                    {region.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
 
-          <button
-            onClick={() => saveCurrentDrawing("zone")}
-            className="px-4 py-2 bg-white rounded-xl shadow font-semibold"
-          >
-            존 저장
-          </button>
-
-          <button
-            onClick={handleAddCell}
-            disabled={!zones.length}
-            className={`px-4 py-2 rounded-xl shadow font-semibold ${
-              zones.length
-                ? "bg-white"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
-          >
-            셀 추가
-          </button>
-
-          <button
-            onClick={() => saveCurrentDrawing("cell")}
-            className="px-4 py-2 bg-white rounded-xl shadow font-semibold"
-          >
-            셀 저장
-          </button>
+        {/* Map Area */}
+        <div className="flex-1 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+          <ZoneDrawingMap onPolygonComplete={handlePolygonComplete} />
         </div>
       </div>
 
-      {/* 오른쪽 목록 */}
-      <div className="w-[340px] border-l p-4 overflow-auto bg-white">
-        <h2 className="text-xl font-bold mb-3">존 목록</h2>
-
-        {zones.map((z) => (
-          <div
-            key={z.id}
-            className="p-3 border rounded-lg mb-2 flex items-center justify-between hover:bg-gray-100"
-          >
-            <span className="cursor-pointer" onClick={() => handleSelectZone(z.id)}>
-              {z.name}
-            </span>
-
-            <button
-              className="p-1 text-gray-500 hover:text-red-500"
-              onClick={() => deleteZone(z.id)}
-            >
-              <X size={16} />
-            </button>
+      {/* Right: Static Zone/Cell List Panel */}
+      <div className="flex-[1.2] flex flex-col gap-4 min-w-[320px]">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4 h-full">
+          <h2 className="text-xl font-bold text-[#eb0000]">존 / 셀 정보</h2>
+          <div className="flex-1 flex flex-col gap-4 text-sm text-gray-500">
+            <div className="border border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/60 flex-1 flex flex-col items-center justify-center">
+              <p className="font-medium text-gray-600 mb-1">Zone list will appear here</p>
+              <p className="text-xs text-gray-400">
+                생성된 존이 이 패널에 리스트 형태로 표시됩니다.
+              </p>
+            </div>
+            <div className="border border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/60 flex-1 flex flex-col items-center justify-center">
+              <p className="font-medium text-gray-600 mb-1">Cell list will appear here</p>
+              <p className="text-xs text-gray-400">
+                선택한 존에 속한 셀 정보가 여기에 표시될 예정입니다.
+              </p>
+            </div>
           </div>
-        ))}
-
-        {selectedZoneIdRef.current && (
-          <>
-            <h2 className="text-xl font-bold mt-6 mb-3">셀 목록</h2>
-
-            {cells
-              .filter((c) => c.zoneId === selectedZoneIdRef.current)
-              .map((c) => (
-                <div
-                  key={c.id}
-                  className="p-3 border rounded-lg mb-2 flex items-center justify-between hover:bg-gray-100"
-                >
-                  <span>{c.name}</span>
-
-                  <button
-                    className="p-1 text-gray-500 hover:text-red-500"
-                    onClick={() => deleteCell(c.id)}
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ))}
-          </>
-        )}
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default AdminZoneCreatePage;

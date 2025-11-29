@@ -8,8 +8,8 @@ import { ROUTES } from '@/routes/paths';
  */
 const Footer = () => {
   return (
-    <footer className="bg-[#2a2a2a] text-white mt-auto pb-16 md:pb-24">
-      <div className="w-full max-w-[540px] md:max-w-[1200px] mx-auto px-5 md:px-8 py-8 md:py-12">
+    <footer className="bg-[#2a2a2a] text-white mt-auto pb-8 md:pb-0">
+      <div className="w-full max-w-[500px] md:max-w-[1200px] mx-auto px-5 md:px-8 py-8 md:py-12">
         {/* Main Footer Content */}
         <div className="space-y-6 md:space-y-0 md:grid md:grid-cols-4 md:gap-8 mb-6 md:mb-10">
           {/* Logo and Description (모바일: 중앙 정렬) */}
