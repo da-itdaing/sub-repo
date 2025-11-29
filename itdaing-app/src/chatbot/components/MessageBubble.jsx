@@ -34,12 +34,40 @@ const BotIcon = () => (
 );
 
 /**
+ * 마크다운 텍스트 정제 - 깨진 포맷 수정
+ */
+const sanitizeMarkdown = (text) => {
+  if (!text) return '';
+  
+  let result = text;
+  
+  // 1. 붙어있는 리스트 항목 수정: "-주소:" → "- 주소:"
+  result = result.replace(/^-(\S)/gm, '- $1');
+  
+  // 2. 여러 개의 연속 빈 줄을 하나로 통합
+  result = result.replace(/\n{3,}/g, '\n\n');
+  
+  // 3. 리스트 항목 앞의 불필요한 공백 제거
+  result = result.replace(/^\s{1,3}(-|\d+\.)/gm, '$1');
+  
+  // 4. 굵은 글씨 뒤에 바로 리스트가 오면 줄바꿈 추가
+  result = result.replace(/\*\*([^*]+)\*\*\s*\n-/g, '**$1**\n\n-');
+  
+  // 5. 이모지 깨짐 수정 (불완전한 UTF-8)
+  result = result.replace(/[\uFFFD]/g, '');
+  
+  return result.trim();
+};
+
+/**
  * 간단한 마크다운 파싱
  */
 const parseMarkdown = (text) => {
   if (!text) return '';
 
-  const lines = text.split('\n');
+  // 먼저 텍스트 정제
+  const sanitized = sanitizeMarkdown(text);
+  const lines = sanitized.split('\n');
   const parsed = [];
 
   for (let line of lines) {
@@ -50,7 +78,7 @@ const parseMarkdown = (text) => {
     // [링크](url)
     line = line.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="text-rose-500 underline underline-offset-2 hover:text-rose-600 transition-colors">$1</a>');
 
-    // 리스트 처리
+    // 리스트 처리 (- 또는 숫자. 로 시작)
     const listMatch = line.match(/^(\s*)([\d]+\.|-)\s+(.+)$/);
     if (listMatch) {
       const [, , marker, content] = listMatch;

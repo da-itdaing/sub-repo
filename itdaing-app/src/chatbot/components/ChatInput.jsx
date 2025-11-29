@@ -1,12 +1,31 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { ArrowUp } from 'lucide-react';
 
 /**
  * 채팅 입력창 - 모던 & 미니멀
+ * - ref를 통해 외부에서 focus() 호출 가능
  */
-const ChatInput = ({ onSend, disabled }) => {
+const ChatInput = forwardRef(({ onSend, disabled }, ref) => {
   const [text, setText] = useState('');
   const textareaRef = useRef(null);
+
+  // 외부에서 focus 호출 가능하도록 expose
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      textareaRef.current?.focus();
+    },
+  }));
+
+  // disabled가 false로 바뀌면 (응답 완료) 자동 포커스
+  useEffect(() => {
+    if (!disabled && textareaRef.current) {
+      // 약간의 딜레이 후 포커스 (모바일 키보드 이슈 방지)
+      const timer = setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [disabled]);
 
   const adjustHeight = useCallback(() => {
     const textarea = textareaRef.current;
@@ -82,5 +101,7 @@ const ChatInput = ({ onSend, disabled }) => {
     </div>
   );
 };
+
+ChatInput.displayName = 'ChatInput';
 
 export default ChatInput;
