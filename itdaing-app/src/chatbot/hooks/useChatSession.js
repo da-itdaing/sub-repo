@@ -410,7 +410,8 @@ const useChatSession = ({ mode = 'consumer' } = {}) => {
               setThreadId(thread_id);
             }
 
-            // 추천 결과 처리
+            // 추천 결과 처리: 새 추천이 오면 업데이트, 없으면 이전 추천 유지
+            // (서버에서 빈 배열을 보내면 추천 없음으로 처리)
             if (Array.isArray(incomingRecs)) {
               setRecommendations(incomingRecs);
             }
