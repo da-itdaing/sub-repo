@@ -1,123 +1,77 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
-
-const MOCK_USERS = [
-  {
-    id: 1,
-    loginId: 'testuser',
-    name: '홍길동',
-    ageGroup: '20대',
-    email: 'user@gmail.com',
-    role: 'consumer',
-    status: 'active',
-  },
-  {
-    id: 2,
-    loginId: 'orion1234',
-    name: '강건',
-    ageGroup: '30대',
-    email: 'orion1234@naver.com',
-    role: 'consumer',
-    status: 'active',
-  },
-  {
-    id: 3,
-    loginId: 'rlaskarb',
-    name: '김남규',
-    ageGroup: '60대',
-    email: 'rlaskarb@gmail.com',
-    role: 'consumer',
-    status: 'active',
-  },
-  {
-    id: 4,
-    loginId: 'minwoo12',
-    name: '고민우',
-    ageGroup: '20대',
-    email: 'minwoo12@Daum.com',
-    role: 'consumer',
-    status: 'active',
-  },
-  {
-    id: 5,
-    loginId: 'JHSung',
-    name: '정하성',
-    ageGroup: '20대',
-    email: 'JHSung@gmail.com',
-    role: 'consumer',
-    status: 'inactive',
-  },
-  {
-    id: 6,
-    loginId: 'yongmari',
-    name: '이자현',
-    ageGroup: '30대',
-    email: 'yongmari@naver.com',
-    role: 'seller',
-    status: 'active',
-  },
-  {
-    id: 7,
-    loginId: 'ganadiuyu',
-    name: '강하리',
-    ageGroup: '30대',
-    email: 'ganadiuyu@Daum.com',
-    role: 'seller',
-    status: 'inactive',
-  },
-  {
-    id: 8,
-    loginId: 'diamond',
-    name: '김고운',
-    ageGroup: '40대',
-    email: 'diamond@gmail.com',
-    role: 'consumer',
-    status: 'active',
-  },
-  {
-    id: 9,
-    loginId: 'yesiCan',
-    name: '한강석',
-    ageGroup: '50대',
-    email: 'yesiCan@naver.com',
-    role: 'seller',
-    status: 'active',
-  },
-  {
-    id: 10,
-    loginId: 'tekemyMoney',
-    name: '이태민',
-    ageGroup: '30대',
-    email: 'tekemyMoney@naver.com',
-    role: 'seller',
-    status: 'inactive',
-  },
-];
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Search, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { useToast } from '@/hooks/useToast';
+import { listUsers, updateUserStatus } from '@/services/adminService';
 
 const PAGE_SIZE = 10;
 
+const getAgeGroupLabel = (ageGroup) => {
+  if (!ageGroup) return '-';
+  return `${ageGroup}대`;
+};
+
+const getStatusLabel = (status) => {
+  if (status === 'ACTIVE') return '활성화';
+  if (status === 'SUSPENDED') return '정지';
+  if (status === 'WITHDRAWN') return '탈퇴';
+  return status;
+};
+
+const getStatusChipClass = (status) => {
+  if (status === 'ACTIVE') return 'bg-blue-50 text-blue-600';
+  if (status === 'SUSPENDED') return 'bg-red-50 text-red-600';
+  if (status === 'WITHDRAWN') return 'bg-gray-50 text-gray-500';
+  return 'bg-gray-50 text-gray-500';
+};
+
 const AdminUsersPage = () => {
   const navigate = useNavigate();
-  const [users, setUsers] = useState(MOCK_USERS);
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('consumer'); // 'consumer' | 'seller'
+  const [roleFilter, setRoleFilter] = useState('CONSUMER'); // 'CONSUMER' | 'SELLER'
   const [selectedIds, setSelectedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 검색 + 역할 필터링
+  // 사용자 목록 조회
+  const { data: usersData, isLoading, refetch } = useQuery({
+    queryKey: ['adminUsers', roleFilter],
+    queryFn: () => listUsers({ role: roleFilter, page: 0, size: 200 }),
+    staleTime: 60 * 1000,
+  });
+
+  // Spring Page 응답에서 content 추출
+  const users = usersData?.content || [];
+  const totalElements = usersData?.totalElements || 0;
+
+  // 상태 변경 Mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ userId, status }) => updateUserStatus(userId, status),
+    onSuccess: () => {
+      addToast({ title: '사용자 상태가 변경되었습니다.' });
+      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      setSelectedIds([]);
+    },
+    onError: (error) => {
+      addToast({ title: '상태 변경 실패', description: error.message, variant: 'error' });
+    },
+  });
+
+  // 검색 필터링 (프론트에서 처리)
   const filteredUsers = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
+    if (!term) return users;
     return users.filter((user) => {
-      if (roleFilter && user.role !== roleFilter) return false;
-      if (!term) return true;
       return (
-        user.loginId.toLowerCase().includes(term) ||
-        user.name.toLowerCase().includes(term) ||
-        user.email.toLowerCase().includes(term)
+        (user.loginId || '').toLowerCase().includes(term) ||
+        (user.name || '').toLowerCase().includes(term) ||
+        (user.email || '').toLowerCase().includes(term)
       );
     });
-  }, [users, searchTerm, roleFilter]);
+  }, [users, searchTerm]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
 
@@ -149,15 +103,13 @@ const AdminUsersPage = () => {
     );
   };
 
-  const handleChangeStatus = (nextStatus) => {
+  const handleChangeStatus = async (nextStatus) => {
     if (selectedIds.length === 0) return;
 
-    setUsers((prev) =>
-      prev.map((user) =>
-        selectedIds.includes(user.id) ? { ...user, status: nextStatus } : user
-      )
-    );
-    setSelectedIds([]);
+    // 순차적으로 상태 변경 (병렬 처리도 가능)
+    for (const userId of selectedIds) {
+      await updateStatusMutation.mutateAsync({ userId, status: nextStatus });
+    }
   };
 
   const handleChangePage = (page) => {
@@ -170,7 +122,19 @@ const AdminUsersPage = () => {
       {/* 헤더: 검색창 */}
       <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <h1 className="text-lg font-semibold text-gray-900">사용자 관리</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold text-gray-900">사용자 관리</h1>
+            <button
+              onClick={() => refetch()}
+              className="p-1 text-gray-400 hover:text-gray-600"
+              title="새로고침"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
+            <span className="text-xs text-gray-400">
+              총 {totalElements}명
+            </span>
+          </div>
           <div className="relative w-full max-w-xl">
             <input
               type="text"
@@ -196,11 +160,12 @@ const AdminUsersPage = () => {
             <button
               type="button"
               onClick={() => {
-                setRoleFilter('consumer');
+                setRoleFilter('CONSUMER');
                 setCurrentPage(1);
+                setSelectedIds([]);
               }}
               className={`min-w-[72px] rounded-full px-3 py-1 text-xs font-semibold ${
-                roleFilter === 'consumer'
+                roleFilter === 'CONSUMER'
                   ? 'bg-primary text-white shadow-sm'
                   : 'bg-transparent text-gray-600 hover:bg-white'
               }`}
@@ -210,11 +175,12 @@ const AdminUsersPage = () => {
             <button
               type="button"
               onClick={() => {
-                setRoleFilter('seller');
+                setRoleFilter('SELLER');
                 setCurrentPage(1);
+                setSelectedIds([]);
               }}
               className={`min-w-[72px] rounded-full px-3 py-1 text-xs font-semibold ${
-                roleFilter === 'seller'
+                roleFilter === 'SELLER'
                   ? 'bg-primary text-white shadow-sm'
                   : 'bg-transparent text-gray-600 hover:bg-white'
               }`}
@@ -256,54 +222,53 @@ const AdminUsersPage = () => {
               </tr>
             </thead>
             <tbody>
-              {pagedUsers.map((user, index) => (
-                <tr
-                  key={user.id}
-                  onClick={() =>
-                    navigate(`/admin/users/${user.id}`, { state: { user } })
-                  }
-                  className={`cursor-pointer border-b border-dashed border-gray-200 hover:bg-slate-50/70 ${
-                    index === 0 ? 'border-t border-solid border-gray-200' : ''
-                  }`}
-                >
-                  <td
-                    className="px-4 py-3"
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(user.id)}
-                      onChange={() => handleToggleSelectOne(user.id)}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-gray-900">{user.loginId}</td>
-                  <td className="px-4 py-3 text-gray-900">{user.name}</td>
-                  <td className="px-4 py-3 text-gray-700">{user.ageGroup}</td>
-                  <td className="px-4 py-3 text-gray-700">{user.email}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                        user.status === 'active'
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'bg-red-50 text-red-600'
-                      }`}
-                    >
-                      {user.status === 'active' ? '활성화' : '비활성화'}
-                    </span>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-500">
+                    로딩 중...
                   </td>
                 </tr>
-              ))}
-
-              {pagedUsers.length === 0 && (
+              ) : pagedUsers.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-10 text-center text-sm text-gray-500"
-                  >
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-500">
                     검색 조건에 맞는 사용자가 없습니다.
                   </td>
                 </tr>
+              ) : (
+                pagedUsers.map((user, index) => (
+                  <tr
+                    key={user.id}
+                    onClick={() =>
+                      navigate(`/admin/users/${user.id}`, { state: { user } })
+                    }
+                    className={`cursor-pointer border-b border-dashed border-gray-200 hover:bg-slate-50/70 ${
+                      index === 0 ? 'border-t border-solid border-gray-200' : ''
+                    }`}
+                  >
+                    <td
+                      className="px-4 py-3"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(user.id)}
+                        onChange={() => handleToggleSelectOne(user.id)}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-gray-900">{user.loginId || '-'}</td>
+                    <td className="px-4 py-3 text-gray-900">{user.name || user.nickname || '-'}</td>
+                    <td className="px-4 py-3 text-gray-700">{getAgeGroupLabel(user.ageGroup)}</td>
+                    <td className="px-4 py-3 text-gray-700">{user.email || '-'}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${getStatusChipClass(user.status)}`}
+                      >
+                        {getStatusLabel(user.status)}
+                      </span>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
@@ -341,8 +306,8 @@ const AdminUsersPage = () => {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => handleChangeStatus('active')}
-              disabled={selectedIds.length === 0}
+              onClick={() => handleChangeStatus('ACTIVE')}
+              disabled={selectedIds.length === 0 || updateStatusMutation.isPending}
               className={`min-w-[88px] rounded-lg px-4 py-2 text-xs font-semibold shadow-sm ${
                 selectedIds.length === 0
                   ? 'cursor-not-allowed bg-gray-200 text-gray-500'
@@ -353,15 +318,15 @@ const AdminUsersPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => handleChangeStatus('inactive')}
-              disabled={selectedIds.length === 0}
+              onClick={() => handleChangeStatus('SUSPENDED')}
+              disabled={selectedIds.length === 0 || updateStatusMutation.isPending}
               className={`min-w-[88px] rounded-lg px-4 py-2 text-xs font-semibold shadow-sm ${
                 selectedIds.length === 0
                   ? 'cursor-not-allowed bg-gray-200 text-gray-500'
                   : 'bg-primary text-white hover:bg-primary/90'
               }`}
             >
-              비활성화
+              정지
             </button>
           </div>
         </div>
@@ -371,5 +336,3 @@ const AdminUsersPage = () => {
 };
 
 export default AdminUsersPage;
-
-
