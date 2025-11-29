@@ -9,7 +9,7 @@ const detectPlatform = () => {
   const isIOS = /iPhone|iPad|iPod/.test(ua);
   const isAndroid = /Android/.test(ua);
   const isSamsung = /SamsungBrowser/.test(ua);
-  const isChrome = /Chrome/.test(ua) && !/Edge|Edg/.test(ua);
+  const isChrome = /Chrome/.test(ua) && !/Edge|Edg|SamsungBrowser/.test(ua);
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
     || window.navigator.standalone === true;
   
@@ -62,9 +62,10 @@ const InstallPrompt = () => {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // beforeinstallprompt가 발생하지 않아도 모바일이면 안내 배너 표시
+    // beforeinstallprompt가 발생하지 않아도 삼성 인터넷/iOS면 안내 배너 표시
+    // Chrome은 자체 설치 UI가 있으므로 제외
     const timer = setTimeout(() => {
-      if (!deferredPrompt && (detected.isAndroid || detected.isIOS)) {
+      if (!deferredPrompt && (detected.isSamsung || detected.isIOS)) {
         setShowPrompt(true);
       }
     }, 3000);

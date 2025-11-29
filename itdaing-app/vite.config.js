@@ -17,10 +17,20 @@ export default defineConfig({
   build: {
     target: 'esnext',
     outDir: 'dist',
+    chunkSizeWarningLimit: 600, // 경고 임계값 상향
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'lucide-react'],
+          // React 코어
+          'react-vendor': ['react', 'react-dom'],
+          // UI 라이브러리
+          'ui-vendor': ['lucide-react', 'clsx'],
+          // 라우팅 & 상태관리
+          'router-vendor': ['react-router-dom', 'zustand'],
+          // 데이터 페칭
+          'query-vendor': ['@tanstack/react-query', 'axios'],
+          // 카카오맵
+          'kakao-vendor': ['react-kakao-maps-sdk'],
         },
       },
     },
