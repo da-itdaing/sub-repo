@@ -1,23 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
-import { MapPin, Calendar, Clock } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { MapPin, Calendar, Clock, Map as MapIcon, ChevronDown } from 'lucide-react';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { createPopup } from '@/services/sellerService';
 import { uploadImage } from '@/services/uploadService';
 import { useToast } from '@/hooks/useToast';
 import { useMasterData } from '@/hooks/useMasterData';
+import { listAreas, listCells, parseGeoJsonPolygon } from '@/services/geoZoneService';
+import { Map, Polygon, MapMarker, CustomOverlayMap } from 'react-kakao-maps-sdk';
 
-// TODO: 마스터 데이터 API 연동 후 대체 가능
-const AMENITIES = [
-  '무료주차',
-  '무료입장',
-  '특별할인',
-  '사전예약',
-  '포토존',
-  '굿즈판매',
-  '체험가능',
-];
+// 광주 중심 좌표
+const GWANGJU_CENTER = { lat: 35.1595, lng: 126.8526 };
 
 const SellerPopupCreatePage = () => {
   const navigate = useNavigate();
@@ -28,15 +22,13 @@ const SellerPopupCreatePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    address: '', // activityRegion
-    addressDetail: '', // 상세 주소
+    zoneCellId: null, // 셀 ID (필수)
     startDate: '',
     endDate: '',
     openingHours: '',
-    contact: '',
-    categoryId: '', // 단일 선택
-    styleIds: [], // 다중 선택
-    featureIds: [], // 편의시설 등
+    categoryId: '',
+    styleIds: [],
+    featureIds: [],
     hashtags: '',
     description: '',
     thumbnail: null,
@@ -44,6 +36,35 @@ const SellerPopupCreatePage = () => {
     homepageUrl: '',
     snsUrl: '',
   });
+
+  // 존/셀 선택 상태
+  const [selectedArea, setSelectedArea] = useState(null);
+  const [selectedCell, setSelectedCell] = useState(null);
+  const [showMap, setShowMap] = useState(false);
+
+  // 존 목록 조회
+  const { data: areasData, isLoading: isLoadingAreas } = useQuery({
+    queryKey: ['geoAreas'],
+    queryFn: () => listAreas({ page: 0, size: 100 }),
+    staleTime: 5 * 60 * 1000, // 5분 캐시
+  });
+  const areas = areasData?.items || [];
+
+  // 선택된 존의 셀 목록 조회
+  const { data: cellsData, isLoading: isLoadingCells } = useQuery({
+    queryKey: ['geoCells', selectedArea?.id],
+    queryFn: () => listCells({ areaId: selectedArea.id, page: 0, size: 100 }),
+    enabled: !!selectedArea?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+  const cells = cellsData?.items || [];
+
+  // 셀 선택 시 formData 업데이트
+  useEffect(() => {
+    if (selectedCell) {
+      setFormData((prev) => ({ ...prev, zoneCellId: selectedCell.id }));
+    }
+  }, [selectedCell]);
 
   const createPopupMutation = useMutation({
     mutationFn: createPopup,
@@ -94,52 +115,83 @@ const SellerPopupCreatePage = () => {
     });
   };
 
+  // 존 선택
+  const handleSelectArea = (area) => {
+    setSelectedArea(area);
+    setSelectedCell(null);
+    setFormData((prev) => ({ ...prev, zoneCellId: null }));
+  };
+
+  // 셀 선택
+  const handleSelectCell = (cell) => {
+    setSelectedCell(cell);
+  };
+
+  // 셀 위치 파싱
+  const getCellPosition = (cell) => {
+    if (!cell?.geometryData) return null;
+    try {
+      const geo = JSON.parse(cell.geometryData);
+      if (geo.type === 'Point' && geo.coordinates) {
+        return { lat: geo.coordinates[1], lng: geo.coordinates[0] };
+      }
+      if (geo.lat && geo.lng) {
+        return { lat: geo.lat, lng: geo.lng };
+      }
+    } catch {
+      // 파싱 실패 시 무시
+    }
+    return null;
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (isSubmitting) return;
+
+    // 셀 선택 검증
+    if (!formData.zoneCellId) {
+      addToast({ title: '셀을 선택해주세요.', description: '지도에서 부스 위치를 선택해야 합니다.', variant: 'error' });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       // 1. 이미지 업로드
-      let thumbnailUrl = '';
+      let thumbnailImage = null;
       if (formData.thumbnail) {
         const uploadRes = await uploadImage(formData.thumbnail);
-        thumbnailUrl = uploadRes.url;
+        thumbnailImage = {
+          url: uploadRes.url,
+          key: uploadRes.key,
+        };
       }
 
-      const imageUrls = [];
+      const images = [];
       if (formData.images.length > 0) {
         for (const file of formData.images) {
           const uploadRes = await uploadImage(file);
-          imageUrls.push(uploadRes.url);
+          images.push({
+            url: uploadRes.url,
+            key: uploadRes.key,
+          });
         }
       }
 
-      // 2. 해시태그 처리
-      const tags = formData.hashtags
-        .split(/[\s,]+/)
-        .filter((tag) => tag.startsWith('#'))
-        .map((tag) => tag.slice(1)); // # 제거
-
-      // 3. API 요청 데이터 구성 (PopupCreateRequest)
+      // 2. API 요청 데이터 구성 (PopupCreateRequest)
       const requestData = {
         title: formData.title,
-        introduction: formData.description,
-        startDate: formData.startDate, // "YYYY-MM-DD"
-        endDate: formData.endDate,     // "YYYY-MM-DD"
-        openingTime: formData.openingHours, // "10:00~22:00" 등 자유 형식
-        location: formData.address,
-        addressDetail: formData.addressDetail,
-        latitude: 0, // TODO: 주소 -> 좌표 변환 로직 필요 (현재 0)
-        longitude: 0, // TODO: 주소 -> 좌표 변환 로직 필요 (현재 0)
-        thumbnail: thumbnailUrl,
-        images: imageUrls,
-        homepageUrl: formData.homepageUrl,
-        snsUrl: formData.snsUrl,
-        categoryId: formData.categoryId ? Number(formData.categoryId) : null,
+        description: formData.description,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        operatingTime: formData.openingHours,
+        zoneCellId: formData.zoneCellId,
+        categoryIds: formData.categoryId ? [Number(formData.categoryId)] : [],
+        targetCategoryIds: [],
         styleIds: formData.styleIds,
         featureIds: formData.featureIds,
-        tags: tags,
+        thumbnailImage,
+        images,
       };
 
       createPopupMutation.mutate(requestData);
@@ -185,31 +237,160 @@ const SellerPopupCreatePage = () => {
           />
         </div>
 
-        {/* 2. 장소 (주소) */}
+        {/* 2. 존/셀 선택 (지도) */}
         <div>
-          <label className="text-xs font-semibold text-gray-500">장소 *</label>
-          <div className="mt-1 space-y-2">
-            <div className="relative">
-              <MapPin className="absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                required
-                placeholder="주소를 입력해주세요. (예: 광주광역시 동구 ...)"
-                className="w-full border-b border-gray-300 py-2 pl-6 text-sm focus:border-primary focus:outline-none"
-              />
+          <label className="text-xs font-semibold text-gray-500">부스 위치 선택 *</label>
+          <p className="text-xs text-gray-400 mt-1">
+            행사가 열리는 존을 선택하고, 해당 존 안에서 부스(셀) 위치를 선택해주세요.
+          </p>
+          
+          {/* 존 선택 드롭다운 */}
+          <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="text-xs text-gray-500">존 선택</label>
+              <div className="relative mt-1">
+                <select
+                  value={selectedArea?.id || ''}
+                  onChange={(e) => {
+                    const area = areas.find((a) => a.id === Number(e.target.value));
+                    handleSelectArea(area);
+                  }}
+                  className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2 pr-8 text-sm focus:border-[#EB0000] focus:outline-none focus:ring-1 focus:ring-[#EB0000]"
+                >
+                  <option value="">존을 선택하세요</option>
+                  {areas.map((area) => (
+                    <option key={area.id} value={area.id}>
+                      {area.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
             </div>
-            <input
-              type="text"
-              name="addressDetail"
-              value={formData.addressDetail}
-              onChange={handleChange}
-              placeholder="상세 주소를 입력해주세요."
-              className="w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
-            />
+
+            <div>
+              <label className="text-xs text-gray-500">셀(부스) 선택</label>
+              <div className="relative mt-1">
+                <select
+                  value={selectedCell?.id || ''}
+                  onChange={(e) => {
+                    const cell = cells.find((c) => c.id === Number(e.target.value));
+                    handleSelectCell(cell);
+                  }}
+                  disabled={!selectedArea}
+                  className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2 pr-8 text-sm focus:border-[#EB0000] focus:outline-none focus:ring-1 focus:ring-[#EB0000] disabled:bg-gray-100 disabled:text-gray-400"
+                >
+                  <option value="">
+                    {isLoadingCells ? '로딩 중...' : selectedArea ? '셀을 선택하세요' : '먼저 존을 선택하세요'}
+                  </option>
+                  {cells.map((cell) => (
+                    <option key={cell.id} value={cell.id}>
+                      {cell.label} {cell.status !== 'APPROVED' && `(${cell.status})`}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
           </div>
+
+          {/* 선택된 존/셀 정보 */}
+          {selectedArea && (
+            <div className="mt-3 rounded-lg bg-gray-50 p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{selectedArea.name}</p>
+                  {selectedCell && (
+                    <p className="text-xs text-[#EB0000] mt-1">
+                      선택된 부스: {selectedCell.label}
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowMap(!showMap)}
+                  className="flex items-center gap-1 text-xs text-[#EB0000] hover:underline"
+                >
+                  <MapIcon className="h-4 w-4" />
+                  {showMap ? '지도 숨기기' : '지도 보기'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 지도 (토글) */}
+          {showMap && selectedArea && (
+            <div className="mt-3 h-[300px] rounded-lg overflow-hidden border border-gray-200">
+              <Map
+                center={(() => {
+                  const coords = parseGeoJsonPolygon(selectedArea.polygonGeoJson);
+                  if (coords.length > 0) {
+                    return coords.reduce(
+                      (acc, c) => ({ lat: acc.lat + c.lat / coords.length, lng: acc.lng + c.lng / coords.length }),
+                      { lat: 0, lng: 0 }
+                    );
+                  }
+                  return GWANGJU_CENTER;
+                })()}
+                style={{ width: '100%', height: '100%' }}
+                level={5}
+              >
+                {/* 존 폴리곤 */}
+                {(() => {
+                  const coords = parseGeoJsonPolygon(selectedArea.polygonGeoJson);
+                  if (coords.length >= 3) {
+                    return (
+                      <Polygon
+                        path={coords}
+                        strokeWeight={2}
+                        strokeColor="#eb0000"
+                        strokeOpacity={0.8}
+                        fillColor="#eb0000"
+                        fillOpacity={0.15}
+                      />
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* 셀 마커 */}
+                {cells.map((cell) => {
+                  const pos = getCellPosition(cell);
+                  if (!pos) return null;
+                  const isSelected = selectedCell?.id === cell.id;
+
+                  return (
+                    <div key={cell.id}>
+                      <MapMarker
+                        position={pos}
+                        onClick={() => handleSelectCell(cell)}
+                        image={
+                          isSelected
+                            ? undefined
+                            : {
+                                src: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
+                                size: { width: 32, height: 35 },
+                              }
+                        }
+                      />
+                      <CustomOverlayMap position={pos} yAnchor={2.5}>
+                        <div
+                          onClick={() => handleSelectCell(cell)}
+                          className={`cursor-pointer px-2 py-1 rounded shadow text-xs font-semibold border ${
+                            isSelected
+                              ? 'bg-[#EB0000] text-white border-[#EB0000]'
+                              : 'bg-white text-gray-700 border-gray-200 hover:border-[#EB0000]'
+                          }`}
+                        >
+                          {cell.label}
+                        </div>
+                      </CustomOverlayMap>
+                    </div>
+                  );
+                })}
+              </Map>
+            </div>
+          )}
         </div>
 
         {/* 3. 팝업 기간 & 운영 시간 */}
@@ -241,27 +422,16 @@ const SellerPopupCreatePage = () => {
             </div>
           </div>
           <div className="mt-4">
-            <label className="text-xs font-semibold text-gray-500">운영 시간 & 연락처</label>
-            <div className="mt-1 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="relative">
-                <Clock className="absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  name="openingHours"
-                  value={formData.openingHours}
-                  onChange={handleChange}
-                  required
-                  placeholder="예: 10:00 - 22:00"
-                  className="w-full border-b border-gray-300 py-2 pl-6 text-sm focus:border-primary focus:outline-none"
-                />
-              </div>
+            <label className="text-xs font-semibold text-gray-500">운영 시간</label>
+            <div className="relative mt-1">
+              <Clock className="absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
-                type="tel"
-                name="contact"
-                value={formData.contact}
+                type="text"
+                name="openingHours"
+                value={formData.openingHours}
                 onChange={handleChange}
-                placeholder="연락처 (선택)"
-                className="w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
+                placeholder="예: 10:00 - 22:00"
+                className="w-full border-b border-gray-300 py-2 pl-6 text-sm focus:border-primary focus:outline-none"
               />
             </div>
           </div>
@@ -419,7 +589,7 @@ const SellerPopupCreatePage = () => {
         <div className="flex justify-end pt-6">
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !formData.zoneCellId}
             className="w-full rounded-lg bg-[#EB0000] py-3 text-base font-bold text-white shadow-md hover:bg-[#c90000] md:w-auto md:px-12 disabled:opacity-70"
           >
             {isSubmitting ? '등록 중...' : '작성'}
