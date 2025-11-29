@@ -62,8 +62,7 @@ public class ZoneQueryService {
         return new ZoneCellSummaryResponse(
             cell.getId(),
             cell.getLabel(),
-            cell.getLat(),
-            cell.getLng(),
+            cell.getGeometryData(),
             cell.getMaxCapacity(),
             zoneStatusToString(cell.getStatus()),
             List.of(),

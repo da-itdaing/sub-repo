@@ -5,8 +5,7 @@ import java.util.List;
 public record ZoneCellSummaryResponse(
     Long id,
     String label,
-    Double lat,
-    Double lng,
+    String geometry,
     Integer maxCapacity,
     String status,
     List<Integer> features,

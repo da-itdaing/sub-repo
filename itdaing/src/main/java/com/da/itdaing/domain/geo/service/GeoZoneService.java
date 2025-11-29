@@ -39,21 +39,25 @@ public class GeoZoneService {
         Users owner = userRepo.findById(sellerId).orElseThrow();
         ZoneArea area = areaRepo.findById(req.getAreaId()).orElseThrow();
 
-        // 구역 상태 체크
         if (area.getStatus() == AreaStatus.HIDDEN || area.getStatus() == AreaStatus.UNAVAILABLE) {
             throw new IllegalStateException("해당 구역은 현재 존 등록이 불가합니다.");
         }
 
-        // 포함검사: (lng, lat) 좌표가 area.polygonGeoJson 내부(또는 경계선)에 존재해야 함
-        validatePointInsideOrThrow(area.getPolygonGeoJson(), req.getLng(), req.getLat());
+        if (req.getGeometryData() == null || req.getGeometryData().isBlank()) {
+            throw new IllegalArgumentException("존 폴리곤(geometryData)은 필수입니다.");
+        }
+
+        if (area.getPolygonGeoJson() != null && !area.getPolygonGeoJson().isBlank()) {
+            Coordinate centroid = centroidFromGeoJson(req.getGeometryData());
+            validatePointInsideOrThrow(area.getPolygonGeoJson(), centroid.getX(), centroid.getY());
+        }
 
         ZoneCell z = ZoneCell.builder()
             .zoneArea(area)
             .owner(owner)
             .label(req.getLabel())
             .detailedAddress(req.getDetailedAddress())
-            .lat(req.getLat())
-            .lng(req.getLng())
+            .geometryData(req.getGeometryData())  // 🔥
             .status(ZoneStatus.PENDING)
             .maxCapacity(req.getMaxCapacity())
             .notice(req.getNotice())
@@ -197,8 +201,7 @@ public class GeoZoneService {
             .ownerId(z.getOwner().getId())
             .label(z.getLabel())
             .detailedAddress(z.getDetailedAddress())
-            .lat(z.getLat())
-            .lng(z.getLng())
+            .geometryData(z.getGeometryData())     // 🔥
             .status(z.getStatus())
             .maxCapacity(z.getMaxCapacity())
             .notice(z.getNotice())
@@ -215,5 +218,20 @@ public class GeoZoneService {
             .page(page.getNumber())
             .size(page.getSize())
             .build();
+    }
+
+    /** GeoJSON 폴리곤의 중심점(centroid) 좌표 계산 */
+    private Coordinate centroidFromGeoJson(String geojson) {
+        if (geojson == null || geojson.isBlank()) {
+            throw new IllegalArgumentException("GeoJSON(geometryData)이 비어있습니다.");
+        }
+
+        try {
+            Geometry geom = readGeometryFromGeoJson(geojson);  // 이미 아래에 있는 메서드 재사용
+            Geometry centroidGeom = geom.getCentroid();
+            return centroidGeom.getCoordinate();  // x = lng, y = lat
+        } catch (Exception e) {
+            throw new IllegalArgumentException("GeoJSON으로부터 중심점을 계산할 수 없습니다.", e);
+        }
     }
 }

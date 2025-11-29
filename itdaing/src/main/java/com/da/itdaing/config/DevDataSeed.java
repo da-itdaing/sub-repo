@@ -502,61 +502,69 @@ public class DevDataSeed implements CommandLineRunner {
        Geo + Popup seed (from mock JSON)
        ========================= */
     private void seedZonesAndCells() {
-        if (zoneAreaRepository.count() > 0 || zoneCellRepository.count() > 0) {
-            log.info("ZoneArea/ZoneCell already seeded. Skipping mock zone import.");
-            return;
-        }
+    if (zoneAreaRepository.count() > 0 || zoneCellRepository.count() > 0) {
+        log.info("ZoneArea/ZoneCell already seeded. Skipping mock zone import.");
+        return;
+    }
 
-        List<MockZone> zones = mockDataService.getZones();
-        if (zones.isEmpty()) {
-            log.info("No mock zones found. Skip zone seeding.");
-            return;
-        }
+    List<MockZone> zones = mockDataService.getZones();
+    if (zones.isEmpty()) {
+        log.info("No mock zones found. Skip zone seeding.");
+        return;
+    }
 
-        Map<Long, Region> regionById = regionRepository.findAll().stream()
-            .collect(Collectors.toMap(Region::getId, region -> region));
-        Map<Long, Users> sellerLookup = buildSellerMockLookup();
+    Map<Long, Region> regionById = regionRepository.findAll().stream()
+        .collect(Collectors.toMap(Region::getId, region -> region));
+    Map<Long, Users> sellerLookup = buildSellerMockLookup();
 
-        for (MockZone zone : zones) {
-            Region region = regionById.getOrDefault(
-                Long.valueOf(zone.regionId()),
-                regionById.values().stream().findFirst().orElse(null)
-            );
-            String geometryJson = writeGeometry(zone);
+    for (MockZone zone : zones) {
+        Region region = regionById.getOrDefault(
+            Long.valueOf(zone.regionId()),
+            regionById.values().stream().findFirst().orElse(null)
+        );
 
-            ZoneArea zoneArea = zoneAreaRepository.save(
-                ZoneArea.builder()
-                    .region(Objects.requireNonNullElseGet(region, () -> regionRepository.findAll().stream().findFirst().orElse(null)))
-                    .name(zone.name())
-                    .polygonGeoJson(geometryJson)
-                    .status(mapAreaStatus(zone.status()))
-                    .maxCapacity(zone.maxCapacity())
-                    .notice(zone.notice())
+        // 존 폴리곤 GeoJSON
+        String areaGeometryJson = writeGeometry(zone);
+
+        ZoneArea zoneArea = zoneAreaRepository.save(
+            ZoneArea.builder()
+                .region(Objects.requireNonNullElseGet(
+                    region,
+                    () -> regionRepository.findAll().stream().findFirst().orElse(null)
+                ))
+                .name(zone.name())
+                .polygonGeoJson(areaGeometryJson)
+                .status(mapAreaStatus(zone.status()))
+                .maxCapacity(zone.maxCapacity())
+                .notice(zone.notice())
+                .build()
+        );
+
+        for (MockZoneCell cell : zone.cells()) {
+            Users owner = resolveOwner(cell.reservedBy(), sellerLookup);
+
+            // TODO: MockZoneCell에 폴리곤 정보 생기면 여기서 cell 전용 geometry로 교체
+            String cellGeometryJson = areaGeometryJson;
+
+            ZoneCell zoneCell = zoneCellRepository.save(
+                ZoneCell.builder()
+                    .zoneArea(zoneArea)
+                    .owner(owner)
+                    .label(cell.label())
+                    .detailedAddress(null)
+                    .geometryData(cellGeometryJson)
+                    .status(mapZoneStatus(cell.status()))
+                    .maxCapacity(cell.maxCapacity())
+                    .notice(cell.notice())
                     .build()
             );
-
-            for (MockZoneCell cell : zone.cells()) {
-                Users owner = resolveOwner(cell.reservedBy(), sellerLookup);
-                ZoneCell zoneCell = zoneCellRepository.save(
-                    ZoneCell.builder()
-                        .zoneArea(zoneArea)
-                        .owner(owner)
-                        .label(cell.label())
-                        .detailedAddress(null)
-                        .lat(cell.lat())
-                        .lng(cell.lng())
-                        .status(mapZoneStatus(cell.status()))
-                        .maxCapacity(cell.maxCapacity())
-                        .notice(cell.notice())
-                        .build()
-                );
-                zoneCellByMockId.put(cell.id(), zoneCell);
-            }
+            zoneCellByMockId.put(cell.id(), zoneCell);
         }
-
-        log.info("Seeded {} zone areas and {} zone cells from mock data.",
-            zoneAreaRepository.count(), zoneCellRepository.count());
     }
+
+    log.info("Seeded {} zone areas and {} zone cells from mock data.",
+        zoneAreaRepository.count(), zoneCellRepository.count());
+}
 
     private void seedPopups() {
         if (popupRepository.count() > 0) {

@@ -39,9 +39,8 @@ public class ZoneCell extends BaseTimeEntity {
     @Column(name = "detailed_address", length = 255)
     private String detailedAddress;
 
-    /** 마커 좌표(필수) */
-    @Column(name = "lat", nullable = false) private Double lat;
-    @Column(name = "lng", nullable = false) private Double lng;
+    @Column(name = "geometry_data", columnDefinition = "TEXT")
+    private String geometryData;
 
     /** 상태/수용/유의사항 */
     @Enumerated(EnumType.STRING)
@@ -57,14 +56,13 @@ public class ZoneCell extends BaseTimeEntity {
     @Builder
     public ZoneCell(ZoneArea zoneArea, Users owner,
                     String label, String detailedAddress,
-                    Double lat, Double lng,
+                    String geometryData,
                     ZoneStatus status, Integer maxCapacity, String notice) {
         this.zoneArea = zoneArea;
         this.owner = owner;
         this.label = label;
         this.detailedAddress = detailedAddress;
-        this.lat = lat;
-        this.lng = lng;
+        this.geometryData = geometryData;
         this.status = status != null ? status : ZoneStatus.PENDING;
         this.maxCapacity = maxCapacity;
         this.notice = notice;
@@ -77,7 +75,7 @@ public class ZoneCell extends BaseTimeEntity {
 
     /** 셀 정보 업데이트 (관리자용) - null이 아닌 값만 업데이트 */
     public void update(ZoneArea zoneArea, Users owner, String label, String detailedAddress,
-                      Double lat, Double lng, ZoneStatus status, Integer maxCapacity, String notice) {
+                      String geometryData, ZoneStatus status, Integer maxCapacity, String notice) {
         // zoneArea와 owner는 항상 설정 (null 체크는 서비스에서)
         this.zoneArea = zoneArea;
         this.owner = owner;
@@ -89,11 +87,8 @@ public class ZoneCell extends BaseTimeEntity {
         if (detailedAddress != null) {
             this.detailedAddress = detailedAddress;
         }
-        if (lat != null) {
-            this.lat = lat;
-        }
-        if (lng != null) {
-            this.lng = lng;
+        if (geometryData != null) {
+            this.geometryData = geometryData;
         }
         if (status != null) {
             this.status = status;

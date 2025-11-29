@@ -55,8 +55,7 @@ public class GeoDtos {
         private Long ownerId;          // 필수: 소유자(판매자) ID (관리자가 지정)
         private String label;          // 선택
         private String detailedAddress;// 선택
-        private Double lat;            // 필수
-        private Double lng;            // 필수
+        private String geometryData;
         private Integer maxCapacity;   // 선택
         private String notice;         // 선택
     }
@@ -68,8 +67,7 @@ public class GeoDtos {
         private Long ownerId;
         private String label;
         private String detailedAddress;
-        private Double lat;
-        private Double lng;
+        private String geometryData;
         private ZoneStatus status;
         private Integer maxCapacity;
         private String notice;
@@ -100,8 +98,7 @@ public class GeoDtos {
         private Long ownerId;           // 필수: 소유자(판매자) ID
         private String label;            // 선택
         private String detailedAddress; // 선택
-        private Double lat;              // 필수
-        private Double lng;              // 필수
+        private String geometryData;
         private ZoneStatus status;       // 선택: 기본 PENDING
         private Integer maxCapacity;      // 선택
         private String notice;           // 선택
@@ -114,8 +111,7 @@ public class GeoDtos {
         private Long ownerId;             // 선택: 소유자 변경
         private String label;            // 선택
         private String detailedAddress;  // 선택
-        private Double lat;              // 선택
-        private Double lng;              // 선택
+        private String geometryData;      // 선택
         private ZoneStatus status;        // 선택
         private Integer maxCapacity;      // 선택
         private String notice;           // 선택
@@ -130,8 +126,7 @@ public class GeoDtos {
         private String ownerLoginId;
         private String label;
         private String detailedAddress;
-        private Double lat;
-        private Double lng;
+        private String geometryData;
         private ZoneStatus status;
         private Integer maxCapacity;
         private String notice;

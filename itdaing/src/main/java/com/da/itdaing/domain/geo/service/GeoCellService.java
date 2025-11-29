@@ -35,15 +35,14 @@ public class GeoCellService {
 
     /** 관리자: 셀 생성 */
     public CellResponse createCell(CreateCellRequest req) {
-        // 필수 필드 검증
         if (req.getAreaId() == null) {
             throw new IllegalArgumentException("구역 ID는 필수입니다.");
         }
         if (req.getOwnerId() == null) {
             throw new IllegalArgumentException("소유자 ID는 필수입니다.");
         }
-        if (req.getLat() == null || req.getLng() == null) {
-            throw new IllegalArgumentException("좌표(lat, lng)는 필수입니다.");
+        if (req.getGeometryData() == null || req.getGeometryData().isBlank()) {
+            throw new IllegalArgumentException("셀 폴리곤(geometryData)은 필수입니다.");
         }
 
         ZoneArea area = areaRepo.findById(req.getAreaId())
@@ -52,14 +51,14 @@ public class GeoCellService {
         Users owner = userRepo.findById(req.getOwnerId())
             .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + req.getOwnerId()));
 
-        // 구역 상태 체크
         if (area.getStatus() == AreaStatus.HIDDEN || area.getStatus() == AreaStatus.UNAVAILABLE) {
             throw new IllegalStateException("해당 구역은 현재 셀 등록이 불가합니다.");
         }
 
-        // 포함검사: 좌표가 구역 폴리곤 내부에 있는지 확인
+        // 🔥 셀 폴리곤의 centroid가 area 폴리곤 내부인지 검사
         if (area.getPolygonGeoJson() != null && !area.getPolygonGeoJson().isBlank()) {
-            validatePointInsideOrThrow(area.getPolygonGeoJson(), req.getLng(), req.getLat());
+            Coordinate centroid = centroidFromGeoJson(req.getGeometryData());
+            validatePointInsideOrThrow(area.getPolygonGeoJson(), centroid.getX(), centroid.getY());
         }
 
         ZoneCell cell = ZoneCell.builder()
@@ -67,8 +66,7 @@ public class GeoCellService {
             .owner(owner)
             .label(req.getLabel())
             .detailedAddress(req.getDetailedAddress())
-            .lat(req.getLat())
-            .lng(req.getLng())
+            .geometryData(req.getGeometryData())                 // 🔥 여기만 저장
             .status(req.getStatus() != null ? req.getStatus() : ZoneStatus.PENDING)
             .maxCapacity(req.getMaxCapacity())
             .notice(req.getNotice())
@@ -78,17 +76,25 @@ public class GeoCellService {
         return toDto(cell);
     }
 
+    private Coordinate centroidFromGeoJson(String geojson) throws IllegalArgumentException {
+        try {
+            Geometry geom = readGeometryFromGeoJson(geojson); // 이미 아래 유틸 있음
+            Point c = geom.getCentroid();
+            return new Coordinate(c.getX(), c.getY()); // X=lng, Y=lat
+        } catch (Exception e) {
+            throw new IllegalArgumentException("셀 geometryData 파싱/centroid 계산 실패", e);
+        }
+    }
+
     /** 관리자: 셀 수정 */
     public CellResponse updateCell(Long cellId, UpdateCellRequest req) {
         ZoneCell existingCell = cellRepo.findById(cellId)
             .orElseThrow(() -> new IllegalArgumentException("셀을 찾을 수 없습니다: " + cellId));
 
-        // 업데이트할 값 결정
         ZoneArea area = existingCell.getZoneArea();
         if (req.getAreaId() != null && !req.getAreaId().equals(existingCell.getZoneArea().getId())) {
             area = areaRepo.findById(req.getAreaId())
                 .orElseThrow(() -> new IllegalArgumentException("구역을 찾을 수 없습니다: " + req.getAreaId()));
-            
             if (area.getStatus() == AreaStatus.HIDDEN || area.getStatus() == AreaStatus.UNAVAILABLE) {
                 throw new IllegalStateException("해당 구역은 현재 셀 등록이 불가합니다.");
             }
@@ -100,29 +106,27 @@ public class GeoCellService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + req.getOwnerId()));
         }
 
-        // null이면 기존 값 유지, null이 아니면 업데이트
         String label = req.getLabel() != null ? req.getLabel() : existingCell.getLabel();
         String detailedAddress = req.getDetailedAddress() != null ? req.getDetailedAddress() : existingCell.getDetailedAddress();
-        Double lat = req.getLat() != null ? req.getLat() : existingCell.getLat();
-        Double lng = req.getLng() != null ? req.getLng() : existingCell.getLng();
+        String geometryData = req.getGeometryData() != null ? req.getGeometryData() : existingCell.getGeometryData();
         ZoneStatus status = req.getStatus() != null ? req.getStatus() : existingCell.getStatus();
         Integer maxCapacity = req.getMaxCapacity() != null ? req.getMaxCapacity() : existingCell.getMaxCapacity();
         String notice = req.getNotice() != null ? req.getNotice() : existingCell.getNotice();
 
-        // 좌표 변경 시 포함검사
-        if ((req.getLat() != null || req.getLng() != null || req.getAreaId() != null) 
+        // 🔥 geometry 또는 area 바뀌면 다시 포함검사
+        if ((req.getGeometryData() != null || req.getAreaId() != null)
             && area.getPolygonGeoJson() != null && !area.getPolygonGeoJson().isBlank()) {
-            validatePointInsideOrThrow(area.getPolygonGeoJson(), lng, lat);
+
+            Coordinate centroid = centroidFromGeoJson(geometryData);
+            validatePointInsideOrThrow(area.getPolygonGeoJson(), centroid.getX(), centroid.getY());
         }
 
-        // 엔티티 업데이트
         existingCell.update(
             area,
             owner,
             label,
             detailedAddress,
-            lat,
-            lng,
+            geometryData,
             status,
             maxCapacity,
             notice
@@ -136,10 +140,10 @@ public class GeoCellService {
     public void deleteCell(Long cellId) {
         ZoneCell cell = cellRepo.findById(cellId)
             .orElseThrow(() -> new IllegalArgumentException("셀을 찾을 수 없습니다: " + cellId));
-        
+
         // 연관된 팝업이 있는지 확인 (선택사항: 경고만 표시하거나 삭제 방지)
         // 여기서는 삭제를 허용하되, 데이터베이스 외래키 제약조건에 의해 팝업이 있으면 삭제 실패
-        
+
         cellRepo.delete(cell);
     }
 
@@ -170,8 +174,8 @@ public class GeoCellService {
             .map(this::toDto)
             .toList();
 
-        long totalElements = status != null 
-            ? filteredItems.size() 
+        long totalElements = status != null
+            ? filteredItems.size()
             : data.getTotalElements();
 
         return CellListResponse.builder()
@@ -200,8 +204,7 @@ public class GeoCellService {
             .ownerLoginId(cell.getOwner().getLoginId())
             .label(cell.getLabel())
             .detailedAddress(cell.getDetailedAddress())
-            .lat(cell.getLat())
-            .lng(cell.getLng())
+            .geometryData(cell.getGeometryData())
             .status(cell.getStatus())
             .maxCapacity(cell.getMaxCapacity())
             .notice(cell.getNotice())
