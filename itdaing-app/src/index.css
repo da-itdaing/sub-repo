@@ -44,7 +44,8 @@ body {
 html,
 body {
   height: 100%;
-  overscroll-behavior-y: none;
+  /* Pull-to-refresh 허용 (PWA에서 새로고침 가능하도록) */
+  overscroll-behavior-y: auto;
 }
 
 #root {
@@ -139,4 +140,20 @@ body {
   100% {
     transform: rotate(5deg);
   }
+}
+
+/* PWA 설치 프롬프트 슬라이드 업 */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out forwards;
 }

@@ -6,7 +6,7 @@ import { useAuthStore } from './store/authStore';
 import { fetchKakaoMapKey } from './utils/kakaoMapLoader';
 import { ToastProvider } from '@/components/ui/ToastProvider';
 import { LoginPromptProvider } from '@/components/ui/LoginPromptProvider';
-import ChatbotButton from '@/components/common/ChatbotButton';
+import InstallPrompt from '@/components/pwa/InstallPrompt';
 
 // React Query 클라이언트 생성
 const queryClient = new QueryClient({
@@ -108,6 +108,8 @@ function App() {
         <LoginPromptProvider>
           <ToastProvider>
             <AppRouter />
+            {/* PWA 설치 프롬프트 */}
+            <InstallPrompt />
           </ToastProvider>
         </LoginPromptProvider>
       </KakaoLoader>
