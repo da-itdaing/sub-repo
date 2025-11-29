@@ -49,12 +49,12 @@ public class ReviewCommandController {
         summary = "리뷰 작성",
         description = """
             소비자가 팝업에 리뷰를 작성합니다.
-            
+
             리뷰 작성 시 다음 정보를 입력해야 합니다:
             - rating: 평점 (1~5, 필수)
             - content: 리뷰 내용 (최대 150자, 선택)
             - images: 리뷰 이미지 목록 (선택)
-            
+
             이 API는 JWT 토큰 인증이 필요하며, CONSUMER 역할을 가진 사용자만 접근할 수 있습니다.
             """,
         security = @SecurityRequirement(name = "bearerAuth"),
@@ -198,13 +198,13 @@ public class ReviewCommandController {
         summary = "리뷰 수정",
         description = """
             소비자가 자신이 작성한 리뷰를 수정합니다.
-            
+
             리뷰 ID를 경로 파라미터로 받아 해당 리뷰의 정보를 수정합니다.
             수정 가능한 필드:
             - rating: 평점 (1~5, 필수)
             - content: 리뷰 내용 (최대 150자, 선택)
             - images: 리뷰 이미지 목록 (선택)
-            
+
             이 API는 JWT 토큰 인증이 필요하며, CONSUMER 역할을 가진 사용자만 접근할 수 있습니다.
             자신이 작성한 리뷰만 수정할 수 있습니다.
             """,
@@ -338,14 +338,14 @@ public class ReviewCommandController {
         summary = "리뷰 삭제",
         description = """
             소비자가 자신이 작성한 리뷰를 삭제하거나 관리자가 리뷰를 삭제합니다.
-            
+
             리뷰 ID를 경로 파라미터로 받아 해당 리뷰를 삭제합니다.
             삭제된 리뷰는 복구할 수 없습니다.
-            
+
             권한:
             - CONSUMER: 자신이 작성한 리뷰만 삭제 가능
             - ADMIN: 모든 리뷰 삭제 가능
-            
+
             이 API는 JWT 토큰 인증이 필요하며, CONSUMER 또는 ADMIN 역할을 가진 사용자만 접근할 수 있습니다.
             """,
         security = @SecurityRequirement(name = "bearerAuth"),
@@ -432,12 +432,15 @@ public class ReviewCommandController {
     private ReviewResponse getReviewResponse(Long reviewId) {
         Review review = reviewRepository.findByIdWithRelations(reviewId)
             .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
-        List<com.da.itdaing.domain.file.dto.ImagePayload> images = reviewImageRepository.findByReviewIdIn(List.of(reviewId)).stream()
-            .map(img -> com.da.itdaing.domain.file.dto.ImagePayload.builder()
-                .url(img.getImageUrl())
-                .key(img.getImageKey())
-                .build())
-            .toList();
+
+        List<com.da.itdaing.domain.file.dto.ImagePayload> images =
+            reviewImageRepository.findByReviewIdIn(List.of(reviewId)).stream()
+                .map(img -> com.da.itdaing.domain.file.dto.ImagePayload.builder()
+                    .url(img.getImageUrl())
+                    .key(img.getImageKey())
+                    .build())
+                .toList();
+
         return new ReviewResponse(
             review.getId(),
             review.getPopup().getId(),
@@ -446,7 +449,8 @@ public class ReviewCommandController {
             review.getRating(),
             review.getContent(),
             images,
-            review.getCreatedAt()
+            review.getCreatedAt(),
+            review.getKeywords()
         );
     }
 }

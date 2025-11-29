@@ -11,6 +11,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 리뷰
@@ -51,21 +53,40 @@ public class Review {
     @Column(name = "content", length = 150)
     private String content;
 
+    @ElementCollection
+    @CollectionTable(
+        name = "review_keyword",
+        joinColumns = @JoinColumn(name = "review_id")
+    )
+    @Column(name = "keyword", length = 50)
+    private List<String> keywords = new ArrayList<>();
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Builder
-    public Review(Users consumer, Popup popup, Byte rating, String content) {
+    public Review(Users consumer,
+                  Popup popup,
+                  Byte rating,
+                  String content,
+                  List<String> keywords) {
         this.consumer = consumer;
         this.popup = popup;
         this.rating = rating;
         this.content = content;
+        if (keywords != null) {
+            this.keywords.addAll(keywords);
+        }
     }
 
-    public void update(Byte rating, String content) {
+    public void update(Byte rating, String content, List<String> keywords) {
         this.rating = rating;
         this.content = content;
+        this.keywords.clear();
+        if (keywords != null) {
+            this.keywords.addAll(keywords);
+        }
     }
 }
 

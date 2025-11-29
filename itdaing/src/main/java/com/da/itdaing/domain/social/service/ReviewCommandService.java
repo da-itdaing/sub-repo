@@ -51,6 +51,7 @@ public class ReviewCommandService {
                 .popup(popup)
                 .rating(request.rating())
                 .content(request.content() != null ? request.content().trim() : null)
+                .keywords(request.keywords())
                 .build()
         );
 
@@ -67,7 +68,11 @@ public class ReviewCommandService {
             throw new BusinessException(ErrorCode.ACCESS_DENIED, "본인이 작성한 리뷰만 수정할 수 있습니다.");
         }
 
-        review.update(request.rating(), request.content() != null ? request.content().trim() : null);
+        review.update(
+            request.rating(),
+            request.content() != null ? request.content().trim() : null,
+            request.keywords()
+        );
 
         reviewImageRepository.deleteByReview(review);
         persistImages(review, request.images());
@@ -79,13 +84,13 @@ public class ReviewCommandService {
     public void deleteReview(Long consumerId, Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
             .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND, "리뷰를 찾을 수 없습니다."));
-        
+
         Users user = userRepository.findById(consumerId)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        
+
         boolean isOwner = Objects.equals(review.getConsumer().getId(), consumerId);
         boolean isAdmin = user.getRole() == UserRole.ADMIN;
-        
+
         if (!isOwner && !isAdmin) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED, "본인이 작성한 리뷰 또는 관리자만 삭제할 수 있습니다.");
         }
