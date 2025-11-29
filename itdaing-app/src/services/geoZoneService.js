@@ -4,7 +4,7 @@
  * - 판매자: 존 목록 조회, 셀 선택
  */
 
-import { client } from '@/api/client';
+import apiClient from '@/api/client';
 
 const BASE_URL = '/api/geo';
 
@@ -16,7 +16,7 @@ const BASE_URL = '/api/geo';
  * @returns {Promise<{items: Array, totalElements: number, totalPages: number, page: number, size: number}>}
  */
 export const listAreas = async ({ keyword = '', page = 0, size = 20 } = {}) => {
-  const response = await client.get(`${BASE_URL}/areas`, {
+  const response = await apiClient.get(`${BASE_URL}/areas`, {
     params: { keyword, page, size },
   });
   return response.data;
@@ -28,7 +28,7 @@ export const listAreas = async ({ keyword = '', page = 0, size = 20 } = {}) => {
  * @returns {Promise<Object>}
  */
 export const getArea = async (id) => {
-  const response = await client.get(`${BASE_URL}/areas/${id}`);
+  const response = await apiClient.get(`${BASE_URL}/areas/${id}`);
   return response.data;
 };
 
@@ -38,7 +38,7 @@ export const getArea = async (id) => {
  * @returns {Promise<Object>}
  */
 export const createArea = async (data) => {
-  const response = await client.post(`${BASE_URL}/areas`, data);
+  const response = await apiClient.post(`${BASE_URL}/areas`, data);
   return response.data;
 };
 
@@ -49,7 +49,7 @@ export const createArea = async (data) => {
  * @returns {Promise<Object>}
  */
 export const updateArea = async (id, data) => {
-  const response = await client.put(`${BASE_URL}/areas/${id}`, data);
+  const response = await apiClient.put(`${BASE_URL}/areas/${id}`, data);
   return response.data;
 };
 
@@ -59,7 +59,7 @@ export const updateArea = async (id, data) => {
  * @returns {Promise<void>}
  */
 export const deleteArea = async (id) => {
-  await client.delete(`${BASE_URL}/areas/${id}`);
+  await apiClient.delete(`${BASE_URL}/areas/${id}`);
 };
 
 /* ============ Zone (존/셀) API ============ */
@@ -70,7 +70,7 @@ export const deleteArea = async (id) => {
  * @returns {Promise<Object>}
  */
 export const createZone = async (data) => {
-  const response = await client.post(`${BASE_URL}/zones`, data);
+  const response = await apiClient.post(`${BASE_URL}/zones`, data);
   return response.data;
 };
 
@@ -80,7 +80,7 @@ export const createZone = async (data) => {
  * @returns {Promise<{items: Array, totalElements: number, totalPages: number, page: number, size: number}>}
  */
 export const listMyZones = async ({ page = 0, size = 20 } = {}) => {
-  const response = await client.get(`${BASE_URL}/zones/me`, {
+  const response = await apiClient.get(`${BASE_URL}/zones/me`, {
     params: { page, size },
   });
   return response.data;
@@ -93,7 +93,7 @@ export const listMyZones = async ({ page = 0, size = 20 } = {}) => {
  * @returns {Promise<{items: Array, totalElements: number, totalPages: number, page: number, size: number}>}
  */
 export const listZonesByArea = async (areaId, { page = 0, size = 20 } = {}) => {
-  const response = await client.get(`${BASE_URL}/zones`, {
+  const response = await apiClient.get(`${BASE_URL}/zones`, {
     params: { areaId, page, size },
   });
   return response.data;
@@ -106,7 +106,7 @@ export const listZonesByArea = async (areaId, { page = 0, size = 20 } = {}) => {
  * @returns {Promise<void>}
  */
 export const changeZoneStatus = async (zoneId, status) => {
-  await client.patch(`${BASE_URL}/zones/${zoneId}/status`, { status });
+  await apiClient.patch(`${BASE_URL}/zones/${zoneId}/status`, { status });
 };
 
 /* ============ Cell (셀/부스) API ============ */
@@ -117,7 +117,7 @@ export const changeZoneStatus = async (zoneId, status) => {
  * @returns {Promise<{items: Array, totalElements: number, totalPages: number, page: number, size: number}>}
  */
 export const listCells = async ({ areaId, page = 0, size = 50 } = {}) => {
-  const response = await client.get(`${BASE_URL}/cells`, {
+  const response = await apiClient.get(`${BASE_URL}/cells`, {
     params: { areaId, page, size },
   });
   return response.data;
@@ -129,7 +129,7 @@ export const listCells = async ({ areaId, page = 0, size = 50 } = {}) => {
  * @returns {Promise<Object>}
  */
 export const createCell = async (data) => {
-  const response = await client.post(`${BASE_URL}/cells`, data);
+  const response = await apiClient.post(`${BASE_URL}/cells`, data);
   return response.data;
 };
 
@@ -140,7 +140,7 @@ export const createCell = async (data) => {
  * @returns {Promise<Object>}
  */
 export const updateCell = async (id, data) => {
-  const response = await client.put(`${BASE_URL}/cells/${id}`, data);
+  const response = await apiClient.put(`${BASE_URL}/cells/${id}`, data);
   return response.data;
 };
 
@@ -150,7 +150,7 @@ export const updateCell = async (id, data) => {
  * @returns {Promise<void>}
  */
 export const deleteCell = async (id) => {
-  await client.delete(`${BASE_URL}/cells/${id}`);
+  await apiClient.delete(`${BASE_URL}/cells/${id}`);
 };
 
 /* ============ 헬퍼 함수 ============ */

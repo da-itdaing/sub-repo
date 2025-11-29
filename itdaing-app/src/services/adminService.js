@@ -5,7 +5,7 @@
  * - 대시보드 통계
  */
 
-import { client } from '@/api/client';
+import apiClient from '@/api/client';
 
 const BASE_URL = '/api/admin';
 
@@ -17,7 +17,7 @@ const BASE_URL = '/api/admin';
  * @returns {Promise<{items: Array, totalElements: number, totalPages: number, page: number, size: number}>}
  */
 export const listPendingApprovals = async ({ page = 0, size = 20 } = {}) => {
-  const response = await client.get(`${BASE_URL}/approvals`, {
+  const response = await apiClient.get(`${BASE_URL}/approvals`, {
     params: { page, size },
   });
   return response.data;
@@ -30,7 +30,7 @@ export const listPendingApprovals = async ({ page = 0, size = 20 } = {}) => {
  * @returns {Promise<Object>}
  */
 export const approvePopup = async (id, data = {}) => {
-  const response = await client.post(`${BASE_URL}/approvals/${id}/approve`, data);
+  const response = await apiClient.post(`${BASE_URL}/approvals/${id}/approve`, data);
   return response.data;
 };
 
@@ -41,7 +41,7 @@ export const approvePopup = async (id, data = {}) => {
  * @returns {Promise<Object>}
  */
 export const rejectPopup = async (id, data) => {
-  const response = await client.post(`${BASE_URL}/approvals/${id}/reject`, data);
+  const response = await apiClient.post(`${BASE_URL}/approvals/${id}/reject`, data);
   return response.data;
 };
 
@@ -57,7 +57,7 @@ export const listUsers = async ({ role, status, page = 0, size = 20 } = {}) => {
   if (status) {
     params.status = status;
   }
-  const response = await client.get(`${BASE_URL}/users`, { params });
+  const response = await apiClient.get(`${BASE_URL}/users`, { params });
   return response.data;
 };
 
@@ -68,7 +68,7 @@ export const listUsers = async ({ role, status, page = 0, size = 20 } = {}) => {
  * @returns {Promise<Object>}
  */
 export const updateUserStatus = async (userId, status) => {
-  const response = await client.patch(`${BASE_URL}/users/${userId}/status`, { status });
+  const response = await apiClient.patch(`${BASE_URL}/users/${userId}/status`, { status });
   return response.data;
 };
 
@@ -115,7 +115,7 @@ export const getDashboardStats = async () => {
  * @returns {Promise<{content: Array, totalElements: number, totalPages: number, ...}>}
  */
 export const listAllPopups = async (params = {}) => {
-  const response = await client.get('/api/popups/search', { params });
+  const response = await apiClient.get('/api/popups/search', { params });
   return response.data;
 };
 
@@ -125,7 +125,7 @@ export const listAllPopups = async (params = {}) => {
  * @returns {Promise<Object>}
  */
 export const getPopupDetail = async (popupId) => {
-  const response = await client.get(`/api/popups/${popupId}`);
+  const response = await apiClient.get(`/api/popups/${popupId}`);
   return response.data;
 };
 
