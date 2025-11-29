@@ -2,11 +2,14 @@
  * Geo Zone/Area/Cell 관련 API 서비스
  * - 관리자: 존(zone_area) 생성/수정/삭제, 셀(zone_cell) 관리
  * - 판매자: 존 목록 조회, 셀 선택
+ * 
+ * 주의: apiClient interceptor가 response.data.data를 자동 언래핑하므로
+ *       response 자체가 이미 data 객체임
  */
 
 import apiClient from '@/api/client';
 
-const BASE_URL = '/api/geo';
+const BASE_URL = '/geo';
 
 /* ============ Area (존 영역) API ============ */
 
@@ -16,10 +19,10 @@ const BASE_URL = '/api/geo';
  * @returns {Promise<{items: Array, totalElements: number, totalPages: number, page: number, size: number}>}
  */
 export const listAreas = async ({ keyword = '', page = 0, size = 20 } = {}) => {
-  const response = await apiClient.get(`${BASE_URL}/areas`, {
+  const data = await apiClient.get(`${BASE_URL}/areas`, {
     params: { keyword, page, size },
   });
-  return response.data;
+  return data;
 };
 
 /**
@@ -28,8 +31,8 @@ export const listAreas = async ({ keyword = '', page = 0, size = 20 } = {}) => {
  * @returns {Promise<Object>}
  */
 export const getArea = async (id) => {
-  const response = await apiClient.get(`${BASE_URL}/areas/${id}`);
-  return response.data;
+  const data = await apiClient.get(`${BASE_URL}/areas/${id}`);
+  return data;
 };
 
 /**
@@ -37,9 +40,9 @@ export const getArea = async (id) => {
  * @param {Object} data - { name, polygonGeoJson, status, maxCapacity, notice, regionId }
  * @returns {Promise<Object>}
  */
-export const createArea = async (data) => {
-  const response = await apiClient.post(`${BASE_URL}/areas`, data);
-  return response.data;
+export const createArea = async (requestData) => {
+  const data = await apiClient.post(`${BASE_URL}/areas`, requestData);
+  return data;
 };
 
 /**
@@ -48,9 +51,9 @@ export const createArea = async (data) => {
  * @param {Object} data - { name, polygonGeoJson, status, maxCapacity, notice, regionId }
  * @returns {Promise<Object>}
  */
-export const updateArea = async (id, data) => {
-  const response = await apiClient.put(`${BASE_URL}/areas/${id}`, data);
-  return response.data;
+export const updateArea = async (id, requestData) => {
+  const data = await apiClient.put(`${BASE_URL}/areas/${id}`, requestData);
+  return data;
 };
 
 /**
@@ -69,9 +72,9 @@ export const deleteArea = async (id) => {
  * @param {Object} data - { areaId, ownerId, label, detailedAddress, geometryData, maxCapacity, notice }
  * @returns {Promise<Object>}
  */
-export const createZone = async (data) => {
-  const response = await apiClient.post(`${BASE_URL}/zones`, data);
-  return response.data;
+export const createZone = async (requestData) => {
+  const data = await apiClient.post(`${BASE_URL}/zones`, requestData);
+  return data;
 };
 
 /**
@@ -80,10 +83,10 @@ export const createZone = async (data) => {
  * @returns {Promise<{items: Array, totalElements: number, totalPages: number, page: number, size: number}>}
  */
 export const listMyZones = async ({ page = 0, size = 20 } = {}) => {
-  const response = await apiClient.get(`${BASE_URL}/zones/me`, {
+  const data = await apiClient.get(`${BASE_URL}/zones/me`, {
     params: { page, size },
   });
-  return response.data;
+  return data;
 };
 
 /**
@@ -93,10 +96,10 @@ export const listMyZones = async ({ page = 0, size = 20 } = {}) => {
  * @returns {Promise<{items: Array, totalElements: number, totalPages: number, page: number, size: number}>}
  */
 export const listZonesByArea = async (areaId, { page = 0, size = 20 } = {}) => {
-  const response = await apiClient.get(`${BASE_URL}/zones`, {
+  const data = await apiClient.get(`${BASE_URL}/zones`, {
     params: { areaId, page, size },
   });
-  return response.data;
+  return data;
 };
 
 /**
@@ -117,10 +120,10 @@ export const changeZoneStatus = async (zoneId, status) => {
  * @returns {Promise<{items: Array, totalElements: number, totalPages: number, page: number, size: number}>}
  */
 export const listCells = async ({ areaId, page = 0, size = 50 } = {}) => {
-  const response = await apiClient.get(`${BASE_URL}/cells`, {
+  const data = await apiClient.get(`${BASE_URL}/cells`, {
     params: { areaId, page, size },
   });
-  return response.data;
+  return data;
 };
 
 /**
@@ -128,9 +131,9 @@ export const listCells = async ({ areaId, page = 0, size = 50 } = {}) => {
  * @param {Object} data - { areaId, ownerId, label, detailedAddress, geometryData, status, maxCapacity, notice }
  * @returns {Promise<Object>}
  */
-export const createCell = async (data) => {
-  const response = await apiClient.post(`${BASE_URL}/cells`, data);
-  return response.data;
+export const createCell = async (requestData) => {
+  const data = await apiClient.post(`${BASE_URL}/cells`, requestData);
+  return data;
 };
 
 /**
@@ -139,9 +142,9 @@ export const createCell = async (data) => {
  * @param {Object} data - { areaId, ownerId, label, detailedAddress, geometryData, status, maxCapacity, notice }
  * @returns {Promise<Object>}
  */
-export const updateCell = async (id, data) => {
-  const response = await apiClient.put(`${BASE_URL}/cells/${id}`, data);
-  return response.data;
+export const updateCell = async (id, requestData) => {
+  const data = await apiClient.put(`${BASE_URL}/cells/${id}`, requestData);
+  return data;
 };
 
 /**
@@ -217,4 +220,3 @@ export default {
   parseGeoJsonPolygon,
   toGeoJsonPolygon,
 };
-

@@ -3,11 +3,14 @@
  * - 승인 관리 (팝업 승인/거부)
  * - 사용자 관리 (소비자/판매자 조회, 상태 변경)
  * - 대시보드 통계
+ * 
+ * 주의: apiClient interceptor가 response.data.data를 자동 언래핑하므로
+ *       response 자체가 이미 data 객체임
  */
 
 import apiClient from '@/api/client';
 
-const BASE_URL = '/api/admin';
+const BASE_URL = '/admin';
 
 /* ============ 승인 관리 API ============ */
 
@@ -17,10 +20,11 @@ const BASE_URL = '/api/admin';
  * @returns {Promise<{items: Array, totalElements: number, totalPages: number, page: number, size: number}>}
  */
 export const listPendingApprovals = async ({ page = 0, size = 20 } = {}) => {
-  const response = await apiClient.get(`${BASE_URL}/approvals`, {
+  // apiClient interceptor가 response.data.data를 반환하므로 그대로 사용
+  const data = await apiClient.get(`${BASE_URL}/approvals`, {
     params: { page, size },
   });
-  return response.data;
+  return data;
 };
 
 /**
@@ -29,9 +33,9 @@ export const listPendingApprovals = async ({ page = 0, size = 20 } = {}) => {
  * @param {Object} data - { reason } (선택)
  * @returns {Promise<Object>}
  */
-export const approvePopup = async (id, data = {}) => {
-  const response = await apiClient.post(`${BASE_URL}/approvals/${id}/approve`, data);
-  return response.data;
+export const approvePopup = async (id, requestData = {}) => {
+  const data = await apiClient.post(`${BASE_URL}/approvals/${id}/approve`, requestData);
+  return data;
 };
 
 /**
@@ -40,9 +44,9 @@ export const approvePopup = async (id, data = {}) => {
  * @param {Object} data - { reason } (필수)
  * @returns {Promise<Object>}
  */
-export const rejectPopup = async (id, data) => {
-  const response = await apiClient.post(`${BASE_URL}/approvals/${id}/reject`, data);
-  return response.data;
+export const rejectPopup = async (id, requestData) => {
+  const data = await apiClient.post(`${BASE_URL}/approvals/${id}/reject`, requestData);
+  return data;
 };
 
 /* ============ 사용자 관리 API ============ */
@@ -57,8 +61,8 @@ export const listUsers = async ({ role, status, page = 0, size = 20 } = {}) => {
   if (status) {
     params.status = status;
   }
-  const response = await apiClient.get(`${BASE_URL}/users`, { params });
-  return response.data;
+  const data = await apiClient.get(`${BASE_URL}/users`, { params });
+  return data;
 };
 
 /**
@@ -68,8 +72,8 @@ export const listUsers = async ({ role, status, page = 0, size = 20 } = {}) => {
  * @returns {Promise<Object>}
  */
 export const updateUserStatus = async (userId, status) => {
-  const response = await apiClient.patch(`${BASE_URL}/users/${userId}/status`, { status });
-  return response.data;
+  const data = await apiClient.patch(`${BASE_URL}/users/${userId}/status`, { status });
+  return data;
 };
 
 /* ============ 대시보드 통계 API ============ */
@@ -115,8 +119,8 @@ export const getDashboardStats = async () => {
  * @returns {Promise<{content: Array, totalElements: number, totalPages: number, ...}>}
  */
 export const listAllPopups = async (params = {}) => {
-  const response = await apiClient.get('/api/popups/search', { params });
-  return response.data;
+  const data = await apiClient.get('/popups/search', { params });
+  return data;
 };
 
 /**
@@ -125,8 +129,8 @@ export const listAllPopups = async (params = {}) => {
  * @returns {Promise<Object>}
  */
 export const getPopupDetail = async (popupId) => {
-  const response = await apiClient.get(`/api/popups/${popupId}`);
-  return response.data;
+  const data = await apiClient.get(`/popups/${popupId}`);
+  return data;
 };
 
 export default {
@@ -139,4 +143,3 @@ export default {
   listAllPopups,
   getPopupDetail,
 };
-
