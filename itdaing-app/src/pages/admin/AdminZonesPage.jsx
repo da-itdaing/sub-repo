@@ -200,13 +200,13 @@ const AdminZonesPage = () => {
               <RefreshCw className="w-4 h-4" />
               새로고침
             </button>
-            <button
-              onClick={() => navigate(ROUTES.admin.zoneCreate)}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-            >
-              <Plus className="w-4 h-4" />
+          <button 
+            onClick={() => navigate(ROUTES.admin.zoneCreate)}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+          >
+            <Plus className="w-4 h-4" />
               새 존 추가
-            </button>
+          </button>
           </div>
         </div>
 
@@ -268,7 +268,7 @@ const AdminZonesPage = () => {
               const isSelected = selectedArea?.id === area.id;
 
               return (
-                <Polygon
+              <Polygon
                   key={area.id}
                   path={coords}
                   strokeWeight={isSelected ? 4 : 2}
@@ -277,7 +277,7 @@ const AdminZonesPage = () => {
                   fillColor={color}
                   fillOpacity={isSelected ? 0.4 : 0.15}
                   onClick={() => handleAreaClick(area)}
-                />
+              />
               );
             })}
 
@@ -292,7 +292,7 @@ const AdminZonesPage = () => {
                 <div key={cell.id}>
                   <MapMarker
                     position={pos}
-                    onClick={() => handleCellClick(cell)}
+                onClick={() => handleCellClick(cell)}
                     image={{
                       src: isApproved
                         ? 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png'
@@ -319,7 +319,7 @@ const AdminZonesPage = () => {
               );
             })}
           </Map>
-
+          
           {/* Map Overlay Info */}
           <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-md z-10 border border-gray-200">
             <p className="text-sm font-medium text-gray-600">
@@ -365,7 +365,7 @@ const AdminZonesPage = () => {
       {/* Right: Cell Details */}
       <div className="flex-[1.2] flex flex-col gap-4 min-w-[320px]">
         <h2 className="text-xl font-bold text-red-600">셀 상세정보</h2>
-
+        
         <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6 overflow-y-auto">
           {selectedCell ? (
             <div className="space-y-6">
@@ -375,15 +375,15 @@ const AdminZonesPage = () => {
                   const pos = getCellPosition(selectedCell);
                   if (!pos) return <div className="h-full flex items-center justify-center text-gray-400">위치 정보 없음</div>;
                   return (
-                    <Map
+                <Map
                       center={pos}
-                      style={{ width: '100%', height: '100%' }}
-                      level={3}
-                      draggable={false}
-                      zoomable={false}
-                    >
+                  style={{ width: '100%', height: '100%' }}
+                  level={3}
+                  draggable={false}
+                  zoomable={false}
+                >
                       <MapMarker position={pos} />
-                    </Map>
+                </Map>
                   );
                 })()}
               </div>

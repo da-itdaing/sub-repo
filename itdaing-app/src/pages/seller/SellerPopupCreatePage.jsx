@@ -424,14 +424,14 @@ const SellerPopupCreatePage = () => {
           <div className="mt-4">
             <label className="text-xs font-semibold text-gray-500">운영 시간</label>
             <div className="relative mt-1">
-              <Clock className="absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                name="openingHours"
-                value={formData.openingHours}
-                onChange={handleChange}
-                placeholder="예: 10:00 - 22:00"
-                className="w-full border-b border-gray-300 py-2 pl-6 text-sm focus:border-primary focus:outline-none"
+                <Clock className="absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  name="openingHours"
+                  value={formData.openingHours}
+                  onChange={handleChange}
+                  placeholder="예: 10:00 - 22:00"
+                  className="w-full border-b border-gray-300 py-2 pl-6 text-sm focus:border-primary focus:outline-none"
               />
             </div>
           </div>
