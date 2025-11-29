@@ -55,9 +55,14 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
     if (mode === 'consumer') {
       const popupId = item.market_id || item.metadata?.market_id;
       if (popupId) {
-        const numericId = popupId.toString().replace(/^M0*/, '');
+        // popup-1234, M001234, 1234 등 다양한 형식 지원
+        const numericId = popupId.toString().replace(/^(popup-|M0*)/, '');
         if (numericId && /^\d+$/.test(numericId)) {
           return ROUTES.popupDetail(parseInt(numericId, 10));
+        }
+        // 숫자만 있는 경우도 처리
+        if (/^\d+$/.test(popupId.toString())) {
+          return ROUTES.popupDetail(parseInt(popupId, 10));
         }
         return ROUTES.popupDetail(popupId);
       }
