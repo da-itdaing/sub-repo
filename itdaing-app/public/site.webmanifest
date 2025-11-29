@@ -1,27 +1,76 @@
 {
-  "name":"Da-Itdaing",
-  "short_name":"잇다잉",
-  "description":"팝업 스토어 추천 및 탐색 플랫폼",
-  "start_url":"/",
-  "scope":"/",
-  "icons":[
+  "name": "다-잇다잉 - 광주 플리마켓 추천",
+  "short_name": "다-잇다잉",
+  "description": "광주광역시 플리마켓·팝업스토어 추천 및 탐색 플랫폼. AI 챗봇이 맞춤 추천해드려요!",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
+  "icons": [
     {
-      "src":"/android-chrome-192x192.png",
-      "sizes":"192x192",
-      "type":"image/png",
-      "purpose":"any maskable"
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
     },
     {
-      "src":"/android-chrome-512x512.png",
-      "sizes":"512x512",
-      "type":"image/png",
-      "purpose":"any maskable"
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "theme_color":"#eb0000",
-  "background_color":"#ffffff",
-  "display":"standalone",
-  "orientation":"portrait",
-  "categories":["lifestyle","shopping","events"],
-  "lang":"ko-KR"
+  "theme_color": "#eb0000",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "categories": ["lifestyle", "shopping", "entertainment", "social"],
+  "lang": "ko-KR",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "AI 챗봇",
+      "short_name": "챗봇",
+      "description": "AI 챗봇에게 플리마켓 추천받기",
+      "url": "/chatbot",
+      "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "팝업 검색",
+      "short_name": "검색",
+      "description": "광주 플리마켓·팝업 검색",
+      "url": "/popups",
+      "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "지도 보기",
+      "short_name": "지도",
+      "description": "지도에서 플리마켓 찾기",
+      "url": "/map",
+      "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
+    }
+  ]
 }

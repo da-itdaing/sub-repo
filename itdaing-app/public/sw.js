@@ -1,7 +1,7 @@
-/* Da-Itdaing PWA Service Worker */
-const VERSION = 'v2.1';
-const CACHE_NAME = 'daitdaing-' + VERSION;
-const RUNTIME_CACHE = 'runtime-' + VERSION;
+/* 잇다잉 PWA Service Worker v3.0 */
+const VERSION = 'v3.0';
+const CACHE_NAME = `itdaing-${VERSION}`;
+const RUNTIME_CACHE = `runtime-${VERSION}`;
 
 // 캐시할 앱 셸 (오프라인 필수 파일)
 const APP_SHELL = [
@@ -14,21 +14,38 @@ const APP_SHELL = [
   '/apple-touch-icon.png',
   '/android-chrome-192x192.png',
   '/android-chrome-512x512.png',
-  '/site.webmanifest'
+  '/site.webmanifest',
+  '/placeholder-popup.png',
+  '/placeholder-user.png'
 ];
 
-// API 요청은 캐시하지 않음
-const API_PATHS = ['/api/', '/actuator/'];
-const isApiRequest = (url) => API_PATHS.some(path => url.includes(path));
+// 캐시하지 않을 경로 (API, 챗봇, 인증)
+const NO_CACHE_PATHS = ['/api/', '/ai/', '/actuator/', '/auth/'];
+const isNoCachePath = (url) => NO_CACHE_PATHS.some(path => url.includes(path));
 
-// Service Worker 설치
+// 이미지 캐시 대상
+const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico'];
+const isImageRequest = (url) => IMAGE_EXTENSIONS.some(ext => url.toLowerCase().includes(ext));
+
+// S3/CDN 이미지 도메인
+const IMAGE_DOMAINS = ['s3.ap-northeast-2.amazonaws.com', 'daitdaing-static-files'];
+const isExternalImage = (url) => IMAGE_DOMAINS.some(domain => url.includes(domain));
+
+/* ============ Service Worker 설치 ============ */
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker version:', VERSION);
+  console.log('[SW] Installing version:', VERSION);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('[SW] Caching app shell');
-        return cache.addAll(APP_SHELL);
+        // 개별 파일 캐싱 (하나 실패해도 나머지 진행)
+        return Promise.allSettled(
+          APP_SHELL.map(url => 
+            cache.add(url).catch(err => {
+              console.warn('[SW] Failed to cache:', url, err.message);
+            })
+          )
+        );
       })
       .then(() => {
         console.log('[SW] Skip waiting');
@@ -40,9 +57,9 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Service Worker 활성화 및 이전 캐시 정리
+/* ============ Service Worker 활성화 및 이전 캐시 정리 ============ */
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker version:', VERSION);
+  console.log('[SW] Activating version:', VERSION);
   event.waitUntil(
     caches.keys()
       .then(keys => {
@@ -63,7 +80,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch 이벤트 처리
+/* ============ Fetch 이벤트 처리 ============ */
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = request.url;
@@ -71,16 +88,24 @@ self.addEventListener('fetch', (event) => {
   // POST, PUT, DELETE 등 non-GET 요청은 캐시하지 않음
   if (request.method !== 'GET') return;
 
-  // API 요청은 항상 네트워크 (캐시하지 않음)
-  if (isApiRequest(url)) {
+  // API/챗봇/인증 요청은 항상 네트워크 (캐시하지 않음)
+  if (isNoCachePath(url)) {
     event.respondWith(
-      fetch(request).catch(err => {
-        console.warn('[SW] API request failed:', url, err);
-        return new Response(
-          JSON.stringify({ error: 'Network error', offline: true }),
-          { status: 503, headers: { 'Content-Type': 'application/json' } }
-        );
-      })
+      fetch(request)
+        .catch(err => {
+          console.warn('[SW] API request failed:', url);
+          return new Response(
+            JSON.stringify({ 
+              error: 'NETWORK_ERROR', 
+              message: '네트워크 연결을 확인해주세요.',
+              offline: true 
+            }),
+            { 
+              status: 503, 
+              headers: { 'Content-Type': 'application/json' } 
+            }
+          );
+        })
     );
     return;
   }
@@ -89,7 +114,48 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
-        .catch(() => caches.match('/offline.html') || caches.match('/index.html'))
+        .then(response => {
+          // 성공한 응답 캐시
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(RUNTIME_CACHE)
+              .then(cache => cache.put(request, clone))
+              .catch(() => {});
+          }
+          return response;
+        })
+        .catch(() => {
+          // 오프라인 시 캐시된 페이지 또는 offline.html
+          return caches.match(request)
+            .then(cached => cached || caches.match('/offline.html'))
+            .then(fallback => fallback || caches.match('/index.html'));
+        })
+    );
+    return;
+  }
+
+  // S3/CDN 이미지: 캐시 우선, 7일 후 갱신
+  if (isExternalImage(url)) {
+    event.respondWith(
+      caches.match(request)
+        .then(cached => {
+          // 백그라운드에서 새 버전 fetch
+          const fetchPromise = fetch(request)
+            .then(response => {
+              if (response && response.status === 200) {
+                const clone = response.clone();
+                caches.open(RUNTIME_CACHE)
+                  .then(cache => cache.put(request, clone))
+                  .catch(() => {});
+              }
+              return response;
+            })
+            .catch(() => null);
+
+          // 캐시가 있으면 즉시 반환, 없으면 네트워크 대기
+          return cached || fetchPromise;
+        })
+        .catch(() => caches.match('/placeholder-popup.png'))
     );
     return;
   }
@@ -99,29 +165,42 @@ self.addEventListener('fetch', (event) => {
     caches.match(request)
       .then(cached => {
         if (cached) {
-          console.log('[SW] Serving from cache:', url);
           return cached;
         }
         
         // 캐시 없으면 네트워크 요청
         return fetch(request).then(response => {
-          // 성공한 응답만 캐시
+          // 성공한 응답만 캐시 (opaque 응답 제외)
           if (response && response.status === 200 && response.type !== 'opaque') {
             const clone = response.clone();
             caches.open(RUNTIME_CACHE)
               .then(cache => cache.put(request, clone))
-              .catch(err => console.warn('[SW] Cache put failed:', err));
+              .catch(() => {});
           }
           return response;
         });
       })
       .catch(err => {
-        console.error('[SW] Fetch failed:', url, err);
-        // 오프라인 시 기본 응답
-        if (request.destination === 'image') {
-          return caches.match('/android-chrome-192x192.png');
+        console.warn('[SW] Fetch failed:', url);
+        // 오프라인 시 이미지 플레이스홀더
+        if (isImageRequest(url)) {
+          return caches.match('/placeholder-popup.png');
         }
         return new Response('Offline', { status: 503 });
-    })
+      })
   );
+});
+
+/* ============ 메시지 이벤트 (캐시 관리) ============ */
+self.addEventListener('message', (event) => {
+  if (event.data === 'skipWaiting') {
+    self.skipWaiting();
+  }
+  
+  if (event.data === 'clearCache') {
+    caches.keys().then(keys => {
+      keys.forEach(key => caches.delete(key));
+    });
+    console.log('[SW] All caches cleared');
+  }
 });
