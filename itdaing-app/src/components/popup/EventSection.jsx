@@ -113,9 +113,9 @@ const EventSection = ({
       <div className="flex flex-col gap-2 mb-4">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="text-xl font-bold tracking-tight text-gray-900">{title}</h2>
-          <span className="text-xs font-semibold text-gray-400">
+          {/* <span className="text-xs font-semibold text-gray-400">
             {Math.min(displayedPopups.length, filteredPopups.length)} / {filteredPopups.length}
-          </span>
+          </span> */}
         </div>
         {description && <p className="text-sm text-gray-500">{description}</p>}
         
