@@ -168,11 +168,22 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
           type="button"
           onClick={handleFavoriteToggle}
           disabled={isProcessing}
-          className="absolute top-2 right-2 inline-flex items-center justify-center p-1.5 bg-white rounded-full border border-gray-200 shadow-md hover:bg-white transition-colors z-10"
+          className={`
+            absolute top-2 right-2 inline-flex items-center justify-center 
+            p-1.5 
+            rounded-full shadow-md
+            transition-colors z-10
+            ${isFavoriteUi ? 'bg-[#FFCDCD]' : 'bg-white'}
+          `}
           aria-label="관심 팝업"
         >
-          <Heart className="w-3.5 h-3.5" fill={isFavoriteUi ? '#eb0000' : 'none'} color={isFavoriteUi ? '#eb0000' : '#414141'} />
+          <Heart 
+            className="w-4 h-4"
+            fill={isFavoriteUi ? '#DC3535' : 'none'}
+            color={isFavoriteUi ? '#DC3535' : '#414141'}
+          />
         </button>
+
 
         {/* 상태 배지 */}
         {statusLabel && (
@@ -185,11 +196,11 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
 
         {/* 텍스트 정보 */}
         <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1">
-          <h3 className="text-sm font-bold text-white leading-tight line-clamp-2">
+          <h3 className="text-lg font-bold text-white leading-tight line-clamp-2">
             {popup.title}
           </h3>
-          <p className="text-[10px] text-white/90">{dateLabel}</p>
-          <p className="flex items-center gap-0.5 text-[10px] text-white/85">
+          <p className="text-[13px] text-white/90">{dateLabel}</p>
+          <p className="flex items-center gap-0.5 text-[13px] text-white/85">
             <MapPin className="w-2.5 h-2.5" />
             <span className="line-clamp-1">{popup.address || popup.location || '위치 미정'}</span>
           </p>

@@ -102,7 +102,7 @@ const HomePage = () => {
     <div className="min-h-screen flex flex-col bg-gray-100">
       <Header />
       
-      <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto bg-white">
+      <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto bg-white pt-14 md:pt-20 ">
         {/* Hero Carousel */}
         <div className="px-5 md:px-8 pt-5">
         <HeroCarousel items={heroItems} isLoading={isLoading} onSelect={handlePopupNavigate} />
@@ -128,9 +128,9 @@ const HomePage = () => {
             {/* Event Sections */}
             <EventSection
               title={
-                <h2 className="text-2xl font-bold">
+                <>
                   곧 오픈한다잉! <span className="text-primary">11월</span>
-                </h2>
+                </>
               }
               popups={openingSoonPopups}
               // description="이번 달에 문을 여는 팝업을 미리 확인하세요."
@@ -138,9 +138,9 @@ const HomePage = () => {
 
             <EventSection
               title={
-                <h2 className="text-2xl font-bold">
+                <>
                   <span className="text-primary">울 동네</span>에 이런 팝업 있다잉!
-                </h2>
+                </>
               }
               popups={localPopups}
               filterType="region"
@@ -149,9 +149,9 @@ const HomePage = () => {
 
             <EventSection
               title={
-                <h2 className="text-2xl font-bold">
+                <>
                   <span className="text-primary">카테고리별</span> 팝업 있다잉!
-                </h2>
+                </>
               }
               popups={categoryPopups}
               filterType="category"
