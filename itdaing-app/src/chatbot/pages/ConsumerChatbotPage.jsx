@@ -12,7 +12,7 @@ const ConsumerChatbotPage = () => {
     <div className="flex min-h-screen flex-col bg-gray-100">
       <Header />
       <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto bg-white px-5 md:px-8 py-10">
-        <ChatLayout />
+        <ChatLayout mode="consumer" />
       </main>
       <div className="hidden md:block">
         <Footer />

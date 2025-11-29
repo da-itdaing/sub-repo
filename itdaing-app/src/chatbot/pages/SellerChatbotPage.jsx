@@ -16,7 +16,7 @@ const SellerChatbotPage = () => {
         </p>
       </div>
       <div className="rounded-3xl border border-gray-100 bg-white px-4 py-6 md:px-6 md:py-8">
-        <ChatLayout />
+        <ChatLayout mode="seller" />
       </div>
     </div>
   );

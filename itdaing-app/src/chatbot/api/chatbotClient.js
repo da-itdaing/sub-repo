@@ -1,22 +1,75 @@
-// TODO: 실제 챗봇 백엔드 API 스펙에 맞게 구현 예정
-// 공통 Axios 인스턴스를 통해 메시지 전송 / 세션 관리 등을 담당한다.
+const CHATBOT_BASE_PATH = '/ai/api/chat';
 
-// import client from '@/api/client';
+const buildRequestBody = ({ message, sessionId, threadId }) => ({
+  user_id: 'web-guest',
+  session_id: sessionId ?? null,
+  message,
+  thread_id: threadId ?? null,
+  restart_thread: false,
+});
 
-// 예시 형태만 정의 (아직 호출하지 않음)
-export const sendChatMessage = async ({ sessionId, message }) => {
-  // 추후 구현 시 아래 주석을 참고해서 작성
-  // const response = await client.post('/api/chatbot/messages', {
-  //   sessionId,
-  //   message,
-  // });
-  // return response.data;
+export async function streamChatMessage({
+  mode = 'consumer',
+  message,
+  sessionId,
+  threadId,
+  onDelta,
+}) {
+  if (!message?.trim()) return;
 
-  // 현재는 목업 동작만 반환
-  return Promise.resolve({
-    sessionId: sessionId ?? 'mock-session-id',
-    reply: '챗봇 백엔드 연동 전입니다. 곧 응답이 연결될 예정이에요.',
+  const endpoint =
+    mode === 'seller'
+      ? `${CHATBOT_BASE_PATH}/seller/async/stream`
+      : `${CHATBOT_BASE_PATH}/consumer/async/stream`;
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(buildRequestBody({ message, sessionId, threadId })),
   });
-};
+
+  if (!response.ok || !response.body) {
+    throw new Error(`chatbot stream failed (${response.status})`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      buffer += decoder.decode();
+      break;
+    }
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const json = JSON.parse(trimmed);
+        onDelta?.(json);
+      } catch (error) {
+        console.error('Failed to parse chatbot delta', error, line);
+      }
+    }
+  }
+
+  const finalChunk = buffer.trim();
+  if (finalChunk) {
+    try {
+      const json = JSON.parse(finalChunk);
+      onDelta?.(json);
+    } catch (error) {
+      console.error('Failed to parse final chatbot delta', error, finalChunk);
+    }
+  }
+}
 
 
