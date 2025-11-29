@@ -44,10 +44,14 @@ const NAV_ITEMS = [
 const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+
+  // 로그인한 관리자 이름 표시
+  const displayName = user?.name || user?.nickname || user?.loginId || '관리자';
+  const initials = displayName.charAt(0).toUpperCase();
 
   const isSidebarExpanded = !isSidebarCollapsed || sidebarOpen;
 
@@ -241,11 +245,11 @@ const AdminLayout = () => {
 
               <button className="flex items-center gap-2 rounded-2xl border border-gray-200 px-3 py-1.5">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-900 text-sm font-semibold text-white">
-                  AD
+                  {initials}
                 </div>
                 <div className="hidden text-left text-sm leading-tight sm:block">
-                  <p className="font-semibold text-gray-900">admin1</p>
-                  <p className="text-xs text-gray-500">운영팀</p>
+                  <p className="font-semibold text-gray-900">{displayName}</p>
+                  <p className="text-xs text-gray-500">관리자</p>
                 </div>
                 <ChevronDown className="h-4 w-4 text-gray-400" />
               </button>
