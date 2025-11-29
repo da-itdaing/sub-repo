@@ -72,7 +72,7 @@
           if (isProduction) {
             navigator.serviceWorker.register('/sw.js', { scope: '/' })
               .then(reg => {
-                console.log('[PWA] Service Worker 등록 성공');
+                // console.log('[PWA] Service Worker 등록 성공');
                 
                 // 새 버전 감지 시 알림
                 reg.addEventListener('updatefound', () => {
@@ -80,7 +80,7 @@
                   newWorker.addEventListener('statechange', () => {
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                       // 새 버전 사용 가능
-                      console.log('[PWA] 새 버전 사용 가능');
+                      // console.log('[PWA] 새 버전 사용 가능');
                       // 자동 새로고침 (선택적)
                       // newWorker.postMessage('skipWaiting');
                     }
