@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { RotateCcw, Zap } from 'lucide-react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
@@ -31,6 +31,70 @@ const MODE_CONFIG = {
     title: '셀러 AI',
     subtitle: '존 추천·운영 가이드',
   },
+};
+
+// 모드별 팁 메시지
+const MARKET_TIPS = {
+  consumer: [
+    { emoji: '🛍️', text: '"이번 주말 플리마켓" 처럼 시간을 알려주세요' },
+    { emoji: '📍', text: '"동구 근처 마켓" 처럼 지역을 말해주세요' },
+    { emoji: '🐕', text: '"반려동물 동반 가능한 곳" 도 찾아드려요' },
+    { emoji: '🎨', text: '"핸드메이드 소품 마켓" 도 추천해드려요' },
+    { emoji: '🌙', text: '"야시장" 이나 "저녁에 열리는 곳" 도 있어요' },
+    { emoji: '👨‍👩‍👧', text: '"가족과 가기 좋은 곳" 도 물어보세요' },
+    { emoji: '☕', text: '"카페 있는 플리마켓" 도 찾을 수 있어요' },
+    { emoji: '🎁', text: '"선물 사기 좋은 마켓" 도 추천해드려요' },
+  ],
+  seller: [
+    { emoji: '📊', text: '"초보 셀러에게 좋은 존" 을 추천받아보세요' },
+    { emoji: '💰', text: '"수수료가 저렴한 존" 을 물어보세요' },
+    { emoji: '📝', text: '"입점 절차" 에 대해 안내해드려요' },
+    { emoji: '🎯', text: '"매출 올리는 팁" 도 알려드려요' },
+    { emoji: '📍', text: '"유동인구 많은 존" 을 찾아드려요' },
+    { emoji: '🏪', text: '"주말에 열리는 존" 도 추천해요' },
+  ],
+};
+
+/**
+ * 플리마켓 팁 메시지 (로테이션)
+ */
+const MarketTipBanner = ({ mode, isLoading }) => {
+  const tips = MARKET_TIPS[mode] || MARKET_TIPS.consumer;
+  const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * tips.length));
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsVisible(false);
+      setTimeout(() => {
+        setTipIndex((prev) => (prev + 1) % tips.length);
+        setIsVisible(true);
+      }, 200);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [tips.length]);
+
+  const tip = tips[tipIndex];
+
+  // 로딩 중이 아닐 때만 표시
+  if (isLoading) return null;
+
+  return (
+    <div className="px-4 pb-2">
+      <div 
+        className={`flex items-center justify-center gap-2 py-2 px-3 bg-gradient-to-r from-rose-50/80 to-amber-50/80 rounded-xl border border-rose-100/30 transition-all duration-200 ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
+        }`}
+      >
+        <span className="text-xs font-medium text-rose-400">💡</span>
+        <span className="text-[11px] text-gray-500">
+          <span className="text-base mr-1">{tip.emoji}</span>
+          {tip.text}
+        </span>
+      </div>
+    </div>
+  );
 };
 
 /**
@@ -148,6 +212,9 @@ const ChatLayout = ({ mode = 'consumer' }) => {
           <RecommendationPanel items={recommendations} mode={mode} />
         </aside>
       )}
+
+      {/* 팁 메시지 - 입력창 위에 항상 표시 (로딩 중 아닐 때) */}
+      <MarketTipBanner mode={mode} isLoading={isLoading} />
 
       {/* 입력 영역 */}
       <footer className="shrink-0">

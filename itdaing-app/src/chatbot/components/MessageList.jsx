@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import MessageBubble from './MessageBubble';
 
 /**
@@ -31,105 +31,130 @@ const BotIcon = () => (
 );
 
 /**
- * 광주 로고 모티브 로딩 애니메이션
- * - 빨간 원 배경 + 역동적인 사람 실루엣
- * - 플리마켓 분위기의 마켓 텐트 요소
+ * 걷는 사람 아이콘 (플리마켓 쇼핑객)
  */
-const GwangjuMarketLoader = () => (
-  <div className="relative w-16 h-16">
-    {/* 메인 원 - 광주 로고 스타일 */}
-    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#eb0000] to-[#c70000] animate-pulse shadow-lg shadow-red-200" />
-    
-    {/* 역동적인 사람 실루엣 - 광주 로고 모티브 */}
-    <svg
-      viewBox="0 0 64 64"
-      className="absolute inset-0 w-full h-full"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* 머리 */}
-      <circle 
-        cx="32" 
-        cy="18" 
-        r="6" 
-        fill="white"
-        className="animate-bounce"
-        style={{ animationDuration: '1.5s' }}
-      />
-      {/* 몸통 - 역동적인 곡선 */}
-      <path
-        d="M32 24 C20 30 18 45 28 52 C30 54 34 54 36 52 C46 45 44 30 32 24"
-        fill="white"
-        className="origin-center"
-        style={{ 
-          animation: 'sway 2s ease-in-out infinite',
-        }}
-      />
-      {/* 팔 - 쇼핑백 든 모습 */}
-      <path
-        d="M26 32 C18 28 14 35 18 40"
-        stroke="white"
-        strokeWidth="4"
-        strokeLinecap="round"
-        className="origin-center"
-        style={{ animation: 'wave 1.5s ease-in-out infinite' }}
-      />
-      <path
-        d="M38 32 C46 28 50 35 46 40"
-        stroke="white"
-        strokeWidth="4"
-        strokeLinecap="round"
-        style={{ animation: 'wave 1.5s ease-in-out infinite 0.3s' }}
-      />
-    </svg>
-    
-    {/* 반짝이는 효과 */}
-    <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-300 rounded-full animate-ping opacity-75" />
-    <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-amber-400 rounded-full animate-ping opacity-60" style={{ animationDelay: '0.5s' }} />
-  </div>
+const WalkingPerson = ({ delay = 0, direction = 'right' }) => (
+  <svg
+    viewBox="0 0 32 48"
+    className="absolute h-6 w-4"
+    style={{
+      animation: `${direction === 'right' ? 'walkRight' : 'walkLeft'} 4s linear infinite`,
+      animationDelay: `${delay}s`,
+      bottom: '4px',
+    }}
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {/* 머리 */}
+    <circle cx="16" cy="6" r="5" fill="#374151" />
+    {/* 몸통 */}
+    <path
+      d="M16 11 L16 26"
+      stroke="#374151"
+      strokeWidth="3"
+      strokeLinecap="round"
+    />
+    {/* 팔 - 쇼핑백 든 모습 */}
+    <path
+      d="M16 15 L10 22 M16 15 L22 20"
+      stroke="#374151"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      style={{ animation: 'armSwing 0.5s ease-in-out infinite alternate' }}
+    />
+    {/* 다리 - 걷는 모션 */}
+    <path
+      d="M16 26 L12 38 M16 26 L20 38"
+      stroke="#374151"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      style={{ animation: 'legWalk 0.5s ease-in-out infinite alternate' }}
+    />
+    {/* 쇼핑백 */}
+    <rect
+      x="6"
+      y="19"
+      width="6"
+      height="8"
+      rx="1"
+      fill="#eb0000"
+      style={{ animation: 'bagSwing 0.5s ease-in-out infinite alternate' }}
+    />
+  </svg>
 );
 
 /**
- * 플리마켓 팁 메시지 (로테이션)
+ * 광주 로고 모티브 로딩 애니메이션 - 개선된 버전
+ * - 빨간 원 안에 자연스러운 사람 실루엣
+ * - 플리마켓 분위기 연출
  */
-const MARKET_TIPS = [
-  { emoji: '🛍️', text: '"이번 주말 플리마켓" 처럼 시간을 알려주세요!' },
-  { emoji: '📍', text: '"동구 근처 마켓" 처럼 지역을 말해주세요!' },
-  { emoji: '🐕', text: '"반려동물 동반 가능한 곳" 도 찾아드려요!' },
-  { emoji: '🎨', text: '"핸드메이드 소품 마켓" 도 추천해드려요!' },
-  { emoji: '🌙', text: '"야시장" 이나 "저녁에 열리는 곳" 도 있어요!' },
-  { emoji: '👨‍👩‍👧', text: '"가족과 가기 좋은 곳" 도 물어보세요!' },
-];
-
-const MarketTip = () => {
-  const [tipIndex, setTipIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsVisible(false);
-      setTimeout(() => {
-        setTipIndex((prev) => (prev + 1) % MARKET_TIPS.length);
-        setIsVisible(true);
-      }, 300);
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const tip = MARKET_TIPS[tipIndex];
-
-  return (
-    <div 
-      className={`flex items-center gap-2 text-xs text-gray-500 transition-opacity duration-300 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
-      }`}
-    >
-      <span className="text-base">{tip.emoji}</span>
-      <span>{tip.text}</span>
+const GwangjuMarketLoader = () => (
+  <div className="relative flex flex-col items-center">
+    {/* 메인 로고 - 광주 스타일 */}
+    <div className="relative w-14 h-14 mb-3">
+      {/* 배경 원 - 펄스 효과 */}
+      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#eb0000] to-[#c70000] shadow-lg shadow-red-200/50" />
+      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#eb0000] to-[#c70000] animate-ping opacity-20" />
+      
+      {/* 광주 로고 스타일 사람 실루엣 */}
+      <svg
+        viewBox="0 0 56 56"
+        className="absolute inset-0 w-full h-full p-1"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* 머리 */}
+        <circle cx="28" cy="14" r="6" fill="white" />
+        {/* 몸통 - 역동적인 포즈 */}
+        <path
+          d="M28 20 C28 20 22 28 24 38 C25 42 31 42 32 38 C34 28 28 20 28 20"
+          fill="white"
+        />
+        {/* 왼팔 - 위로 뻗은 모습 */}
+        <path
+          d="M24 24 C20 20 16 18 14 20"
+          stroke="white"
+          strokeWidth="4"
+          strokeLinecap="round"
+          style={{ animation: 'armWave 1s ease-in-out infinite' }}
+        />
+        {/* 오른팔 */}
+        <path
+          d="M32 24 C36 28 40 30 42 28"
+          stroke="white"
+          strokeWidth="4"
+          strokeLinecap="round"
+          style={{ animation: 'armWave 1s ease-in-out infinite 0.5s' }}
+        />
+        {/* 왼다리 */}
+        <path
+          d="M26 38 L22 50"
+          stroke="white"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+        {/* 오른다리 */}
+        <path
+          d="M30 38 L36 48"
+          stroke="white"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+      </svg>
     </div>
-  );
-};
+    
+    {/* 걷는 사람들 - 플리마켓 분위기 */}
+    <div className="relative w-32 h-8 overflow-hidden">
+      {/* 바닥 선 */}
+      <div className="absolute bottom-1 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+      
+      {/* 걷는 사람들 */}
+      <WalkingPerson delay={0} direction="right" />
+      <WalkingPerson delay={1.5} direction="left" />
+      <WalkingPerson delay={3} direction="right" />
+    </div>
+  </div>
+);
 
 /**
  * 타이핑 인디케이터 - 펄스 애니메이션
@@ -151,26 +176,18 @@ const TypingIndicator = () => (
  * 느린 응답 안내 - 광주 마켓 테마 디자인
  */
 const SlowResponseMessage = () => (
-  <div className="flex flex-col items-center justify-center gap-4 py-6 px-4">
+  <div className="flex flex-col items-center justify-center gap-3 py-5 px-4">
     {/* 광주 로고 스타일 로딩 애니메이션 */}
     <GwangjuMarketLoader />
     
     {/* 메인 텍스트 */}
-    <div className="text-center space-y-1">
+    <div className="text-center space-y-0.5">
       <p className="text-sm font-medium text-gray-700">
         광주 플리마켓을 찾고 있어요
       </p>
-      <p className="text-xs text-gray-400">
+      <p className="text-[11px] text-gray-400">
         잠시만 기다려주세요 ✨
       </p>
-    </div>
-    
-    {/* 팁 메시지 */}
-    <div className="mt-2 px-4 py-2.5 bg-gradient-to-r from-rose-50 to-amber-50 rounded-xl border border-rose-100/50">
-      <div className="flex items-center gap-1.5 mb-1">
-        <span className="text-[10px] font-semibold text-rose-500 uppercase tracking-wider">💡 Tip</span>
-      </div>
-      <MarketTip />
     </div>
   </div>
 );

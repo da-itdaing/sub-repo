@@ -62,49 +62,21 @@ body {
 }
 
 /* 광주 마켓 로딩 애니메이션 */
-@keyframes sway {
+
+/* 팔 흔드는 애니메이션 */
+@keyframes armWave {
   0%, 100% {
-    transform: rotate(-3deg);
+    transform: rotate(-5deg);
   }
   50% {
-    transform: rotate(3deg);
+    transform: rotate(5deg);
   }
 }
 
-@keyframes wave {
-  0%, 100% {
-    transform: rotate(-10deg);
-  }
-  50% {
-    transform: rotate(10deg);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-/* 마켓 텐트 애니메이션 */
-@keyframes tent-appear {
+/* 걷는 사람 - 오른쪽으로 */
+@keyframes walkRight {
   0% {
-    transform: scaleY(0);
-    opacity: 0;
-  }
-  100% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-
-/* 사람 걸어다니는 애니메이션 */
-@keyframes walk {
-  0% {
-    transform: translateX(-100%);
+    left: -20%;
     opacity: 0;
   }
   10% {
@@ -114,7 +86,57 @@ body {
     opacity: 1;
   }
   100% {
-    transform: translateX(100%);
+    left: 100%;
     opacity: 0;
+  }
+}
+
+/* 걷는 사람 - 왼쪽으로 */
+@keyframes walkLeft {
+  0% {
+    left: 100%;
+    opacity: 0;
+    transform: scaleX(-1);
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: -20%;
+    opacity: 0;
+    transform: scaleX(-1);
+  }
+}
+
+/* 팔 스윙 */
+@keyframes armSwing {
+  0% {
+    transform: rotate(-15deg);
+  }
+  100% {
+    transform: rotate(15deg);
+  }
+}
+
+/* 다리 걷기 */
+@keyframes legWalk {
+  0% {
+    transform: rotate(-10deg);
+  }
+  100% {
+    transform: rotate(10deg);
+  }
+}
+
+/* 쇼핑백 흔들림 */
+@keyframes bagSwing {
+  0% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(5deg);
   }
 }
