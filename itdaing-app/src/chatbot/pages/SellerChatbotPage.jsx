@@ -2,26 +2,30 @@ import ChatLayout from '@/chatbot/components/ChatLayout';
 
 /**
  * 판매자용 챗봇 페이지
- * - SellerLayout의 Outlet 영역에서 사용할 수 있는 전용 페이지 컴포넌트
- * - 현재는 소비자와 동일한 ChatLayout을 사용하며,
- *   향후 판매자 전용 가이드/툴바를 상단에 추가할 수 있다.
+ * - SellerLayout의 Outlet 영역에서 사용
  */
 const SellerChatbotPage = () => {
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="mb-4">
-        <h1 className="text-lg font-semibold text-gray-900">챗봇 도우미</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          팝업 운영, 승인, 통계와 관련한 질문을 챗봇에게 물어볼 수 있어요.
+    <div className="flex flex-1 flex-col gap-4">
+      {/* 페이지 헤더 */}
+      <div>
+        <h1 className="text-lg font-semibold text-gray-900">AI 챗봇 도우미</h1>
+        <p className="text-sm text-gray-500 mt-0.5">
+          존 추천, 운영 팁, 승인 절차 등 궁금한 점을 물어보세요
         </p>
       </div>
-      <div className="rounded-3xl border border-gray-100 bg-white px-4 py-6 md:px-6 md:py-8">
+
+      {/* 챗봇 */}
+      <div className="flex-1 rounded-2xl border border-gray-200 bg-white overflow-hidden">
         <ChatLayout mode="seller" />
       </div>
+
+      {/* 안내 */}
+      <p className="text-xs text-gray-400 text-center">
+        AI 답변은 참고용이며, 실제 정책과 다를 수 있습니다.
+      </p>
     </div>
   );
 };
 
 export default SellerChatbotPage;
-
-
