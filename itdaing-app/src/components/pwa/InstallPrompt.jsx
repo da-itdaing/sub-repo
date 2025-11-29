@@ -1,20 +1,37 @@
 import { useState, useEffect } from 'react';
-import { Download, X } from 'lucide-react';
+import { Download, X, Share2 } from 'lucide-react';
+
+/**
+ * 브라우저/OS 감지
+ */
+const detectPlatform = () => {
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPhone|iPad|iPod/.test(ua);
+  const isAndroid = /Android/.test(ua);
+  const isSamsung = /SamsungBrowser/.test(ua);
+  const isChrome = /Chrome/.test(ua) && !/Edge|Edg/.test(ua);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+    || window.navigator.standalone === true;
+  
+  return { isIOS, isAndroid, isSamsung, isChrome, isStandalone };
+};
 
 /**
  * PWA 설치 프롬프트 컴포넌트
- * - beforeinstallprompt 이벤트를 캐치하여 설치 버튼 표시
- * - 갤럭시/안드로이드 Chrome에서 동작
+ * - beforeinstallprompt 이벤트가 있으면 자동 설치 버튼
+ * - 없으면 수동 설치 안내 표시
  */
 const InstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showPrompt, setShowPrompt] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [platform, setPlatform] = useState({});
 
   useEffect(() => {
+    const detected = detectPlatform();
+    setPlatform(detected);
+
     // 이미 설치된 경우 체크
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
+    if (detected.isStandalone) {
       return;
     }
 
@@ -31,17 +48,13 @@ const InstallPrompt = () => {
 
     // beforeinstallprompt 이벤트 리스너
     const handleBeforeInstallPrompt = (e) => {
-      // 기본 브라우저 프롬프트 막기
       e.preventDefault();
-      // 이벤트 저장
       setDeferredPrompt(e);
-      // 커스텀 프롬프트 표시 (1초 후)
-      setTimeout(() => setShowPrompt(true), 1000);
+      setTimeout(() => setShowPrompt(true), 1500);
     };
 
     // 앱 설치 완료 이벤트
     const handleAppInstalled = () => {
-      setIsInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
     };
@@ -49,29 +62,31 @@ const InstallPrompt = () => {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
+    // beforeinstallprompt가 발생하지 않아도 모바일이면 안내 배너 표시
+    const timer = setTimeout(() => {
+      if (!deferredPrompt && (detected.isAndroid || detected.isIOS)) {
+        setShowPrompt(true);
+      }
+    }, 3000);
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
+      clearTimeout(timer);
     };
   }, []);
 
-  // 설치 버튼 클릭
+  // 설치 버튼 클릭 (자동 설치)
   const handleInstall = async () => {
     if (!deferredPrompt) return;
 
-    // 설치 프롬프트 표시
     deferredPrompt.prompt();
-
-    // 사용자 선택 대기
     const { outcome } = await deferredPrompt.userChoice;
     
     if (outcome === 'accepted') {
       console.log('[PWA] 사용자가 설치를 수락함');
-    } else {
-      console.log('[PWA] 사용자가 설치를 거절함');
     }
 
-    // 프롬프트는 한 번만 사용 가능
     setDeferredPrompt(null);
     setShowPrompt(false);
   };
@@ -79,14 +94,37 @@ const InstallPrompt = () => {
   // 닫기 버튼 클릭
   const handleDismiss = () => {
     setShowPrompt(false);
-    // 24시간 동안 다시 안 보여줌
     localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
   };
 
-  // 표시 조건: 프롬프트가 있고, 설치 안 됐고, 표시 상태일 때
-  if (!showPrompt || isInstalled || !deferredPrompt) {
+  // 표시 조건
+  if (!showPrompt || platform.isStandalone) {
     return null;
   }
+
+  // 수동 설치 안내 메시지
+  const getInstallGuide = () => {
+    if (platform.isIOS) {
+      return {
+        icon: <Share2 className="w-4 h-4" />,
+        text: '공유 버튼 → "홈 화면에 추가"',
+      };
+    }
+    if (platform.isSamsung) {
+      return {
+        icon: <Download className="w-4 h-4" />,
+        text: '메뉴(≡) → "현재 페이지 추가" → "홈 화면"',
+      };
+    }
+    // Chrome Android
+    return {
+      icon: <Download className="w-4 h-4" />,
+      text: '메뉴(⋮) → "홈 화면에 추가" 또는 "앱 설치"',
+    };
+  };
+
+  const guide = getInstallGuide();
+  const canAutoInstall = !!deferredPrompt;
 
   return (
     <div className="fixed bottom-20 left-4 right-4 z-50 animate-slide-up">
@@ -117,14 +155,26 @@ const InstallPrompt = () => {
           </button>
         </div>
 
-        {/* 설치 버튼 */}
-        <button
-          onClick={handleInstall}
-          className="mt-3 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-rose-500 to-red-600 text-white font-semibold text-sm py-2.5 rounded-xl shadow-md shadow-rose-200 hover:shadow-lg transition-all active:scale-[0.98]"
-        >
-          <Download className="w-4 h-4" />
-          앱 설치하기
-        </button>
+        {canAutoInstall ? (
+          /* 자동 설치 버튼 */
+          <button
+            onClick={handleInstall}
+            className="mt-3 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-rose-500 to-red-600 text-white font-semibold text-sm py-2.5 rounded-xl shadow-md shadow-rose-200 hover:shadow-lg transition-all active:scale-[0.98]"
+          >
+            <Download className="w-4 h-4" />
+            앱 설치하기
+          </button>
+        ) : (
+          /* 수동 설치 안내 */
+          <div className="mt-3 flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center text-rose-500">
+              {guide.icon}
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed">
+              {guide.text}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
