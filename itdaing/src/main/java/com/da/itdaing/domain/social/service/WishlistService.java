@@ -70,33 +70,27 @@ public class WishlistService {
 
     @Transactional(readOnly = true)
     public Page<PopupSummaryResponse> getMyWishlist(Long userId, Pageable pageable) {
-        // 페이지 요청에 널값 보호 로직 추가 가능하지만, Spring Data JPA가 기본 처리함
-        // 만약 pageable이 null이면 기본값 사용하도록 방어
         if (pageable == null) {
             pageable = Pageable.ofSize(40).withPage(0);
         }
-        
-        Page<Wishlist> page = wishlistRepository.findByUserIdWithPopup(userId, pageable);
 
-        // 위시리스트가 비어있으면 빈 페이지 반환
+        Page<Wishlist> page = wishlistRepository.findByUserIdWithPopup(userId, pageable);
         if (page.isEmpty()) {
             return Page.empty(pageable);
         }
 
-        // 1. 팝업 ID 목록 추출
         List<Long> popupIds = page.getContent().stream()
             .map(w -> w.getPopup().getId())
             .toList();
 
-        // 2. 팝업별 이미지 목록을 조회해 썸네일 우선/없으면 첫 번째 이미지를 사용
-        Map<Long, List<PopupImage>> imagesByPopupId = popupImageRepository.findByPopupIdIn(popupIds)
+        // 👉 여기: 팝업별 전체 이미지 조회 (PopupQueryService와 동일한 방식)
+        Map<Long, List<PopupImage>> imagesByPopup = popupImageRepository.findByPopupIdIn(popupIds)
             .stream()
             .collect(Collectors.groupingBy(img -> img.getPopup().getId()));
 
         return page.map(w -> {
             Popup p = w.getPopup();
 
-            // null 방어용 로컬 변수들
             Users seller = p.getSeller();
             var zoneCell = p.getZoneCell();
             var zoneArea = zoneCell != null ? zoneCell.getZoneArea() : null;
@@ -120,19 +114,30 @@ public class WishlistService {
             String startDate = p.getStartDate() != null ? p.getStartDate().toString() : null;
             String endDate = p.getEndDate() != null ? p.getEndDate().toString() : null;
 
-            // 썸네일 매핑: isThumbnail=true 우선, 없으면 첫 번째 이미지 사용
-            List<PopupImage> popupImages = imagesByPopupId.getOrDefault(p.getId(), List.of());
-            PopupImage thumbnailImage = popupImages.stream()
+            // 👉 여기: 전체 이미지 목록에서 썸네일 + 갤러리 구성
+            List<PopupImage> images = imagesByPopup.getOrDefault(p.getId(), List.of());
+
+            ImagePayload thumbnail = images.stream()
                 .filter(img -> Boolean.TRUE.equals(img.getIsThumbnail()))
                 .findFirst()
-                .orElseGet(() -> popupImages.stream().findFirst().orElse(null));
-            ImagePayload thumbnail = null;
-            if (thumbnailImage != null) {
-                thumbnail = ImagePayload.builder()
-                    .url(thumbnailImage.getImageUrl())
-                    .key(thumbnailImage.getImageKey())
-                    .build();
-            }
+                .map(img -> ImagePayload.builder()
+                    .url(img.getImageUrl())
+                    .key(img.getImageKey())
+                    .build())
+                .orElseGet(() -> images.stream().findFirst()
+                    .map(img -> ImagePayload.builder()
+                        .url(img.getImageUrl())
+                        .key(img.getImageKey())
+                        .build())
+                    .orElse(null));
+
+            List<ImagePayload> gallery = images.stream()
+                .filter(img -> !Boolean.TRUE.equals(img.getIsThumbnail()))
+                .map(img -> ImagePayload.builder()
+                    .url(img.getImageUrl())
+                    .key(img.getImageKey())
+                    .build())
+                .toList();
 
             return new PopupSummaryResponse(
                 p.getId(),
@@ -150,16 +155,16 @@ public class WishlistService {
                 startDate,
                 endDate,
                 p.getOperatingTime(),
-                List.of(),          // operatingHours
+                List.of(),          // operatingHours (필요하면 PopupQueryService처럼 파싱 가능)
                 p.getDescription(),
                 p.getViewCount(),
                 p.getFavoriteCount(),
                 List.of(),          // categoryIds
                 List.of(),          // featureIds
                 List.of(),          // styleTags
-                thumbnail,          // thumbnail
-                List.of(),          // gallery
-                null,               // reviewSummary
+                thumbnail,          // ✅ 이제 null이 아니라 fallback까지 고려
+                gallery,            // ✅ gallery도 채워줌
+                null,               // reviewSummary (원하면 ReviewRepository 써서 추가 가능)
                 true,               // isFavorite
                 createdAt,
                 updatedAt
