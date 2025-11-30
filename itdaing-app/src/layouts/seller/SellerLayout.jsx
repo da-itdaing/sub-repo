@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import {
@@ -10,11 +10,10 @@ import {
   Stars,
   Megaphone,
   CalendarClock,
-  Bot,
 } from 'lucide-react';
 import { ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/authStore';
-import ChatbotModal from '@/components/chatbot/ChatbotModal';
+import SellerChatbotPopup from '@/components/chatbot/SellerChatbotPopup';
 
 const NAV_ITEMS = [
   {
@@ -60,44 +59,16 @@ const SellerLayout = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const isSidebarExpanded = !isSidebarCollapsed || isSidebarOpen;
 
-  // 챗봇 모달 상태
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
-
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
 
   const displayName = user?.name || user?.nickname || user?.loginId || '판매자';
-  const roleLabel = user?.role === 'SELLER' ? '판매자 계정' : '계정';
   const initials = displayName.charAt(0).toUpperCase();
 
   const handleLogout = () => {
     logout();
     navigate(ROUTES.home);
   };
-
-  // 챗봇 모달 열기
-  const handleOpenChatbot = useCallback(() => {
-    setIsChatbotOpen(true);
-  }, []);
-
-  // 챗봇 모달 닫기
-  const handleCloseChatbot = useCallback(() => {
-    setIsChatbotOpen(false);
-  }, []);
-
-  // ESC 키로 챗봇 모달 닫기
-  useEffect(() => {
-    if (!isChatbotOpen) return;
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        handleCloseChatbot();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isChatbotOpen, handleCloseChatbot]);
 
   const renderNavItem = (item) => {
     const Icon = item.icon;
@@ -141,6 +112,9 @@ const SellerLayout = () => {
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff235b] text-base font-semibold text-white">
           DA
         </div>
+        {isSidebarExpanded && (
+          <span className="text-lg font-bold text-white">다잇다잉</span>
+        )}
       </div>
 
       {/* 메뉴 */}
@@ -233,36 +207,28 @@ const SellerLayout = () => {
                 <Menu className="h-5 w-5" />
               </button>
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-sm font-bold text-white lg:h-11 lg:w-11">
-                DA
+              {/* 로고 + 서비스명 */}
+              <div className="flex items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-sm font-bold text-white lg:h-11 lg:w-11">
+                  DA
+                </div>
+                <span className="hidden sm:block text-lg font-bold text-gray-900">다잇다잉</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* 챗봇 버튼 - 클릭 시 판매자용 챗봇 모달 열기 */}
-              <button
-                type="button"
-                onClick={handleOpenChatbot}
-                className="rounded-2xl border border-gray-200 p-2 text-gray-600 transition hover:border-primary hover:text-primary"
-                aria-label="AI 챗봇 열기"
-              >
-                <Bot className="h-5 w-5" />
-              </button>
-
-              {/* 프로필 영역 - 클릭 시 내 정보 페이지로 이동 */}
-              <button
-                type="button"
-                onClick={() => navigate(ROUTES.seller.profile)}
-                className="flex items-center gap-2 rounded-2xl border border-gray-200 px-3 py-1.5 transition hover:border-primary/30 hover:bg-primary/5"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary">
-                  {initials}
-                </div>
-                <div className="hidden text-left text-sm leading-tight sm:block">
-                  <p className="font-semibold text-gray-900">{displayName}</p>
-                </div>
-              </button>
-            </div>
+            {/* 프로필 영역 - 클릭 시 내 정보 페이지로 이동 */}
+            <button
+              type="button"
+              onClick={() => navigate(ROUTES.seller.profile)}
+              className="flex items-center gap-2 rounded-2xl border border-gray-200 px-3 py-1.5 transition hover:border-primary/30 hover:bg-primary/5"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary">
+                {initials}
+              </div>
+              <div className="hidden text-left text-sm leading-tight sm:block">
+                <p className="font-semibold text-gray-900">{displayName}</p>
+              </div>
+            </button>
           </div>
         </header>
 
@@ -272,12 +238,8 @@ const SellerLayout = () => {
         </main>
       </div>
 
-      {/* 판매자용 챗봇 모달 */}
-      <ChatbotModal 
-        open={isChatbotOpen} 
-        onClose={handleCloseChatbot} 
-        mode="seller" 
-      />
+      {/* 판매자용 플로팅 챗봇 - 탭 이동 중에도 유지 */}
+      <SellerChatbotPopup />
     </div>
   );
 };
