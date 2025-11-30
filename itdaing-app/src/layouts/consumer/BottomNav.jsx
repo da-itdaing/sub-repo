@@ -14,7 +14,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { MapPin, Home, User } from 'lucide-react';
 import { clsx } from 'clsx';
-import ChatbotButton from '@/components/common/ChatbotButton';
+import ConsumerChatbotPopup from '@/components/chatbot/ConsumerChatbotPopup';
 
 const BottomNav = () => {
   const location = useLocation();
@@ -54,7 +54,7 @@ const BottomNav = () => {
 
   return (
     <>
-      <ChatbotButton mode="floating" />
+      <ConsumerChatbotPopup />
       <nav className="fixed bottom-0 left-0 right-0 z-120 w-full bg-[#3d3d3d] border-t border-gray-800">
         <div className="mx-auto w-full max-w-[480px] px-4">
           <div className="flex items-center justify-around h-16 pb-safe-bottom">
