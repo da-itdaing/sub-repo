@@ -56,10 +56,19 @@ public class Announcement {
     @Builder
     public Announcement(Users author, AnnouncementAudience audience, Popup popup, String title, String content) {
         this.author = author;
-        this.audience = audience;
+        this.audience = audience != null ? audience : AnnouncementAudience.ALL;
         this.popup = popup;
         this.title = title;
         this.content = content;
+    }
+
+    public void update(String title, String content) {
+        if (title != null && !title.isBlank()) {
+            this.title = title;
+        }
+        if (content != null) {
+            this.content = content;
+        }
     }
 }
 

@@ -1,4 +1,3 @@
-// src/main/java/com/da/itdaing/domain/messaging/repository/AnnouncementRepository.java
 package com.da.itdaing.domain.messaging.repository;
 
 import com.da.itdaing.domain.messaging.entity.Announcement;
@@ -10,4 +9,7 @@ public interface AnnouncementRepository extends JpaRepository<Announcement, Long
 
     // popupId 기준으로, 최신 공지 먼저 내려주기
     Page<Announcement> findByPopupIdOrderByCreatedAtDesc(Long popupId, Pageable pageable);
+
+    // 작성자 기준으로, 최신 공지 먼저 내려주기
+    Page<Announcement> findByAuthorIdOrderByCreatedAtDesc(Long authorId, Pageable pageable);
 }

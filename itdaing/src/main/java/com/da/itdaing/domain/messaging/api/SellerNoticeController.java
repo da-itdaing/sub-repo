@@ -1,70 +1,113 @@
-// src/main/java/com/da/itdaing/domain/messaging/api/SellerNoticeController.java
 package com.da.itdaing.domain.messaging.api;
 
 import com.da.itdaing.domain.messaging.dto.NoticeCreateRequest;
 import com.da.itdaing.domain.messaging.dto.NoticeResponse;
 import com.da.itdaing.domain.messaging.service.SellerNoticeService;
-import com.da.itdaing.global.api.ApiResponse;
+import com.da.itdaing.global.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-// import는 네 프로젝트의 실제 Principal 타입에 맞게 수정
-// import com.da.itdaing.global.auth.CustomUserPrincipal;
+import java.security.Principal;
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/sellers/notices")
+@RequestMapping("/api/sellers")
 @RequiredArgsConstructor
 public class SellerNoticeController {
 
     private final SellerNoticeService sellerNoticeService;
 
     /**
-     * 공지 등록 (POST /api/sellers/notices)
+     * 판매자의 모든 팝업에 대한 공지사항 목록 조회
+     * GET /api/sellers/me/notices
      */
-    @PostMapping
+    @GetMapping("/me/notices")
+    public ApiResponse<Page<NoticeResponse>> getMyNotices(
+        Principal principal,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "100") int size
+    ) {
+        Long sellerUserId = Long.valueOf(principal.getName());
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Page<NoticeResponse> responsePage = sellerNoticeService.getMyNotices(sellerUserId, pageRequest);
+        return ApiResponse.success(responsePage);
+    }
+
+    /**
+     * 공지사항 상세 조회
+     * GET /api/sellers/notices/{noticeId}
+     */
+    @GetMapping("/notices/{noticeId}")
+    public ApiResponse<NoticeResponse> getNoticeById(
+        Principal principal,
+        @PathVariable Long noticeId
+    ) {
+        Long sellerUserId = Long.valueOf(principal.getName());
+        NoticeResponse response = sellerNoticeService.getNoticeById(sellerUserId, noticeId);
+        return ApiResponse.success(response);
+    }
+
+    /**
+     * 공지사항 등록
+     * POST /api/sellers/notices
+     */
+    @PostMapping("/notices")
     public ApiResponse<NoticeResponse> createNotice(
-        @AuthenticationPrincipal /* CustomUserPrincipal */ Object principal,
+        Principal principal,
         @RequestBody NoticeCreateRequest request
     ) {
-        // TODO: 실제 로그인 사용자 ID 가져오는 로직으로 교체
-        Long sellerUserId = extractUserId(principal);
-
+        Long sellerUserId = Long.valueOf(principal.getName());
         NoticeResponse response = sellerNoticeService.createNotice(sellerUserId, request);
         return ApiResponse.success(response);
     }
 
     /**
-     * 공지 조회 (GET /api/sellers/notices?popupId=&page=&size=)
+     * 공지사항 수정
+     * PUT /api/sellers/notices/{noticeId}
      */
-    @GetMapping
-    public ApiResponse<Page<NoticeResponse>> getNotices(
-        @AuthenticationPrincipal /* CustomUserPrincipal */ Object principal,
-        @RequestParam Long popupId,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size
+    @PutMapping("/notices/{noticeId}")
+    public ApiResponse<NoticeResponse> updateNotice(
+        Principal principal,
+        @PathVariable Long noticeId,
+        @RequestBody NoticeCreateRequest request
     ) {
-        Long sellerUserId = extractUserId(principal);
-
-        PageRequest pageRequest = PageRequest.of(page, size);
-        Page<NoticeResponse> responsePage =
-            sellerNoticeService.getNotices(sellerUserId, popupId, pageRequest);
-
-        return ApiResponse.success(responsePage);
+        Long sellerUserId = Long.valueOf(principal.getName());
+        NoticeResponse response = sellerNoticeService.updateNotice(sellerUserId, noticeId, request);
+        return ApiResponse.success(response);
     }
 
     /**
-     * 🔧 여기만 네 프로젝트에 맞게 고치면 됨
-     *  - 예: ((CustomUserPrincipal) principal).getUserId()
+     * 공지사항 삭제
+     * DELETE /api/sellers/notices/{noticeId}
      */
-    private Long extractUserId(Object principal) {
-        // 임시 구현: 실제로는 네가 쓰는 Principal 타입으로 캐스팅해서 userId 꺼내기
-        // 예시:
-        // CustomUserPrincipal p = (CustomUserPrincipal) principal;
-        // return p.getUserId();
+    @DeleteMapping("/notices/{noticeId}")
+    public ApiResponse<Void> deleteNotice(
+        Principal principal,
+        @PathVariable Long noticeId
+    ) {
+        Long sellerUserId = Long.valueOf(principal.getName());
+        sellerNoticeService.deleteNotice(sellerUserId, noticeId);
+        return ApiResponse.success();
+    }
 
-        throw new UnsupportedOperationException("Principal → userId 매핑을 구현하세요.");
+    /**
+     * 공지사항 다중 삭제
+     * DELETE /api/sellers/notices
+     */
+    @DeleteMapping("/notices")
+    public ApiResponse<Void> deleteNotices(
+        Principal principal,
+        @RequestBody DeleteNoticesRequest request
+    ) {
+        Long sellerUserId = Long.valueOf(principal.getName());
+        sellerNoticeService.deleteNotices(sellerUserId, request.getIds());
+        return ApiResponse.success();
+    }
+
+    @lombok.Data
+    public static class DeleteNoticesRequest {
+        private List<Long> ids;
     }
 }
