@@ -329,6 +329,7 @@ public class PopupQueryService {
         ObjectMapper om = new ObjectMapper();
         JsonNode root = om.readTree(geojson);
 
+        // Feature / FeatureCollection 래핑 해제
         if (root.has("type") && "Feature".equalsIgnoreCase(root.get("type").asText()) && root.has("geometry")) {
             root = root.get("geometry");
         } else if (root.has("type") && "FeatureCollection".equalsIgnoreCase(root.get("type").asText())
@@ -338,17 +339,34 @@ public class PopupQueryService {
         }
 
         String type = root.has("type") ? root.get("type").asText() : null;
-        if (type == null) throw new IllegalArgumentException("GeoJSON type이 없습니다.");
+        if (type == null) {
+            throw new IllegalArgumentException("GeoJSON type이 없습니다.");
+        }
 
         GeometryFactory gf = new GeometryFactory();
 
-        if ("Polygon".equalsIgnoreCase(type)) {
+        // 🔧 여기서부터 타입 분기 추가
+        if ("Point".equalsIgnoreCase(type)) {
+            // coordinates: [lng, lat]
+            return pointFromCoords(gf, root.get("coordinates"));
+        } else if ("Polygon".equalsIgnoreCase(type)) {
             return polygonFromCoords(gf, root.get("coordinates"));
         } else if ("MultiPolygon".equalsIgnoreCase(type)) {
             return multiPolygonFromCoords(gf, root.get("coordinates"));
         } else {
             throw new IllegalArgumentException("지원하지 않는 GeoJSON 타입: " + type);
         }
+    }
+
+    private Point pointFromCoords(GeometryFactory gf, JsonNode coordsNode) {
+        if (coordsNode == null || !coordsNode.isArray() || coordsNode.size() < 2) {
+            throw new IllegalArgumentException("Point coordinates는 [lng, lat] 형식이어야 합니다.");
+        }
+
+        double lng = coordsNode.get(0).asDouble();
+        double lat = coordsNode.get(1).asDouble();
+
+        return gf.createPoint(new Coordinate(lng, lat));
     }
 
     private Polygon polygonFromCoords(GeometryFactory gf, JsonNode coordsNode) {
