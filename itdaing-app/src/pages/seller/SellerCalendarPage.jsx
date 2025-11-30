@@ -1,21 +1,21 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin, Clock, Eye, Heart } from 'lucide-react';
 import { getMyPopups } from '@/services/sellerService';
 
 /**
  * 팝업 상태에 따른 색상 반환
  */
 const getPopupColor = (startDate, endDate) => {
-  if (!startDate || !endDate) return '#94a3b8'; // 날짜 없음 - 회색
+  if (!startDate || !endDate) return { bg: '#94a3b8', text: '#64748b' }; // 회색
 
   const now = new Date();
   const s = new Date(startDate);
   const e = new Date(endDate);
 
-  if (now > e) return '#f97316'; // 종료 - 주황
-  if (now < s) return '#3b82f6'; // 예정 - 파랑
-  return '#10b981'; // 진행 중 - 초록
+  if (now > e) return { bg: '#f97316', text: '#ea580c' }; // 종료 - 주황
+  if (now < s) return { bg: '#3b82f6', text: '#2563eb' }; // 예정 - 파랑
+  return { bg: '#10b981', text: '#059669' }; // 진행 중 - 초록
 };
 
 /**
@@ -33,6 +33,8 @@ const getStatusLabel = (startDate, endDate) => {
   return '진행 중';
 };
 
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
 const formatKoreanMonth = (year, monthIndex) => {
   return `${year}년 ${monthIndex + 1}월`;
 };
@@ -44,6 +46,9 @@ const formatDateRange = (start, end) => {
 
 const getDaysInMonth = (year, monthIndex) =>
   new Date(year, monthIndex + 1, 0).getDate();
+
+const getFirstDayOfMonth = (year, monthIndex) =>
+  new Date(year, monthIndex, 1).getDay();
 
 const SellerCalendarPage = () => {
   const today = new Date();
@@ -72,6 +77,7 @@ const SellerCalendarPage = () => {
   }, [popups, selectedPopupId]);
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+  const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
 
   const handlePrevMonth = () => {
     setCurrentMonth((prev) => {
@@ -93,47 +99,51 @@ const SellerCalendarPage = () => {
     });
   };
 
-  // 캘린더 바 계산
-  const bars = useMemo(() => {
-    const monthStart = new Date(currentYear, currentMonth, 1);
-    const monthEnd = new Date(currentYear, currentMonth, daysInMonth);
-
-    return popups.map((popup) => {
-      const startDate = popup.startDate;
-      const endDate = popup.endDate;
-
-      if (!startDate || !endDate) return null;
-
-      const [sYear, sMonth, sDay] = startDate.split('-').map(Number);
-      const [eYear, eMonth, eDay] = endDate.split('-').map(Number);
-
+  // 특정 날짜에 해당하는 팝업 찾기
+  const getPopupsForDate = (day) => {
+    const dateToCheck = new Date(currentYear, currentMonth, day);
+    
+    return popups.filter((popup) => {
+      if (!popup.startDate || !popup.endDate) return false;
+      
+      const [sYear, sMonth, sDay] = popup.startDate.split('-').map(Number);
+      const [eYear, eMonth, eDay] = popup.endDate.split('-').map(Number);
+      
       const popupStart = new Date(sYear, sMonth - 1, sDay);
       const popupEnd = new Date(eYear, eMonth - 1, eDay);
+      
+      return dateToCheck >= popupStart && dateToCheck <= popupEnd;
+    });
+  };
 
-      // 해당 월과 전혀 겹치지 않으면 스킵
-      if (popupEnd < monthStart || popupStart > monthEnd) {
-        return null;
-      }
-
-      // 이 월 안에서의 실제 시작/끝 날짜로 클램프
-      const effectiveStart =
-        popupStart < monthStart ? monthStart : popupStart;
-      const effectiveEnd = popupEnd > monthEnd ? monthEnd : popupEnd;
-
-      const startDay = effectiveStart.getDate();
-      const endDay = effectiveEnd.getDate();
-
-      const left = ((startDay - 1) / daysInMonth) * 100;
-      const width = ((endDay - startDay + 1) / daysInMonth) * 100;
-
-      return {
-        popup,
-        left,
-        width,
-        color: getPopupColor(startDate, endDate),
-      };
-    }).filter(Boolean);
-  }, [popups, currentYear, currentMonth, daysInMonth]);
+  // 달력 셀 생성
+  const calendarCells = useMemo(() => {
+    const cells = [];
+    
+    // 이전 달 빈 셀
+    for (let i = 0; i < firstDay; i++) {
+      cells.push({ type: 'empty', key: `empty-${i}` });
+    }
+    
+    // 현재 달 날짜
+    for (let day = 1; day <= daysInMonth; day++) {
+      const datePopups = getPopupsForDate(day);
+      const isToday = 
+        today.getFullYear() === currentYear && 
+        today.getMonth() === currentMonth && 
+        today.getDate() === day;
+      
+      cells.push({
+        type: 'day',
+        day,
+        popups: datePopups,
+        isToday,
+        key: `day-${day}`,
+      });
+    }
+    
+    return cells;
+  }, [currentYear, currentMonth, daysInMonth, firstDay, popups]);
 
   if (isLoading) {
     return (
@@ -171,177 +181,261 @@ const SellerCalendarPage = () => {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-6 rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60 lg:grid-cols-[2fr,1fr]">
-        {/* Left: Calendar + Popup periods */}
-        <div className="space-y-4">
+      {/* 헤더 */}
+      <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-[#EB0000]">일정 관리</h2>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#10b981]" />
+              진행 중
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#3b82f6]" />
+              예정
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#f97316]" />
+              종료
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr,380px]">
+        {/* 달력 영역 */}
+        <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
           {/* Month Header */}
-          <div className="flex items-center justify-between px-4 pt-2">
+          <div className="flex items-center justify-between mb-6">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="rounded-full p-2 text-gray-600 hover:bg-gray-100"
+              className="rounded-xl p-2 text-gray-600 hover:bg-gray-100 transition-colors"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <p className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-bold text-gray-900">
               {formatKoreanMonth(currentYear, currentMonth)}
-            </p>
+            </h3>
             <button
               type="button"
               onClick={handleNextMonth}
-              className="rounded-full p-2 text-gray-600 hover:bg-gray-100"
+              className="rounded-xl p-2 text-gray-600 hover:bg-gray-100 transition-colors"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
 
-          {/* Calendar + Popup period 카드 */}
-          <div className="rounded-2xl border border-gray-200 bg-white px-6 py-4">
-            {/* Calendar (days row) */}
-            <div className="bg-gray-50 rounded-xl px-4 py-4">
-              <div className="grid grid-cols-7 gap-y-6 text-center text-sm text-gray-700">
-                {Array.from({ length: daysInMonth }, (_, idx) => (
-                  <div key={idx} className="text-xs text-gray-500">
-                    {idx + 1}
-                  </div>
-                ))}
+          {/* 요일 헤더 */}
+          <div className="grid grid-cols-7 mb-2">
+            {WEEKDAYS.map((day, idx) => (
+              <div 
+                key={day} 
+                className={`py-2 text-center text-xs font-semibold ${
+                  idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-gray-500'
+                }`}
+              >
+                {day}
               </div>
+            ))}
+          </div>
 
-              {/* Bars */}
-              <div className="mt-8 space-y-3">
-                {bars.map(({ popup, left, width, color }) => (
-                  <div key={popup.id} className="relative h-2">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedPopupId(popup.id)}
-                      className="absolute inset-y-0 rounded-full transition-[box-shadow,transform]"
-                      style={{
-                        left: `${left}%`,
-                        width: `${width}%`,
-                        backgroundColor: color,
-                        boxShadow:
-                          selectedPopupId === popup.id
-                            ? '0 0 0 3px rgba(239,68,68,0.4)'
-                            : 'none',
-                      }}
-                    />
+          {/* 달력 그리드 */}
+          <div className="grid grid-cols-7 gap-1">
+            {calendarCells.map((cell) => {
+              if (cell.type === 'empty') {
+                return <div key={cell.key} className="aspect-square" />;
+              }
+
+              const dayOfWeek = (firstDay + cell.day - 1) % 7;
+              const hasPopups = cell.popups.length > 0;
+              
+              return (
+                <div
+                  key={cell.key}
+                  className={`
+                    aspect-square p-1 rounded-xl transition-all cursor-pointer
+                    ${cell.isToday ? 'bg-primary/10 ring-2 ring-primary/30' : 'hover:bg-gray-50'}
+                    ${hasPopups ? 'bg-gray-50' : ''}
+                  `}
+                  onClick={() => {
+                    if (cell.popups.length > 0) {
+                      setSelectedPopupId(cell.popups[0].id);
+                    }
+                  }}
+                >
+                  <div className={`
+                    text-xs font-medium mb-0.5 text-center
+                    ${cell.isToday ? 'text-primary font-bold' : ''}
+                    ${dayOfWeek === 0 ? 'text-red-500' : dayOfWeek === 6 ? 'text-blue-500' : 'text-gray-700'}
+                  `}>
+                    {cell.day}
                   </div>
-                ))}
-              </div>
-            </div>
+                  
+                  {/* 팝업 인디케이터 */}
+                  <div className="flex flex-wrap gap-0.5 justify-center">
+                    {cell.popups.slice(0, 3).map((popup) => {
+                      const color = getPopupColor(popup.startDate, popup.endDate);
+                      return (
+                        <div
+                          key={popup.id}
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ backgroundColor: color.bg }}
+                          title={popup.title}
+                        />
+                      );
+                    })}
+                    {cell.popups.length > 3 && (
+                      <span className="text-[8px] text-gray-400">+{cell.popups.length - 3}</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-            {/* Popup periods (달력 아래) */}
-            <div className="mt-6 border-t border-gray-200 pt-4">
-              <p className="mb-3 text-sm font-semibold text-gray-900">팝업 기간</p>
-              <div className="space-y-2 text-sm text-gray-700 max-h-48 overflow-y-auto">
-                {popups.map((popup) => (
+          {/* 팝업 기간 목록 */}
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">팝업 기간</h4>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {popups.map((popup) => {
+                const color = getPopupColor(popup.startDate, popup.endDate);
+                const isSelected = selectedPopupId === popup.id;
+                
+                return (
                   <button
                     key={popup.id}
                     type="button"
                     onClick={() => setSelectedPopupId(popup.id)}
-                    className={`flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-gray-50 transition-colors ${
-                      selectedPopupId === popup.id ? 'bg-gray-100' : ''
-                    }`}
+                    className={`
+                      flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all
+                      ${isSelected ? 'bg-gray-100 shadow-sm' : 'hover:bg-gray-50'}
+                    `}
                   >
                     <span
-                      className="inline-block h-2.5 w-2.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: getPopupColor(popup.startDate, popup.endDate) }}
+                      className="h-3 w-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: color.bg }}
                     />
-                    <span className="font-medium truncate flex-1">
-                      {getStatusLabel(popup.startDate, popup.endDate)} | {popup.title}
-                    </span>
-                    <span className="ml-auto text-xs text-gray-500 flex-shrink-0">
-                      {formatDateRange(popup.startDate, popup.endDate)}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {popup.title}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {formatDateRange(popup.startDate, popup.endDate)}
+                      </p>
+                    </div>
+                    <span
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                      style={{
+                        backgroundColor: `${color.bg}20`,
+                        color: color.text,
+                      }}
+                    >
+                      {getStatusLabel(popup.startDate, popup.endDate)}
                     </span>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Right: Selected popup detail */}
+        {/* 선택된 팝업 상세 */}
         {selectedPopup && (
-          <div className="flex flex-col items-stretch rounded-3xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
+          <section className="rounded-3xl border border-white/80 bg-white p-5 shadow-sm shadow-slate-200/60 h-fit">
+            {/* 썸네일 */}
+            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-gray-100 aspect-[4/3]">
               {selectedPopup.thumbnail ? (
                 <img
-                  src={selectedPopup.thumbnail}
+                  src={typeof selectedPopup.thumbnail === 'string' ? selectedPopup.thumbnail : selectedPopup.thumbnail?.url}
                   alt={selectedPopup.title}
-                  className="h-72 w-full object-cover"
+                  className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="h-72 w-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                  <CalendarIcon className="h-16 w-16 text-gray-300" />
+                <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                  <CalendarIcon className="h-12 w-12 text-gray-300" />
                 </div>
               )}
             </div>
 
-            <div className="mt-6 space-y-4 px-1">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900 truncate">
+            {/* 정보 */}
+            <div className="mt-5 space-y-4">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-lg font-bold text-gray-900 leading-tight">
                   {selectedPopup.title}
-                </h2>
+                </h3>
                 <span
-                  className="text-xs font-semibold px-2 py-1 rounded-full"
+                  className="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
                   style={{
-                    backgroundColor: `${getPopupColor(selectedPopup.startDate, selectedPopup.endDate)}20`,
-                    color: getPopupColor(selectedPopup.startDate, selectedPopup.endDate),
+                    backgroundColor: `${getPopupColor(selectedPopup.startDate, selectedPopup.endDate).bg}20`,
+                    color: getPopupColor(selectedPopup.startDate, selectedPopup.endDate).text,
                   }}
                 >
                   {getStatusLabel(selectedPopup.startDate, selectedPopup.endDate)}
                 </span>
               </div>
 
-              <div className="space-y-3 text-sm text-gray-800">
-                <div className="flex gap-4">
-                  <span className="w-20 text-xs font-semibold text-gray-500 flex items-center gap-1">
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    팝업 기간
-                  </span>
-                  <span>{formatDateRange(selectedPopup.startDate, selectedPopup.endDate)}</span>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <CalendarIcon className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500">운영 기간</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {formatDateRange(selectedPopup.startDate, selectedPopup.endDate)}
+                    </p>
+                  </div>
                 </div>
-                {selectedPopup.operatingTime && (
-                  <div className="flex gap-4">
-                    <span className="w-20 text-xs font-semibold text-gray-500 flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      운영 시간
-                    </span>
-                    <span>{selectedPopup.operatingTime}</span>
+
+                {selectedPopup.hours && (
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-gray-500">운영 시간</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {selectedPopup.hours}
+                      </p>
+                    </div>
                   </div>
                 )}
+
                 {selectedPopup.address && (
-                  <div className="flex gap-4">
-                    <span className="w-20 text-xs font-semibold text-gray-500 flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" />
-                      팝업 장소
-                    </span>
-                    <span className="whitespace-pre-line">
-                      {selectedPopup.address}
-                    </span>
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-gray-500">위치</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {selectedPopup.address}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* 조회수/찜 정보 */}
-              <div className="flex gap-4 pt-2 border-t border-gray-100">
-                <div className="flex-1 text-center">
-                  <p className="text-xs text-gray-500">조회수</p>
-                  <p className="text-lg font-bold text-gray-900">
-                    {(selectedPopup.viewCount ?? 0).toLocaleString()}
-                  </p>
+              {/* 통계 */}
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
+                <div className="flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2.5">
+                  <Eye className="h-4 w-4 text-gray-400" />
+                  <div>
+                    <p className="text-[10px] text-gray-500">조회수</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {(selectedPopup.viewCount ?? 0).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 text-center">
-                  <p className="text-xs text-gray-500">찜</p>
-                  <p className="text-lg font-bold text-gray-900">
-                    {(selectedPopup.favoriteCount ?? 0).toLocaleString()}
-                  </p>
+                <div className="flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2.5">
+                  <Heart className="h-4 w-4 text-gray-400" />
+                  <div>
+                    <p className="text-[10px] text-gray-500">찜</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {(selectedPopup.favoriteCount ?? 0).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </section>
         )}
-      </section>
+      </div>
     </div>
   );
 };

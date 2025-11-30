@@ -205,44 +205,45 @@ const SellerReviewsPage = () => {
         </div>
       </section>
 
-      {/* 리뷰 요약 지표 영역 */}
+      {/* 리뷰 요약 지표 영역 - 균등 3분할 그리드 */}
       <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
-        <div className="flex flex-col gap-4 md:flex-row">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* 평균 평점 카드 */}
-          <div className="rounded-2xl border border-gray-200 bg-gray-50 px-6 py-4 text-center md:w-64">
-            <p className="text-sm font-semibold text-gray-500">평균 평점</p>
-            <div className="mt-3 flex flex-col items-center gap-1.5">
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 flex flex-col items-center justify-center min-h-[140px]">
+            <p className="text-sm font-semibold text-gray-500 mb-3">평균 평점</p>
+            <div className="flex flex-col items-center gap-2">
               {renderStars(Math.round(averageRating))}
-              <p className="mt-1 text-3xl font-bold text-gray-900">{averageRating}</p>
+              <p className="text-4xl font-bold text-gray-900">{averageRating}</p>
             </div>
           </div>
 
           {/* 총 리뷰 수 카드 */}
-          <div className="rounded-2xl border border-gray-200 bg-gray-50 px-6 py-4 text-center md:w-64">
-            <p className="text-sm font-semibold text-gray-500">총 리뷰 수</p>
-            <p className="mt-3 text-4xl font-bold text-gray-900">{totalReviews}</p>
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 flex flex-col items-center justify-center min-h-[140px]">
+            <p className="text-sm font-semibold text-gray-500 mb-3">총 리뷰 수</p>
+            <p className="text-4xl font-bold text-gray-900">{totalReviews}</p>
+            <p className="text-xs text-gray-400 mt-1">개의 리뷰</p>
           </div>
 
           {/* 별점 분포 카드 */}
-          <div className="rounded-2xl border border-gray-200 bg-gray-50 px-6 py-4 md:flex-1">
-            <p className="mb-2 text-xs font-semibold text-gray-500">별점 분포</p>
-            <div className="space-y-1.5">
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 min-h-[140px]">
+            <p className="text-sm font-semibold text-gray-500 mb-3">별점 분포</p>
+            <div className="space-y-2">
               {[5, 4, 3, 2, 1].map((rating) => {
                 const count = ratingCounts[rating];
                 const ratio = totalReviews ? (count / totalReviews) * 100 : 0;
                 return (
                   <div key={rating} className="flex items-center gap-2">
-                    <span className="flex w-10 items-center gap-0.5 text-xs text-gray-500">
+                    <span className="flex w-8 items-center gap-0.5 text-xs font-medium text-gray-600 flex-shrink-0">
                       {rating}
                       <Star className="h-3 w-3 text-[#EB0000]" fill="#EB0000" />
                     </span>
-                    <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-gray-200">
+                    <div className="flex-1 h-2 overflow-hidden rounded-full bg-gray-200">
                       <div
-                        className="h-full rounded-full bg-[#EB0000] transition-all"
+                        className="h-full rounded-full bg-[#EB0000] transition-all duration-300"
                         style={{ width: `${ratio}%` }}
                       />
                     </div>
-                    <span className="w-6 text-right text-xs text-gray-500">{count}</span>
+                    <span className="w-8 text-right text-xs font-medium text-gray-600 flex-shrink-0">{count}</span>
                   </div>
                 );
               })}

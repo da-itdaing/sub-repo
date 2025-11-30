@@ -20,32 +20,28 @@ public class SellerNoticeController {
     private final SellerNoticeService sellerNoticeService;
 
     /**
-     * 판매자의 모든 팝업에 대한 공지사항 목록 조회
+     * 판매자용 전체 공지사항 조회 (ALL + SELLER 대상)
      * GET /api/sellers/me/notices
      */
     @GetMapping("/me/notices")
-    public ApiResponse<Page<NoticeResponse>> getMyNotices(
-        Principal principal,
+    public ApiResponse<Page<NoticeResponse>> getSellerNotices(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "100") int size
     ) {
-        Long sellerUserId = Long.valueOf(principal.getName());
         PageRequest pageRequest = PageRequest.of(page, size);
-        Page<NoticeResponse> responsePage = sellerNoticeService.getMyNotices(sellerUserId, pageRequest);
+        Page<NoticeResponse> responsePage = sellerNoticeService.getSellerNotices(pageRequest);
         return ApiResponse.success(responsePage);
     }
 
     /**
-     * 공지사항 상세 조회
+     * 공지사항 상세 조회 (공개)
      * GET /api/sellers/notices/{noticeId}
      */
     @GetMapping("/notices/{noticeId}")
     public ApiResponse<NoticeResponse> getNoticeById(
-        Principal principal,
         @PathVariable Long noticeId
     ) {
-        Long sellerUserId = Long.valueOf(principal.getName());
-        NoticeResponse response = sellerNoticeService.getNoticeById(sellerUserId, noticeId);
+        NoticeResponse response = sellerNoticeService.getNoticeByIdPublic(noticeId);
         return ApiResponse.success(response);
     }
 

@@ -5,8 +5,6 @@ import {
   Menu,
   LayoutDashboard,
   Store,
-  MessageSquare,
-  ChevronDown,
   Plus,
   User2,
   Stars,
@@ -251,20 +249,19 @@ const SellerLayout = () => {
                 <Bot className="h-5 w-5" />
               </button>
 
-              <button className="rounded-2xl border border-gray-200 p-2 text-gray-600 transition hover:border-gray-300">
-                <MessageSquare className="h-5 w-5" />
-              </button>
-
-              <div className="flex items-center gap-2 rounded-2xl border border-gray-200 px-3 py-1.5">
+              {/* 프로필 영역 - 클릭 시 내 정보 페이지로 이동 */}
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.seller.profile)}
+                className="flex items-center gap-2 rounded-2xl border border-gray-200 px-3 py-1.5 transition hover:border-primary/30 hover:bg-primary/5"
+              >
                 <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary">
                   {initials}
                 </div>
                 <div className="hidden text-left text-sm leading-tight sm:block">
                   <p className="font-semibold text-gray-900">{displayName}</p>
-                  <p className="text-xs text-gray-500">{roleLabel}</p>
                 </div>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
-              </div>
+              </button>
             </div>
           </div>
         </header>

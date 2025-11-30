@@ -217,20 +217,26 @@ const SellerPopupsPage = () => {
                   
                   return (
                     <tr key={popup.id} className="hover:bg-gray-50 transition-colors">
-                      {/* Image */}
+                      {/* Image - thumbnail이 객체({url, key}) 또는 문자열일 수 있음 */}
                       <td className="py-4 px-4 text-center">
                         <div className="relative aspect-square w-14 mx-auto overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
                           {popup.thumbnail ? (
                             <img 
-                              src={popup.thumbnail} 
+                              src={typeof popup.thumbnail === 'string' ? popup.thumbnail : popup.thumbnail?.url} 
                               alt={popup.title} 
-                              className="h-full w-full object-cover" 
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
                             />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-400">
-                              No Image
-                            </div>
-                          )}
+                          ) : null}
+                          <div 
+                            className="h-full w-full items-center justify-center text-[10px] text-gray-400"
+                            style={{ display: popup.thumbnail ? 'none' : 'flex' }}
+                          >
+                            No Image
+                          </div>
                         </div>
                       </td>
 

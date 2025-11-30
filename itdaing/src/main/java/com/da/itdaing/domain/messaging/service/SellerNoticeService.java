@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -144,5 +145,28 @@ public class SellerNoticeService {
 
         return announcementRepository.findByPopupIdOrderByCreatedAtDesc(popupId, pageable)
             .map(NoticeResponse::from);
+    }
+
+    /**
+     * 판매자용 전체 공지사항 조회 (ALL + SELLER 대상)
+     */
+    @Transactional(readOnly = true)
+    public Page<NoticeResponse> getSellerNotices(Pageable pageable) {
+        List<AnnouncementAudience> audiences = Arrays.asList(
+            AnnouncementAudience.ALL,
+            AnnouncementAudience.SELLER
+        );
+        return announcementRepository.findByAudienceInOrderByCreatedAtDesc(audiences, pageable)
+            .map(NoticeResponse::from);
+    }
+
+    /**
+     * 공지사항 상세 조회 (권한 체크 없음 - 공개 공지용)
+     */
+    @Transactional(readOnly = true)
+    public NoticeResponse getNoticeByIdPublic(Long noticeId) {
+        Announcement announcement = announcementRepository.findById(noticeId)
+            .orElseThrow(() -> new EntityNotFoundException("Notice not found"));
+        return NoticeResponse.from(announcement);
     }
 }
