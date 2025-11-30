@@ -1,193 +1,150 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Search, Plus, ChevronLeft, ChevronRight, Megaphone } from 'lucide-react';
 import clsx from 'clsx';
 import { ROUTES } from '@/routes/paths';
+import { getMyNotices, deleteNotices, getMyPopups } from '@/services/sellerService';
+import { useToast } from '@/hooks/useToast';
+
+const ITEMS_PER_PAGE = 10;
 
 const SellerNoticesPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  // Mock Data
-  const [notices, setNotices] = useState([
-    {
-      id: 'notice-1',
-      isImportant: true,
-      popupName: '충장 라온 페스타',
-      title: '고객 문의사항 창구',
-      date: '2025-09-11',
-    },
-    {
-      id: 'notice-2',
-      isImportant: false,
-      no: 12,
-      popupName: '여울원 팝업 IN 광주',
-      title: '분실물 보관 안내',
-      date: '2025-10-24',
-    },
-    {
-      id: 'notice-3',
-      isImportant: false,
-      no: 11,
-      popupName: '충장 라온 페스타',
-      title: '11월 안내사항 안내',
-      date: '2025-10-31',
-      isChecked: true, // 예시용
-    },
-    {
-      id: 'notice-4',
-      isImportant: false,
-      no: 10,
-      popupName: '여울원 팝업 IN 광주',
-      title: '선입장 및 일반입장 고객 안내사항',
-      date: '2025-10-22',
-    },
-    {
-      id: 'notice-5',
-      isImportant: false,
-      no: 9,
-      popupName: '[중장년 남성] 집밥에 진심인 남자들 : 제철 남도밥상',
-      title: '충장로 교통통제 안내',
-      date: '2025-10-14',
-      isChecked: true, // 예시용
-    },
-    {
-      id: 'notice-6',
-      isImportant: false,
-      no: 8,
-      popupName: '충장 라온 페스타',
-      title: 'SNS 후기 이벤트! (10/15~10/22)',
-      date: '2025-10-12',
-    },
-    {
-      id: 'notice-7',
-      isImportant: false,
-      no: 7,
-      popupName: '[중장년 남성] 집밥에 진심인 남자들 : 제철 남도밥상',
-      title: '\'광주 추억의 충장축제\' 내부 마켓 위치 안내도',
-      date: '2025-10-11',
-    },
-    {
-      id: 'notice-8',
-      isImportant: false,
-      no: 6,
-      popupName: '2025 광주 빵 페스타',
-      title: '물품 통신판매 안내(10/10~10/13)',
-      date: '2025-10-10',
-    },
-    {
-      id: 'notice-9',
-      isImportant: false,
-      no: 5,
-      popupName: '하리보리빙 팝업',
-      title: '참여형 전시 중 권고사항',
-      date: '2025-10-02',
-    },
-    {
-      id: 'notice-10',
-      isImportant: false,
-      no: 4,
-      popupName: '하리보리빙 팝업',
-      title: '10월 추석 기간 휴무(10/4~10/8)',
-      date: '2025-09-30',
-    },
-  ]);
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
-  
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
-  // 생성/수정 페이지에서 돌아올 때 중요 여부 및 신규 공지 반영
-  useEffect(() => {
-    const updated = location.state?.updatedNotice;
-    const created = location.state?.createdNotice;
+  // 공지사항 목록 조회
+  const { data: noticesData, isLoading, error } = useQuery({
+    queryKey: ['myNotices'],
+    queryFn: () => getMyNotices(0, 100), // 전체 조회 후 프론트엔드에서 페이징
+    staleTime: 2 * 60 * 1000,
+  });
 
-    if (!updated && !created) return;
+  // 팝업 목록 조회 (팝업명 매핑용)
+  const { data: popups = [] } = useQuery({
+    queryKey: ['myPopups'],
+    queryFn: getMyPopups,
+    staleTime: 5 * 60 * 1000,
+  });
 
-    setNotices((prev) => {
-      let next = [...prev];
+  // 공지사항 삭제 mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteNotices,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myNotices'] });
+      setSelectedIds([]);
+      addToast({ title: '공지사항이 삭제되었습니다.' });
+    },
+    onError: (err) => {
+      addToast({ 
+        title: '삭제 실패', 
+        description: err.message,
+        variant: 'error' 
+      });
+    },
+  });
 
-      // 중요 여부 수정 반영
-      if (updated) {
-        next = next.map((n) =>
-          n.id === updated.id ? { ...n, isImportant: updated.isImportant } : n
-        );
-      }
-
-      // 신규 공지 추가 (목록 상단에 추가)
-      if (created) {
-        const maxNo = next.reduce((max, n) => (typeof n.no === 'number' ? Math.max(max, n.no) : max), 0);
-        next = [
-          {
-            ...created,
-            no: maxNo + 1,
-          },
-          ...next,
-        ];
-      }
-
-      return next;
+  // 팝업 ID -> 팝업명 맵
+  const popupNameMap = useMemo(() => {
+    const map = {};
+    popups.forEach((p) => {
+      map[p.id] = p.title;
     });
+    return map;
+  }, [popups]);
 
-    // state 초기화 (뒤로가기 등에서 중복 적용 방지)
-    navigate(location.pathname, { replace: true, state: {} });
-  }, [location.state, location.pathname, navigate]);
+  // 공지사항 데이터 정규화
+  const notices = useMemo(() => {
+    const rawData = noticesData?.content || noticesData || [];
+    if (!Array.isArray(rawData)) return [];
+    
+    return rawData.map((n) => ({
+      id: n.id,
+      isImportant: n.isImportant || n.important || false,
+      popupId: n.popupId,
+      popupName: popupNameMap[n.popupId] || n.popupName || '전체',
+      title: n.title,
+      content: n.content,
+      date: n.createdAt?.split('T')[0] || n.date || '-',
+    }));
+  }, [noticesData, popupNameMap]);
 
-  // Filter logic
-  const filteredNotices = notices.filter((notice) =>
-    notice.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    notice.popupName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // 필터링된 공지사항
+  const filteredNotices = useMemo(() => {
+    return notices.filter((notice) =>
+      notice.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      notice.popupName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [notices, searchTerm]);
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredNotices.length / itemsPerPage);
+  // 페이지네이션
+  const totalPages = Math.ceil(filteredNotices.length / ITEMS_PER_PAGE);
   const paginatedNotices = filteredNotices.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
   );
 
-  // Handlers
+  // 전체 선택 핸들러
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      // Select all filtered items
       setSelectedIds(filteredNotices.map((n) => n.id));
     } else {
       setSelectedIds([]);
     }
   };
 
+  // 개별 선택 핸들러
   const handleSelectOne = (id) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
+  // 삭제 핸들러
   const handleDelete = () => {
     if (selectedIds.length === 0) {
-      alert('삭제할 공지사항을 선택해주세요.');
+      addToast({ title: '삭제할 공지사항을 선택해주세요.', variant: 'warning' });
       return;
     }
 
     if (window.confirm(`${selectedIds.length}개의 공지사항을 삭제하시겠습니까?`)) {
-      setNotices((prev) => prev.filter((n) => !selectedIds.includes(n.id)));
-      setSelectedIds([]);
-      
-      // If current page becomes empty after deletion, go to previous page
-      const remainingCount = filteredNotices.length - selectedIds.length;
-      const newTotalPages = Math.ceil(remainingCount / itemsPerPage);
-      if (currentPage > newTotalPages && newTotalPages > 0) {
-        setCurrentPage(newTotalPages);
-      }
+      deleteMutation.mutate(selectedIds);
     }
   };
 
+  // 페이지 변경 핸들러
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
+
+  // 검색 시 페이지 리셋
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">공지사항을 불러오는 중...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-red-500">공지사항을 불러오는데 실패했습니다.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -202,10 +159,7 @@ const SellerNoticesPage = () => {
                 type="text"
                 placeholder="검색어를 입력하세요"
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1); // Reset to page 1 on search
-                }}
+                onChange={handleSearch}
                 className="w-full rounded-full border border-gray-300 py-2 pl-4 pr-10 text-sm placeholder:text-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
               />
               <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-primary" />
@@ -223,119 +177,135 @@ const SellerNoticesPage = () => {
         </div>
       </section>
 
-      {/* Table Section */}
-      <section className="overflow-hidden rounded-t-xl border border-gray-200 bg-white shadow-sm">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-[#333333] text-white">
-              <th className="w-12 py-3 pl-4 text-left">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-[#EB0000] focus:ring-[#EB0000]"
-                  checked={
-                    filteredNotices.length > 0 &&
-                    filteredNotices.every((n) => selectedIds.includes(n.id))
-                  }
-                  onChange={handleSelectAll}
-                />
-              </th>
-              <th className="w-20 py-3 text-center text-sm font-medium"></th>
-              <th className="w-1/4 py-3 text-center text-sm font-medium">팝업명</th>
-              <th className="py-3 text-center text-sm font-medium">제목</th>
-              <th className="w-32 py-3 pr-4 text-center text-sm font-medium">게시 일자</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedNotices.map((notice) => (
-              <tr
-                key={notice.id}
-                onClick={() => navigate(ROUTES.seller.noticeDetail(notice.id))}
-                className="border-b border-dashed border-gray-200 hover:bg-gray-50 cursor-pointer"
-              >
-                <td className="py-4 pl-4" onClick={(e) => e.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-[#EB0000] focus:ring-[#EB0000]"
-                    checked={selectedIds.includes(notice.id)}
-                    onChange={() => handleSelectOne(notice.id)}
-                  />
-                </td>
-                <td className="py-4 text-center">
-                  {notice.isImportant ? (
-                    <span className="inline-block rounded-full border border-[#EB0000] px-2 py-0.5 text-xs font-bold text-[#EB0000]">
-                      중요
-                    </span>
-                  ) : (
-                    <span className="inline-block rounded-full border border-emerald-500 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
-                      일반
-                    </span>
-                  )}
-                </td>
-                <td className="py-4 text-center text-sm text-gray-600">
-                  {notice.popupName}
-                </td>
-                <td className="py-4 text-left pl-8 text-sm text-gray-900">
-                  {notice.title}
-                </td>
-                <td className="py-4 pr-4 text-center text-sm text-gray-500">
-                  {notice.date}
-                </td>
-              </tr>
-            ))}
+      {/* Empty State */}
+      {notices.length === 0 ? (
+        <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Megaphone className="h-16 w-16 text-gray-300 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              등록된 공지사항이 없습니다
+            </h3>
+            <p className="text-sm text-gray-500">
+              새 공지사항을 등록해보세요.
+            </p>
+          </div>
+        </section>
+      ) : (
+        <>
+          {/* Table Section */}
+          <section className="overflow-hidden rounded-t-xl border border-gray-200 bg-white shadow-sm">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-[#333333] text-white">
+                  <th className="w-12 py-3 pl-4 text-left">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-[#EB0000] focus:ring-[#EB0000]"
+                      checked={
+                        filteredNotices.length > 0 &&
+                        filteredNotices.every((n) => selectedIds.includes(n.id))
+                      }
+                      onChange={handleSelectAll}
+                    />
+                  </th>
+                  <th className="w-20 py-3 text-center text-sm font-medium">구분</th>
+                  <th className="w-1/4 py-3 text-center text-sm font-medium">팝업명</th>
+                  <th className="py-3 text-center text-sm font-medium">제목</th>
+                  <th className="w-32 py-3 pr-4 text-center text-sm font-medium">게시 일자</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedNotices.map((notice) => (
+                  <tr
+                    key={notice.id}
+                    onClick={() => navigate(ROUTES.seller.noticeDetail(notice.id))}
+                    className="border-b border-dashed border-gray-200 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <td className="py-4 pl-4" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-[#EB0000] focus:ring-[#EB0000]"
+                        checked={selectedIds.includes(notice.id)}
+                        onChange={() => handleSelectOne(notice.id)}
+                      />
+                    </td>
+                    <td className="py-4 text-center">
+                      {notice.isImportant ? (
+                        <span className="inline-block rounded-full border border-[#EB0000] px-2 py-0.5 text-xs font-bold text-[#EB0000]">
+                          중요
+                        </span>
+                      ) : (
+                        <span className="inline-block rounded-full border border-emerald-500 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                          일반
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-4 text-center text-sm text-gray-600 truncate max-w-[200px]">
+                      {notice.popupName}
+                    </td>
+                    <td className="py-4 text-left pl-8 text-sm text-gray-900">
+                      {notice.title}
+                    </td>
+                    <td className="py-4 pr-4 text-center text-sm text-gray-500">
+                      {notice.date}
+                    </td>
+                  </tr>
+                ))}
+                
+                {/* Empty Search Result */}
+                {paginatedNotices.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="py-10 text-center text-sm text-gray-500">
+                      {searchTerm ? '검색 결과가 없습니다.' : '등록된 공지사항이 없습니다.'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </section>
+
+          {/* Footer Actions & Pagination */}
+          <div className="flex items-center justify-between pt-2">
+            <div className="w-20"></div>
             
-            {/* Empty State */}
-            {paginatedNotices.length === 0 && (
-              <tr>
-                <td colSpan={5} className="py-10 text-center text-sm text-gray-500">
-                  {searchTerm ? '검색 결과가 없습니다.' : '등록된 공지사항이 없습니다.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </section>
-
-      {/* Footer Actions & Pagination */}
-      <div className="flex items-center justify-between pt-2">
-        <div className="w-20"></div> {/* Spacer for centering */}
-        
-        <div className="flex items-center gap-2">
-            <button 
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
-            >
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
                 <ChevronLeft className="h-5 w-5" />
-            </button>
-            <span className="text-sm font-medium text-gray-600">
-              {totalPages === 0 ? 0 : currentPage} / {totalPages}
-            </span>
-            <button 
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
-            >
+              </button>
+              <span className="text-sm font-medium text-gray-600">
+                {totalPages === 0 ? 0 : currentPage} / {totalPages || 1}
+              </span>
+              <button 
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
                 <ChevronRight className="h-5 w-5" />
-            </button>
-        </div>
+              </button>
+            </div>
 
-        <button
-          type="button"
-          onClick={handleDelete}
-          className={clsx(
-            "rounded-lg px-6 py-2 text-sm font-bold text-white shadow-sm transition",
-            selectedIds.length > 0 
-              ? "bg-[#EB0000] hover:bg-[#c90000]" 
-              : "bg-gray-300 cursor-not-allowed"
-          )}
-          disabled={selectedIds.length === 0}
-        >
-          삭제
-        </button>
-      </div>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={selectedIds.length === 0 || deleteMutation.isPending}
+              className={clsx(
+                "rounded-lg px-6 py-2 text-sm font-bold text-white shadow-sm transition",
+                selectedIds.length > 0 
+                  ? "bg-[#EB0000] hover:bg-[#c90000]" 
+                  : "bg-gray-300 cursor-not-allowed"
+              )}
+            >
+              {deleteMutation.isPending ? '삭제 중...' : '삭제'}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
 
 export default SellerNoticesPage;
-

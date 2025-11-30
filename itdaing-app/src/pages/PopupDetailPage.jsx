@@ -14,6 +14,7 @@ import ReviewTab from '@/components/popup/detail/tabs/ReviewTab';
 import { usePopupById, usePopupReviews } from '@/hooks/usePopups';
 import { getImageUrl, getImageUrls } from '@/utils/imageUtils';
 import { addToWishlist, removeFromWishlist } from '@/services/wishlistService';
+import { recordPopupView } from '@/services/popupService';
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/hooks/useToast';
 import { useLoginPrompt } from '@/hooks/useLoginPrompt';
@@ -54,6 +55,13 @@ const PopupDetailPage = () => {
       setLocalFavoriteCount(popup.favoriteCount);
     }
   }, [popup?.favoriteCount]);
+
+  // 📈 조회수 증가 이벤트 기록 (팝업 ID 변경 시 1회만 실행)
+  useEffect(() => {
+    if (popup?.id) {
+      recordPopupView(popup.id, 'detail_page');
+    }
+  }, [popup?.id]);
 
   // ⭐⭐ 핵심: UI 하트 초기값은 딱 1번만 설정 (popup.id 변경 시에만!)
   useEffect(() => {

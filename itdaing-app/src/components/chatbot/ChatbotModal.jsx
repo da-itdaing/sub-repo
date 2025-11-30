@@ -7,12 +7,21 @@ import ChatbotContent from '@/components/chatbot/ChatbotContent';
  * - Portal을 사용하여 body에 렌더링
  * - 배경 클릭 또는 X 버튼으로 닫기
  * - 접근성(aria) 속성 포함
+ * - mode prop으로 consumer/seller 챗봇 구분
+ * 
+ * @param {Object} props
+ * @param {boolean} props.open - 모달 열림 상태
+ * @param {Function} props.onClose - 닫기 콜백
+ * @param {'consumer' | 'seller'} props.mode - 챗봇 모드 (기본: consumer)
  */
-const ChatbotModal = ({ open, onClose }) => {
+const ChatbotModal = ({ open, onClose, mode = 'consumer' }) => {
   // 서버 사이드 렌더링 또는 닫힌 상태에서는 렌더링하지 않음
   if (!open || typeof document === 'undefined') {
     return null;
   }
+
+  const isSeller = mode === 'seller';
+  const titleText = isSeller ? '다잇다잉 셀러 AI' : '다잇다잉 AI 챗봇';
 
   return createPortal(
     <div
@@ -42,12 +51,12 @@ const ChatbotModal = ({ open, onClose }) => {
 
         {/* 숨겨진 제목 (접근성용) */}
         <h2 id="chatbot-modal-title" className="sr-only">
-          다잇다잉 AI 챗봇
+          {titleText}
         </h2>
 
         {/* 챗봇 콘텐츠 */}
         <div className="flex-1 p-4 md:p-6 overflow-hidden">
-          <ChatbotContent />
+          <ChatbotContent mode={mode} />
         </div>
       </div>
     </div>,

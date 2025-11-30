@@ -1,38 +1,44 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin, Clock } from 'lucide-react';
+import { getMyPopups } from '@/services/sellerService';
 
-const MOCK_POPUPS = [
-  {
-    id: 'popup-1',
-    title: '양동통맥축제',
-    status: 'ended',
-    color: '#f59e0b',
-    startDate: '2025-10-30',
-    endDate: '2025-11-01',
-    thumbnail:
-      'https://images.unsplash.com/photo-1530041539828-114de669390e?auto=format&fit=crop&w=600&q=80',
-    openingHours: '10:30 ~ 21:00',
-    location: '광주광역시 서구 ○○로 123 양동시장 일대',
-  },
-  {
-    id: 'popup-2',
-    title: '여울원 팝업 IN 광주',
-    status: 'ongoing',
-    color: '#0f172a',
-    startDate: '2025-10-31',
-    endDate: '2025-11-13',
-    thumbnail:
-      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
-    openingHours: '월-목 AM 10:30 ~ PM 20:00 / 금-일 AM 10:30 ~ PM 20:30',
-    location: '광주광역시 동구 동명로 268 롯데백화점 광주점 B1 문화홀',
-  },
-];
+/**
+ * 팝업 상태에 따른 색상 반환
+ */
+const getPopupColor = (startDate, endDate) => {
+  if (!startDate || !endDate) return '#94a3b8'; // 날짜 없음 - 회색
+
+  const now = new Date();
+  const s = new Date(startDate);
+  const e = new Date(endDate);
+
+  if (now > e) return '#f97316'; // 종료 - 주황
+  if (now < s) return '#3b82f6'; // 예정 - 파랑
+  return '#10b981'; // 진행 중 - 초록
+};
+
+/**
+ * 운영 상태 라벨 반환
+ */
+const getStatusLabel = (startDate, endDate) => {
+  if (!startDate || !endDate) return '미정';
+
+  const now = new Date();
+  const s = new Date(startDate);
+  const e = new Date(endDate);
+
+  if (now > e) return '종료';
+  if (now < s) return '예정';
+  return '진행 중';
+};
 
 const formatKoreanMonth = (year, monthIndex) => {
-  return `${monthIndex + 1}월`;
+  return `${year}년 ${monthIndex + 1}월`;
 };
 
 const formatDateRange = (start, end) => {
+  if (!start || !end) return '날짜 미정';
   return `${start.replace(/-/g, '.')} ~ ${end.replace(/-/g, '.')}`;
 };
 
@@ -43,7 +49,27 @@ const SellerCalendarPage = () => {
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [selectedPopupId, setSelectedPopupId] = useState(MOCK_POPUPS[1].id);
+  const [selectedPopupId, setSelectedPopupId] = useState(null);
+
+  // 실제 API 데이터 조회
+  const { data: popups = [], isLoading, error } = useQuery({
+    queryKey: ['myPopups'],
+    queryFn: getMyPopups,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // 선택된 팝업 (첫 팝업을 기본값으로)
+  const selectedPopup = useMemo(() => {
+    if (!popups.length) return null;
+    return popups.find((p) => p.id === selectedPopupId) || popups[0];
+  }, [popups, selectedPopupId]);
+
+  // 첫 로드 시 첫 번째 팝업 선택
+  useMemo(() => {
+    if (popups.length && !selectedPopupId) {
+      setSelectedPopupId(popups[0].id);
+    }
+  }, [popups, selectedPopupId]);
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
 
@@ -67,13 +93,19 @@ const SellerCalendarPage = () => {
     });
   };
 
+  // 캘린더 바 계산
   const bars = useMemo(() => {
     const monthStart = new Date(currentYear, currentMonth, 1);
     const monthEnd = new Date(currentYear, currentMonth, daysInMonth);
 
-    return MOCK_POPUPS.map((popup) => {
-      const [sYear, sMonth, sDay] = popup.startDate.split('-').map(Number);
-      const [eYear, eMonth, eDay] = popup.endDate.split('-').map(Number);
+    return popups.map((popup) => {
+      const startDate = popup.startDate;
+      const endDate = popup.endDate;
+
+      if (!startDate || !endDate) return null;
+
+      const [sYear, sMonth, sDay] = startDate.split('-').map(Number);
+      const [eYear, eMonth, eDay] = endDate.split('-').map(Number);
 
       const popupStart = new Date(sYear, sMonth - 1, sDay);
       const popupEnd = new Date(eYear, eMonth - 1, eDay);
@@ -98,17 +130,49 @@ const SellerCalendarPage = () => {
         popup,
         left,
         width,
+        color: getPopupColor(startDate, endDate),
       };
     }).filter(Boolean);
-  }, [currentYear, currentMonth, daysInMonth]);
+  }, [popups, currentYear, currentMonth, daysInMonth]);
 
-  const selectedPopup =
-    MOCK_POPUPS.find((popup) => popup.id === selectedPopupId) || MOCK_POPUPS[0];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">일정을 불러오는 중...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-red-500">일정을 불러오는데 실패했습니다.</div>
+      </div>
+    );
+  }
+
+  if (!popups.length) {
+    return (
+      <div className="space-y-6">
+        <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <CalendarIcon className="h-16 w-16 text-gray-300 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              등록된 팝업이 없습니다
+            </h3>
+            <p className="text-sm text-gray-500">
+              팝업을 등록하면 일정을 관리할 수 있습니다.
+            </p>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <section className="grid gap-6 rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60 lg:grid-cols-[2fr,1fr]">
-        {/* Left: Calendar + Popup periods (단일 영역) */}
+        {/* Left: Calendar + Popup periods */}
         <div className="space-y-4">
           {/* Month Header */}
           <div className="flex items-center justify-between px-4 pt-2">
@@ -131,7 +195,7 @@ const SellerCalendarPage = () => {
             </button>
           </div>
 
-          {/* Calendar + Popup period 카드 (동일 가로 길이) */}
+          {/* Calendar + Popup period 카드 */}
           <div className="rounded-2xl border border-gray-200 bg-white px-6 py-4">
             {/* Calendar (days row) */}
             <div className="bg-gray-50 rounded-xl px-4 py-4">
@@ -145,7 +209,7 @@ const SellerCalendarPage = () => {
 
               {/* Bars */}
               <div className="mt-8 space-y-3">
-                {bars.map(({ popup, left, width }) => (
+                {bars.map(({ popup, left, width, color }) => (
                   <div key={popup.id} className="relative h-2">
                     <button
                       type="button"
@@ -154,7 +218,7 @@ const SellerCalendarPage = () => {
                       style={{
                         left: `${left}%`,
                         width: `${width}%`,
-                        backgroundColor: popup.color,
+                        backgroundColor: color,
                         boxShadow:
                           selectedPopupId === popup.id
                             ? '0 0 0 3px rgba(239,68,68,0.4)'
@@ -169,22 +233,24 @@ const SellerCalendarPage = () => {
             {/* Popup periods (달력 아래) */}
             <div className="mt-6 border-t border-gray-200 pt-4">
               <p className="mb-3 text-sm font-semibold text-gray-900">팝업 기간</p>
-              <div className="space-y-2 text-sm text-gray-700">
-                {MOCK_POPUPS.map((popup) => (
+              <div className="space-y-2 text-sm text-gray-700 max-h-48 overflow-y-auto">
+                {popups.map((popup) => (
                   <button
                     key={popup.id}
                     type="button"
                     onClick={() => setSelectedPopupId(popup.id)}
-                    className="flex w-full items-center gap-3 rounded-lg px-2 py-1 text-left hover:bg-gray-50"
+                    className={`flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-gray-50 transition-colors ${
+                      selectedPopupId === popup.id ? 'bg-gray-100' : ''
+                    }`}
                   >
                     <span
-                      className="inline-block h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: popup.color }}
+                      className="inline-block h-2.5 w-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: getPopupColor(popup.startDate, popup.endDate) }}
                     />
-                    <span className="font-medium">
-                      {popup.status === 'ended' ? '종료' : '진행 중'} | {popup.title}
+                    <span className="font-medium truncate flex-1">
+                      {getStatusLabel(popup.startDate, popup.endDate)} | {popup.title}
                     </span>
-                    <span className="ml-auto text-xs text-gray-500">
+                    <span className="ml-auto text-xs text-gray-500 flex-shrink-0">
                       {formatDateRange(popup.startDate, popup.endDate)}
                     </span>
                   </button>
@@ -195,49 +261,89 @@ const SellerCalendarPage = () => {
         </div>
 
         {/* Right: Selected popup detail */}
-        <div className="flex flex-col items-stretch rounded-3xl border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
-            <img
-              src={selectedPopup.thumbnail}
-              alt={selectedPopup.title}
-              className="h-72 w-full object-cover"
-            />
-          </div>
+        {selectedPopup && (
+          <div className="flex flex-col items-stretch rounded-3xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
+              {selectedPopup.thumbnail ? (
+                <img
+                  src={selectedPopup.thumbnail}
+                  alt={selectedPopup.title}
+                  className="h-72 w-full object-cover"
+                />
+              ) : (
+                <div className="h-72 w-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                  <CalendarIcon className="h-16 w-16 text-gray-300" />
+                </div>
+              )}
+            </div>
 
-          <div className="mt-6 space-y-4 px-1">
-            <h2 className="text-xl font-bold text-gray-900">
-              {selectedPopup.title}
-            </h2>
+            <div className="mt-6 space-y-4 px-1">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900 truncate">
+                  {selectedPopup.title}
+                </h2>
+                <span
+                  className="text-xs font-semibold px-2 py-1 rounded-full"
+                  style={{
+                    backgroundColor: `${getPopupColor(selectedPopup.startDate, selectedPopup.endDate)}20`,
+                    color: getPopupColor(selectedPopup.startDate, selectedPopup.endDate),
+                  }}
+                >
+                  {getStatusLabel(selectedPopup.startDate, selectedPopup.endDate)}
+                </span>
+              </div>
 
-            <div className="space-y-3 text-sm text-gray-800">
-              <div className="flex gap-4">
-                <span className="w-20 text-xs font-semibold text-gray-500">
-                  팝업 기간
-                </span>
-                <span>{formatDateRange(selectedPopup.startDate, selectedPopup.endDate)}</span>
+              <div className="space-y-3 text-sm text-gray-800">
+                <div className="flex gap-4">
+                  <span className="w-20 text-xs font-semibold text-gray-500 flex items-center gap-1">
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    팝업 기간
+                  </span>
+                  <span>{formatDateRange(selectedPopup.startDate, selectedPopup.endDate)}</span>
+                </div>
+                {selectedPopup.operatingTime && (
+                  <div className="flex gap-4">
+                    <span className="w-20 text-xs font-semibold text-gray-500 flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      운영 시간
+                    </span>
+                    <span>{selectedPopup.operatingTime}</span>
+                  </div>
+                )}
+                {selectedPopup.address && (
+                  <div className="flex gap-4">
+                    <span className="w-20 text-xs font-semibold text-gray-500 flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5" />
+                      팝업 장소
+                    </span>
+                    <span className="whitespace-pre-line">
+                      {selectedPopup.address}
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="flex gap-4">
-                <span className="w-20 text-xs font-semibold text-gray-500">
-                  팝업 시간
-                </span>
-                <span>{selectedPopup.openingHours}</span>
-              </div>
-              <div className="flex gap-4">
-                <span className="w-20 text-xs font-semibold text-gray-500">
-                  팝업 장소
-                </span>
-                <span className="whitespace-pre-line">
-                  {selectedPopup.location}
-                </span>
+
+              {/* 조회수/찜 정보 */}
+              <div className="flex gap-4 pt-2 border-t border-gray-100">
+                <div className="flex-1 text-center">
+                  <p className="text-xs text-gray-500">조회수</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {(selectedPopup.viewCount ?? 0).toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex-1 text-center">
+                  <p className="text-xs text-gray-500">찜</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {(selectedPopup.favoriteCount ?? 0).toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </section>
     </div>
   );
 };
 
 export default SellerCalendarPage;
-
-

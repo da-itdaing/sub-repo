@@ -1,10 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Upload } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Upload, Loader2 } from 'lucide-react';
 import { ROUTES } from '@/routes/paths';
+import { 
+  getMyPopups, 
+  getNoticeById, 
+  createNotice, 
+  updateNotice 
+} from '@/services/sellerService';
+import { useToast } from '@/hooks/useToast';
 
 const SellerNoticeCreatePage = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
+  
   const { id } = useParams(); // 수정 모드일 경우 id 존재
   const location = useLocation();
   const passedNotice = location.state?.notice;
@@ -18,40 +29,76 @@ const SellerNoticeCreatePage = () => {
     files: [],
   });
 
-  // Mock Popup List
-  const myPopups = [
-    { id: 1, title: '여울원 팝업 IN 광주' },
-    { id: 2, title: '충장 라온 페스타' },
-    { id: 3, title: '[중장년 남성] 집밥에 진심인 남자들 : 제철 남도밥상' },
-  ];
+  // 내 팝업 목록 조회
+  const { data: myPopups = [], isLoading: isLoadingPopups } = useQuery({
+    queryKey: ['myPopups'],
+    queryFn: getMyPopups,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // 수정 모드일 때 공지사항 상세 조회
+  const { data: noticeDetail, isLoading: isLoadingNotice } = useQuery({
+    queryKey: ['notice', id],
+    queryFn: () => getNoticeById(id),
+    enabled: isEditMode && !passedNotice,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // 공지사항 생성 mutation
+  const createMutation = useMutation({
+    mutationFn: createNotice,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myNotices'] });
+      addToast({ title: '공지사항이 등록되었습니다.' });
+      navigate(ROUTES.seller.notices);
+    },
+    onError: (err) => {
+      addToast({ 
+        title: '등록 실패', 
+        description: err.message,
+        variant: 'error' 
+      });
+    },
+  });
+
+  // 공지사항 수정 mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ noticeId, data }) => updateNotice(noticeId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myNotices'] });
+      queryClient.invalidateQueries({ queryKey: ['notice', id] });
+      addToast({ title: '공지사항이 수정되었습니다.' });
+      navigate(ROUTES.seller.notices);
+    },
+    onError: (err) => {
+      addToast({ 
+        title: '수정 실패', 
+        description: err.message,
+        variant: 'error' 
+      });
+    },
+  });
 
   const selectedPopupName =
     passedNotice?.popupName ||
     myPopups.find((popup) => String(popup.id) === String(formData.popupId))?.title ||
     '';
 
-  // 수정 모드일 때 초기 데이터 로드 (Mock)
+  // 수정 모드일 때 초기 데이터 로드
   useEffect(() => {
-    if (isEditMode) {
-      // TODO: 실제로는 API로 상세 데이터 조회
-      const source = passedNotice || {
-        id,
-        isImportant: true,
-        title: '고객 문의사항 창구',
-        popupId: 2,
-        content:
-          '안녕하세요, 충장 라온 페스타 운영사무국입니다.\n\n공지사항 내용을 반드시 숙지하고 방문해주시길 바랍니다.\n\n1. 운영 시간 안내: 10:00 ~ 22:00\n2. 주차 안내: 인근 공영주차장 이용 권장\n3. 우천 시 행사 진행 여부는 당일 오전 9시 인스타그램을 통해 공지됩니다.\n\n감사합니다.',
-      };
+    if (!isEditMode) return;
 
-      setFormData({
-        isImportant: Boolean(source.isImportant),
-        title: source.title || '',
-        popupId: source.popupId || '',
-        content: (source.content || '').trim(),
-        files: [],
-      });
-    }
-  }, [isEditMode, id, passedNotice]);
+    const source = passedNotice || noticeDetail;
+    if (!source) return;
+
+    setFormData({
+      isImportant: Boolean(source.isImportant || source.important),
+      title: source.title || '',
+      popupId: source.popupId || '',
+      content: (source.content || '').trim(),
+      files: [],
+    });
+  }, [isEditMode, passedNotice, noticeDetail]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -72,54 +119,47 @@ const SellerNoticeCreatePage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-  // 신규 작성일 때만 필수 항목 체크, 수정 시에는 자유롭게 저장 가능
-  if (
-    !isEditMode &&
-    (!formData.title || !formData.popupId || !formData.content)
-  ) {
-    alert('필수 항목을 모두 입력해주세요.');
-    return;
-  }
+    
+    // 필수 항목 체크
+    if (!formData.title || !formData.popupId || !formData.content) {
+      addToast({ 
+        title: '필수 항목을 모두 입력해주세요.', 
+        variant: 'warning' 
+      });
+      return;
+    }
 
-    // TODO: API 연동
-    console.log(isEditMode ? 'Updating Notice:' : 'Creating Notice:', formData);
-    alert(isEditMode ? '공지사항이 수정되었습니다.' : '공지사항이 등록되었습니다.');
-
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const requestData = {
+      popupId: Number(formData.popupId),
+      title: formData.title,
+      content: formData.content,
+      isImportant: formData.isImportant,
+    };
 
     if (isEditMode) {
-      // 중요 체크 여부를 리스트 테이블에 반영
-      navigate(ROUTES.seller.notices, {
-        state: {
-          updatedNotice: {
-            id,
-            isImportant: formData.isImportant,
-          },
-        },
-      });
+      updateMutation.mutate({ noticeId: id, data: requestData });
     } else {
-      // 신규 공지 등록 시 목록에 추가할 데이터 전달
-      const selectedPopup =
-        myPopups.find((popup) => String(popup.id) === String(formData.popupId)) ?? null;
-
-      navigate(ROUTES.seller.notices, {
-        state: {
-          createdNotice: {
-            id: `notice-${Date.now()}`,
-            isImportant: formData.isImportant,
-            popupName: selectedPopup?.title || '선택된 팝업',
-            title: formData.title,
-            date: today,
-          },
-        },
-      });
+      createMutation.mutate(requestData);
     }
   };
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  const isLoading = isLoadingPopups || (isEditMode && isLoadingNotice && !passedNotice);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">데이터를 불러오는 중...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border border-white/80 bg-white p-8 shadow-sm shadow-slate-200/60">
-        <h2 className="mb-8 text-xl font-bold text-[#EB0000]">공지사항</h2>
+        <h2 className="mb-8 text-xl font-bold text-[#EB0000]">
+          공지사항 {isEditMode ? '수정' : '등록'}
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* 제목 & 중요 체크박스 */}
@@ -215,12 +255,21 @@ const SellerNoticeCreatePage = () => {
           </div>
 
           {/* 작성 버튼 */}
-          <div className="flex justify-center pt-8">
+          <div className="flex justify-center gap-4 pt-8">
+            <button
+              type="button"
+              onClick={() => navigate(ROUTES.seller.notices)}
+              className="min-w-[120px] rounded-lg bg-gray-500 px-8 py-3 text-base font-bold text-white shadow-md hover:bg-gray-600 transition-colors"
+            >
+              취소
+            </button>
             <button
               type="submit"
-              className="min-w-[120px] rounded-lg bg-[#EB0000] px-8 py-3 text-base font-bold text-white shadow-md hover:bg-[#c90000] transition-colors"
+              disabled={isSubmitting}
+              className="min-w-[120px] rounded-lg bg-[#EB0000] px-8 py-3 text-base font-bold text-white shadow-md hover:bg-[#c90000] transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
             >
-              {isEditMode ? '수정하기' : '작성'}
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isEditMode ? '수정하기' : '등록하기'}
             </button>
           </div>
         </form>
@@ -230,4 +279,3 @@ const SellerNoticeCreatePage = () => {
 };
 
 export default SellerNoticeCreatePage;
-

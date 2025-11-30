@@ -79,3 +79,95 @@ export const getMyZones = async (page = 0, size = 20) => {
     params: { page, size },
   });
 };
+
+/**
+ * 판매자 대시보드 데이터 조회
+ * GET /api/sellers/me/dashboard
+ * 백엔드에서 통계 및 팝업 요약 정보를 계산하여 반환
+ */
+export const getSellerDashboard = async () => {
+  return apiClient.get('/sellers/me/dashboard');
+};
+
+/**
+ * 내 팝업들의 리뷰 목록 조회 (판매자용)
+ * GET /api/sellers/me/reviews
+ * @param {number} page
+ * @param {number} size
+ */
+export const getMyPopupReviews = async (page = 0, size = 20) => {
+  return apiClient.get('/sellers/me/reviews', {
+    params: { page, size },
+  });
+};
+
+/**
+ * 특정 팝업의 리뷰 목록 조회
+ * GET /api/popups/{popupId}/reviews
+ * @param {number} popupId
+ */
+export const getPopupReviews = async (popupId) => {
+  return apiClient.get(`/popups/${popupId}/reviews`);
+};
+
+/* ======================== 공지사항 API ======================== */
+
+/**
+ * 내 공지사항 목록 조회
+ * GET /api/sellers/me/notices
+ * @param {number} page
+ * @param {number} size
+ */
+export const getMyNotices = async (page = 0, size = 20) => {
+  return apiClient.get('/sellers/me/notices', {
+    params: { page, size },
+  });
+};
+
+/**
+ * 공지사항 상세 조회
+ * GET /api/sellers/notices/{noticeId}
+ * @param {string|number} noticeId
+ */
+export const getNoticeById = async (noticeId) => {
+  return apiClient.get(`/sellers/notices/${noticeId}`);
+};
+
+/**
+ * 공지사항 등록
+ * POST /api/sellers/notices
+ * @param {Object} data - { popupId, title, content, isImportant }
+ */
+export const createNotice = async (data) => {
+  return apiClient.post('/sellers/notices', data);
+};
+
+/**
+ * 공지사항 수정
+ * PUT /api/sellers/notices/{noticeId}
+ * @param {string|number} noticeId
+ * @param {Object} data - { title, content, isImportant }
+ */
+export const updateNotice = async (noticeId, data) => {
+  return apiClient.put(`/sellers/notices/${noticeId}`, data);
+};
+
+/**
+ * 공지사항 삭제
+ * DELETE /api/sellers/notices/{noticeId}
+ * @param {string|number} noticeId
+ */
+export const deleteNotice = async (noticeId) => {
+  return apiClient.delete(`/sellers/notices/${noticeId}`);
+};
+
+/**
+ * 공지사항 다중 삭제
+ * DELETE /api/sellers/notices
+ * @param {Array<string|number>} ids
+ */
+export const deleteNotices = async (ids) => {
+  return apiClient.delete('/sellers/notices', {
+    data: { ids },
+  });
+};

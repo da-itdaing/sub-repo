@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import {
@@ -12,10 +12,11 @@ import {
   Stars,
   Megaphone,
   CalendarClock,
+  Bot,
 } from 'lucide-react';
 import { ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/authStore';
-import ChatbotButton from '@/components/common/ChatbotButton';
+import ChatbotModal from '@/components/chatbot/ChatbotModal';
 
 const NAV_ITEMS = [
   {
@@ -61,6 +62,9 @@ const SellerLayout = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const isSidebarExpanded = !isSidebarCollapsed || isSidebarOpen;
 
+  // 챗봇 모달 상태
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
 
@@ -72,6 +76,30 @@ const SellerLayout = () => {
     logout();
     navigate(ROUTES.home);
   };
+
+  // 챗봇 모달 열기
+  const handleOpenChatbot = useCallback(() => {
+    setIsChatbotOpen(true);
+  }, []);
+
+  // 챗봇 모달 닫기
+  const handleCloseChatbot = useCallback(() => {
+    setIsChatbotOpen(false);
+  }, []);
+
+  // ESC 키로 챗봇 모달 닫기
+  useEffect(() => {
+    if (!isChatbotOpen) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        handleCloseChatbot();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isChatbotOpen, handleCloseChatbot]);
 
   const renderNavItem = (item) => {
     const Icon = item.icon;
@@ -142,7 +170,7 @@ const SellerLayout = () => {
           </div>
         )}
 
-        {/* 🔥 SVG 왼쪽 고정된 로그아웃 버튼 */}
+        {/* 로그아웃 버튼 */}
         <button
           onClick={handleLogout}
           className={clsx(
@@ -213,7 +241,15 @@ const SellerLayout = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <ChatbotButton mode="header" />
+              {/* 챗봇 버튼 - 클릭 시 판매자용 챗봇 모달 열기 */}
+              <button
+                type="button"
+                onClick={handleOpenChatbot}
+                className="rounded-2xl border border-gray-200 p-2 text-gray-600 transition hover:border-primary hover:text-primary"
+                aria-label="AI 챗봇 열기"
+              >
+                <Bot className="h-5 w-5" />
+              </button>
 
               <button className="rounded-2xl border border-gray-200 p-2 text-gray-600 transition hover:border-gray-300">
                 <MessageSquare className="h-5 w-5" />
@@ -238,6 +274,13 @@ const SellerLayout = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* 판매자용 챗봇 모달 */}
+      <ChatbotModal 
+        open={isChatbotOpen} 
+        onClose={handleCloseChatbot} 
+        mode="seller" 
+      />
     </div>
   );
 };
