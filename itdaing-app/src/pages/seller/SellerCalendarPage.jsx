@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin, Clock, Eye, Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin, Clock, Eye, Heart, Store, TrendingUp } from 'lucide-react';
 import { getMyPopups } from '@/services/sellerService';
 
 /**
@@ -75,6 +75,25 @@ const SellerCalendarPage = () => {
       setSelectedPopupId(popups[0].id);
     }
   }, [popups, selectedPopupId]);
+
+  // 통계 계산
+  const stats = useMemo(() => {
+    const activeCount = popups.filter((p) => {
+      if (!p.startDate || !p.endDate) return false;
+      const now = new Date();
+      return now >= new Date(p.startDate) && now <= new Date(p.endDate);
+    }).length;
+
+    const upcomingCount = popups.filter((p) => {
+      if (!p.startDate) return false;
+      return new Date() < new Date(p.startDate);
+    }).length;
+
+    const totalViews = popups.reduce((sum, p) => sum + (p.viewCount ?? 0), 0);
+    const totalFavorites = popups.reduce((sum, p) => sum + (p.favoriteCount ?? 0), 0);
+
+    return { activeCount, upcomingCount, totalViews, totalFavorites };
+  }, [popups]);
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
@@ -181,30 +200,58 @@ const SellerCalendarPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
-      <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-[#EB0000]">일정 관리</h2>
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-xs text-gray-500">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#10b981]" />
-              진행 중
-            </span>
-            <span className="flex items-center gap-1.5 text-xs text-gray-500">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#3b82f6]" />
-              예정
-            </span>
-            <span className="flex items-center gap-1.5 text-xs text-gray-500">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#f97316]" />
-              종료
-            </span>
+      {/* 헤더 + 통계 */}
+      <section className="rounded-3xl border border-white/80 bg-white p-5 shadow-sm shadow-slate-200/60">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-bold text-[#EB0000]">일정 관리</h2>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                <span className="h-2 w-2 rounded-full bg-[#10b981]" />
+                진행 중
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                <span className="h-2 w-2 rounded-full bg-[#3b82f6]" />
+                예정
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                <span className="h-2 w-2 rounded-full bg-[#f97316]" />
+                종료
+              </span>
+            </div>
+          </div>
+
+          {/* 요약 통계 */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 rounded-xl bg-green-50 px-3 py-2">
+              <Store className="h-4 w-4 text-green-600" />
+              <div className="text-xs">
+                <span className="font-bold text-green-700">{stats.activeCount}</span>
+                <span className="text-green-600 ml-1">운영중</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2">
+              <CalendarIcon className="h-4 w-4 text-blue-600" />
+              <div className="text-xs">
+                <span className="font-bold text-blue-700">{stats.upcomingCount}</span>
+                <span className="text-blue-600 ml-1">예정</span>
+              </div>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2">
+              <TrendingUp className="h-4 w-4 text-gray-600" />
+              <div className="text-xs">
+                <span className="font-bold text-gray-700">{stats.totalViews.toLocaleString()}</span>
+                <span className="text-gray-500 ml-1">총 조회</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(400px,700px),320px]">
-        {/* 달력 영역 - 최대 너비 제한 */}
-        <section className="rounded-3xl border border-white/80 bg-white p-4 md:p-6 shadow-sm shadow-slate-200/60 max-w-[700px]">
+      {/* 메인 컨텐츠 - 2열 레이아웃 */}
+      <div className="grid gap-6 lg:grid-cols-[1fr,360px]">
+        {/* 좌측: 달력 */}
+        <section className="rounded-3xl border border-white/80 bg-white p-5 shadow-sm shadow-slate-200/60">
           {/* Month Header */}
           <div className="flex items-center justify-between mb-4">
             <button
@@ -214,7 +261,7 @@ const SellerCalendarPage = () => {
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <h3 className="text-base md:text-lg font-bold text-gray-900">
+            <h3 className="text-lg font-bold text-gray-900">
               {formatKoreanMonth(currentYear, currentMonth)}
             </h3>
             <button
@@ -227,11 +274,11 @@ const SellerCalendarPage = () => {
           </div>
 
           {/* 요일 헤더 */}
-          <div className="grid grid-cols-7 mb-1">
+          <div className="grid grid-cols-7 mb-1 border-b border-gray-100 pb-2">
             {WEEKDAYS.map((day, idx) => (
               <div 
                 key={day} 
-                className={`py-1.5 text-center text-[11px] md:text-xs font-semibold ${
+                className={`py-1.5 text-center text-xs font-semibold ${
                   idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-gray-500'
                 }`}
               >
@@ -240,11 +287,11 @@ const SellerCalendarPage = () => {
             ))}
           </div>
 
-          {/* 달력 그리드 - 고정 높이 셀 */}
-          <div className="grid grid-cols-7 gap-0.5">
+          {/* 달력 그리드 */}
+          <div className="grid grid-cols-7 gap-1">
             {calendarCells.map((cell) => {
               if (cell.type === 'empty') {
-                return <div key={cell.key} className="h-10 md:h-12" />;
+                return <div key={cell.key} className="h-14 lg:h-16" />;
               }
 
               const dayOfWeek = (firstDay + cell.day - 1) % 7;
@@ -254,9 +301,9 @@ const SellerCalendarPage = () => {
                 <div
                   key={cell.key}
                   className={`
-                    h-10 md:h-12 p-0.5 rounded-lg transition-all cursor-pointer flex flex-col items-center
-                    ${cell.isToday ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-gray-50'}
-                    ${hasPopups ? 'bg-gray-50' : ''}
+                    h-14 lg:h-16 p-1 rounded-lg transition-all cursor-pointer flex flex-col
+                    ${cell.isToday ? 'bg-primary/10 ring-2 ring-primary/30' : 'hover:bg-gray-50'}
+                    ${hasPopups ? 'bg-gray-50/80' : ''}
                   `}
                   onClick={() => {
                     if (cell.popups.length > 0) {
@@ -265,7 +312,7 @@ const SellerCalendarPage = () => {
                   }}
                 >
                   <div className={`
-                    text-[11px] md:text-xs font-medium text-center leading-tight
+                    text-xs font-medium text-center
                     ${cell.isToday ? 'text-primary font-bold' : ''}
                     ${dayOfWeek === 0 ? 'text-red-500' : dayOfWeek === 6 ? 'text-blue-500' : 'text-gray-700'}
                   `}>
@@ -273,20 +320,20 @@ const SellerCalendarPage = () => {
                   </div>
                   
                   {/* 팝업 인디케이터 */}
-                  <div className="flex flex-wrap gap-0.5 justify-center mt-0.5">
-                    {cell.popups.slice(0, 2).map((popup) => {
+                  <div className="flex-1 flex flex-wrap gap-0.5 justify-center items-start mt-1">
+                    {cell.popups.slice(0, 3).map((popup) => {
                       const color = getPopupColor(popup.startDate, popup.endDate);
                       return (
                         <div
                           key={popup.id}
-                          className="h-1 w-1 md:h-1.5 md:w-1.5 rounded-full"
+                          className="h-1.5 w-1.5 rounded-full"
                           style={{ backgroundColor: color.bg }}
                           title={popup.title}
                         />
                       );
                     })}
-                    {cell.popups.length > 2 && (
-                      <span className="text-[7px] text-gray-400">+{cell.popups.length - 2}</span>
+                    {cell.popups.length > 3 && (
+                      <span className="text-[8px] text-gray-400">+{cell.popups.length - 3}</span>
                     )}
                   </div>
                 </div>
@@ -294,10 +341,10 @@ const SellerCalendarPage = () => {
             })}
           </div>
 
-          {/* 팝업 기간 목록 */}
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <h4 className="text-sm font-semibold text-gray-900 mb-2">팝업 기간</h4>
-            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+          {/* 팝업 목록 */}
+          <div className="mt-5 pt-5 border-t border-gray-100">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">내 팝업 목록</h4>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               {popups.map((popup) => {
                 const color = getPopupColor(popup.startDate, popup.endDate);
                 const isSelected = selectedPopupId === popup.id;
@@ -308,26 +355,28 @@ const SellerCalendarPage = () => {
                     type="button"
                     onClick={() => setSelectedPopupId(popup.id)}
                     className={`
-                      flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-all
-                      ${isSelected ? 'bg-gray-100 shadow-sm' : 'hover:bg-gray-50'}
+                      flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all border
+                      ${isSelected 
+                        ? 'bg-gray-100 border-gray-200 shadow-sm' 
+                        : 'bg-white border-gray-100 hover:bg-gray-50 hover:border-gray-200'}
                     `}
                   >
                     <span
-                      className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                      className="h-3 w-3 rounded-full flex-shrink-0"
                       style={{ backgroundColor: color.bg }}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs md:text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-gray-900 truncate">
                         {popup.title}
                       </p>
-                      <p className="text-[10px] md:text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 mt-0.5">
                         {formatDateRange(popup.startDate, popup.endDate)}
                       </p>
                     </div>
                     <span
-                      className="text-[9px] md:text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
                       style={{
-                        backgroundColor: `${color.bg}20`,
+                        backgroundColor: `${color.bg}15`,
                         color: color.text,
                       }}
                     >
@@ -340,101 +389,135 @@ const SellerCalendarPage = () => {
           </div>
         </section>
 
-        {/* 선택된 팝업 상세 */}
-        {selectedPopup && (
-          <section className="rounded-3xl border border-white/80 bg-white p-4 shadow-sm shadow-slate-200/60 h-fit max-w-[320px]">
-            {/* 썸네일 */}
-            <div className="overflow-hidden rounded-xl border border-gray-100 bg-gray-100 aspect-[4/3]">
-              {selectedPopup.thumbnail ? (
-                <img
-                  src={typeof selectedPopup.thumbnail === 'string' ? selectedPopup.thumbnail : selectedPopup.thumbnail?.url}
-                  alt={selectedPopup.title}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                  <CalendarIcon className="h-10 w-10 text-gray-300" />
-                </div>
-              )}
-            </div>
-
-            {/* 정보 */}
-            <div className="mt-4 space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-sm md:text-base font-bold text-gray-900 leading-tight">
-                  {selectedPopup.title}
-                </h3>
-                <span
-                  className="text-[9px] md:text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
-                  style={{
-                    backgroundColor: `${getPopupColor(selectedPopup.startDate, selectedPopup.endDate).bg}20`,
-                    color: getPopupColor(selectedPopup.startDate, selectedPopup.endDate).text,
-                  }}
-                >
-                  {getStatusLabel(selectedPopup.startDate, selectedPopup.endDate)}
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-start gap-2">
-                  <CalendarIcon className="h-3.5 w-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-gray-500">운영 기간</p>
-                    <p className="text-xs font-medium text-gray-900">
-                      {formatDateRange(selectedPopup.startDate, selectedPopup.endDate)}
-                    </p>
-                  </div>
-                </div>
-
-                {selectedPopup.hours && (
-                  <div className="flex items-start gap-2">
-                    <Clock className="h-3.5 w-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-[10px] text-gray-500">운영 시간</p>
-                      <p className="text-xs font-medium text-gray-900">
-                        {selectedPopup.hours}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {selectedPopup.address && (
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-[10px] text-gray-500">위치</p>
-                      <p className="text-xs font-medium text-gray-900">
-                        {selectedPopup.address}
-                      </p>
-                    </div>
+        {/* 우측: 선택된 팝업 상세 */}
+        <div className="space-y-6">
+          {selectedPopup && (
+            <section className="rounded-3xl border border-white/80 bg-white p-5 shadow-sm shadow-slate-200/60">
+              <h4 className="text-sm font-semibold text-gray-500 mb-3">선택된 팝업</h4>
+              
+              {/* 썸네일 */}
+              <div className="overflow-hidden rounded-2xl border border-gray-100 bg-gray-100 aspect-[4/3]">
+                {selectedPopup.thumbnail ? (
+                  <img
+                    src={typeof selectedPopup.thumbnail === 'string' ? selectedPopup.thumbnail : selectedPopup.thumbnail?.url}
+                    alt={selectedPopup.title}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                    <CalendarIcon className="h-12 w-12 text-gray-300" />
                   </div>
                 )}
               </div>
 
-              {/* 통계 */}
-              <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100">
-                <div className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-2 py-2">
-                  <Eye className="h-3.5 w-3.5 text-gray-400" />
-                  <div>
-                    <p className="text-[9px] text-gray-500">조회수</p>
-                    <p className="text-xs font-bold text-gray-900">
-                      {(selectedPopup.viewCount ?? 0).toLocaleString()}
-                    </p>
-                  </div>
+              {/* 정보 */}
+              <div className="mt-4 space-y-4">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-base font-bold text-gray-900 leading-tight">
+                    {selectedPopup.title}
+                  </h3>
+                  <span
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                    style={{
+                      backgroundColor: `${getPopupColor(selectedPopup.startDate, selectedPopup.endDate).bg}15`,
+                      color: getPopupColor(selectedPopup.startDate, selectedPopup.endDate).text,
+                    }}
+                  >
+                    {getStatusLabel(selectedPopup.startDate, selectedPopup.endDate)}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-2 py-2">
-                  <Heart className="h-3.5 w-3.5 text-gray-400" />
-                  <div>
-                    <p className="text-[9px] text-gray-500">찜</p>
-                    <p className="text-xs font-bold text-gray-900">
-                      {(selectedPopup.favoriteCount ?? 0).toLocaleString()}
-                    </p>
+
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <CalendarIcon className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-gray-500">운영 기간</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {formatDateRange(selectedPopup.startDate, selectedPopup.endDate)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {selectedPopup.hours && (
+                    <div className="flex items-start gap-3">
+                      <Clock className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-gray-500">운영 시간</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {selectedPopup.hours}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedPopup.address && (
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-gray-500">위치</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {selectedPopup.address}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 통계 */}
+                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
+                  <div className="flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-3">
+                    <Eye className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <p className="text-[10px] text-gray-500">조회수</p>
+                      <p className="text-sm font-bold text-gray-900">
+                        {(selectedPopup.viewCount ?? 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-3">
+                    <Heart className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <p className="text-[10px] text-gray-500">찜</p>
+                      <p className="text-sm font-bold text-gray-900">
+                        {(selectedPopup.favoriteCount ?? 0).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
+            </section>
+          )}
+
+          {/* 오늘의 팁 카드 */}
+          <section className="rounded-3xl border border-white/80 bg-gradient-to-br from-[#ff235b]/5 to-[#c4006b]/5 p-5 shadow-sm shadow-slate-200/60">
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">💡 운영 팁</h4>
+            <p className="text-xs text-gray-600 leading-relaxed">
+              팝업 운영 중에는 SNS에 현장 사진을 자주 업로드하세요. 
+              실시간 방문 후기와 현장 분위기를 공유하면 방문객이 증가합니다.
+            </p>
+          </section>
+
+          {/* 빠른 액션 */}
+          <section className="rounded-3xl border border-white/80 bg-white p-5 shadow-sm shadow-slate-200/60">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">빠른 액션</h4>
+            <div className="space-y-2">
+              <button
+                type="button"
+                className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 transition-colors"
+              >
+                <Store className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-gray-700">새 팝업 등록하기</span>
+              </button>
+              <button
+                type="button"
+                className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 transition-colors"
+              >
+                <Eye className="h-4 w-4 text-blue-500" />
+                <span className="text-sm font-medium text-gray-700">팝업 미리보기</span>
+              </button>
             </div>
           </section>
-        )}
+        </div>
       </div>
     </div>
   );
