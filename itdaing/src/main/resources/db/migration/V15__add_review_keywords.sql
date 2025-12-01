@@ -10,4 +10,4 @@ CREATE TABLE review_keyword (
 );
 
 CREATE INDEX idx_review_keyword_review_id
-    ON review_keyword (review_id); ㅂ
+    ON review_keyword (review_id);

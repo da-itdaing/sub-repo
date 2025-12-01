@@ -8,6 +8,7 @@ import com.da.itdaing.domain.social.entity.ReviewImage;
 import com.da.itdaing.domain.social.repository.ReviewImageRepository;
 import com.da.itdaing.domain.social.repository.ReviewRepository;
 import com.da.itdaing.domain.social.service.ReviewCommandService;
+import com.da.itdaing.domain.social.service.ReviewQueryService;
 import com.da.itdaing.global.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,8 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReviewCommandController {
 
     private final ReviewCommandService reviewCommandService;
-    private final ReviewRepository reviewRepository;
-    private final ReviewImageRepository reviewImageRepository;
+    private final ReviewQueryService reviewQueryService;
 
     @PreAuthorize("hasRole('CONSUMER')")
     @Operation(
@@ -189,7 +189,7 @@ public class ReviewCommandController {
     ) {
         Long consumerId = Long.valueOf(principal.getName());
         Long reviewId = reviewCommandService.createReview(consumerId, popupId, request);
-        ReviewResponse response = getReviewResponse(reviewId);
+        ReviewResponse response = reviewQueryService.getReviewResponse(reviewId); // ✅ 변경
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
@@ -329,7 +329,7 @@ public class ReviewCommandController {
     ) {
         Long consumerId = Long.valueOf(principal.getName());
         Long updatedId = reviewCommandService.updateReview(consumerId, reviewId, request);
-        ReviewResponse response = getReviewResponse(updatedId);
+        ReviewResponse response = reviewQueryService.getReviewResponse(updatedId); // ✅ 변경
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -427,31 +427,6 @@ public class ReviewCommandController {
         Long userId = Long.valueOf(principal.getName());
         reviewCommandService.deleteReview(userId, reviewId);
         return ResponseEntity.ok(ApiResponse.success());
-    }
-
-    private ReviewResponse getReviewResponse(Long reviewId) {
-        Review review = reviewRepository.findByIdWithRelations(reviewId)
-            .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
-
-        List<com.da.itdaing.domain.file.dto.ImagePayload> images =
-            reviewImageRepository.findByReviewIdIn(List.of(reviewId)).stream()
-                .map(img -> com.da.itdaing.domain.file.dto.ImagePayload.builder()
-                    .url(img.getImageUrl())
-                    .key(img.getImageKey())
-                    .build())
-                .toList();
-
-        return new ReviewResponse(
-            review.getId(),
-            review.getPopup().getId(),
-            review.getConsumer().getId(),
-            review.getConsumer().getLoginId(),
-            review.getRating(),
-            review.getContent(),
-            images,
-            review.getCreatedAt(),
-            review.getKeywords()
-        );
     }
 }
 
