@@ -526,147 +526,237 @@ const AdminZonesPage = () => {
         </div>
       </div>
 
-      {/* Right: Cell Details */}
+      {/* Right: Cell List & Details */}
       <div className="flex-[1.2] flex flex-col gap-4 min-w-[320px]">
-        <h2 className="text-xl font-bold text-red-600">셀 상세정보</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-red-600">
+            {selectedCell ? '셀 상세정보' : selectedArea ? '셀 목록' : '존/셀 관리'}
+          </h2>
+          {selectedCell && (
+            <button
+              onClick={() => setSelectedCell(null)}
+              className="text-xs text-gray-500 hover:text-gray-700"
+            >
+              ← 목록으로
+            </button>
+          )}
+        </div>
         
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6 overflow-y-auto">
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
           {selectedCell ? (
-            <div className="space-y-6">
-              {/* Mini Map for Cell */}
-              <div className="w-full h-48 bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
-                {(() => {
-                  const pos = getCellPosition(selectedCell);
-                  if (!pos) return <div className="h-full flex items-center justify-center text-gray-400">위치 정보 없음</div>;
-                  return (
-                <Map
-                      center={pos}
-                  style={{ width: '100%', height: '100%' }}
-                  level={3}
-                  draggable={false}
-                  zoomable={false}
-                >
-                      <MapMarker position={pos} />
-                </Map>
-                  );
-                })()}
-              </div>
-
-              {/* Cell Info */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">셀 라벨</label>
-                  <input
-                    type="text"
-                    value={selectedCell.label || ''}
-                    readOnly
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700"
-                  />
+            /* 셀 상세 정보 */
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="space-y-6">
+                {/* Mini Map for Cell */}
+                <div className="w-full h-40 bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+                  {(() => {
+                    const pos = getCellPosition(selectedCell);
+                    if (!pos) return <div className="h-full flex items-center justify-center text-gray-400">위치 정보 없음</div>;
+                    return (
+                      <Map
+                        center={pos}
+                        style={{ width: '100%', height: '100%' }}
+                        level={3}
+                        draggable={false}
+                        zoomable={false}
+                      >
+                        <MapMarker position={pos} />
+                      </Map>
+                    );
+                  })()}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">소속 존</label>
-                  <input
-                    type="text"
-                    value={selectedCell.areaName || selectedArea?.name || ''}
-                    readOnly
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+                {/* Cell Info */}
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">상태</label>
-                    <select
-                      name="status"
-                      value={editForm.status}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 focus:outline-none"
-                    >
-                      <option value="APPROVED">승인됨</option>
-                      <option value="PENDING">대기중</option>
-                      <option value="REJECTED">거절됨</option>
-                    </select>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">셀 라벨</label>
+                    <input
+                      type="text"
+                      value={selectedCell.label || ''}
+                      readOnly
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700"
+                    />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">최대 수용</label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        name="maxCapacity"
-                        value={editForm.maxCapacity}
+                    <label className="block text-sm font-medium text-gray-500 mb-1">소속 존</label>
+                    <input
+                      type="text"
+                      value={selectedCell.areaName || selectedArea?.name || ''}
+                      readOnly
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">상태</label>
+                      <select
+                        name="status"
+                        value={editForm.status}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 focus:outline-none"
-                      />
-                      <span className="absolute right-3 top-2 text-sm text-gray-400">명</span>
+                      >
+                        <option value="APPROVED">승인됨</option>
+                        <option value="PENDING">대기중</option>
+                        <option value="REJECTED">거절됨</option>
+                      </select>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">최대 수용</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          name="maxCapacity"
+                          value={editForm.maxCapacity}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                        />
+                        <span className="absolute right-3 top-2 text-sm text-gray-400">명</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">유의사항</label>
+                    <textarea
+                      name="notice"
+                      value={editForm.notice}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 focus:outline-none resize-none"
+                      placeholder="유의사항을 입력하세요"
+                    />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">유의사항</label>
-                  <textarea
-                    name="notice"
-                    value={editForm.notice}
-                    onChange={handleInputChange}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 focus:outline-none resize-none"
-                    placeholder="유의사항을 입력하세요"
-                  />
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4 border-t border-gray-100">
+                  <button
+                    onClick={handleSave}
+                    disabled={updateCellMutation.isPending}
+                    className="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    {updateCellMutation.isPending ? '저장 중...' : '수정'}
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleteCellMutation.isPending}
+                    className="flex-1 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                  >
+                    {deleteCellMutation.isPending ? '삭제 중...' : '삭제'}
+                  </button>
                 </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-gray-100">
-                <button
-                  onClick={handleSave}
-                  disabled={updateCellMutation.isPending}
-                  className="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-                >
-                  {updateCellMutation.isPending ? '저장 중...' : '수정'}
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleteCellMutation.isPending}
-                  className="flex-1 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                >
-                  {deleteCellMutation.isPending ? '삭제 중...' : '삭제'}
-                </button>
               </div>
             </div>
           ) : selectedArea ? (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400">
-              <MapPin className="w-12 h-12 mb-3 opacity-20" />
-              <p className="text-center">
-                <span className="font-medium text-gray-600">{selectedArea.name}</span>
-                <br />
-                지도에서 셀을 선택해주세요
-              </p>
-              <p className="text-xs mt-2">총 {cells.length}개 셀</p>
-              
-              {/* 존 관리 버튼 */}
-              <div className="flex gap-2 mt-4">
-                <button
-                  onClick={openAreaEditModal}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200"
-                >
-                  <Edit3 className="w-3 h-3" />
-                  존 수정
-                </button>
-                <button
-                  onClick={handleDeleteArea}
-                  disabled={deleteAreaMutation.isPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-100 text-rose-600 text-xs font-medium rounded-lg hover:bg-rose-200 disabled:opacity-50"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  존 삭제
-                </button>
+            /* 셀 목록 */
+            <div className="flex flex-col h-full">
+              {/* 존 정보 헤더 */}
+              <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-gray-900">{selectedArea.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">총 {cells.length}개 셀</p>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={openAreaEditModal}
+                      className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
+                      title="존 수정"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={handleDeleteArea}
+                      disabled={deleteAreaMutation.isPending}
+                      className="p-1.5 bg-rose-100 text-rose-600 rounded-lg hover:bg-rose-200 disabled:opacity-50"
+                      title="존 삭제"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
               </div>
+
+              {/* 셀 리스트 */}
+              <div className="flex-1 overflow-y-auto">
+                {isLoadingCells ? (
+                  <div className="p-6 text-center text-gray-400 text-sm">로딩 중...</div>
+                ) : cells.length === 0 ? (
+                  <div className="p-6 text-center text-gray-400">
+                    <MapPin className="w-10 h-10 mx-auto mb-2 opacity-20" />
+                    <p className="text-sm">등록된 셀이 없습니다.</p>
+                    <button
+                      onClick={openCellAddModal}
+                      className="mt-3 text-xs text-blue-600 hover:underline"
+                    >
+                      + 새 셀 추가하기
+                    </button>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {cells.map((cell) => {
+                      const isApproved = cell.status === 'APPROVED';
+                      const isPending = cell.status === 'PENDING';
+                      
+                      return (
+                        <div
+                          key={cell.id}
+                          onClick={() => handleCellClick(cell)}
+                          className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-3"
+                        >
+                          {/* 상태 표시 */}
+                          <div className={clsx(
+                            'w-2 h-2 rounded-full flex-shrink-0',
+                            isApproved ? 'bg-green-500' : isPending ? 'bg-yellow-500' : 'bg-red-500'
+                          )} />
+                          
+                          {/* 셀 정보 */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {cell.label || `셀 #${cell.id}`}
+                            </p>
+                            {cell.detailedAddress && (
+                              <p className="text-xs text-gray-500 truncate">
+                                {cell.detailedAddress}
+                              </p>
+                            )}
+                          </div>
+                          
+                          {/* 상태 칩 */}
+                          <span className={clsx(
+                            'text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0',
+                            isApproved ? 'bg-green-50 text-green-700' : 
+                            isPending ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'
+                          )}>
+                            {isApproved ? '승인' : isPending ? '대기' : '거절'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* 셀 추가 버튼 */}
+              {cells.length > 0 && (
+                <div className="p-3 border-t border-gray-100">
+                  <button
+                    onClick={openCellAddModal}
+                    className="w-full py-2 text-sm text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 font-medium"
+                  >
+                    + 새 셀 추가
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400">
+            /* 존 미선택 */
+            <div className="h-full flex flex-col items-center justify-center text-gray-400 p-6">
               <MapPin className="w-12 h-12 mb-3 opacity-20" />
-              <p>지도에서 존을 선택해주세요</p>
+              <p className="text-center text-sm">지도에서 존을 선택해주세요</p>
+              <p className="text-xs mt-1">존을 선택하면 셀 목록이 표시됩니다</p>
             </div>
           )}
         </div>
