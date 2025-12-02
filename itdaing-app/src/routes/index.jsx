@@ -17,6 +17,7 @@ import MySettingsPage from '@/pages/MySettingsPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import ReviewWritePage from '@/pages/ReviewWritePage';
 import ChatbotPage from '@/pages/ChatbotPage';
+import SellerInfoPage from '@/pages/SellerInfoPage';
 
 // Seller Pages
 import SellerDashboardPage from '@/pages/seller/SellerDashboardPage';
@@ -132,6 +133,10 @@ const router = createBrowserRouter([
         <MySettingsPage />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: ROUTES.sellerInfo(':sellerId'),
+    element: <SellerInfoPage />,
   },
   {
     path: ROUTES.seller.root,

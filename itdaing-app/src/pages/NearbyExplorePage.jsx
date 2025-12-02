@@ -155,20 +155,24 @@ const NearbyExplorePage = () => {
               </div>
 
               {/* 지역 필터 */}
-              <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                {regionFilters.map((region) => (
-                  <button
-                    key={region}
-                    onClick={() => setSelectedRegion(region)}
-                    className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                      selectedRegion === region
-                        ? 'bg-primary text-white shadow-md scale-105'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {region === 'ALL' ? '전체' : region}
-                  </button>
-                ))}
+              <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0">
+                {regionFilters.map((region) => {
+                  const isActive = selectedRegion === region;
+                  return (
+                    <button
+                      key={region}
+                      type="button"
+                      onClick={() => setSelectedRegion(region)}
+                      className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200 ${
+                        isActive
+                          ? 'bg-primary text-white border-primary shadow-sm'
+                          : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      {region === 'ALL' ? '전체' : region}
+                    </button>
+                  );
+                })}
               </div>
               </div>
             </div>
@@ -221,29 +225,27 @@ const NearbyExplorePage = () => {
 
           {/* 더보기/전체보기 버튼 (데스크톱만) */}
           {filteredPopups.length > 0 && (
-            <div className="mt-4 flex flex-col items-center gap-2">
-              <div className="w-full flex flex-col gap-2 md:flex-row md:items-center md:justify-center">
-                {hasMore && (
-                  <button
-                    type="button"
-                    onClick={handleLoadMore}
-                    className="w-full md:w-auto px-4 py-1.5 rounded-full border border-gray-300 bg-white text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
-                  >
-                    더보기 <ChevronDown className="w-3 h-3" />
-                  </button>
-                )}
-                {filteredPopups.length > 4 && (
-                  <button
-                    type="button"
-                    onClick={handleToggleExpand}
-                    className={`w-full md:w-auto px-5 py-1.5 rounded-full text-xs font-bold text-white shadow-sm transition-colors ${
-                      expanded ? 'bg-gray-800 hover:bg-gray-700' : 'bg-primary hover:bg-primary/90'
-                    }`}
-                  >
-                    {expanded ? '접기' : '전체보기'}
-                  </button>
-                )}
-              </div>
+            <div className="mt-6 hidden md:flex flex-col md:flex-row md:items-center md:justify-center gap-2">
+              {hasMore && (
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  className="px-5 py-2 rounded-full border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors flex items-center justify-center gap-1"
+                >
+                  더보기
+                </button>
+              )}
+              {filteredPopups.length > 4 && (
+                <button
+                  type="button"
+                  onClick={handleToggleExpand}
+                  className={`px-5 py-2 rounded-full text-sm font-medium shadow-sm transition-all ${
+                    expanded ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-primary/10 text-primary hover:bg-primary/20'
+                  }`}
+                >
+                  {expanded ? '접기' : '전체보기'}
+                </button>
+              )}
             </div>
           )}
         </div>

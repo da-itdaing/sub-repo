@@ -24,6 +24,7 @@ export const ROUTES = {
   mypageFavorites: '/mypage/favorites',
   mypageReviews: '/mypage/reviews',
   mypageSettings: '/mypage/settings',
+  sellerInfo: (sellerId = ':sellerId') => `/seller-info/${sellerId}`,
   
   // Seller 대시보드 (추후 구현)
   seller: {

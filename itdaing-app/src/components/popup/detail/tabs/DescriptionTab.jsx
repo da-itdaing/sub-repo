@@ -1,5 +1,7 @@
 import { Copy, Car, Ticket, Tag, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/useToast';
+import { ROUTES } from '@/routes/paths';
 
 // 편의사항 아이콘 매핑 (임시)
 // 실제 featureId와 매핑 필요. 여기서는 예시로 1~3번을 가정하거나,
@@ -10,6 +12,8 @@ const FEATURE_ICONS = {
   DISCOUNT: { icon: Tag, label: '특별 할인' },
   // 필요한 만큼 추가
 };
+
+const FALLBACK_PROFILE = '/placeholder-user.png';
 
 // Feature ID를 라벨/아이콘으로 변환하는 헬퍼 (임시 구현)
 // 백엔드에서 feature 정보를 어떻게 주는지(ID List vs Object List)에 따라 수정 필요
@@ -25,6 +29,7 @@ const getFeatureInfo = (id) => {
 
 const DescriptionTab = ({ popup }) => {
   const { addToast } = useToast();
+  const navigate = useNavigate();
 
   const handleCopyAddress = () => {
     if (!popup.address) return;
@@ -73,8 +78,26 @@ const DescriptionTab = ({ popup }) => {
           </div>
 
           {/* Seller Profile (Right Top) */}
-          <div className="flex flex-col items-center gap-1.5 shrink-0">
-            <div className="w-14 h-14 rounded-full bg-gray-100 border border-gray-200 overflow-hidden relative">
+          <button
+            type="button"
+            onClick={() => {
+              const sellerIdentifier = encodeURIComponent(
+                popup.sellerId || popup.sellerSlug || popup.sellerName || popup.sellerEmail || 'unknown'
+              );
+              const sellerPayload = {
+                id: popup.sellerId || popup.sellerSlug || popup.sellerName || popup.sellerEmail || 'unknown',
+                name: popup.sellerName || '우리 존재 화이팅',
+                profileImage: popup.sellerProfileImage || FALLBACK_PROFILE,
+                tagline: popup.sellerTagline || popup.sellerBio || '',
+                region: popup.sellerRegion || popup.primaryRegion || '',
+                sns: popup.sellerSNS || '',
+                email: popup.sellerEmail || '',
+              };
+              navigate(ROUTES.sellerInfo(sellerIdentifier), { state: { seller: sellerPayload } });
+            }}
+            className="flex flex-col items-center gap-2 shrink-0 focus:outline-none"
+          >
+            <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 overflow-hidden relative">
               {/* 실제 판매자 프로필 이미지가 있다면 img 태그 사용 */}
                {popup.sellerProfileImage ? (
                   <img src={popup.sellerProfileImage} alt="seller" className="w-full h-full object-cover"/>
@@ -84,10 +107,10 @@ const DescriptionTab = ({ popup }) => {
                    </div>
                )}
             </div>
-            <span className="text-[10px] font-medium text-gray-900">
+            <span className="text-sm font-semibold text-gray-900">
               {popup.sellerName || '우리 존재 화이팅'}
             </span>
-          </div>
+          </button>
         </div>
 
         {/* Tags */}

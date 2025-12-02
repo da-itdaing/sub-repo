@@ -277,26 +277,29 @@ const MyPage = () => {
         </section>
       
       {/* 탭 영역 */}
-      <section className="rounded-3xl bg-white shadow-sm ring-1 ring-gray-100">
-        <nav className="px-6">
-          <div className="grid grid-cols-2 gap-2 md:flex md:gap-8 md:justify-start">
-            {TAB_LIST.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap w-full md:w-auto ${
-                  activeTab === tab.key
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+        <section className="rounded-3xl bg-white shadow-sm ring-1 ring-gray-100">
+        <nav className="px-4 md:px-6 pt-4">
+          <div className="grid grid-cols-2 gap-3 md:flex md:gap-4 md:justify-start">
+            {TAB_LIST.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`group relative flex items-center justify-center rounded-2xl px-3 py-3 text-sm font-semibold transition-all ${
+                    isActive
+                      ? 'bg-primary/10 text-primary shadow-sm'
+                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-800'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </nav>
 
-        <div className="border-t border-gray-100 px-3 md:px-6 py-6 min-h-[300px]">
+        <div className="px-3 md:px-6 py-6 min-h-[300px]">
           {activeTab === 'recommend' && (
             <section className="space-y-4 animate-fade-in">
               <div className="flex items-center justify-between">
@@ -332,7 +335,7 @@ const MyPage = () => {
                   </div>
                   
                   {recommendations.length > 8 && (
-                    <div className="mt-6 flex flex-col gap-2 md:flex-row md:justify-center md:items-center">
+                    <div className="mt-6 hidden md:flex md:flex-row md:justify-center md:items-center gap-2">
                       <button
                         type="button"
                         onClick={() =>
@@ -347,14 +350,14 @@ const MyPage = () => {
                             : 'border-gray-100 text-gray-400 cursor-not-allowed'
                         }`}
                       >
-                        더보기 <ChevronRight className="w-4 h-4" />
+                        더보기
                       </button>
                       <button
                         type="button"
                         onClick={() =>
                           setRecommendVisibleCount(fullyExpanded ? 8 : recommendations.length)
                         }
-                        className={`w-full md:w-auto px-5 py-2 rounded-full text-sm font-medium shadow-sm transition ${
+                        className={`px-5 py-2 rounded-full text-sm font-medium shadow-sm transition ${
                           fullyExpanded
                             ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             : 'bg-primary/10 text-primary hover:bg-primary/20'

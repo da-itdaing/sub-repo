@@ -208,7 +208,7 @@ const PopupDetailPage = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
 
-      <main className="flex-1 w-full max-w-[800px] mx-auto bg-white pt-8 md:pt-12 pb-20">
+      <main className="flex-1 w-full max-w-[800px] mx-auto bg-white pt-16 md:pt-24 pb-20">
         {/* 큰 이미지 */}
         <div className="w-full">
           <img
@@ -255,22 +255,25 @@ const PopupDetailPage = () => {
 
         {/* 탭 메뉴 */}
         <div className="px-4">
-          <div className="flex items-center justify-around border-b">
+          <div className="flex items-center gap-2 bg-gray-50 rounded-2xl p-1">
             {[
               { key: 'description', label: '설명' },
               { key: 'map', label: '지도' },
               { key: 'reviews', label: '후기' },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 py-3 text-sm font-semibold border-b-2 ${
-                  activeTab === tab.key ? 'border-primary text-primary' : 'border-transparent text-gray-400'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+            ].map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex-1 rounded-2xl px-4 py-2 text-sm font-semibold transition-all ${
+                    isActive ? 'bg-white text-primary shadow-sm' : 'text-gray-500'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 

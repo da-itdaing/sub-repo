@@ -33,7 +33,7 @@ const MyFavoritesPage = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
 
-      <main className="flex-1 w-full max-w-[1200px] mx-auto px-4 md:px-6 lg:px-8 pt-8 pb-12 md:pt-12">
+      <main className="flex-1 w-full max-w-[1200px] mx-auto px-4 md:px-6 lg:px-8 pt-16 pb-16 md:pt-24 md:pb-20">
           <div className="mb-6">
             <p className="text-sm text-gray-500">나의 관심 팝업 리스트</p>
             <h1 className="text-2xl font-bold">찜한 팝업</h1>
@@ -62,7 +62,7 @@ const MyFavoritesPage = () => {
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.home)}
-              className="mt-6 inline-flex px-6 py-3 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition"
+                className="mt-10 inline-flex items-center justify-center px-8 py-4 rounded-full bg-primary text-white text-base font-semibold tracking-wide hover:bg-primary/90 transition shadow-md shadow-primary/20"
               >
                 인기 팝업 둘러보기
               </button>
