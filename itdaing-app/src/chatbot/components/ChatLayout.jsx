@@ -208,9 +208,9 @@ const ChatLayout = ({ mode = 'consumer' }) => {
         </div>
       )}
 
-      {/* 추천 패널 */}
+      {/* 추천 패널 - 펼쳐도 입력창 보이도록 max-h 조정 */}
       {recommendations.length > 0 && (
-        <aside className="shrink-0 max-h-[40%] overflow-y-auto">
+        <aside className="shrink-0">
           <RecommendationPanel items={recommendations} mode={mode} />
         </aside>
       )}

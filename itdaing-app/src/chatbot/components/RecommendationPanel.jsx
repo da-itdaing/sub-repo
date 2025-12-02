@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Star, ChevronRight, ChevronDown, ChevronUp, Map } from 'lucide-react';
+import { ChevronRight, ChevronDown, ChevronUp, Map } from 'lucide-react';
 import KakaoMap from '@/components/map/KakaoMap';
 import { ROUTES } from '@/routes/paths';
 
@@ -104,23 +104,23 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
         </div>
       </button>
 
-      {/* 펼쳐진 내용 */}
+      {/* 펼쳐진 내용 - 모바일 최적화 */}
       {isExpanded && (
-        <div className="animate-expand">
-          {/* 지도 */}
+        <div className="animate-expand max-h-[280px] overflow-y-auto">
+          {/* 지도 - 모바일에서 컴팩트하게 */}
           {hasValidMarkers && (
-            <div className="h-[180px] mx-3 mb-2 rounded-xl overflow-hidden ring-1 ring-gray-100">
+            <div className="h-[120px] mx-3 mb-2 rounded-xl overflow-hidden ring-1 ring-gray-100">
               <KakaoMap
                 height="100%"
-                level={items.length === 1 ? 3 : 5}
+                level={items.length === 1 ? 4 : 6}
                 center={centerMarker ? { lat: centerMarker.lat, lng: centerMarker.lng } : undefined}
                 markers={markers}
               />
             </div>
           )}
 
-          {/* 카드 리스트 */}
-          <div className="px-3 pb-3 space-y-1.5">
+          {/* 카드 리스트 - 컴팩트 */}
+          <div className="px-3 pb-2 space-y-1">
             {items.map((item, index) => {
               const id = resolveItemId(item);
               const isActive = id === highlightId;
@@ -130,7 +130,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
               return (
                 <div
                   key={id}
-                  className={`flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer transition-all ${
+                  className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
                     isActive 
                       ? 'bg-rose-50 ring-1 ring-rose-200' 
                       : 'bg-gray-50 hover:bg-gray-100'
@@ -138,7 +138,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
                   onClick={() => setHighlightId(id)}
                 >
                   {/* 순위 */}
-                  <span className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${
+                  <span className={`flex-shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[9px] font-bold ${
                     index === 0 
                       ? 'bg-rose-500 text-white' 
                       : 'bg-gray-200 text-gray-500'
@@ -146,40 +146,26 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
                     {index + 1}
                   </span>
 
-                  {/* 정보 */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-gray-800 truncate">
+                  {/* 정보 - 한 줄로 압축 */}
+                  <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                    <p className="text-[12px] font-semibold text-gray-800 truncate">
                       {item.name || '이름 미정'}
                     </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {address && (
-                        <span className="text-[10px] text-gray-400 truncate flex items-center gap-0.5">
-                          <MapPin className="h-2.5 w-2.5" />
-                          {address.split(' ').slice(0, 2).join(' ')}
-                        </span>
-                      )}
-                      {typeof item.rating === 'number' && (
-                        <span className="text-[10px] text-gray-500 flex items-center gap-0.5">
-                          <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400" />
-                          {item.rating.toFixed(1)}
-                        </span>
-                      )}
-                      {item.category && (
-                        <span className="text-[9px] text-gray-400 bg-white px-1 py-0.5 rounded">
-                          {item.category}
-                        </span>
-                      )}
-                    </div>
+                    {address && (
+                      <span className="text-[10px] text-gray-400 truncate hidden sm:inline">
+                        · {address.split(' ').slice(1, 2).join(' ')}
+                      </span>
+                    )}
                   </div>
 
                   {/* 상세 버튼 */}
                   {detailLink && (
                     <Link
                       to={detailLink}
-                      className="flex-shrink-0 p-1.5 rounded-lg bg-white ring-1 ring-gray-200 text-gray-400 hover:text-rose-500 hover:ring-rose-200 transition-all"
+                      className="flex-shrink-0 p-1 rounded-md bg-white ring-1 ring-gray-200 text-gray-400 hover:text-rose-500 transition-all"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <ChevronRight className="h-3.5 w-3.5" />
+                      <ChevronRight className="h-3 w-3" />
                     </Link>
                   )}
                 </div>
