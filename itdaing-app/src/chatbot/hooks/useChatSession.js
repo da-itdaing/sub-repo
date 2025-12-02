@@ -279,6 +279,7 @@ const useChatSession = ({ mode = 'consumer' } = {}) => {
   const [recommendations, setRecommendations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSlow, setIsSlow] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false); // v14: 첫 토큰 도착 후 스트리밍 중 상태
 
   // 타이머 및 요청 취소용 ref
   const slowTimerRef = useRef(null);
@@ -307,12 +308,15 @@ const useChatSession = ({ mode = 'consumer' } = {}) => {
     setIsSlow(false);
   }, []);
 
-  // 느린 응답 타이머 시작 (2초 후 isSlow = true)
+  // 느린 응답 타이머 시작 (3초 후 isSlow = true)
+  // v14: 실제 토큰 스트리밍으로 TTFT가 개선되어 3초로 조정
+  // - 간단한 질문(인사): TTFT ~0.76초 → slowTimer 미발동
+  // - RAG 질문: TTFT ~5초 → 3초 후 "찾고 있어요" 메시지 표시
   const startSlowTimer = useCallback(() => {
     clearSlowTimer();
     slowTimerRef.current = setTimeout(() => {
       setIsSlow(true);
-    }, 2000);
+    }, 3000);
   }, [clearSlowTimer]);
 
   // 컴포넌트 언마운트 시 정리
@@ -335,6 +339,7 @@ const useChatSession = ({ mode = 'consumer' } = {}) => {
     setMessages([initialMessage]);
     setRecommendations([]);
     setIsLoading(false);
+    setIsStreaming(false); // v14: 스트리밍 상태 초기화
   }, [clearSlowTimer, initialMessage]);
 
   // 메시지 전송
@@ -363,6 +368,7 @@ const useChatSession = ({ mode = 'consumer' } = {}) => {
       }
 
       setIsLoading(true);
+      setIsStreaming(false); // v14: 스트리밍 시작 전 초기화
       startSlowTimer();
       setRecommendations([]);
 
@@ -446,6 +452,11 @@ const useChatSession = ({ mode = 'consumer' } = {}) => {
 
             if (!cleanDelta.trim()) return;
             clearSlowTimer();
+            
+            // v14: 첫 토큰 도착 시 스트리밍 상태로 전환
+            if (!isStreaming) {
+              setIsStreaming(true);
+            }
 
             // 봇 메시지 업데이트 (스트리밍 누적)
             setMessages((prev) => {
@@ -489,10 +500,11 @@ const useChatSession = ({ mode = 'consumer' } = {}) => {
         ]);
       } finally {
         setIsLoading(false);
+        setIsStreaming(false); // v14: 스트리밍 완료
         clearSlowTimer();
       }
     },
-    [sessionId, mode, clearSlowTimer, startSlowTimer],
+    [sessionId, mode, clearSlowTimer, startSlowTimer, isStreaming],
   );
 
   return {
@@ -501,6 +513,7 @@ const useChatSession = ({ mode = 'consumer' } = {}) => {
     messages,
     isLoading,
     isSlow,
+    isStreaming, // v14: 첫 토큰 도착 후 스트리밍 중 여부
     recommendations,
     sendMessage,
     resetSession,
