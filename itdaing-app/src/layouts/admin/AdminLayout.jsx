@@ -175,8 +175,11 @@ const AdminLayout = () => {
           </svg>
         </button>
 
-        <div className="text-xs text-white/40">
-          © {new Date().getFullYear()} Da-Itdaing · 내부 전용
+        <div className={clsx(
+          "text-xs text-white/40 text-center",
+          !isSidebarExpanded && "hidden"
+        )}>
+          © {new Date().getFullYear()} Da-Itdaing
         </div>
       </div>
     </aside>

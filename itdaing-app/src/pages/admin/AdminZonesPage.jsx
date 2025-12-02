@@ -81,6 +81,9 @@ const AdminZonesPage = () => {
     notice: '',
   });
 
+  // 셀 상태 필터 ('all' | 'APPROVED' | 'PENDING' | 'REJECTED')
+  const [cellStatusFilter, setCellStatusFilter] = useState('all');
+
   // 존(Area) 목록 조회
   const { data: areasData, isLoading: isLoadingAreas, refetch: refetchAreas } = useQuery({
     queryKey: ['geoAreas'],
@@ -338,6 +341,11 @@ const AdminZonesPage = () => {
   // 선택된 구에 속한 존만 필터링
   const filteredAreas = areas.filter((a) => a.regionId === selectedDistrict.id);
 
+  // 상태별 필터링된 셀 목록
+  const filteredCells = cellStatusFilter === 'all' 
+    ? cells 
+    : cells.filter((c) => c.status === cellStatusFilter);
+
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-6 p-6 bg-gray-50">
       {/* Left: Zone Management */}
@@ -377,20 +385,48 @@ const AdminZonesPage = () => {
         {/* Controls & Status */}
         <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
           <div className="flex gap-4">
-            <div className="flex items-center gap-3 px-4 py-2 bg-white border border-gray-200 rounded-lg">
+            <button
+              onClick={() => setCellStatusFilter(cellStatusFilter === 'APPROVED' ? 'all' : 'APPROVED')}
+              className={clsx(
+                "flex items-center gap-3 px-4 py-2 rounded-lg transition-colors cursor-pointer",
+                cellStatusFilter === 'APPROVED' 
+                  ? "bg-green-50 border-2 border-green-400" 
+                  : "bg-white border border-gray-200 hover:bg-gray-50"
+              )}
+            >
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-500" />
                 <span className="text-sm font-medium text-gray-600">승인됨</span>
               </div>
               <span className="text-lg font-bold text-gray-900">{approvedCells}</span>
-            </div>
-            <div className="flex items-center gap-3 px-4 py-2 bg-white border border-gray-200 rounded-lg">
+            </button>
+            <button
+              onClick={() => setCellStatusFilter(cellStatusFilter === 'PENDING' ? 'all' : 'PENDING')}
+              className={clsx(
+                "flex items-center gap-3 px-4 py-2 rounded-lg transition-colors cursor-pointer",
+                cellStatusFilter === 'PENDING' 
+                  ? "bg-yellow-50 border-2 border-yellow-400" 
+                  : "bg-white border border-gray-200 hover:bg-gray-50"
+              )}
+            >
               <div className="flex items-center gap-2">
                 <XCircle className="w-5 h-5 text-yellow-500" />
                 <span className="text-sm font-medium text-gray-600">대기중</span>
               </div>
               <span className="text-lg font-bold text-gray-900">{pendingCells}</span>
-            </div>
+            </button>
+            <button
+              onClick={() => setCellStatusFilter('all')}
+              className={clsx(
+                "flex items-center gap-3 px-4 py-2 rounded-lg transition-colors cursor-pointer",
+                cellStatusFilter === 'all' 
+                  ? "bg-gray-100 border-2 border-gray-400" 
+                  : "bg-white border border-gray-200 hover:bg-gray-50"
+              )}
+            >
+              <span className="text-sm font-medium text-gray-600">전체</span>
+              <span className="text-lg font-bold text-gray-900">{cells.length}</span>
+            </button>
             <div className="flex items-center gap-3 px-4 py-2 bg-white border border-gray-200 rounded-lg">
               <span className="text-sm font-medium text-gray-600">존 수</span>
               <span className="text-lg font-bold text-gray-900">{filteredAreas.length}</span>
@@ -694,9 +730,19 @@ const AdminZonesPage = () => {
                       + 새 셀 추가하기
                     </button>
                   </div>
+                ) : filteredCells.length === 0 ? (
+                  <div className="p-6 text-center text-gray-400">
+                    <p className="text-sm">해당 상태의 셀이 없습니다.</p>
+                    <button
+                      onClick={() => setCellStatusFilter('all')}
+                      className="mt-2 text-xs text-blue-600 hover:underline"
+                    >
+                      전체 보기
+                    </button>
+                  </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
-                    {cells.map((cell) => {
+                    {filteredCells.map((cell) => {
                       const isApproved = cell.status === 'APPROVED';
                       const isPending = cell.status === 'PENDING';
                       
@@ -762,16 +808,90 @@ const AdminZonesPage = () => {
         </div>
       </div>
 
-      {/* 셀 추가 모달 */}
+      {/* 셀 추가 모달 - 지도 클릭으로 위치 선택 */}
       {cellAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900">새 셀 추가</h3>
             <p className="mt-1 text-xs text-gray-500">
-              {selectedArea?.name}에 새로운 셀(부스)을 추가합니다.
+              {selectedArea?.name}에 새로운 셀(부스)을 추가합니다. 지도를 클릭하여 위치를 선택하세요.
             </p>
             
-            <div className="mt-4 space-y-3">
+            {/* 지도로 위치 선택 */}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                📍 위치 선택 (지도 클릭) *
+              </label>
+              <div className="h-[200px] rounded-lg overflow-hidden border border-gray-200">
+                <Map
+                  center={selectedArea ? (() => {
+                    const coords = parseGeoJsonPolygon(selectedArea.polygonGeoJson);
+                    if (coords.length > 0) {
+                      return coords.reduce(
+                        (acc, c) => ({ lat: acc.lat + c.lat / coords.length, lng: acc.lng + c.lng / coords.length }),
+                        { lat: 0, lng: 0 }
+                      );
+                    }
+                    return selectedDistrict.center;
+                  })() : selectedDistrict.center}
+                  style={{ width: '100%', height: '100%' }}
+                  level={4}
+                  onClick={(_map, mouseEvent) => {
+                    const latlng = mouseEvent.latLng;
+                    const lat = latlng.getLat();
+                    const lng = latlng.getLng();
+                    
+                    // 좌표 업데이트
+                    setNewCellForm(prev => ({ ...prev, lat: lat.toFixed(6), lng: lng.toFixed(6) }));
+                    
+                    // 카카오 주소 검색 API로 도로명 주소 조회
+                    if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
+                      const geocoder = new window.kakao.maps.services.Geocoder();
+                      geocoder.coord2Address(lng, lat, (result, status) => {
+                        if (status === window.kakao.maps.services.Status.OK && result[0]) {
+                          const address = result[0].road_address 
+                            ? result[0].road_address.address_name 
+                            : result[0].address.address_name;
+                          setNewCellForm(prev => ({ ...prev, detailedAddress: address }));
+                        }
+                      });
+                    }
+                  }}
+                >
+                  {/* 선택된 존 폴리곤 표시 */}
+                  {selectedArea && (() => {
+                    const coords = parseGeoJsonPolygon(selectedArea.polygonGeoJson);
+                    if (coords.length >= 3) {
+                      return (
+                        <Polygon
+                          path={coords}
+                          strokeWeight={2}
+                          strokeColor="#eb0000"
+                          strokeOpacity={0.6}
+                          fillColor="#eb0000"
+                          fillOpacity={0.1}
+                        />
+                      );
+                    }
+                    return null;
+                  })()}
+                  
+                  {/* 선택한 위치 마커 */}
+                  {newCellForm.lat && newCellForm.lng && (
+                    <MapMarker 
+                      position={{ lat: parseFloat(newCellForm.lat), lng: parseFloat(newCellForm.lng) }}
+                    />
+                  )}
+                </Map>
+              </div>
+              {newCellForm.lat && newCellForm.lng && (
+                <p className="mt-1 text-xs text-green-600">
+                  ✓ 선택된 좌표: {newCellForm.lat}, {newCellForm.lng}
+                </p>
+              )}
+            </div>
+            
+            <div className="mt-4 grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">셀 라벨 *</label>
                 <input
@@ -784,42 +904,6 @@ const AdminZonesPage = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">상세 주소</label>
-                <input
-                  type="text"
-                  value={newCellForm.detailedAddress}
-                  onChange={(e) => setNewCellForm(prev => ({ ...prev, detailedAddress: e.target.value }))}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  placeholder="예: 광주광역시 동구 충장로 100"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">위도 *</label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    value={newCellForm.lat}
-                    onChange={(e) => setNewCellForm(prev => ({ ...prev, lat: e.target.value }))}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                    placeholder="35.1595"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">경도 *</label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    value={newCellForm.lng}
-                    onChange={(e) => setNewCellForm(prev => ({ ...prev, lng: e.target.value }))}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                    placeholder="126.8526"
-                  />
-                </div>
-              </div>
-              
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">최대 수용 인원</label>
                 <input
                   type="number"
@@ -829,17 +913,30 @@ const AdminZonesPage = () => {
                   placeholder="1"
                 />
               </div>
+            </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">유의사항</label>
-                <textarea
-                  value={newCellForm.notice}
-                  onChange={(e) => setNewCellForm(prev => ({ ...prev, notice: e.target.value }))}
-                  rows={2}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none resize-none"
-                  placeholder="셀 운영 관련 유의사항"
-                />
-              </div>
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                도로명 주소 <span className="text-xs text-gray-400">(지도 클릭 시 자동 입력)</span>
+              </label>
+              <input
+                type="text"
+                value={newCellForm.detailedAddress}
+                onChange={(e) => setNewCellForm(prev => ({ ...prev, detailedAddress: e.target.value }))}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-gray-50"
+                placeholder="지도를 클릭하면 자동으로 입력됩니다"
+              />
+            </div>
+              
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">유의사항</label>
+              <textarea
+                value={newCellForm.notice}
+                onChange={(e) => setNewCellForm(prev => ({ ...prev, notice: e.target.value }))}
+                rows={2}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none resize-none"
+                placeholder="셀 운영 관련 유의사항"
+              />
             </div>
             
             <div className="mt-6 flex justify-end gap-2">
