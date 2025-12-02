@@ -422,7 +422,7 @@ const SellerCalendarPage = () => {
           )}
 
           {/* 빠른 액션 */}
-          <section className="rounded-2xl border border-white/80 bg-white p-3 shadow-sm shadow-slate-200/60">
+          {/* <section className="rounded-2xl border border-white/80 bg-white p-3 shadow-sm shadow-slate-200/60">
             <div className="flex gap-2">
               <button
                 type="button"
@@ -439,15 +439,15 @@ const SellerCalendarPage = () => {
                 <span className="text-[11px] font-medium text-gray-600">미리보기</span>
               </button>
             </div>
-          </section>
+          </section> */}
 
           {/* 운영 팁 */}
-          <section className="rounded-2xl border border-white/80 bg-gradient-to-br from-[#ff235b]/5 to-[#c4006b]/5 p-3 shadow-sm shadow-slate-200/60">
+          {/* <section className="rounded-2xl border border-white/80 bg-gradient-to-br from-[#ff235b]/5 to-[#c4006b]/5 p-3 shadow-sm shadow-slate-200/60">
             <h4 className="text-[11px] font-semibold text-gray-900 mb-1">💡 운영 팁</h4>
             <p className="text-[10px] text-gray-600 leading-relaxed">
               팝업 운영 중 SNS에 현장 사진을 자주 업로드하면 방문객이 증가합니다.
             </p>
-          </section>
+          </section> */}
         </div>
       </div>
 

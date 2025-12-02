@@ -109,3 +109,12 @@ export const getMyPreferences = async () => {
 export const updateMyPreferences = async (payload) => {
   await apiClient.put('/consumers/me/preferences', payload);
 };
+
+/**
+ * 비밀번호 변경 (추정 엔드포인트)
+ * @param {{currentPassword: string, newPassword: string}} payload
+ */
+export const changePassword = async (payload) => {
+  const response = await apiClient.post('/auth/password/change', payload);
+  return response;
+};

@@ -18,7 +18,7 @@
 | Pages (`src/pages`) | Route-level shells (HomePage, LoginPage, NearbyExplorePage, PopupDetailPage, MyPage, Signup steps) | Use React Query hooks and shared components; maintain `max-w-[540px]/[1200px]` alignment. |
 | Components (`src/components`) | HeroCarousel, EventSection, HorizontalBanner, BottomNav, Footer, Header, ReviewWritePage, MyPage tabs | Must hydrate from master data or API payloads; no hardcoded chips/resgions. |
 | Hooks (`src/hooks`) | `useMasterData`, `usePopups`, `useAuthInitialization` | Wrap React Query fetchers with caching and selection limits enforcement. |
-| Services (`src/services`) | `authService`, `popupService`, `reviewService`, `wishlistService` | Axios clients hitting `/api/**` via Vite proxy; unify ApiResponse handling. |
+| Services (`src/services`) | `authService`, `popupService`, `reviewService`, `wishlistService`(API TBD) | Axios clients hitting `/api/**` via Vite proxy; unify ApiResponse handling. |
 | Backend | Spring Boot controllers → services → repositories | Redis caches master data & refresh tokens; PostgreSQL stores popups, favorites, reviews. |
 
 **Auth Flow:** Login → `authService.login` → access/refresh tokens stored in localStorage → Axios interceptor attaches `Authorization` header → on 401 try `/api/auth/refresh` → update Zustand store → re-run original request.
@@ -48,7 +48,7 @@
 
 ### MyPage
 - Tabs: 맞춤 추천 · 관심 팝업 · 내 후기 · 일정. 각 탭은 동일한 카드/통계 스타일을 공유한다.
-- **Favorites**: uses same EventCard visuals; data syncs with wishlist backend (`GET /api/wishlist`).
+- **Favorites**: uses same EventCard visuals; wishlist API is still pending (OpenAPI 미포함) so keep client logic decoupled for later integration.
 - **Schedule**: `CalendarSection` 컴포넌트를 통해 관심 팝업의 일정(시작~종료)을 캘린더에 시각화. 날짜 클릭 시 해당 일자에 운영 중인 팝업 목록 노출.
 - **Reviews**: `/mypage/reviews` 서브페이지로 이동하여 내가 작성한 리뷰 목록 확인 및 관리.
 - **Settings**: `/mypage/settings` 서브페이지에서 프로필 이미지 변경 및 로그아웃 수행.
@@ -65,11 +65,13 @@
 | Feature | Endpoint(s) | Frontend Modules |
 | --- | --- | --- |
 | Master data | `GET /api/master/categories`, `styles`, `regions`, `features` | `src/hooks/useMasterData.js`, consumed by Signup/MyPage filters |
-| Favorites | `POST /api/wishlist?popupId=...` / `DELETE` / `GET` | `EventCard`, `PopupDetailPage`, `MyPageFavorites` |
+| Favorites | **TBD** – `/api/wishlist` 계열 엔드포인트는 OpenAPI에 없으므로 스펙 정의 후 연동 | `EventCard`, `PopupDetailPage`, `MyPageFavorites` |
 | Reviews | `POST /api/popups/{id}/reviews`, `PUT`, `DELETE`, `GET` | `PopupDetailPage`, `ReviewWritePage`, `MyReviewsPage` |
 | Nearby map | `GET /api/popups/search` with region/category filters | `NearbyExplorePage`, map markers |
 | Image Upload | `POST /api/uploads/images` (Multipart) | `src/services/uploadService.js`, `ImageUploader.jsx` |
-| Profile | `GET /api/users/me`, `PUT /api/users/me/profile-image` | `MyPage`, `MySettingsPage` |
+| Profile | `GET /api/users/me` (조회만 정의됨) | `MyPage`, `MySettingsPage` |
+
+> ℹ️ Wishlist 및 프로필 이미지 수정 API는 현재 `docs/openapi.json`에 존재하지 않아 백엔드 스펙 확정 시 본 표와 서비스 의존성을 함께 업데이트해야 합니다.
 
 ---
 

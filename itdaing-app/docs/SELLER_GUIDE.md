@@ -205,19 +205,21 @@ const { data: popups } = useSellerPopups();
 - [x] 로그인 시 role 확인 (`SELLER`, `CONSUMER`, `ADMIN`)
 
 ### 2. Seller Dashboard API (구현 필요)
-- [ ] 대시보드 통계 조회 (`/api/seller/dashboard/stats`)
-- [ ] 최근 팝업 목록 조회 (`/api/seller/popups?limit=5`)
+- [ ] 대시보드 통계 조회 (스펙 미정 – `openapi.json` 미포함)
+- [ ] 최근 팝업 목록 조회 (스펙 미정 – `openapi.json` 미포함)
 
 ### 3. Seller Popup Management API (구현 필요)
-- [ ] 팝업 목록 조회 (`/api/seller/popups`)
-- [ ] 팝업 상세 조회 (`/api/seller/popups/:id`)
-- [ ] 팝업 등록 (`POST /api/seller/popups`)
-- [ ] 팝업 수정 (`PUT /api/seller/popups/:id`)
-- [ ] 팝업 삭제 (`DELETE /api/seller/popups/:id`)
+- [ ] 팝업 목록 조회 (`GET /api/sellers/me/popups`)
+- [ ] 팝업 상세 조회 (`GET /api/popups/{popupId}`)
+- [ ] 팝업 등록 (`POST /api/popups`)
+- [ ] 팝업 수정 (`PUT /api/popups/{popupId}`)
+- [ ] 팝업 삭제 (`DELETE /api/popups/{popupId}`)
 
 ### 4. Seller Profile API (구현 필요)
-- [ ] 판매자 프로필 조회 (`/api/seller/profile`)
-- [ ] 판매자 프로필 수정 (`PUT /api/seller/profile`)
+- [ ] 판매자 프로필 조회 (`GET /api/sellers/me/profile`)
+- [ ] 판매자 프로필 수정 (`PUT /api/sellers/me/profile`)
+
+> 참고: 대시보드/요약 계열 엔드포인트는 아직 스펙에 없으므로 백엔드 정의 완료 시 위 체크리스트를 실제 경로로 갱신해야 합니다.
 
 ## 🧪 테스트 시나리오
 

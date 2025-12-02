@@ -114,7 +114,7 @@ const MyPage = () => {
     return preferenceData.interestCategoryIds
       .map((id) => categoryNameMap.get(id))
       .filter(Boolean)
-      .slice(0, 3);
+      .slice(0, 4);
   }, [preferenceData, categoryNameMap]);
 
   const preferredStyles = useMemo(() => {
@@ -122,7 +122,7 @@ const MyPage = () => {
     return preferenceData.styleIds
       .map((id) => styleNameMap.get(id))
       .filter(Boolean)
-      .slice(0, 3);
+      .slice(0, 4);
   }, [preferenceData, styleNameMap]);
 
   const preferenceChips = [
@@ -261,7 +261,7 @@ const MyPage = () => {
                     return (
                       <span
                         key={`${group.key}-${label}-${idx}`}
-                        className="rounded-full bg-gray-900 text-white text-xs font-medium px-3 py-1"
+                        className="rounded-full border border-amber-200 bg-amber-50 text-amber-800 text-xs font-medium px-3 py-1 shadow-sm"
                       >
                         {label}
                       </span>

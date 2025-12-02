@@ -62,7 +62,7 @@ const MyFavoritesPage = () => {
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.home)}
-                className="mt-10 inline-flex items-center justify-center px-8 py-4 rounded-full bg-primary text-white text-base font-semibold tracking-wide hover:bg-primary/90 transition shadow-md shadow-primary/20"
+                className="mt-10 inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#EB0000] text-white text-base font-semibold tracking-wide hover:bg-[#d00000] transition shadow-md shadow-primary/20"
               >
                 인기 팝업 둘러보기
               </button>

@@ -187,7 +187,7 @@ const SellerPopupsPage = () => {
               className="inline-flex items-center gap-2 rounded-2xl bg-[#EB0000] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[#EB0000]/30 hover:bg-[#c90000] transition-all"
             >
               <PlusCircle className="h-4 w-4" />
-              새 팝업 등록
+              팝업 등록
             </Link>
           </div>
         </div>
