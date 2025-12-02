@@ -2,11 +2,13 @@ import { Instagram, Facebook, Youtube, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
 
-const IconButton = ({ icon, label }) => (
+const IconButton = ({ icon, label, href = '#', className = '' }) => (
   <a
-    href="#"
+    href={href}
     aria-label={label}
-    className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors"
+    target={href === '#' ? undefined : '_blank'}
+    rel={href === '#' ? undefined : 'noreferrer'}
+    className={`w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition duration-200 hover:scale-110 shadow-sm hover:shadow-lg ${className}`}
   >
     {icon}
   </a>
@@ -32,6 +34,12 @@ const Footer = () => {
           <IconButton icon={<Facebook className="w-4 h-4" />} label="Facebook" />
           <IconButton icon={<Youtube className="w-4 h-4" />} label="Youtube" />
           <IconButton icon={<Mail className="w-4 h-4" />} label="Email" />
+          <IconButton
+            icon={<span className="text-[11px] font-bold tracking-tight text-white">LT</span>}
+            label="Linktree"
+            href="https://linktr.ee/daitdaing"
+            className="bg-linear-to-br from-[#00C853] to-[#00E676] hover:from-[#00E676] hover:to-[#00C853]"
+          />
         </div>
         <div className="flex items-center gap-2 text-xs text-gray-400">
           <a href="#" className="hover:text-white font-medium">
@@ -130,6 +138,12 @@ const Footer = () => {
               <IconButton icon={<Facebook className="w-5 h-5" />} label="Facebook" />
               <IconButton icon={<Youtube className="w-5 h-5" />} label="Youtube" />
               <IconButton icon={<Mail className="w-5 h-5" />} label="Email" />
+              <IconButton
+                icon={<span className="text-[11px] font-bold tracking-tight text-white">LT</span>}
+                label="Linktree"
+                href="https://linktr.ee/daitdaing"
+                className="bg-linear-to-br from-[#00C853] to-[#00E676] hover:from-[#00E676] hover:to-[#00C853]"
+              />
             </div>
           </div>
         </div>

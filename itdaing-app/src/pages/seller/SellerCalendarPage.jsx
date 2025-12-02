@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin, Clock, Eye, Heart, Store, TrendingUp } from 'lucide-react';
 import { getMyPopups } from '@/services/sellerService';
@@ -50,11 +50,17 @@ const getDaysInMonth = (year, monthIndex) =>
 const getFirstDayOfMonth = (year, monthIndex) =>
   new Date(year, monthIndex, 1).getDay();
 
+const buildDateKey = (year, monthIndex, day) => `${year}-${monthIndex}-${day}`;
+
 const SellerCalendarPage = () => {
   const today = new Date();
-  const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  const todayYear = today.getFullYear();
+  const todayMonth = today.getMonth();
+  const todayDate = today.getDate();
+  const [currentYear, setCurrentYear] = useState(todayYear);
+  const [currentMonth, setCurrentMonth] = useState(todayMonth);
   const [selectedPopupId, setSelectedPopupId] = useState(null);
+  const [selectedDateKey, setSelectedDateKey] = useState(null);
 
   // 실제 API 데이터 조회
   const { data: popups = [], isLoading, error } = useQuery({
@@ -117,6 +123,14 @@ const SellerCalendarPage = () => {
       return prev + 1;
     });
   };
+
+  useEffect(() => {
+    if (currentYear === todayYear && currentMonth === todayMonth) {
+      setSelectedDateKey(buildDateKey(currentYear, currentMonth, todayDate));
+    } else {
+      setSelectedDateKey(null);
+    }
+  }, [currentYear, currentMonth, todayYear, todayMonth, todayDate]);
 
   // 특정 날짜에 해당하는 팝업 찾기
   const getPopupsForDate = (day) => {

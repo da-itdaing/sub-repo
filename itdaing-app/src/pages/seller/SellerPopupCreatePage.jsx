@@ -12,6 +12,7 @@ import { Map, Polygon, MapMarker, CustomOverlayMap } from 'react-kakao-maps-sdk'
 
 // 광주 중심 좌표
 const GWANGJU_CENTER = { lat: 35.1595, lng: 126.8526 };
+const getTodayDateString = () => new Date().toISOString().split('T')[0];
 
 const SellerPopupCreatePage = () => {
   const navigate = useNavigate();
@@ -20,11 +21,11 @@ const SellerPopupCreatePage = () => {
   const { categories, features, styles } = useMasterData();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     title: '',
     zoneCellId: null, // 셀 ID (필수)
-    startDate: '',
-    endDate: '',
+    startDate: getTodayDateString(),
+    endDate: getTodayDateString(),
     openingHours: '',
     categoryId: '',
     styleIds: [],
@@ -35,7 +36,7 @@ const SellerPopupCreatePage = () => {
     images: [],
     homepageUrl: '',
     snsUrl: '',
-  });
+  }));
 
   // 존/셀 선택 상태
   const [selectedArea, setSelectedArea] = useState(null);
@@ -83,6 +84,31 @@ const SellerPopupCreatePage = () => {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
+
+    if (name === 'startDate') {
+      setFormData((prev) => ({
+        ...prev,
+        startDate: value,
+        endDate: prev.endDate && prev.endDate < value ? value : prev.endDate,
+      }));
+      return;
+    }
+
+    if (name === 'endDate') {
+      setFormData((prev) => {
+        if (value < prev.startDate) {
+          addToast({
+            title: '종료일을 확인해주세요.',
+            description: '종료일은 시작일 이후 날짜여야 합니다.',
+            variant: 'error',
+          });
+          return prev;
+        }
+        return { ...prev, endDate: value };
+      });
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -214,7 +240,7 @@ const SellerPopupCreatePage = () => {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
-        <p className="text-xs uppercase tracking-wide text-gray-400">새 팝업 등록</p>
+        {/* <p className="text-xs uppercase tracking-wide text-gray-400">새 팝업 등록</p> */}
         <h2 className="mt-2 text-2xl font-semibold text-gray-900">팝업 정보를 입력해주세요</h2>
         <p className="text-sm text-gray-500">승인까지 평균 2일이 소요됩니다.</p>
       </section>
@@ -225,7 +251,10 @@ const SellerPopupCreatePage = () => {
       >
         {/* 1. 팝업명 */}
         <div>
-          <label className="text-xs font-semibold text-gray-500">팝업명 *</label>
+          <label className="text-xs font-semibold text-gray-500">
+            팝업명
+            <span className="text-[#EB0000] ml-[3px]">*</span> 
+          </label>
           <input
             type="text"
             name="title"
@@ -239,7 +268,10 @@ const SellerPopupCreatePage = () => {
 
         {/* 2. 존/셀 선택 (지도) */}
         <div>
-          <label className="text-xs font-semibold text-gray-500">부스 위치 선택 *</label>
+          <label className="text-xs font-semibold text-gray-500">
+            부스 위치 선택 
+            <span className="text-[#EB0000] ml-[3px]">*</span>
+          </label>
           <p className="text-xs text-gray-400 mt-1">
             행사가 열리는 존을 선택하고, 해당 존 안에서 부스(셀) 위치를 선택해주세요.
           </p>
@@ -395,7 +427,10 @@ const SellerPopupCreatePage = () => {
 
         {/* 3. 팝업 기간 & 운영 시간 */}
         <div>
-          <label className="text-xs font-semibold text-gray-500">팝업기간 *</label>
+          <label className="text-xs font-semibold text-gray-500">
+            팝업기간
+            <span className="text-[#EB0000] ml-[3px]">*</span>
+          </label>
           <div className="mt-1 flex flex-wrap items-center gap-4">
             <div className="relative flex-1 min-w-[140px]">
               <Calendar className="absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -439,7 +474,10 @@ const SellerPopupCreatePage = () => {
 
         {/* 4. 팝업 카테고리 (단일) */}
         <div>
-          <label className="mb-3 block text-xs font-semibold text-gray-500">카테고리 (필수)</label>
+          <label className="mb-3 block text-xs font-semibold text-gray-500">카테고리
+            <span className="text-[#EB0000] ml-[3px]">*</span>
+            (최소 한개 선택)
+          </label>
           <div className="flex flex-wrap gap-2">
             {categories?.map((cat) => (
               <button
@@ -456,7 +494,11 @@ const SellerPopupCreatePage = () => {
 
         {/* 5. 스타일 (다중) */}
         <div>
-          <label className="mb-3 block text-xs font-semibold text-gray-500">분위기/스타일 (다중 선택)</label>
+          <label className="mb-3 block text-xs font-semibold text-gray-500">
+            분위기/스타일
+            <span className="text-[#EB0000] ml-[3px]">*</span> 
+            <span className="text-[#8d8d8d] ml-[3px]">(최소 1개 - 최대 3개 선택)</span>
+          </label>
           <div className="flex flex-wrap gap-2">
             {styles?.map((style) => (
               <button
@@ -473,7 +515,11 @@ const SellerPopupCreatePage = () => {
 
         {/* 6. 편의/특징 (다중) */}
         <div>
-          <label className="mb-3 block text-xs font-semibold text-gray-500">편의/특징</label>
+          <label className="mb-3 block text-xs font-semibold text-gray-500">
+            편의/특징
+            <span className="text-[#EB0000] ml-[3px]">*</span> 
+            <span className="text-[#8d8d8d] ml-[3px]">(최소 1개 - 최대 3개 선택)</span>
+          </label>
           <div className="flex flex-wrap gap-2">
             {features?.map((feat) => (
               <button
@@ -527,7 +573,10 @@ const SellerPopupCreatePage = () => {
 
         {/* 8. 팝업 소개 */}
         <div>
-          <label className="text-xs font-semibold text-gray-500">팝업소개 *</label>
+          <label className="text-xs font-semibold text-gray-500">
+            팝업소개
+            <span className="text-[#EB0000] ml-[3px]">*</span>
+          </label>
           <textarea
             name="description"
             value={formData.description}
@@ -544,7 +593,10 @@ const SellerPopupCreatePage = () => {
           <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400">첨부파일</h3>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <label className="text-xs font-semibold text-gray-500">썸네일 이미지 *</label>
+              <label className="text-xs font-semibold text-gray-500">
+                썸네일 이미지
+                <span className="text-[#EB0000] ml-[3px]">*</span>
+              </label>
               <div className="mt-2 flex items-center gap-3">
                 <div className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-500 truncate">
                   {formData.thumbnail ? formData.thumbnail.name : '파일을 선택하세요'}
