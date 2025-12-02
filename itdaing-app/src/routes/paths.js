@@ -35,6 +35,7 @@ export const ROUTES = {
     calendar: '/seller/calendar',
     reviews: '/seller/reviews',
     popupCreate: '/seller/popups/create',
+    popupDetail: (id) => `/seller/popups/${id}`,
     popupEdit: (id) => `/seller/popups/${id}/edit`,
     notices: '/seller/notices',
     noticeCreate: '/seller/notices/create',

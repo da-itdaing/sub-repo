@@ -51,7 +51,13 @@ const HomePage = () => {
     });
   }, [gwangjuRegions, popups]);
 
-  const heroItems = useMemo(() => normalizedPopups.slice(0, 7), [normalizedPopups]);
+  const heroItems = useMemo(() => {
+    const activePopups = normalizedPopups.filter(isPopupActive);
+    if (activePopups.length > 0) {
+      return activePopups.slice(0, 7);
+    }
+    return normalizedPopups.slice(0, 7);
+  }, [normalizedPopups]);
 
   const openingSoonPopups = useMemo(() => {
     const filtered = normalizedPopups.filter((popup) => popup.runtimeStatus === 'upcoming');

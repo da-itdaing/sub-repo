@@ -12,6 +12,8 @@ import { useLoginPrompt } from '@/hooks/useLoginPrompt';
 import { isPopupActive, normalizePopup } from '@/utils/popupUtils';
 import { useFavoriteStore } from '@/store/favoriteStore';
 
+const AUTO_SLIDE_DELAY = 2500;
+
 /**
  * HeroCarousel Component (반응형 최적화)
  * 중앙이 크고 양옆으로 갈수록 작아지는 디자인
@@ -79,7 +81,7 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
     if (!hasItems || isPaused) return;
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % normalizedItems.length);
-    }, 3500);
+    }, AUTO_SLIDE_DELAY);
     return () => clearInterval(timer);
   }, [isPaused, normalizedItems.length, hasItems]);
 
@@ -154,6 +156,61 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
   const centerCardWidth = isMobile ? 150 : 280;
   const centerCardHeight = isMobile ? 225 : 420;
   const containerHeight = isMobile ? 260 : 460;
+
+  if (isMobile) {
+    return (
+      <section className="w-full">
+        <div className="mx-auto rounded-2xl bg-linear-to-b from-[#fff6f2] via-white to-[#fff6f2] p-4">
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-3">
+            {normalizedItems.map((item) => {
+              const isFavorite = hydrated ? hasFavorite.has(item.id) : item.isFavorite ?? false;
+              return (
+                <div
+                  key={item.id}
+                  className="flex-none w-[190px] snap-center"
+                  onClick={() => onSelect?.(item.id)}
+                >
+                  <div className="relative h-[270px] rounded-2xl overflow-hidden shadow-lg">
+                    <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFavoriteToggle(e, item.id);
+                      }}
+                      className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full shadow"
+                      aria-label="관심 팝업"
+                      disabled={favoriteLoadingId === item.id}
+                    >
+                      <Heart
+                        className="w-4 h-4"
+                        fill={isFavorite ? '#eb0000' : 'none'}
+                        color={isFavorite ? '#eb0000' : '#414141'}
+                      />
+                    </button>
+                    <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1">
+                      <div className="inline-flex items-center bg-white/90 px-2 py-0.5 rounded-full text-[11px] font-semibold text-gray-900">
+                        #{item.rank.toString().padStart(2, '0')}
+                      </div>
+                      <h3 className="text-base font-bold text-white leading-tight truncate" title={item.title}>
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-white/85">{item.date}</p>
+                      <p className="flex items-center gap-1 text-xs text-white/80">
+                        <MapPin className="w-3 h-3" />
+                        <span className="line-clamp-1">{item.location}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -234,7 +291,7 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
                     opacity,
                   }}
                   transition={{ 
-                    duration: 0.55,
+                    duration: 0.45,
                     ease: [0.4, 0, 0.2, 1],
                   }}
                   className="absolute rounded-2xl overflow-hidden shadow-xl cursor-pointer"

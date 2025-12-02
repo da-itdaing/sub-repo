@@ -1,26 +1,92 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
-import { MapPin, Calendar, Clock, Map as MapIcon, ChevronDown } from 'lucide-react';
+import { MapPin, Calendar, Clock, Map as MapIcon, ChevronDown, Trash2, X } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { createPopup } from '@/services/sellerService';
+import { createPopup, updatePopup, deletePopup } from '@/services/sellerService';
 import { uploadImage } from '@/services/uploadService';
 import { useToast } from '@/hooks/useToast';
 import { useMasterData } from '@/hooks/useMasterData';
 import { listAreas, listCells, parseGeoJsonPolygon } from '@/services/geoZoneService';
 import { Map, Polygon, MapMarker, CustomOverlayMap } from 'react-kakao-maps-sdk';
+import { getPopupById } from '@/services/popupService';
 
 // 광주 중심 좌표
 const GWANGJU_CENTER = { lat: 35.1595, lng: 126.8526 };
 const getTodayDateString = () => new Date().toISOString().split('T')[0];
 
-const SellerPopupCreatePage = () => {
+const normalizeImage = (image) => {
+  if (!image) return null;
+  if (typeof image === 'string') {
+    return { url: image, key: image };
+  }
+  if (image.url) {
+    return {
+      url: image.url,
+      key: image.key || image.url,
+    };
+  }
+  if (image.thumbnailUrl) {
+    return {
+      url: image.thumbnailUrl,
+      key: image.key || image.thumbnailUrl,
+    };
+  }
+  return null;
+};
+
+const normalizeImageList = (list = []) => {
+  if (!Array.isArray(list)) return [];
+  return list
+    .map((item, idx) => {
+      if (typeof item === 'string') {
+        return { url: item, key: `${item}-${idx}` };
+      }
+      if (item?.url) {
+        return { url: item.url, key: item.key || item.url || `${idx}` };
+      }
+      if (item?.thumbnailUrl) {
+        return { url: item.thumbnailUrl, key: item.key || item.thumbnailUrl || `${idx}` };
+      }
+      return null;
+    })
+    .filter(Boolean);
+};
+
+const toDateValue = (value) => {
+  if (!value) return getTodayDateString();
+  if (value.includes('T')) {
+    return value.split('T')[0];
+  }
+  return value;
+};
+
+const SellerPopupFormPage = ({
+  mode,
+  popupIdOverride = null,
+  onSuccessOverride = null,
+  hideActionButtons = false,
+  formRef = null,
+  onSubmitStateChange = null,
+}) => {
   const navigate = useNavigate();
+  const params = useParams();
+  const routePopupId = params.popupId;
+  const popupId = popupIdOverride ?? routePopupId;
+  const isEditMode = mode === 'edit';
+  const activePopupId = isEditMode ? popupId : null;
   const { addToast } = useToast();
   const queryClient = useQueryClient();
   const { categories, features, styles } = useMasterData();
+  const isLocationLocked = isEditMode;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const updateSubmittingState = (value) => {
+    setIsSubmitting(value);
+    if (typeof onSubmitStateChange === 'function') {
+      onSubmitStateChange(value);
+    }
+  };
   const [formData, setFormData] = useState(() => ({
     title: '',
     zoneCellId: null, // 셀 ID (필수)
@@ -37,6 +103,10 @@ const SellerPopupCreatePage = () => {
     homepageUrl: '',
     snsUrl: '',
   }));
+  const [existingThumbnail, setExistingThumbnail] = useState(null);
+  const [existingImages, setExistingImages] = useState([]);
+  const [pendingCellId, setPendingCellId] = useState(null);
+  const [prefillDone, setPrefillDone] = useState(false);
 
   // 존/셀 선택 상태
   const [selectedArea, setSelectedArea] = useState(null);
@@ -60,6 +130,13 @@ const SellerPopupCreatePage = () => {
   });
   const cells = cellsData?.items || [];
 
+  // 편집 모드일 때 팝업 상세 조회
+  const { data: popupDetail, isLoading: isLoadingPopup } = useQuery({
+    queryKey: ['sellerPopupDetail', activePopupId],
+    queryFn: () => getPopupById(activePopupId),
+    enabled: isEditMode && Boolean(activePopupId),
+  });
+
   // 셀 선택 시 formData 업데이트
   useEffect(() => {
     if (selectedCell) {
@@ -67,20 +144,119 @@ const SellerPopupCreatePage = () => {
     }
   }, [selectedCell]);
 
-  const createPopupMutation = useMutation({
-    mutationFn: createPopup,
+  const popupMutation = useMutation({
+    mutationFn: (payload) =>
+      isEditMode ? updatePopup(Number(activePopupId), payload) : createPopup(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myPopups'] });
       queryClient.invalidateQueries({ queryKey: ['sellerDashboard'] });
-      addToast({ title: '팝업이 성공적으로 등록되었습니다.', description: '관리자 승인 후 게시됩니다.' });
+      addToast({
+        title: isEditMode ? '팝업이 수정되었습니다.' : '팝업이 성공적으로 등록되었습니다.',
+        description: isEditMode ? '관리자 검수를 거쳐 반영됩니다.' : '관리자 승인 후 게시됩니다.',
+      });
+      if (typeof onSuccessOverride === 'function') {
+        onSuccessOverride();
+      } else {
+        navigate(ROUTES.seller.popups);
+      }
+    },
+    onError: (error) => {
+      console.error(error);
+      addToast({
+        title: isEditMode ? '수정에 실패했습니다.' : '등록 실패',
+        description: error.message,
+        variant: 'error',
+      });
+    },
+    onSettled: () => {
+      updateSubmittingState(false);
+    },
+  });
+
+  const deletePopupMutation = useMutation({
+    mutationFn: () => deletePopup(Number(activePopupId)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myPopups'] });
+      queryClient.invalidateQueries({ queryKey: ['sellerDashboard'] });
+      addToast({ title: '팝업이 삭제되었습니다.' });
       navigate(ROUTES.seller.popups);
     },
     onError: (error) => {
       console.error(error);
-      addToast({ title: '등록 실패', description: error.message, variant: 'error' });
-      setIsSubmitting(false);
+      addToast({ title: '삭제 실패', description: error.message, variant: 'error' });
     },
   });
+
+  // 편집 모드 초기 데이터 세팅
+  useEffect(() => {
+    if (!isEditMode || !popupDetail || prefillDone) return;
+
+    const styleIds = (() => {
+      if (Array.isArray(popupDetail.styleIds) && popupDetail.styleIds.length > 0) {
+        return popupDetail.styleIds;
+      }
+      if (!Array.isArray(popupDetail.styleTags) || !styles) return [];
+      return popupDetail.styleTags
+        .map((tag) => styles.find((style) => style.name === tag)?.id)
+        .filter(Boolean);
+    })();
+
+    setFormData((prev) => ({
+      ...prev,
+      title: popupDetail.title || '',
+      description: popupDetail.description || '',
+      startDate: toDateValue(popupDetail.startDate),
+      endDate: toDateValue(popupDetail.endDate || popupDetail.startDate),
+      openingHours: popupDetail.operatingTime || popupDetail.hours || '',
+      categoryId: popupDetail.categoryIds?.[0] ? String(popupDetail.categoryIds[0]) : '',
+      styleIds,
+      featureIds: popupDetail.featureIds || [],
+      hashtags: Array.isArray(popupDetail.hashtags)
+        ? popupDetail.hashtags.join(' ')
+        : popupDetail.hashtags || '',
+      homepageUrl: popupDetail.homepageUrl || '',
+      snsUrl: popupDetail.snsUrl || '',
+      zoneCellId: popupDetail.cellId || prev.zoneCellId,
+    }));
+
+    const thumbnail = normalizeImage(
+      popupDetail.thumbnailImage || popupDetail.thumbnail || popupDetail.thumbnailImageUrl,
+    );
+    if (thumbnail) {
+      setExistingThumbnail(thumbnail);
+    }
+
+    setExistingImages(
+      normalizeImageList(popupDetail.gallery || popupDetail.images || popupDetail.imageUrls || []),
+    );
+
+    if (popupDetail.cellId) {
+      setPendingCellId(popupDetail.cellId);
+    }
+
+    setPrefillDone(true);
+  }, [isEditMode, popupDetail, styles, prefillDone]);
+
+  // 편집 모드: 존 자동 선택
+  useEffect(() => {
+    if (!isEditMode || !popupDetail || !areas.length) return;
+    const areaId = popupDetail.zoneId || popupDetail.areaId;
+    if (!areaId) return;
+    const area = areas.find((item) => item.id === areaId);
+    if (area) {
+      setSelectedArea(area);
+    }
+  }, [areas, isEditMode, popupDetail]);
+
+  // 편집 모드: 셀 자동 선택
+  useEffect(() => {
+    if (!pendingCellId || !cells.length) return;
+    const cell = cells.find((item) => item.id === pendingCellId);
+    if (cell) {
+      setSelectedCell(cell);
+      setPendingCellId(null);
+    }
+  }, [cells, pendingCellId]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -115,11 +291,21 @@ const SellerPopupCreatePage = () => {
   const handleFileChange = (event) => {
     const { name, files } = event.target;
     if (name === 'thumbnail' && files.length > 0) {
+      setExistingThumbnail(null);
       setFormData((prev) => ({ ...prev, thumbnail: files[0] }));
     }
     if (name === 'images') {
       setFormData((prev) => ({ ...prev, images: Array.from(files) }));
     }
+  };
+
+  const handleRemoveExistingImage = (imageKey) => {
+    setExistingImages((prev) => prev.filter((image) => image.key !== imageKey));
+  };
+
+  const handleRemoveThumbnail = () => {
+    setExistingThumbnail(null);
+    setFormData((prev) => ({ ...prev, thumbnail: null }));
   };
 
   const toggleCategory = (id) => {
@@ -143,6 +329,7 @@ const SellerPopupCreatePage = () => {
 
   // 존 선택
   const handleSelectArea = (area) => {
+    if (isLocationLocked) return;
     setSelectedArea(area);
     setSelectedCell(null);
     setFormData((prev) => ({ ...prev, zoneCellId: null }));
@@ -150,6 +337,7 @@ const SellerPopupCreatePage = () => {
 
   // 셀 선택
   const handleSelectCell = (cell) => {
+    if (isLocationLocked) return;
     setSelectedCell(cell);
   };
 
@@ -180,11 +368,10 @@ const SellerPopupCreatePage = () => {
       return;
     }
 
-    setIsSubmitting(true);
+    updateSubmittingState(true);
 
     try {
-      // 1. 이미지 업로드
-      let thumbnailImage = null;
+      let thumbnailImage = existingThumbnail || null;
       if (formData.thumbnail) {
         const uploadRes = await uploadImage(formData.thumbnail);
         thumbnailImage = {
@@ -193,18 +380,27 @@ const SellerPopupCreatePage = () => {
         };
       }
 
-      const images = [];
+      const uploadedImages = [];
       if (formData.images.length > 0) {
         for (const file of formData.images) {
           const uploadRes = await uploadImage(file);
-          images.push({
+          uploadedImages.push({
             url: uploadRes.url,
             key: uploadRes.key,
           });
         }
       }
 
-      // 2. API 요청 데이터 구성 (PopupCreateRequest)
+      if (!thumbnailImage) {
+        addToast({
+          title: '썸네일 이미지를 선택해주세요.',
+          description: '최소 1개의 썸네일 이미지를 등록해야 합니다.',
+          variant: 'error',
+        });
+        updateSubmittingState(false);
+        return;
+      }
+
       const requestData = {
         title: formData.title,
         description: formData.description,
@@ -217,16 +413,22 @@ const SellerPopupCreatePage = () => {
         styleIds: formData.styleIds,
         featureIds: formData.featureIds,
         thumbnailImage,
-        images,
+        images: [...existingImages, ...uploadedImages],
       };
 
-      createPopupMutation.mutate(requestData);
-
+      popupMutation.mutate(requestData);
     } catch (error) {
       console.error('Upload failed:', error);
       addToast({ title: '이미지 업로드 실패', description: '다시 시도해주세요.', variant: 'error' });
-      setIsSubmitting(false);
+      updateSubmittingState(false);
     }
+  };
+
+  const handleDelete = () => {
+    if (!isEditMode || !activePopupId || deletePopupMutation.isPending) return;
+    const confirmed = window.confirm('선택한 팝업을 삭제할까요? 삭제된 팝업은 복구할 수 없습니다.');
+    if (!confirmed) return;
+    deletePopupMutation.mutate();
   };
 
   // 공통 버튼 스타일
@@ -237,15 +439,56 @@ const SellerPopupCreatePage = () => {
         : 'bg-white text-[oklch(0.373_0.034_259.733)] border-[oklch(0.373_0.034_259.733)]'
     }`;
 
+  if (isEditMode && !activePopupId) {
+    return (
+      <div className="p-12 text-center text-red-500">
+        유효하지 않은 접근입니다. 다시 시도해주세요.
+      </div>
+    );
+  }
+
+  if (isEditMode && isLoadingPopup) {
+    return (
+      <div className="p-12 text-center text-gray-500">
+        등록된 팝업 정보를 불러오는 중입니다...
+      </div>
+    );
+  }
+
+  if (isEditMode && !popupDetail && !isLoadingPopup) {
+    return (
+      <div className="p-12 text-center text-red-500">
+        해당 팝업 정보를 찾을 수 없습니다.
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
-        {/* <p className="text-xs uppercase tracking-wide text-gray-400">새 팝업 등록</p> */}
-        <h2 className="mt-2 text-2xl font-semibold text-gray-900">팝업 정보를 입력해주세요</h2>
-        <p className="text-sm text-gray-500">승인까지 평균 2일이 소요됩니다.</p>
+        <h2 className="mt-2 text-2xl font-semibold text-gray-900">
+          {isEditMode ? '등록한 팝업을 확인하고 수정하세요' : '팝업 정보를 입력해주세요'}
+        </h2>
+        <p className="text-sm text-gray-500">
+          {isEditMode ? '입력값을 수정하거나 필요시 팝업을 삭제할 수 있습니다.' : '승인까지 평균 2일이 소요됩니다.'}
+        </p>
+
+        {isEditMode && popupDetail && (
+          <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-500">
+            <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 font-semibold text-gray-700">
+              승인 상태 · {popupDetail.status || 'PENDING'}
+            </span>
+            {popupDetail.startDate && popupDetail.endDate && (
+              <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 font-semibold text-gray-700">
+                {toDateValue(popupDetail.startDate)} ~ {toDateValue(popupDetail.endDate)}
+              </span>
+            )}
+          </div>
+        )}
       </section>
 
       <form
+        ref={formRef || null}
         onSubmit={handleSubmit}
         className="space-y-6 rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60"
       >
@@ -273,7 +516,9 @@ const SellerPopupCreatePage = () => {
             <span className="text-[#EB0000] ml-[3px]">*</span>
           </label>
           <p className="text-xs text-gray-400 mt-1">
-            행사가 열리는 존을 선택하고, 해당 존 안에서 부스(셀) 위치를 선택해주세요.
+            {isLocationLocked
+              ? '등록된 부스 위치는 수정할 수 없습니다.'
+              : '행사가 열리는 존을 선택하고, 해당 존 안에서 부스(셀) 위치를 선택해주세요.'}
           </p>
           
           {/* 존 선택 드롭다운 */}
@@ -287,7 +532,8 @@ const SellerPopupCreatePage = () => {
                     const area = areas.find((a) => a.id === Number(e.target.value));
                     handleSelectArea(area);
                   }}
-                  className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2 pr-8 text-sm focus:border-[#EB0000] focus:outline-none focus:ring-1 focus:ring-[#EB0000]"
+                  disabled={isLocationLocked}
+                  className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2 pr-8 text-sm focus:border-[#EB0000] focus:outline-none focus:ring-1 focus:ring-[#EB0000] disabled:bg-gray-100 disabled:text-gray-400"
                 >
                   <option value="">존을 선택하세요</option>
                   {areas.map((area) => (
@@ -309,11 +555,17 @@ const SellerPopupCreatePage = () => {
                     const cell = cells.find((c) => c.id === Number(e.target.value));
                     handleSelectCell(cell);
                   }}
-                  disabled={!selectedArea}
+                  disabled={!selectedArea || isLocationLocked}
                   className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2 pr-8 text-sm focus:border-[#EB0000] focus:outline-none focus:ring-1 focus:ring-[#EB0000] disabled:bg-gray-100 disabled:text-gray-400"
                 >
                   <option value="">
-                    {isLoadingCells ? '로딩 중...' : selectedArea ? '셀을 선택하세요' : '먼저 존을 선택하세요'}
+                    {isLoadingCells
+                      ? '로딩 중...'
+                      : selectedArea
+                        ? isLocationLocked
+                          ? '셀을 수정할 수 없습니다'
+                          : '셀을 선택하세요'
+                        : '먼저 존을 선택하세요'}
                   </option>
                   {cells.map((cell) => (
                     <option key={cell.id} value={cell.id}>
@@ -340,11 +592,15 @@ const SellerPopupCreatePage = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowMap(!showMap)}
-                  className="flex items-center gap-1 text-xs text-[#EB0000] hover:underline"
+                  onClick={() => {
+                    if (isLocationLocked) return;
+                    setShowMap(!showMap);
+                  }}
+                  disabled={isLocationLocked}
+                  className="flex items-center gap-1 text-xs text-[#EB0000] hover:underline disabled:text-gray-400 disabled:hover:no-underline"
                 >
                   <MapIcon className="h-4 w-4" />
-                  {showMap ? '지도 숨기기' : '지도 보기'}
+                  {showMap ? '지도 숨기기' : isLocationLocked ? '위치 수정 불가' : '지도 보기'}
                 </button>
               </div>
             </div>
@@ -599,7 +855,7 @@ const SellerPopupCreatePage = () => {
               </label>
               <div className="mt-2 flex items-center gap-3">
                 <div className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-500 truncate">
-                  {formData.thumbnail ? formData.thumbnail.name : '파일을 선택하세요'}
+                  {formData.thumbnail ? formData.thumbnail.name : existingThumbnail ? '현재 이미지를 유지합니다.' : '파일을 선택하세요'}
                 </div>
                 <label className="cursor-pointer rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-600">
                   첨부
@@ -609,10 +865,28 @@ const SellerPopupCreatePage = () => {
                     accept="image/*"
                     onChange={handleFileChange}
                     className="hidden"
-                    required
+                    required={!isEditMode}
                   />
                 </label>
               </div>
+
+              {existingThumbnail && (
+                <div className="mt-3 flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                  <img
+                    src={existingThumbnail.url}
+                    alt="현재 썸네일"
+                    className="h-16 w-16 rounded-lg object-cover"
+                  />
+                  <div className="flex-1 text-xs text-gray-500">현재 등록된 썸네일입니다.</div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveThumbnail}
+                    className="rounded-full bg-white p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
             </div>
             <div>
               <label className="text-xs font-semibold text-gray-500">추가 이미지</label>
@@ -620,7 +894,9 @@ const SellerPopupCreatePage = () => {
                 <div className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-500 truncate">
                   {formData.images.length > 0
                     ? `${formData.images.length}개 파일 선택됨`
-                    : '파일을 선택하세요'}
+                    : existingImages.length > 0
+                      ? '현재 이미지를 유지합니다.'
+                      : '파일을 선택하세요'}
                 </div>
                 <label className="cursor-pointer rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-600">
                   첨부
@@ -634,22 +910,75 @@ const SellerPopupCreatePage = () => {
                   />
                 </label>
               </div>
+
+              {existingImages.length > 0 && (
+                <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
+                  {existingImages.map((image) => (
+                    <div key={image.key} className="relative overflow-hidden rounded-xl border">
+                      <img src={image.url} alt="등록된 이미지" className="h-28 w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExistingImage(image.key)}
+                        className="absolute right-2 top-2 rounded-full bg-white/80 p-1 text-gray-500 hover:bg-white"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end pt-6">
-          <button
-            type="submit"
-            disabled={isSubmitting || !formData.zoneCellId}
-            className="w-full rounded-lg bg-[#EB0000] py-3 text-base font-bold text-white shadow-md hover:bg-[#c90000] md:w-auto md:px-12 disabled:opacity-70"
-          >
-            {isSubmitting ? '등록 중...' : '작성'}
-          </button>
-        </div>
+        {!hideActionButtons && (
+          <div className="flex flex-col gap-3 pt-6 md:flex-row md:justify-end">
+            <Link
+              to={ROUTES.seller.popups}
+              className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              목록으로
+            </Link>
+
+            {isEditMode && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deletePopupMutation.isPending}
+                className="inline-flex items-center justify-center rounded-xl border border-red-200 px-6 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {deletePopupMutation.isPending ? '삭제 중...' : '팝업 삭제'}
+              </button>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting || popupMutation.isPending || !formData.zoneCellId}
+              className="inline-flex items-center justify-center rounded-xl bg-[#EB0000] px-8 py-3 text-base font-bold text-white shadow-md hover:bg-[#c90000] disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {popupMutation.isPending || isSubmitting
+                ? isEditMode
+                  ? '수정 중...'
+                  : '등록 중...'
+                : isEditMode
+                  ? '수정하기'
+                  : '등록하기'}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );
 };
 
+const SellerPopupCreatePage = () => {
+  return <SellerPopupFormPage mode="create" />;
+};
+
+const SellerPopupEditPage = () => {
+  return <SellerPopupFormPage mode="edit" />;
+};
+
 export default SellerPopupCreatePage;
+export { SellerPopupEditPage, SellerPopupFormPage };

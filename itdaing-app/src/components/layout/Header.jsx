@@ -94,7 +94,7 @@ const Header = ({ hideSearchBar = false }) => {
               {!isAuthenticated && (
                 <button
                   onClick={handleLoginClick}
-                  className="px-2.5 md:px-5 py-1 md:py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-semibold text-xs md:text-base whitespace-nowrap"
+                  className="px-2.5 md:px-5 py-1 md:py-1.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-semibold text-xs md:text-base whitespace-nowrap"
                 >
                   로그인
                 </button>

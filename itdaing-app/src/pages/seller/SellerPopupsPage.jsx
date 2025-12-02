@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
-import { useQuery } from '@tanstack/react-query';
-import { getMyPopups } from '@/services/sellerService';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getMyPopups, deletePopup } from '@/services/sellerService';
 import {
   PlusCircle,
   Search,
@@ -11,6 +11,7 @@ import {
   FileText,
   X,
 } from 'lucide-react';
+import { useToast } from '@/hooks/useToast';
 
 /* ----------------------- CONSTANTS & FORMATTERS ----------------------- */
 
@@ -48,6 +49,9 @@ const getOperationStatus = (start, end) => {
 };
 
 const SellerPopupsPage = () => {
+  const navigate = useNavigate();
+  const { addToast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [approvalFilter, setApprovalFilter] = useState('ALL');
@@ -58,12 +62,32 @@ const SellerPopupsPage = () => {
 
   // Modal state
   const [selectedRejection, setSelectedRejection] = useState(null);
+  const [selectedPopupIds, setSelectedPopupIds] = useState([]);
 
   // Fetch Data
   const { data: popups = [], isLoading, error } = useQuery({
     queryKey: ['myPopups'],
     queryFn: getMyPopups,
     staleTime: 1000 * 60, // 1분
+  });
+
+  const deletePopupMutation = useMutation({
+    mutationFn: async (popupIds) => {
+      // 개별 삭제 API를 병렬 호출하여 반응 속도 확보
+      await Promise.all(popupIds.map((popupId) => deletePopup(popupId)));
+    },
+    onSuccess: () => {
+      addToast({ title: '선택한 팝업이 삭제되었습니다.', variant: 'success' });
+      setSelectedPopupIds([]);
+      queryClient.invalidateQueries({ queryKey: ['myPopups'] });
+    },
+    onError: (mutationError) => {
+      addToast({
+        title: '삭제에 실패했습니다.',
+        description: mutationError?.message || '잠시 후 다시 시도해주세요.',
+        variant: 'error',
+      });
+    },
   });
 
   // Filtering
@@ -94,11 +118,50 @@ const SellerPopupsPage = () => {
   const totalPages = Math.ceil(filteredPopups.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentItems = filteredPopups.slice(startIndex, startIndex + itemsPerPage);
+  const currentPagePopupIds = currentItems.map((popup) => popup.id);
+  const isAllCurrentSelected =
+    currentPagePopupIds.length > 0 &&
+    currentPagePopupIds.every((popupId) => selectedPopupIds.includes(popupId));
+  const selectedCount = selectedPopupIds.length;
+  const isDeleteDisabled = selectedCount === 0 || deletePopupMutation.isPending;
+
+  const handleRowClick = (popupId) => {
+    if (!popupId) return;
+    navigate(ROUTES.seller.popupDetail(popupId));
+  };
+
+  const handleSelectPopup = (popupId) => {
+    setSelectedPopupIds((prev) =>
+      prev.includes(popupId) ? prev.filter((id) => id !== popupId) : [...prev, popupId]
+    );
+  };
+
+  const handleSelectAllInPage = () => {
+    setSelectedPopupIds((prev) => {
+      const isAllSelected = currentPagePopupIds.every((id) => prev.includes(id));
+      if (isAllSelected) {
+        return prev.filter((id) => !currentPagePopupIds.includes(id));
+      }
+      return Array.from(new Set([...prev, ...currentPagePopupIds]));
+    });
+  };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
     }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedCount === 0) {
+      addToast({ title: '삭제할 팝업을 선택해주세요.', variant: 'error' });
+      return;
+    }
+
+    const confirmed = window.confirm('선택한 팝업을 삭제할까요? 삭제된 팝업은 복구할 수 없습니다.');
+    if (!confirmed) return;
+
+    deletePopupMutation.mutate([...selectedPopupIds]);
   };
 
   if (isLoading) {
@@ -199,7 +262,17 @@ const SellerPopupsPage = () => {
           <table className="w-full min-w-[1000px] border-collapse">
             <thead className="bg-[#333] text-white text-sm">
               <tr>
-                <th className="py-3 px-4 font-medium text-center rounded-tl-xl w-[100px]">이미지</th>
+                <th className="py-3 px-4 font-medium text-center rounded-tl-xl w-[64px]">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-[#EB0000]"
+                    checked={isAllCurrentSelected}
+                    onChange={handleSelectAllInPage}
+                    aria-label="현재 페이지 전체 선택"
+                    disabled={currentItems.length === 0}
+                  />
+                </th>
+                <th className="py-3 px-4 font-medium text-center w-[100px]">이미지</th>
                 <th className="py-3 px-4 font-medium text-center">팝업명</th>
                 <th className="py-3 px-4 font-medium text-center w-[120px]">운영 상태</th>
                 <th className="py-3 px-4 font-medium text-center w-[120px]">등록 일시</th>
@@ -214,9 +287,24 @@ const SellerPopupsPage = () => {
                   const opKey = getOperationStatus(popup.startDate, popup.endDate);
                   const opStatus = OPERATION_STATUS[opKey] || OPERATION_STATUS['UNKNOWN'];
                   const appStatus = APPROVAL_STATUS[popup.status] || APPROVAL_STATUS['PENDING'];
+                  const isChecked = selectedPopupIds.includes(popup.id);
                   
                   return (
-                    <tr key={popup.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={popup.id}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => handleRowClick(popup.id)}
+                    >
+                      <td className="py-4 px-4 text-center">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 accent-[#EB0000]"
+                          checked={isChecked}
+                          onChange={() => handleSelectPopup(popup.id)}
+                          onClick={(event) => event.stopPropagation()}
+                          aria-label={`${popup.title} 선택`}
+                        />
+                      </td>
                       {/* Image - thumbnail이 객체({url, key}) 또는 문자열일 수 있음 */}
                       <td className="py-4 px-4 text-center">
                         <div className="relative aspect-square w-14 mx-auto overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
@@ -273,7 +361,10 @@ const SellerPopupsPage = () => {
                       <td className="py-4 px-4 text-center flex justify-center items-center h-[88px]">
                         {popup.status === 'REJECTED' && popup.rejectionReason ? (
                           <button
-                            onClick={() => setSelectedRejection(popup.rejectionReason)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setSelectedRejection(popup.rejectionReason);
+                            }}
                             className="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
                             aria-label="반려 사유 확인"
                           >
@@ -288,13 +379,28 @@ const SellerPopupsPage = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="7" className="py-12 text-center text-gray-500">
+                  <td colSpan="8" className="py-12 text-center text-gray-500">
                     검색 결과가 없습니다.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Bulk Actions */}
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-gray-500">
+            선택된 팝업 <span className="font-semibold text-gray-900">{selectedCount}</span>개
+          </p>
+          <button
+            type="button"
+            onClick={handleDeleteSelected}
+            disabled={isDeleteDisabled}
+            className="inline-flex items-center justify-center rounded-2xl bg-[#EB0000] px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#c90000] disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
+          >
+            {deletePopupMutation.isPending ? '삭제 중...' : '팝업 삭제'}
+          </button>
         </div>
 
         {/* Pagination */}

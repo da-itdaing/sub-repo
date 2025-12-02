@@ -324,7 +324,7 @@ const SellerProfilePage = () => {
           <button
             type="submit"
             disabled={updateProfileMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary/90 disabled:opacity-70"
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-70"
           >
             {/* <Save className="h-4 w-4" /> */}
             {updateProfileMutation.isPending ? '저장 중...' : '저장하기'}

@@ -206,6 +206,11 @@ const SellerDashboardPage = () => {
   // Reset page on filter change
   useMemo(() => setPage(1), [filterOpStatus, filterAppStatus]);
 
+  const handleRowClick = (popupId) => {
+    if (!popupId) return;
+    navigate(ROUTES.seller.popupDetail(popupId));
+  };
+
   if (isLoading) return <div className="p-8 text-center">로딩 중...</div>;
 
   return (
@@ -302,7 +307,11 @@ const SellerDashboardPage = () => {
                   const appStatus = APPROVAL_STATUS[p.status] || APPROVAL_STATUS.DRAFT;
 
                   return (
-                    <tr key={p.id} className="hover:bg-gray-50">
+                    <tr
+                      key={p.id}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => handleRowClick(p.id)}
+                    >
                       <td className="py-4 px-4 text-center font-medium text-gray-900 truncate max-w-[200px]">{p.title}</td>
                       <td className="py-4 px-4 text-center">
                         <span className={clsx(opStatus.color)}>{opStatus.label}</span>
@@ -318,7 +327,13 @@ const SellerDashboardPage = () => {
                       </td>
                       <td className="py-4 px-4 text-center flex justify-center">
                         {p.status === 'REJECTED' ? (
-                          <FileText className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer" />
+                          <button
+                            type="button"
+                            onClick={(event) => event.stopPropagation()}
+                            className="rounded-full p-1 text-gray-400 hover:text-gray-600"
+                          >
+                            <FileText className="w-5 h-5" />
+                          </button>
                         ) : (
                           <span className="text-gray-300">-</span>
                         )}

@@ -23,7 +23,8 @@ import SellerInfoPage from '@/pages/SellerInfoPage';
 import SellerDashboardPage from '@/pages/seller/SellerDashboardPage';
 import SellerPopupsPage from '@/pages/seller/SellerPopupsPage';
 import SellerProfilePage from '@/pages/seller/SellerProfilePage';
-import SellerPopupCreatePage from '@/pages/seller/SellerPopupCreatePage';
+import SellerPopupCreatePage, { SellerPopupEditPage } from '@/pages/seller/SellerPopupCreatePage';
+import SellerPopupDetailPage from '@/pages/seller/SellerPopupDetailPage';
 import SellerNoticesPage from '@/pages/seller/SellerNoticesPage';
 import SellerNoticeCreatePage from '@/pages/seller/SellerNoticeCreatePage';
 import SellerNoticeDetailPage from '@/pages/seller/SellerNoticeDetailPage';
@@ -45,6 +46,8 @@ const SELLER_ROUTE_SEGMENTS = {
   popups: 'popups',
   profile: 'profile',
   popupCreate: 'popups/create',
+  popupDetail: 'popups/:popupId',
+  popupEdit: 'popups/:popupId/edit',
   calendar: 'calendar',
   reviews: 'reviews',
   notices: 'notices',
@@ -173,6 +176,14 @@ const router = createBrowserRouter([
       {
         path: SELLER_ROUTE_SEGMENTS.popupCreate,
         element: <SellerPopupCreatePage />,
+      },
+      {
+        path: SELLER_ROUTE_SEGMENTS.popupDetail,
+        element: <SellerPopupDetailPage />,
+      },
+      {
+        path: SELLER_ROUTE_SEGMENTS.popupEdit,
+        element: <SellerPopupEditPage />,
       },
       {
         path: SELLER_ROUTE_SEGMENTS.notices,

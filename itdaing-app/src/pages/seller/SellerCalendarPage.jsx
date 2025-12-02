@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin, Clock, Eye, Heart, Store, TrendingUp } from 'lucide-react';
 import { getMyPopups } from '@/services/sellerService';
+import { ROUTES } from '@/routes/paths';
 
 /**
  * 팝업 상태에 따른 색상 반환
@@ -53,6 +55,7 @@ const getFirstDayOfMonth = (year, monthIndex) =>
 const buildDateKey = (year, monthIndex, day) => `${year}-${monthIndex}-${day}`;
 
 const SellerCalendarPage = () => {
+  const navigate = useNavigate();
   const today = new Date();
   const todayYear = today.getFullYear();
   const todayMonth = today.getMonth();
@@ -103,6 +106,11 @@ const SellerCalendarPage = () => {
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+
+  const handleNavigateDetail = (popupId) => {
+    if (!popupId) return;
+    navigate(ROUTES.seller.popupDetail(popupId));
+  };
 
   const handlePrevMonth = () => {
     setCurrentMonth((prev) => {
@@ -359,7 +367,15 @@ const SellerCalendarPage = () => {
               {/* 상단: 이미지 + 기본 정보 (가로 배치) */}
               <div className="flex gap-3">
                 {/* 썸네일 */}
-                <div className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-gray-100">
+                <div
+                  className="w-20 h-20 shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-gray-100 cursor-pointer transition hover:opacity-80"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleNavigateDetail(selectedPopup.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') handleNavigateDetail(selectedPopup.id);
+                  }}
+                >
                   {selectedPopup.thumbnail ? (
                     <img
                       src={typeof selectedPopup.thumbnail === 'string' ? selectedPopup.thumbnail : selectedPopup.thumbnail?.url}
@@ -367,7 +383,7 @@ const SellerCalendarPage = () => {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                    <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200">
                       <CalendarIcon className="h-6 w-6 text-gray-300" />
                     </div>
                   )}
@@ -380,7 +396,7 @@ const SellerCalendarPage = () => {
                       {selectedPopup.title}
                     </h3>
                     <span
-                      className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                      className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
                       style={{
                         backgroundColor: `${getPopupColor(selectedPopup.startDate, selectedPopup.endDate).bg}15`,
                         color: getPopupColor(selectedPopup.startDate, selectedPopup.endDate).text,
@@ -392,12 +408,12 @@ const SellerCalendarPage = () => {
 
                   <div className="space-y-1 text-[11px]">
                     <div className="flex items-center gap-1.5 text-gray-600">
-                      <CalendarIcon className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                      <CalendarIcon className="h-3 w-3 text-gray-400 shrink-0" />
                       <span className="truncate">{formatDateRange(selectedPopup.startDate, selectedPopup.endDate)}</span>
                     </div>
                     {selectedPopup.hours && (
                       <div className="flex items-center gap-1.5 text-gray-600">
-                        <Clock className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                        <Clock className="h-3 w-3 text-gray-400 shrink-0" />
                         <span className="truncate">{selectedPopup.hours}</span>
                       </div>
                     )}
@@ -409,7 +425,7 @@ const SellerCalendarPage = () => {
               {selectedPopup.address && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <div className="flex items-start gap-1.5 text-[11px] text-gray-600">
-                    <MapPin className="h-3 w-3 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <MapPin className="h-3 w-3 text-gray-400 mt-0.5 shrink-0" />
                     <span>{selectedPopup.address}</span>
                   </div>
                 </div>
@@ -456,7 +472,7 @@ const SellerCalendarPage = () => {
           </section> */}
 
           {/* 운영 팁 */}
-          {/* <section className="rounded-2xl border border-white/80 bg-gradient-to-br from-[#ff235b]/5 to-[#c4006b]/5 p-3 shadow-sm shadow-slate-200/60">
+          {/* <section className="rounded-2xl border border-white/80 bg-linear-to-br from-[#ff235b]/5 to-[#c4006b]/5 p-3 shadow-sm shadow-slate-200/60">
             <h4 className="text-[11px] font-semibold text-gray-900 mb-1">💡 운영 팁</h4>
             <p className="text-[10px] text-gray-600 leading-relaxed">
               팝업 운영 중 SNS에 현장 사진을 자주 업로드하면 방문객이 증가합니다.
@@ -491,7 +507,21 @@ const SellerCalendarPage = () => {
                 `}
               >
                 {/* 썸네일 */}
-                <div className="w-12 h-12 flex-shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-100">
+                <div
+                  className="w-12 h-12 shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-100 cursor-pointer transition hover:opacity-80"
+                  role="button"
+                  tabIndex={0}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleNavigateDetail(popup.id);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.stopPropagation();
+                      handleNavigateDetail(popup.id);
+                    }
+                  }}
+                >
                   {popup.thumbnail ? (
                     <img
                       src={typeof popup.thumbnail === 'string' ? popup.thumbnail : popup.thumbnail?.url}
@@ -499,7 +529,7 @@ const SellerCalendarPage = () => {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                    <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200">
                       <Store className="h-5 w-5 text-gray-300" />
                     </div>
                   )}
@@ -507,7 +537,7 @@ const SellerCalendarPage = () => {
 
                 {/* 상태 인디케이터 */}
                 <span
-                  className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                  className="h-2.5 w-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: color.bg }}
                 />
 
@@ -522,7 +552,7 @@ const SellerCalendarPage = () => {
                 </div>
 
                 {/* 통계 + 상태 */}
-                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                <div className="flex flex-col items-end gap-1 shrink-0">
                   <span
                     className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
                     style={{
