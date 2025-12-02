@@ -17,25 +17,25 @@ import { useAuthStore } from '@/store/authStore';
 const NAV_ITEMS = [
   {
     label: '대시보드',
-    description: '전체 서비스 현황',
+    // description: '전체 서비스 현황',
     path: ROUTES.admin.dashboard,
     icon: LayoutDashboard,
   },
   {
     label: '사용자관리',
-    description: '회원 / 권한 관리',
+    // description: '회원 / 권한 관리',
     path: ROUTES.admin.users,
     icon: Users,
   },
   {
     label: '검수관리',
-    description: '팝업 / 계정 검수',
+    // description: '팝업 / 계정 검수',
     path: ROUTES.admin.approvals,
     icon: ShieldCheck,
   },
   {
     label: '구역관리',
-    description: '존 / 지역 운영 설정',
+    // description: '존 / 지역 운영 설정',
     path: ROUTES.admin.zones,
     icon: Map,
   },
@@ -131,12 +131,12 @@ const AdminLayout = () => {
           AD
         </div>
 
-        {isSidebarExpanded && (
+        {/* {isSidebarExpanded && (
           <div>
             <p className="text-lg font-semibold tracking-tight text-white">Itdaing Admin</p>
             <p className="text-xs text-white/60">Admin Control Center</p>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* 메뉴 */}
@@ -174,9 +174,9 @@ const AdminLayout = () => {
           </svg>
         </button>
 
-        <div className="text-xs text-white/40">
+        {/* <div className="text-xs text-white/40">
           © {new Date().getFullYear()} Da-Itdaing · 내부 전용
-        </div>
+        </div> */}
       </div>
     </aside>
   );
@@ -239,19 +239,19 @@ const AdminLayout = () => {
 
             {/* 우측 */}
             <div className="flex items-center gap-3">
-              <button className="rounded-2xl border border-gray-200 p-2 text-gray-600 transition hover:border-gray-300">
+              {/* <button className="rounded-2xl border border-gray-200 p-2 text-gray-600 transition hover:border-gray-300">
                 <Bell className="h-5 w-5" />
-              </button>
+              </button> */}
 
-              <button className="flex items-center gap-2 rounded-2xl border border-gray-200 px-3 py-1.5">
+              <button className="flex items-center gap-2 rounded-2xl px-3 py-1.5">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-900 text-sm font-semibold text-white">
                   {initials}
                 </div>
                 <div className="hidden text-left text-sm leading-tight sm:block">
                   <p className="font-semibold text-gray-900">{displayName}</p>
-                  <p className="text-xs text-gray-500">관리자</p>
+                  {/* <p className="text-xs text-gray-500">관리자</p> */}
                 </div>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
+                {/* <ChevronDown className="h-4 w-4 text-gray-400" /> */}
               </button>
             </div>
           </div>

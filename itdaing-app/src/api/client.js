@@ -78,8 +78,11 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // 401 에러 처리: 공개 API와 보호 API를 구분하여 동작
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-      const url = typeof originalRequest.url === 'string' ? originalRequest.url : '';
+    const requestUrl = typeof originalRequest?.url === 'string' ? originalRequest.url : '';
+    const status = error.response?.status;
+
+    if (status === 401 && originalRequest && !originalRequest._retry) {
+      const url = requestUrl;
 
       // 공개 API 및 인증 관련 엔드포인트는 Refresh / 리다이렉션을 하지 않는다.
       const isPublicOrAuthPath = PUBLIC_OR_AUTH_PATHS.some((path) => url.startsWith(path));
@@ -131,14 +134,22 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // 에러 응답 처리
+    // 에러 응답 처리: 원본 응답 구조를 보존하여 컴포넌트에서 다양한 방식으로 접근 가능하게 함
     if (error.response?.data) {
       const { success, error: errorData } = error.response.data;
       if (!success && errorData) {
-        const customError = new Error(errorData.message || 'API 요청 실패');
+        // 백엔드가 내려준 메시지를 최우선으로 사용
+        const backendMessage = errorData.message;
+        
+        const customError = new Error(backendMessage || 'API 요청 실패');
         customError.code = errorData.code;
-        customError.status = errorData.status;
+        customError.status = errorData.status ?? status;
         customError.fieldErrors = errorData.fieldErrors;
+        customError.requestUrl = requestUrl;
+        customError.httpStatus = status;
+        // 원본 에러 응답 구조 보존 (extractErrorMessage에서 다양한 경로로 접근 가능)
+        customError.error = errorData;
+        customError.response = error.response;
         return Promise.reject(customError);
       }
     }

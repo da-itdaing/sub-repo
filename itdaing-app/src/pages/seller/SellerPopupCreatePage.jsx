@@ -61,6 +61,51 @@ const toDateValue = (value) => {
   return value;
 };
 
+/**
+ * 다양한 API 에러 응답 형태를 단일 메시지로 정규화
+ * 우선순위:
+ * 1) error.response.data.error.message (axios 기반 API)
+ * 2) error.response.data.message (axios 단순 구조)
+ * 3) error.error.message (fetch 기반 API - { success: false, error: { message } })
+ * 4) error.message (일반 Error 객체)
+ * 5) error가 문자열이면 그대로 사용
+ * 6) fallback 메시지
+ */
+const extractErrorMessage = (error) => {
+  // null/undefined 체크
+  if (!error) {
+    return '오류가 발생했습니다.';
+  }
+
+  // 문자열 타입이면 그대로 반환
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  // axios 기반 API 응답 (error.response.data.error.message)
+  if (error?.response?.data?.error?.message) {
+    return error.response.data.error.message;
+  }
+
+  // axios 기반 API 응답 (error.response.data.message)
+  if (error?.response?.data?.message) {
+    return error.response.data.message;
+  }
+
+  // fetch 기반 API 응답 ({ success: false, error: { message } })
+  if (error?.error?.message) {
+    return error.error.message;
+  }
+
+  // 일반 Error 객체
+  if (error?.message) {
+    return error.message;
+  }
+
+  // fallback
+  return '오류가 발생했습니다.';
+};
+
 const MIN_STYLE_SELECTION = 1;
 const MAX_STYLE_SELECTION = 3;
 const MIN_FEATURE_SELECTION = 1;
@@ -167,9 +212,10 @@ const SellerPopupFormPage = ({
     },
     onError: (error) => {
       console.error(error);
+      const message = extractErrorMessage(error);
       addToast({
         title: isEditMode ? '수정에 실패했습니다.' : '등록 실패',
-        description: error.message,
+        description: message,
         variant: 'error',
       });
     },
@@ -188,7 +234,8 @@ const SellerPopupFormPage = ({
     },
     onError: (error) => {
       console.error(error);
-      addToast({ title: '삭제 실패', description: error.message, variant: 'error' });
+      const message = extractErrorMessage(error);
+      addToast({ title: '삭제 실패', description: message, variant: 'error' });
     },
   });
 
@@ -495,7 +542,11 @@ const SellerPopupFormPage = ({
       popupMutation.mutate(requestData);
     } catch (error) {
       console.error('Upload failed:', error);
-      addToast({ title: '이미지 업로드 실패', description: '다시 시도해주세요.', variant: 'error' });
+      addToast({
+        title: '이미지 업로드 실패',
+        description: extractErrorMessage(error),
+        variant: 'error',
+      });
       updateSubmittingState(false);
     }
   };

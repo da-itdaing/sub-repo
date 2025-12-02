@@ -190,7 +190,7 @@ const AdminZonesPage = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">존/셀 관리</h1>
           <div className="flex items-center gap-2">
-            <button
+            {/* <button
               onClick={() => {
                 refetchAreas();
                 refetchCells();
@@ -199,7 +199,7 @@ const AdminZonesPage = () => {
             >
               <RefreshCw className="w-4 h-4" />
               새로고침
-            </button>
+            </button> */}
           <button 
             onClick={() => navigate(ROUTES.admin.zoneCreate)}
             className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
