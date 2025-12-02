@@ -48,6 +48,7 @@ const AdminLayout = () => {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   // 로그인한 관리자 이름 표시
   const displayName = user?.name || user?.nickname || user?.loginId || '관리자';
@@ -239,20 +240,72 @@ const AdminLayout = () => {
 
             {/* 우측 */}
             <div className="flex items-center gap-3">
-              <button className="rounded-2xl border border-gray-200 p-2 text-gray-600 transition hover:border-gray-300">
+              {/* 알림 버튼 - 검수 관리로 이동 */}
+              <button 
+                onClick={() => navigate(ROUTES.admin.approvals)}
+                className="relative rounded-2xl border border-gray-200 p-2 text-gray-600 transition hover:border-gray-300 hover:bg-gray-50"
+                title="검수 관리"
+              >
                 <Bell className="h-5 w-5" />
               </button>
 
-              <button className="flex items-center gap-2 rounded-2xl border border-gray-200 px-3 py-1.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-900 text-sm font-semibold text-white">
-                  {initials}
-                </div>
-                <div className="hidden text-left text-sm leading-tight sm:block">
-                  <p className="font-semibold text-gray-900">{displayName}</p>
-                  <p className="text-xs text-gray-500">관리자</p>
-                </div>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
-              </button>
+              {/* 프로필 드롭다운 */}
+              <div className="relative">
+                <button 
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  className="flex items-center gap-2 rounded-2xl border border-gray-200 px-3 py-1.5 hover:bg-gray-50 transition"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-900 text-sm font-semibold text-white">
+                    {initials}
+                  </div>
+                  <div className="hidden text-left text-sm leading-tight sm:block">
+                    <p className="font-semibold text-gray-900">{displayName}</p>
+                    <p className="text-xs text-gray-500">관리자</p>
+                  </div>
+                  <ChevronDown className={clsx("h-4 w-4 text-gray-400 transition-transform", showProfileMenu && "rotate-180")} />
+                </button>
+
+                {/* 프로필 드롭다운 메뉴 */}
+                {showProfileMenu && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setShowProfileMenu(false)} 
+                    />
+                    <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-xl border border-gray-200 bg-white shadow-lg py-1">
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          navigate(ROUTES.admin.dashboard);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        대시보드
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          navigate(ROUTES.home);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        메인 사이트로
+                      </button>
+                      <div className="border-t border-gray-100 my-1" />
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          logout();
+                          navigate(ROUTES.home);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                      >
+                        로그아웃
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </header>

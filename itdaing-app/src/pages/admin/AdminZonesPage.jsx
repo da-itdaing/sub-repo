@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Map, Polygon, MapMarker, CustomOverlayMap } from 'react-kakao-maps-sdk';
 import { Plus, CheckCircle, XCircle, MapPin, RefreshCw, Trash2, Edit3, PlusCircle } from 'lucide-react';
 import clsx from 'clsx';
@@ -37,14 +37,23 @@ const ZONE_COLORS = [
 
 const AdminZonesPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { addToast } = useToast();
 
+  // 대시보드에서 전달된 초기 선택 상태
+  const initialDistrictId = location.state?.selectedDistrictId;
+  const initialAreaId = location.state?.selectedAreaId;
+  const initialDistrict = initialDistrictId 
+    ? DISTRICTS.find(d => d.id === initialDistrictId) || DISTRICTS[0]
+    : DISTRICTS[0];
+
   // State
-  const [selectedDistrict, setSelectedDistrict] = useState(DISTRICTS[0]);
-  const [mapCenter, setMapCenter] = useState(GWANGJU_CENTER);
+  const [selectedDistrict, setSelectedDistrict] = useState(initialDistrict);
+  const [mapCenter, setMapCenter] = useState(initialDistrict.center);
   const [selectedArea, setSelectedArea] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
+  const [pendingAreaId, setPendingAreaId] = useState(initialAreaId); // 초기 선택할 area ID
 
   // Form State for Cell Edit
   const [editForm, setEditForm] = useState({
@@ -161,6 +170,17 @@ const AdminZonesPage = () => {
       setMapCenter(selectedDistrict.center);
     }
   }, [selectedDistrict]);
+
+  // 대시보드에서 전달된 초기 area 선택
+  useEffect(() => {
+    if (pendingAreaId && areas.length > 0) {
+      const targetArea = areas.find(a => a.id === pendingAreaId);
+      if (targetArea) {
+        handleAreaClick(targetArea);
+        setPendingAreaId(null); // 한 번만 실행
+      }
+    }
+  }, [pendingAreaId, areas]);
 
   // 셀 선택 시 폼 업데이트
   useEffect(() => {

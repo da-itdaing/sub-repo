@@ -107,7 +107,7 @@ const AdminDashboardPage = () => {
     refetchApprovals();
   };
 
-  // KPI 데이터
+  // KPI 데이터 (클릭 시 해당 페이지로 이동)
   const kpiStats = [
     {
       id: 'users',
@@ -117,6 +117,7 @@ const AdminDashboardPage = () => {
       icon: Users,
       bg: 'bg-blue-50',
       text: 'text-blue-600',
+      onClick: () => navigate(ROUTES.admin.users, { state: { roleFilter: 'CONSUMER' } }),
     },
     {
       id: 'sellers',
@@ -126,6 +127,7 @@ const AdminDashboardPage = () => {
       icon: Store,
       bg: 'bg-emerald-50',
       text: 'text-emerald-600',
+      onClick: () => navigate(ROUTES.admin.users, { state: { roleFilter: 'SELLER' } }),
     },
     {
       id: 'approvals',
@@ -135,6 +137,7 @@ const AdminDashboardPage = () => {
       icon: ShieldCheck,
       bg: 'bg-purple-50',
       text: 'text-purple-600',
+      onClick: () => navigate(ROUTES.admin.approvals),
     },
   ];
 
@@ -163,7 +166,8 @@ const AdminDashboardPage = () => {
                 return (
                   <div
                     key={stat.id}
-                    className="flex items-center gap-4 rounded-2xl bg-gray-50/50 border border-gray-100 px-5 py-4"
+                    onClick={stat.onClick}
+                    className="flex items-center gap-4 rounded-2xl bg-gray-50/50 border border-gray-100 px-5 py-4 cursor-pointer hover:bg-gray-100/70 transition-colors"
                   >
                     <div className={`flex h-12 w-12 items-center justify-center rounded-full ${stat.bg} ${stat.text}`}>
                       <Icon className="h-6 w-6" />
@@ -215,7 +219,7 @@ const AdminDashboardPage = () => {
               style={{ width: '100%', height: '100%' }}
               level={6}
             >
-              {/* 존 폴리곤 렌더링 */}
+              {/* 존 폴리곤 렌더링 - 클릭 시 해당 존 선택 상태로 구역관리 페이지 이동 */}
               {filteredAreas.map((area, idx) => {
                 const coords = parseGeoJsonPolygon(area.polygonGeoJson);
                 if (coords.length < 3) return null;
@@ -230,6 +234,12 @@ const AdminDashboardPage = () => {
                     strokeOpacity={0.8}
                     fillColor={color}
                     fillOpacity={0.2}
+                    onClick={() => navigate(ROUTES.admin.zones, { 
+                      state: { 
+                        selectedAreaId: area.id, 
+                        selectedDistrictId: selectedDistrict.id 
+                      } 
+                    })}
                   />
                 );
               })}

@@ -457,6 +457,53 @@ const AdminApprovalsPage = () => {
                   </dl>
                 </div>
 
+                {/* 팝업 이미지 (있는 경우) */}
+                {selectedPopupDetail?.images?.length > 0 && (
+                  <div>
+                    <h3 className="border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900">
+                      팝업 이미지
+                    </h3>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {selectedPopupDetail.images.slice(0, 4).map((img, idx) => (
+                        <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+                          <img 
+                            src={img.url || img.imageUrl} 
+                            alt={`팝업 이미지 ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder-popup.png';
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {selectedPopupDetail.images.length > 4 && (
+                      <p className="text-xs text-gray-400 mt-2 text-center">
+                        +{selectedPopupDetail.images.length - 4}개 더 보기
+                      </p>
+                    )}
+                  </div>
+                )}
+                
+                {/* 대표 이미지만 있는 경우 */}
+                {selectedPopupDetail?.thumbnailUrl && !selectedPopupDetail?.images?.length && (
+                  <div>
+                    <h3 className="border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900">
+                      대표 이미지
+                    </h3>
+                    <div className="mt-3 aspect-video rounded-lg overflow-hidden bg-gray-100">
+                      <img 
+                        src={selectedPopupDetail.thumbnailUrl} 
+                        alt="대표 이미지"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder-popup.png';
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* 팝업 상세 정보 (있는 경우) */}
                 {selectedPopupDetail && (
                   <div>
