@@ -46,9 +46,9 @@ const ReviewTab = ({ popup, reviews, onWriteClick }) => {
   return (
     <div className="pt-6 pb-20 max-w-[960px] mx-auto px-6">
 
-      {/* ⭐ 리뷰 통계 — 좌우정렬 + 중앙정렬 + 간격 증가 */}
+      {/* ⭐ 리뷰 통계 — 좌우정렬 + 중앙정렬 */}
       {summary.total > 0 && (
-        <div className="flex items-center justify-center gap-30 mb-10">
+        <div className="flex items-center justify-center gap-8 md:gap-16 mb-10">
 
           {/* ⭐ 큰 별 평점 */}
           <div className="flex flex-col items-center">
