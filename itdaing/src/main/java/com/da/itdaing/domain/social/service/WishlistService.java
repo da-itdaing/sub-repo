@@ -221,26 +221,43 @@ public class WishlistService {
         ObjectMapper om = new ObjectMapper();
         JsonNode root = om.readTree(geojson);
 
+        // Feature / FeatureCollection 래핑 처리
         if (root.has("type") && "Feature".equalsIgnoreCase(root.get("type").asText()) && root.has("geometry")) {
             root = root.get("geometry");
         } else if (root.has("type") && "FeatureCollection".equalsIgnoreCase(root.get("type").asText())
             && root.has("features") && root.get("features").isArray() && root.get("features").size() > 0) {
             JsonNode first = root.get("features").get(0);
-            root = first.has("geometry") ? first.get("geometry") : root;
+            if (first.has("geometry")) {
+                root = first.get("geometry");
+            }
         }
 
         String type = root.has("type") ? root.get("type").asText() : null;
-        if (type == null) throw new IllegalArgumentException("GeoJSON type이 없습니다.");
+        if (type == null) {
+            throw new IllegalArgumentException("GeoJSON type이 없습니다.");
+        }
 
         GeometryFactory gf = new GeometryFactory();
 
-        if ("Polygon".equalsIgnoreCase(type)) {
+        if ("Point".equalsIgnoreCase(type)) {
+            // ✅ 지금 네가 보여준 JSON이 여기에 해당
+            return pointFromCoords(gf, root.get("coordinates"));
+        } else if ("Polygon".equalsIgnoreCase(type)) {
             return polygonFromCoords(gf, root.get("coordinates"));
         } else if ("MultiPolygon".equalsIgnoreCase(type)) {
             return multiPolygonFromCoords(gf, root.get("coordinates"));
         } else {
             throw new IllegalArgumentException("지원하지 않는 GeoJSON 타입: " + type);
         }
+    }
+
+    private Point pointFromCoords(GeometryFactory gf, JsonNode coordsNode) {
+        if (coordsNode == null || !coordsNode.isArray() || coordsNode.size() < 2) {
+            throw new IllegalArgumentException("Point 좌표가 올바르지 않습니다.");
+        }
+        double lng = coordsNode.get(0).asDouble();
+        double lat = coordsNode.get(1).asDouble();
+        return gf.createPoint(new Coordinate(lng, lat));
     }
 
     private Polygon polygonFromCoords(GeometryFactory gf, JsonNode coordsNode) {

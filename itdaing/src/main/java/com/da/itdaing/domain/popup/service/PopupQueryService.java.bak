@@ -1,0 +1,531 @@
+package com.da.itdaing.domain.popup.service;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import com.da.itdaing.domain.geo.entity.ZoneCell;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.locationtech.jts.geom.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import com.da.itdaing.domain.file.dto.ImagePayload;
+import com.da.itdaing.domain.popup.dto.PopupOperatingHourResponse;
+import com.da.itdaing.domain.popup.dto.PopupReviewAuthorResponse;
+import com.da.itdaing.domain.popup.dto.PopupReviewResponse;
+import com.da.itdaing.domain.popup.dto.PopupReviewSummaryResponse;
+import com.da.itdaing.domain.popup.dto.PopupSearchRequest;
+import com.da.itdaing.domain.popup.dto.PopupSummaryResponse;
+import com.da.itdaing.domain.popup.entity.Popup;
+import com.da.itdaing.domain.popup.entity.PopupCategory;
+import com.da.itdaing.domain.popup.entity.PopupFeature;
+import com.da.itdaing.domain.popup.entity.PopupImage;
+import com.da.itdaing.domain.popup.entity.PopupStyle;
+import com.da.itdaing.domain.popup.entity.QPopup;
+import com.da.itdaing.domain.popup.entity.QPopupCategory;
+import com.da.itdaing.domain.popup.exception.PopupNotFoundException;
+import com.da.itdaing.domain.popup.repository.PopupCategoryRepository;
+import com.da.itdaing.domain.popup.repository.PopupFeatureRepository;
+import com.da.itdaing.domain.popup.repository.PopupImageRepository;
+import com.da.itdaing.domain.popup.repository.PopupRepository;
+import com.da.itdaing.domain.popup.repository.PopupStyleRepository;
+import com.da.itdaing.domain.social.entity.Review;
+import com.da.itdaing.domain.social.entity.ReviewImage;
+import com.da.itdaing.domain.social.repository.ReviewImageRepository;
+import com.da.itdaing.domain.social.repository.ReviewRepository;
+import com.da.itdaing.domain.user.entity.Users;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import jakarta.persistence.EntityManager;
+import lombok.RequiredArgsConstructor;
+
+@Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
+public class PopupQueryService {
+
+    private static final DateTimeFormatter REVIEW_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+
+    private final PopupRepository popupRepository;
+    private final PopupImageRepository popupImageRepository;
+    private final PopupCategoryRepository popupCategoryRepository;
+    private final PopupFeatureRepository popupFeatureRepository;
+    private final PopupStyleRepository popupStyleRepository;
+    private final ReviewRepository reviewRepository;
+    private final ReviewImageRepository reviewImageRepository;
+    private final EntityManager entityManager;
+
+    public List<PopupSummaryResponse> getPopups(boolean includeEnded) {
+        List<Popup> popups = popupRepository.findAllWithZoneAndSeller();
+
+        if (!includeEnded) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            popups = popups.stream()
+                .filter(p -> p.getEndDate() == null || !p.getEndDate().isBefore(today))
+                .toList();
+        }
+
+        return mapToSummaryResponses(popups);
+    }
+
+    public List<PopupSummaryResponse> getPopupsBySeller(Long sellerId) {
+        List<Popup> popups = popupRepository.findAllBySellerIdWithZoneAndSeller(sellerId);
+        return mapToSummaryResponses(popups);
+    }
+
+    public PopupSummaryResponse getPopup(Long popupId) {
+        Popup popup = popupRepository.findByIdWithZoneAndSeller(popupId)
+            .orElseThrow(() -> new PopupNotFoundException(popupId));
+        return mapToSummaryResponses(List.of(popup)).stream()
+            .findFirst()
+            .orElseThrow(() -> new PopupNotFoundException(popupId));
+    }
+
+    public List<PopupReviewResponse> getAllReviews() {
+        List<Review> reviews = reviewRepository.findAllWithRelations();
+        return mapToReviewResponses(reviews);
+    }
+
+    public List<PopupReviewResponse> getReviewsByPopup(Long popupId) {
+        Long targetPopupId = Objects.requireNonNull(popupId, "popupId must not be null");
+        if (!popupRepository.existsById(targetPopupId)) {
+            throw new PopupNotFoundException(targetPopupId);
+        }
+        List<Review> reviews = reviewRepository.findByPopupIdWithRelations(targetPopupId);
+        return mapToReviewResponses(reviews);
+    }
+
+    public Page<PopupSummaryResponse> searchPopups(PopupSearchRequest request) {
+        JPAQueryFactory queryFactory = new JPAQueryFactory(entityManager);
+        QPopup popup = QPopup.popup;
+        QPopupCategory popupCategory = QPopupCategory.popupCategory;
+
+        BooleanBuilder builder = new BooleanBuilder();
+
+        // 키워드 검색 (제목 또는 설명)
+        if (StringUtils.hasText(request.getKeyword())) {
+            String keyword = "%" + request.getKeyword().toLowerCase() + "%";
+            builder.and(
+                popup.name.lower().like(keyword)
+                    .or(popup.description.lower().like(keyword))
+            );
+        }
+
+        // 승인 상태 필터
+        if (request.getApprovalStatus() != null) {
+            builder.and(popup.approvalStatus.eq(request.getApprovalStatus()));
+        }
+
+        // 날짜 필터
+        if (request.getStartDate() != null) {
+            builder.and(popup.startDate.goe(request.getStartDate()));
+        }
+        // endDate가 null인 경우: 기본적으로 오늘 이후에 종료되는 팝업만 노출 (종료된 팝업 필터링)
+        // 사용자가 명시적으로 endDate를 지정한 경우에는 해당 조건만 적용
+        if (request.getEndDate() != null) {
+            builder.and(popup.endDate.loe(request.getEndDate()));
+        } else {
+            // 기본 필터링: 현재 날짜(오늘) 이후에 종료되거나 오늘 종료되는 팝업만 조회
+            builder.and(popup.endDate.goe(java.time.LocalDate.now()));
+        }
+
+        // 지역 필터 (ZoneArea ID)
+        if (request.getRegionId() != null) {
+            builder.and(popup.zoneCell.zoneArea.id.eq(request.getRegionId()));
+        }
+
+        // 카테고리 필터
+        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
+            builder.and(
+                popup.id.in(
+                    queryFactory.select(popupCategory.popup.id)
+                        .from(popupCategory)
+                        .where(popupCategory.category.id.in(request.getCategoryIds()))
+                        .distinct()
+                )
+            );
+        }
+
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
+
+        // 카운트 쿼리
+        Long totalCount = queryFactory.select(popup.count())
+            .from(popup)
+            .where(builder)
+            .fetchOne();
+        long total = totalCount != null ? totalCount : 0L;
+
+        // 데이터 쿼리
+        List<Popup> popups = queryFactory.selectFrom(popup)
+            .leftJoin(popup.zoneCell).fetchJoin()
+            .leftJoin(popup.zoneCell.zoneArea).fetchJoin()
+            .leftJoin(popup.seller).fetchJoin()
+            .where(builder)
+            .orderBy(popup.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        List<PopupSummaryResponse> responses = Objects.requireNonNull(
+            mapToSummaryResponses(popups),
+            "Popup summary mapping must not be null"
+        );
+        return new PageImpl<>(responses, pageable, total);
+    }
+
+    private List<PopupSummaryResponse> mapToSummaryResponses(List<Popup> popups) {
+        if (popups.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> popupIds = popups.stream().map(Popup::getId).toList();
+
+        Map<Long, List<PopupImage>> imagesByPopup = popupImageRepository.findByPopupIdIn(popupIds)
+            .stream()
+            .collect(Collectors.groupingBy(image -> image.getPopup().getId()));
+
+        Map<Long, List<PopupCategory>> categoriesByPopup = popupCategoryRepository.findByPopupIdIn(popupIds)
+            .stream()
+            .collect(Collectors.groupingBy(item -> item.getPopup().getId()));
+
+        Map<Long, List<PopupFeature>> featuresByPopup = popupFeatureRepository.findByPopupIdIn(popupIds)
+            .stream()
+            .collect(Collectors.groupingBy(item -> item.getPopup().getId()));
+
+        Map<Long, List<PopupStyle>> stylesByPopup = popupStyleRepository.findByPopupIdIn(popupIds)
+            .stream()
+            .collect(Collectors.groupingBy(item -> item.getPopup().getId()));
+
+        Map<Long, List<Review>> reviewsByPopup = popupIds.isEmpty()
+            ? Map.of()
+            : reviewRepository.findByPopupIdInWithRelations(popupIds)
+            .stream()
+            .collect(Collectors.groupingBy(review -> review.getPopup().getId()));
+
+        return popups.stream()
+            .map(popup -> toSummaryResponse(
+                popup,
+                imagesByPopup.getOrDefault(popup.getId(), List.of()),
+                categoriesByPopup.getOrDefault(popup.getId(), List.of()),
+                featuresByPopup.getOrDefault(popup.getId(), List.of()),
+                stylesByPopup.getOrDefault(popup.getId(), List.of()),
+                reviewsByPopup.getOrDefault(popup.getId(), List.of())
+            ))
+            .toList();
+    }
+
+    private PopupSummaryResponse toSummaryResponse(
+        Popup popup,
+        List<PopupImage> images,
+        List<PopupCategory> categories,
+        List<PopupFeature> features,
+        List<PopupStyle> styles,
+        List<Review> reviews
+    ) {
+        ImagePayload thumbnail = images.stream()
+            .filter(image -> Boolean.TRUE.equals(image.getIsThumbnail()))
+            .findFirst()
+            .map(this::toImagePayload)
+            .orElseGet(() -> images.stream().findFirst().map(this::toImagePayload).orElse(null));
+
+        List<ImagePayload> gallery = images.stream()
+            .filter(image -> !Boolean.TRUE.equals(image.getIsThumbnail()))
+            .map(this::toImagePayload)
+            .toList();
+
+        List<Long> categoryIds = categories.stream()
+            .map(item -> item.getCategory().getId())
+            .distinct()
+            .toList();
+
+        List<Long> featureIds = features.stream()
+            .map(item -> item.getFeature().getId())
+            .distinct()
+            .toList();
+
+        List<String> styleTags = styles.stream()
+            .map(item -> item.getStyle().getName())
+            .distinct()
+            .toList();
+
+        List<PopupOperatingHourResponse> operatingHours = parseOperatingHours(popup.getOperatingTime());
+        PopupReviewSummaryResponse reviewSummary = buildReviewSummary(reviews);
+
+        String startDate = popup.getStartDate() != null ? popup.getStartDate().toString() : null;
+        String endDate = popup.getEndDate() != null ? popup.getEndDate().toString() : null;
+        String createdAt = formatDateTime(popup.getCreatedAt());
+        String updatedAt = formatDateTime(popup.getUpdatedAt());
+        String locationName = popup.getZoneCell().getZoneArea().getName();
+        String address = popup.getZoneCell().getDetailedAddress();
+
+        Double latitude = null;
+        Double longitude = null;
+
+        ZoneCell zoneCell = popup.getZoneCell();
+        if (zoneCell != null
+            && zoneCell.getGeometryData() != null
+            && !zoneCell.getGeometryData().isBlank()) {
+
+            Coordinate centroid = centroidFromGeoJson(zoneCell.getGeometryData());
+            longitude = centroid.getX(); // X = lng
+            latitude = centroid.getY();  // Y = lat
+        }
+
+        return new PopupSummaryResponse(
+            popup.getId(),
+            popup.getName(),
+            popup.getSeller().getId(),
+            resolveSellerName(popup.getSeller()),
+            popup.getZoneCell().getZoneArea().getId(),
+            popup.getZoneCell().getId(),
+            popup.getZoneCell().getLabel(),
+            locationName,
+            address,
+            latitude,
+            longitude,
+            popup.getApprovalStatus().name(),
+            startDate,
+            endDate,
+            popup.getOperatingTime(),
+            operatingHours,
+            popup.getDescription(),
+            popup.getViewCount(),
+            popup.getFavoriteCount(),
+            categoryIds,
+            featureIds,
+            styleTags,
+            thumbnail,
+            gallery,
+            reviewSummary,
+            false, // isFavorite (기본값)
+            createdAt,
+            updatedAt
+        );
+    }
+
+    private Coordinate centroidFromGeoJson(String geojson) {
+        try {
+            Geometry geom = readGeometryFromGeoJson(geojson);
+            Point c = geom.getCentroid();
+            return new Coordinate(c.getX(), c.getY()); // X=lng, Y=lat
+        } catch (Exception e) {
+            throw new IllegalArgumentException("셀 geometryData 파싱/centroid 계산 실패", e);
+        }
+    }
+
+    private Geometry readGeometryFromGeoJson(String geojson) throws Exception {
+        ObjectMapper om = new ObjectMapper();
+        JsonNode root = om.readTree(geojson);
+
+        if (root.has("type") && "Feature".equalsIgnoreCase(root.get("type").asText()) && root.has("geometry")) {
+            root = root.get("geometry");
+        } else if (root.has("type") && "FeatureCollection".equalsIgnoreCase(root.get("type").asText())
+            && root.has("features") && root.get("features").isArray() && root.get("features").size() > 0) {
+            JsonNode first = root.get("features").get(0);
+            root = first.has("geometry") ? first.get("geometry") : root;
+        }
+
+        String type = root.has("type") ? root.get("type").asText() : null;
+        if (type == null) throw new IllegalArgumentException("GeoJSON type이 없습니다.");
+
+        GeometryFactory gf = new GeometryFactory();
+
+        if ("Polygon".equalsIgnoreCase(type)) {
+            return polygonFromCoords(gf, root.get("coordinates"));
+        } else if ("MultiPolygon".equalsIgnoreCase(type)) {
+            return multiPolygonFromCoords(gf, root.get("coordinates"));
+        } else if ("Point".equalsIgnoreCase(type)) {
+            JsonNode coords = root.get("coordinates");
+            if (coords == null || !coords.isArray() || coords.size() < 2) {
+                throw new IllegalArgumentException("Point coordinates가 비어있습니다.");
+            }
+            double x = coords.get(0).asDouble();
+            double y = coords.get(1).asDouble();
+            return gf.createPoint(new org.locationtech.jts.geom.Coordinate(x, y));
+            return multiPolygonFromCoords(gf, root.get("coordinates"));
+        } else {
+            throw new IllegalArgumentException("지원하지 않는 GeoJSON 타입: " + type);
+        }
+    }
+
+    private Polygon polygonFromCoords(GeometryFactory gf, JsonNode coordsNode) {
+        if (coordsNode == null || !coordsNode.isArray() || coordsNode.isEmpty()) {
+            throw new IllegalArgumentException("Polygon coordinates가 비어있습니다.");
+        }
+        LinearRing shell = ringFromLinearCoords(gf, coordsNode.get(0));
+        LinearRing[] holes = new LinearRing[Math.max(0, coordsNode.size() - 1)];
+        for (int i = 1; i < coordsNode.size(); i++) {
+            holes[i - 1] = ringFromLinearCoords(gf, coordsNode.get(i));
+        }
+        return gf.createPolygon(shell, holes);
+    }
+
+    private MultiPolygon multiPolygonFromCoords(GeometryFactory gf, JsonNode coordsNode) {
+        if (coordsNode == null || !coordsNode.isArray() || coordsNode.isEmpty()) {
+            throw new IllegalArgumentException("MultiPolygon coordinates가 비어있습니다.");
+        }
+        Polygon[] polys = new Polygon[coordsNode.size()];
+        for (int i = 0; i < coordsNode.size(); i++) {
+            polys[i] = polygonFromCoords(gf, coordsNode.get(i));
+        }
+        return gf.createMultiPolygon(polys);
+    }
+
+    private LinearRing ringFromLinearCoords(GeometryFactory gf, JsonNode ringNode) {
+        if (ringNode == null || !ringNode.isArray() || ringNode.size() < 4) {
+            throw new IllegalArgumentException("LinearRing 좌표는 최소 4개([lng,lat]...)이어야 합니다.");
+        }
+        Coordinate[] coords = new Coordinate[ringNode.size()];
+        for (int i = 0; i < ringNode.size(); i++) {
+            JsonNode p = ringNode.get(i);
+            double lng = p.get(0).asDouble();
+            double lat = p.get(1).asDouble();
+            coords[i] = new Coordinate(lng, lat);
+        }
+        if (!coords[0].equals2D(coords[coords.length - 1])) {
+            Coordinate[] closed = new Coordinate[coords.length + 1];
+            System.arraycopy(coords, 0, closed, 0, coords.length);
+            closed[closed.length - 1] = coords[0];
+            coords = closed;
+        }
+        return gf.createLinearRing(coords);
+    }
+
+    private List<PopupOperatingHourResponse> parseOperatingHours(String operatingTime) {
+        if (operatingTime == null || operatingTime.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(operatingTime.split("/"))
+            .map(String::trim)
+            .filter(segment -> !segment.isBlank())
+            .map(segment -> {
+                int firstSpace = segment.indexOf(' ');
+                if (firstSpace > 0) {
+                    String day = segment.substring(0, firstSpace).trim();
+                    String time = segment.substring(firstSpace + 1).trim();
+                    return new PopupOperatingHourResponse(day, time);
+                }
+                return new PopupOperatingHourResponse("기본", segment);
+            })
+            .toList();
+    }
+
+    private PopupReviewSummaryResponse buildReviewSummary(List<Review> reviews) {
+        if (reviews.isEmpty()) {
+            return new PopupReviewSummaryResponse(0.0, 0, List.of(0, 0, 0, 0, 0));
+        }
+
+        int[] distribution = new int[5];
+        int total = reviews.size();
+        int sum = 0;
+
+        for (Review review : reviews) {
+            int rating = resolveRating(review);
+            sum += rating;
+            if (rating >= 1 && rating <= 5) {
+                distribution[rating - 1]++;
+            }
+        }
+
+        double average = total > 0 ? (double) sum / total : 0.0;
+        List<Integer> distributionList = Arrays.stream(distribution).boxed().toList();
+        return new PopupReviewSummaryResponse(average, total, distributionList);
+    }
+
+    private ImagePayload toImagePayload(PopupImage image) {
+        if (image == null) {
+            return null;
+        }
+        return ImagePayload.builder()
+            .url(image.getImageUrl())
+            .key(image.getImageKey())
+            .build();
+    }
+
+    private List<PopupReviewResponse> mapToReviewResponses(List<Review> reviews) {
+        if (reviews.isEmpty()) {
+            return List.of();
+        }
+        List<Long> reviewIds = reviews.stream().map(Review::getId).toList();
+        Map<Long, List<ReviewImage>> imagesByReview = reviewImageRepository.findByReviewIdIn(reviewIds)
+            .stream()
+            .collect(Collectors.groupingBy(image -> image.getReview().getId()));
+
+        return reviews.stream()
+            .map(review -> {
+                List<ImagePayload> images = imagesByReview.getOrDefault(review.getId(), List.of())
+                    .stream()
+                    .map(img -> ImagePayload.builder()
+                        .url(img.getImageUrl())
+                        .key(img.getImageKey())
+                        .build())
+                    .toList();
+                PopupReviewAuthorResponse author = buildReviewAuthor(review.getConsumer());
+                int rating = resolveRating(review);
+                String date = formatReviewDate(review.getCreatedAt());
+                return new PopupReviewResponse(
+                    review.getId(),
+                    review.getPopup().getId(),
+                    author,
+                    rating,
+                    date,
+                    review.getContent(),
+                    images
+                );
+            })
+            .toList();
+    }
+
+    private PopupReviewAuthorResponse buildReviewAuthor(Users user) {
+        if (user == null) {
+            return new PopupReviewAuthorResponse(null, null, null, null);
+        }
+        return new PopupReviewAuthorResponse(
+            user.getId(),
+            user.getName(),
+            user.getNickname(),
+            null
+        );
+    }
+
+    private String resolveSellerName(Users user) {
+        if (user == null) {
+            return null;
+        }
+        if (user.getNickname() != null && !user.getNickname().isBlank()) {
+            return user.getNickname();
+        }
+        if (user.getName() != null && !user.getName().isBlank()) {
+            return user.getName();
+        }
+        return user.getLoginId();
+    }
+
+    private String formatDateTime(LocalDateTime dateTime) {
+        return dateTime != null ? dateTime.toString() : null;
+    }
+
+    private String formatReviewDate(LocalDateTime createdAt) {
+        return createdAt != null ? createdAt.format(REVIEW_DATE_FORMATTER) : null;
+    }
+
+    private int resolveRating(Review review) {
+        if (review == null) {
+            return 0;
+        }
+        Byte rawRating = review.getRating();
+        return rawRating != null ? rawRating.intValue() : 0;
+    }
+}

@@ -353,6 +353,14 @@ public class PopupQueryService {
             return polygonFromCoords(gf, root.get("coordinates"));
         } else if ("MultiPolygon".equalsIgnoreCase(type)) {
             return multiPolygonFromCoords(gf, root.get("coordinates"));
+        } else if ("Point".equalsIgnoreCase(type)) {
+            JsonNode coords = root.get("coordinates");
+            if (coords == null || !coords.isArray() || coords.size() < 2) {
+                throw new IllegalArgumentException("Point coordinates가 비어있습니다.");
+            }
+            double x = coords.get(0).asDouble();
+            double y = coords.get(1).asDouble();
+            return gf.createPoint(new org.locationtech.jts.geom.Coordinate(x, y));
         } else {
             throw new IllegalArgumentException("지원하지 않는 GeoJSON 타입: " + type);
         }
