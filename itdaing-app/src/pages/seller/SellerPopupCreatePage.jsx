@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
-import { MapPin, Calendar, Clock, Map as MapIcon, ChevronDown, Trash2, X } from 'lucide-react';
+import { MapPin, Calendar, Clock, Map as MapIcon, ChevronDown, Trash2, X, ArrowLeft } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { createPopup, updatePopup, deletePopup } from '@/services/sellerService';
 import { uploadImage } from '@/services/uploadService';
@@ -60,6 +60,11 @@ const toDateValue = (value) => {
   }
   return value;
 };
+
+const MIN_STYLE_SELECTION = 1;
+const MAX_STYLE_SELECTION = 3;
+const MIN_FEATURE_SELECTION = 1;
+const MAX_FEATURE_SELECTION = 3;
 
 const SellerPopupFormPage = ({
   mode,
@@ -318,13 +323,80 @@ const SellerPopupFormPage = ({
   const toggleArrayItem = (field, id) => {
     setFormData((prev) => {
       const current = prev[field] || [];
+      const exists = current.includes(id);
+      if (exists) {
+        return {
+          ...prev,
+          [field]: current.filter((item) => item !== id),
+        };
+      }
+
+      const maxCount = field === 'styleIds' ? MAX_STYLE_SELECTION : MAX_FEATURE_SELECTION;
+      if (current.length >= maxCount) {
+        addToast({
+          title:
+            field === 'styleIds'
+              ? `스타일은 최대 ${MAX_STYLE_SELECTION}개까지 선택할 수 있습니다.`
+              : `편의/특징은 최대 ${MAX_FEATURE_SELECTION}개까지 선택할 수 있습니다.`,
+          variant: 'error',
+        });
+        return prev;
+      }
+
       return {
         ...prev,
-        [field]: current.includes(id)
-          ? current.filter((item) => item !== id)
-          : [...current, id],
+        [field]: [...current, id],
       };
     });
+  };
+
+  const validateSelections = () => {
+    if (!formData.categoryId) {
+      addToast({
+        title: '카테고리를 선택해주세요.',
+        description: '최소 1개의 카테고리를 선택해야 합니다.',
+        variant: 'error',
+      });
+      return false;
+    }
+
+    if (formData.styleIds.length < MIN_STYLE_SELECTION) {
+      addToast({
+        title: '스타일을 선택해주세요.',
+        description: `스타일은 최소 ${MIN_STYLE_SELECTION}개 이상 선택해야 합니다.`,
+        variant: 'error',
+      });
+      return false;
+    }
+
+    if (formData.styleIds.length > MAX_STYLE_SELECTION) {
+      addToast({
+        title: '스타일 선택 초과',
+        description: `스타일은 최대 ${MAX_STYLE_SELECTION}개까지 선택 가능합니다.`,
+        variant: 'error',
+      });
+      return false;
+    }
+
+    if (formData.featureIds.length < MIN_FEATURE_SELECTION) {
+      addToast({
+        title: '편의/특징을 선택해주세요.',
+        description: `편의/특징은 최소 ${MIN_FEATURE_SELECTION}개 이상 선택해야 합니다.`,
+        variant: 'error',
+      });
+      return false;
+    }
+
+    if (formData.featureIds.length > MAX_FEATURE_SELECTION) {
+      addToast({
+        title: '편의/특징 선택 초과',
+        description: `편의/특징은 최대 ${MAX_FEATURE_SELECTION}개까지 선택 가능합니다.`,
+        variant: 'error',
+      });
+      return false;
+    }
+
+    return true;
   };
 
   // 존 선택
@@ -365,6 +437,10 @@ const SellerPopupFormPage = ({
     // 셀 선택 검증
     if (!formData.zoneCellId) {
       addToast({ title: '셀을 선택해주세요.', description: '지도에서 부스 위치를 선택해야 합니다.', variant: 'error' });
+      return;
+    }
+
+    if (!validateSelections()) {
       return;
     }
 
@@ -415,7 +491,7 @@ const SellerPopupFormPage = ({
         thumbnailImage,
         images: [...existingImages, ...uploadedImages],
       };
-
+      console.log('[SellerPopupForm] submit payload', requestData);
       popupMutation.mutate(requestData);
     } catch (error) {
       console.error('Upload failed:', error);
@@ -465,26 +541,37 @@ const SellerPopupFormPage = ({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <section className="rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
-        <h2 className="mt-2 text-2xl font-semibold text-gray-900">
-          {isEditMode ? '등록한 팝업을 확인하고 수정하세요' : '팝업 정보를 입력해주세요'}
-        </h2>
-        <p className="text-sm text-gray-500">
-          {isEditMode ? '입력값을 수정하거나 필요시 팝업을 삭제할 수 있습니다.' : '승인까지 평균 2일이 소요됩니다.'}
-        </p>
+      <section className="relative rounded-3xl border border-white/80 bg-white p-6 shadow-sm shadow-slate-200/60">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
+          aria-label="뒤로가기"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
 
-        {isEditMode && popupDetail && (
-          <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-500">
-            <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 font-semibold text-gray-700">
-              승인 상태 · {popupDetail.status || 'PENDING'}
-            </span>
-            {popupDetail.startDate && popupDetail.endDate && (
+        <div className="pr-12">
+          <h2 className="mt-2 text-2xl font-semibold text-gray-900">
+            {isEditMode ? '등록한 팝업을 확인하고 수정하세요' : '팝업 정보를 입력해주세요'}
+          </h2>
+          <p className="text-sm text-gray-500">
+            {isEditMode ? '입력값을 수정하거나 필요시 팝업을 삭제할 수 있습니다.' : '승인까지 평균 2일이 소요됩니다.'}
+          </p>
+
+          {isEditMode && popupDetail && (
+            <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-500">
               <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 font-semibold text-gray-700">
-                {toDateValue(popupDetail.startDate)} ~ {toDateValue(popupDetail.endDate)}
+                승인 상태 · {popupDetail.status || 'PENDING'}
               </span>
-            )}
-          </div>
-        )}
+              {popupDetail.startDate && popupDetail.endDate && (
+                <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 font-semibold text-gray-700">
+                  {toDateValue(popupDetail.startDate)} ~ {toDateValue(popupDetail.endDate)}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </section>
 
       <form
