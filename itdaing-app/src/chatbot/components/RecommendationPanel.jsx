@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Star, ChevronRight, Map, Navigation } from 'lucide-react';
+import { MapPin, Star, ChevronRight, Map, X } from 'lucide-react';
 import KakaoMap from '@/components/map/KakaoMap';
 import { ROUTES } from '@/routes/paths';
 
@@ -13,7 +13,10 @@ const resolveItemId = (item = {}) =>
   item.market_id || item.metadata?.market_id || item.zone_id || item.name || 'unknown';
 
 /**
- * 추천 결과 패널 - 모던 디자인
+ * 추천 결과 패널 - v14.1 콤팩트 디자인
+ * - 지도 기본 숨김, 토글로 표시
+ * - 가로 스크롤 카드 레이아웃
+ * - 모바일 친화적 터치 영역
  */
 const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
   const [highlightId, setHighlightId] = useState(null);
@@ -23,6 +26,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
     if (items.length > 0) {
       setHighlightId(resolveItemId(items[0]));
     }
+    setShowMap(false);
   }, [items]);
 
   const markers = useMemo(
@@ -49,18 +53,15 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
 
   const centerMarker = markers.find((m) => m.id === highlightId) || markers[0];
   const hasValidMarkers = markers.length > 0;
-  const shouldShowMapByDefault = items.length >= 3 && hasValidMarkers;
 
   const getDetailLink = (item) => {
     if (mode === 'consumer') {
       const popupId = item.market_id || item.metadata?.market_id;
       if (popupId) {
-        // popup-1234, M001234, 1234 등 다양한 형식 지원
         const numericId = popupId.toString().replace(/^(popup-|M0*)/, '');
         if (numericId && /^\d+$/.test(numericId)) {
           return ROUTES.popupDetail(parseInt(numericId, 10));
         }
-        // 숫자만 있는 경우도 처리
         if (/^\d+$/.test(popupId.toString())) {
           return ROUTES.popupDetail(parseInt(popupId, 10));
         }
@@ -70,132 +71,143 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
     return null;
   };
 
-  const isMapVisible = shouldShowMapByDefault || showMap;
-
   return (
     <div className="bg-white border-t border-rose-100/50">
-      {/* 헤더 */}
-      <div className="px-4 py-3 flex items-center justify-between">
+      {/* 헤더 - 더 콤팩트하게 */}
+      <div className="px-4 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Navigation className="h-4 w-4 text-rose-500" />
-          <span className="text-[13px] font-semibold text-gray-800">
-            추천 장소
-          </span>
-          <span className="text-[11px] font-medium text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded-full">
-            {items.length}
+          <span className="text-[12px] font-semibold text-gray-700">
+            📍 추천 {items.length}곳
           </span>
         </div>
-        <div className="flex items-center gap-3">
-          {!shouldShowMapByDefault && hasValidMarkers && (
+        <div className="flex items-center gap-2">
+          {hasValidMarkers && (
             <button
               type="button"
               onClick={() => setShowMap(!showMap)}
-              className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
-                showMap ? 'text-rose-500' : 'text-gray-400 hover:text-gray-600'
+              className={`flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium transition-all ${
+                showMap 
+                  ? 'bg-rose-500 text-white' 
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
               }`}
             >
-              <Map className="h-3.5 w-3.5" />
+              <Map className="h-3 w-3" />
               지도
             </button>
           )}
-          <Link
-            to={ROUTES.home}
-            className="text-[11px] text-gray-400 hover:text-rose-500 transition-colors"
-          >
-            전체 보기
-          </Link>
         </div>
       </div>
 
-      {/* 지도 */}
-      {isMapVisible && hasValidMarkers && (
-        <div className="h-[140px] mx-4 mb-3 rounded-xl overflow-hidden ring-1 ring-gray-100">
-          <KakaoMap
-            height="100%"
-            level={items.length === 1 ? 3 : 5}
-            center={centerMarker ? { lat: centerMarker.lat, lng: centerMarker.lng } : undefined}
-            markers={markers}
-          />
+      {/* 지도 - 토글 시에만 표시 */}
+      {showMap && hasValidMarkers && (
+        <div className="relative mx-4 mb-2 rounded-xl overflow-hidden ring-1 ring-gray-100">
+          <div className="h-[160px]">
+            <KakaoMap
+              height="100%"
+              level={items.length === 1 ? 3 : 5}
+              center={centerMarker ? { lat: centerMarker.lat, lng: centerMarker.lng } : undefined}
+              markers={markers}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowMap(false)}
+            className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full shadow-sm hover:bg-white transition-colors"
+          >
+            <X className="h-3.5 w-3.5 text-gray-500" />
+          </button>
         </div>
       )}
 
-      {/* 카드 리스트 */}
-      <div className={`px-4 pb-3 space-y-2 ${items.length > 3 ? 'max-h-[180px] overflow-y-auto' : ''}`}>
-        {items.map((item) => {
-          const id = resolveItemId(item);
-          const isActive = id === highlightId;
-          const detailLink = getDetailLink(item);
-          const address = item.address || item.metadata?.address || item.metadata?.location;
-          const hasCoords = markers.some((m) => m.id === id);
+      {/* 카드 리스트 - 가로 스크롤 */}
+      <div className="px-4 pb-3">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+          {items.map((item, index) => {
+            const id = resolveItemId(item);
+            const isActive = id === highlightId;
+            const detailLink = getDetailLink(item);
+            const address = item.address || item.metadata?.address || item.metadata?.location;
+            const hasCoords = markers.some((m) => m.id === id);
 
-          return (
-            <div
-              key={id}
-              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
-                isActive 
-                  ? 'bg-rose-50 ring-1 ring-rose-200' 
-                  : 'bg-gray-50 hover:bg-gray-100'
-              }`}
-              onClick={() => setHighlightId(id)}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-[13px] font-semibold text-gray-800 truncate">
-                    {item.name || '이름 미정'}
-                  </p>
-                  {!hasCoords && (
-                    <span className="text-[9px] text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-full">
-                      위치정보 없음
-                    </span>
+            return (
+              <div
+                key={id}
+                className={`flex-shrink-0 w-[200px] p-3 rounded-xl cursor-pointer transition-all ${
+                  isActive 
+                    ? 'bg-rose-50 ring-2 ring-rose-300' 
+                    : 'bg-gray-50 hover:bg-gray-100 ring-1 ring-gray-100'
+                }`}
+                onClick={() => {
+                  setHighlightId(id);
+                  if (showMap && hasCoords) {
+                    // 지도가 열려있으면 해당 마커로 포커스
+                  }
+                }}
+              >
+                {/* 순위 배지 */}
+                <div className="flex items-start justify-between mb-2">
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                    index === 0 
+                      ? 'bg-rose-500 text-white' 
+                      : 'bg-gray-200 text-gray-500'
+                  }`}>
+                    {index + 1}
+                  </span>
+                  {detailLink && (
+                    <Link
+                      to={detailLink}
+                      className="p-1 rounded-md bg-white ring-1 ring-gray-200 text-gray-400 hover:text-rose-500 hover:ring-rose-200 transition-all"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
                   )}
                 </div>
+
+                {/* 이름 */}
+                <p className="text-[13px] font-semibold text-gray-800 truncate mb-1">
+                  {item.name || '이름 미정'}
+                </p>
+
+                {/* 주소 */}
                 {address && (
-                  <p className="text-[11px] text-gray-500 truncate flex items-center gap-1 mt-1">
-                    <MapPin className="h-3 w-3 shrink-0 text-gray-400" />
+                  <p className="text-[10px] text-gray-500 truncate flex items-center gap-1 mb-1.5">
+                    <MapPin className="h-2.5 w-2.5 shrink-0" />
                     {address}
                   </p>
                 )}
-                <div className="flex items-center gap-2 mt-1.5">
+
+                {/* 메타 정보 */}
+                <div className="flex items-center gap-1.5 flex-wrap">
                   {typeof item.rating === 'number' && (
                     <span className="text-[10px] text-gray-600 flex items-center gap-0.5">
-                      <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                      <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400" />
                       {item.rating.toFixed(1)}
                     </span>
                   )}
                   {item.category && (
-                    <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                    <span className="text-[9px] text-gray-400 bg-white px-1.5 py-0.5 rounded">
                       {item.category}
                     </span>
                   )}
-                  {item.distance_km && (
-                    <span className="text-[10px] text-gray-400">
-                      {Number(item.distance_km).toFixed(1)}km
+                  {!hasCoords && (
+                    <span className="text-[8px] text-gray-400">
+                      📍없음
                     </span>
                   )}
                 </div>
               </div>
-              {detailLink && (
-                <Link
-                  to={detailLink}
-                  className="shrink-0 flex items-center justify-center h-8 w-8 rounded-lg bg-white ring-1 ring-gray-200 text-gray-400 hover:text-rose-500 hover:ring-rose-200 transition-all"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Link>
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
-      {/* 안내 메시지 */}
-      {items.length < 3 && (
-        <div className="px-4 pb-3">
-          <p className="text-[10px] text-gray-400 text-center">
-            더 구체적인 조건을 말씀해주시면 더 많은 추천을 받을 수 있어요
-          </p>
-        </div>
-      )}
+      {/* 팁 메시지 - 더 작게 */}
+      <div className="px-4 pb-2">
+        <p className="text-[10px] text-gray-400 text-center">
+          💡 "야시장" 이나 "저녁에 열리는 곳" 도 있어요
+        </p>
+      </div>
     </div>
   );
 };
