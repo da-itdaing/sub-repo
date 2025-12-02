@@ -272,7 +272,10 @@ const HeroCarousel = ({ items = [], isLoading = false, onSelect }) => {
                           <div className="inline-flex items-center bg-white/90 px-2.5 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-bold text-gray-900">
                               #{item.rank.toString().padStart(2, '0')}
                           </div>
-                          <h3 className="text-base md:text-2xl font-bold text-white leading-tight line-clamp-2">
+                          <h3
+                            className="text-base md:text-2xl font-bold text-white leading-tight truncate"
+                            title={item.title}
+                          >
                             {item.title}
                           </h3>
                           <p className="text-xs md:text-sm text-white/90">{item.date}</p>

@@ -160,8 +160,8 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
             }}
           />
         
-        {/* 오버레이 그라데이션 */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
+        {/* 오버레이 그라데이션 - 텍스트 가독성을 위한 하단 그라데이션 (연하게) */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/30 to-transparent" />
         
         {/* 좋아요 버튼 (PopupDetailPage와 동일한 스타일, 배경은 항상 흰색) */}
         <button
@@ -196,7 +196,10 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
 
         {/* 텍스트 정보 */}
         <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1">
-          <h3 className="text-lg font-bold text-white leading-tight line-clamp-2">
+          <h3
+            className="text-lg font-bold text-white leading-tight truncate"
+            title={popup.title}
+          >
             {popup.title}
           </h3>
           <p className="text-[13px] text-white/90">{dateLabel}</p>

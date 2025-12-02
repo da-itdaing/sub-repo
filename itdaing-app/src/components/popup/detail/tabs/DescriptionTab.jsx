@@ -154,9 +154,9 @@ const DescriptionTab = ({ popup }) => {
                     </p>
                 </div>
                 {/* 추가 설명 텍스트가 있다면 여기에 */}
-                <p className="text-xs text-gray-600 leading-relaxed">
+                {/* <p className="text-xs text-gray-600 leading-relaxed">
                     모이나는 현존하는 가장 오래된 트렁크 메이커 프랑스 브랜드로 LVMH사 아르노 회장이 직접 디자이너 선정 및 제품 디자인에 참여했습니다. 셀럽 백으로는 리사 라부부백/ 이부진 가브리엘백/ 손연재 캔버스백이 베스트셀러입니다.
-                </p>
+                </p> */}
             </div>
         </div>
       </section>
