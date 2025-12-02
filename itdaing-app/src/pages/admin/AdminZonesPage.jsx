@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Map, Polygon, MapMarker, CustomOverlayMap } from 'react-kakao-maps-sdk';
-import { Plus, CheckCircle, XCircle, MapPin, RefreshCw } from 'lucide-react';
+import { Plus, CheckCircle, XCircle, MapPin, RefreshCw, Trash2, Edit3, PlusCircle } from 'lucide-react';
 import clsx from 'clsx';
 import { ROUTES } from '@/routes/paths';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,9 @@ import {
   listCells,
   updateCell,
   deleteCell,
+  createCell,
+  updateArea,
+  deleteArea,
   parseGeoJsonPolygon,
 } from '@/services/geoZoneService';
 
@@ -46,6 +49,25 @@ const AdminZonesPage = () => {
   // Form State for Cell Edit
   const [editForm, setEditForm] = useState({
     status: 'APPROVED',
+    maxCapacity: 0,
+    notice: '',
+  });
+
+  // 셀 추가 모달 상태
+  const [cellAddModalOpen, setCellAddModalOpen] = useState(false);
+  const [newCellForm, setNewCellForm] = useState({
+    label: '',
+    detailedAddress: '',
+    lat: '',
+    lng: '',
+    maxCapacity: 1,
+    notice: '',
+  });
+
+  // 존 수정 모달 상태
+  const [areaEditModalOpen, setAreaEditModalOpen] = useState(false);
+  const [editAreaForm, setEditAreaForm] = useState({
+    name: '',
     maxCapacity: 0,
     notice: '',
   });
@@ -89,6 +111,47 @@ const AdminZonesPage = () => {
     },
     onError: (error) => {
       addToast({ title: '삭제 실패', description: error.message, variant: 'error' });
+    },
+  });
+
+  // 셀 생성 Mutation
+  const createCellMutation = useMutation({
+    mutationFn: (data) => createCell(data),
+    onSuccess: () => {
+      addToast({ title: '셀이 생성되었습니다.' });
+      setCellAddModalOpen(false);
+      setNewCellForm({ label: '', detailedAddress: '', lat: '', lng: '', maxCapacity: 1, notice: '' });
+      refetchCells();
+    },
+    onError: (error) => {
+      addToast({ title: '셀 생성 실패', description: error.message, variant: 'error' });
+    },
+  });
+
+  // 존 수정 Mutation
+  const updateAreaMutation = useMutation({
+    mutationFn: ({ areaId, data }) => updateArea(areaId, data),
+    onSuccess: () => {
+      addToast({ title: '존 정보가 수정되었습니다.' });
+      setAreaEditModalOpen(false);
+      refetchAreas();
+    },
+    onError: (error) => {
+      addToast({ title: '존 수정 실패', description: error.message, variant: 'error' });
+    },
+  });
+
+  // 존 삭제 Mutation
+  const deleteAreaMutation = useMutation({
+    mutationFn: (areaId) => deleteArea(areaId),
+    onSuccess: () => {
+      addToast({ title: '존이 삭제되었습니다.' });
+      setSelectedArea(null);
+      setSelectedCell(null);
+      refetchAreas();
+    },
+    onError: (error) => {
+      addToast({ title: '존 삭제 실패', description: error.message, variant: 'error' });
     },
   });
 
@@ -158,6 +221,79 @@ const AdminZonesPage = () => {
     }
   };
 
+  // 셀 추가 모달 열기
+  const openCellAddModal = () => {
+    if (!selectedArea) {
+      addToast({ title: '먼저 존을 선택해주세요.', variant: 'error' });
+      return;
+    }
+    setNewCellForm({ label: '', detailedAddress: '', lat: '', lng: '', maxCapacity: 1, notice: '' });
+    setCellAddModalOpen(true);
+  };
+
+  // 셀 생성 처리
+  const handleCreateCell = () => {
+    if (!selectedArea) return;
+    if (!newCellForm.label.trim()) {
+      addToast({ title: '셀 라벨을 입력해주세요.', variant: 'error' });
+      return;
+    }
+    if (!newCellForm.lat || !newCellForm.lng) {
+      addToast({ title: '위치(위도/경도)를 입력해주세요.', variant: 'error' });
+      return;
+    }
+
+    // geometryData 생성 (Point GeoJSON)
+    const geometryData = JSON.stringify({
+      type: 'Point',
+      coordinates: [parseFloat(newCellForm.lng), parseFloat(newCellForm.lat)],
+    });
+
+    createCellMutation.mutate({
+      areaId: selectedArea.id,
+      label: newCellForm.label.trim(),
+      detailedAddress: newCellForm.detailedAddress.trim() || null,
+      geometryData,
+      status: 'APPROVED',
+      maxCapacity: parseInt(newCellForm.maxCapacity, 10) || 1,
+      notice: newCellForm.notice.trim() || null,
+    });
+  };
+
+  // 존 수정 모달 열기
+  const openAreaEditModal = () => {
+    if (!selectedArea) return;
+    setEditAreaForm({
+      name: selectedArea.name || '',
+      maxCapacity: selectedArea.maxCapacity || 0,
+      notice: selectedArea.notice || '',
+    });
+    setAreaEditModalOpen(true);
+  };
+
+  // 존 수정 처리
+  const handleUpdateArea = () => {
+    if (!selectedArea) return;
+    updateAreaMutation.mutate({
+      areaId: selectedArea.id,
+      data: {
+        name: editAreaForm.name.trim(),
+        maxCapacity: parseInt(editAreaForm.maxCapacity, 10) || null,
+        notice: editAreaForm.notice.trim() || null,
+        regionId: selectedArea.regionId,
+        polygonGeoJson: selectedArea.polygonGeoJson,
+      },
+    });
+  };
+
+  // 존 삭제 처리
+  const handleDeleteArea = () => {
+    if (!selectedArea) return;
+    if (window.confirm(`"${selectedArea.name}" 존을 삭제하시겠습니까?\n포함된 모든 셀도 함께 삭제됩니다.`)) {
+      deleteAreaMutation.mutate(selectedArea.id);
+    }
+  };
+
   // 셀 위치 파싱
   const getCellPosition = (cell) => {
     if (!cell?.geometryData) return null;
@@ -200,13 +336,21 @@ const AdminZonesPage = () => {
               <RefreshCw className="w-4 h-4" />
               새로고침
             </button>
-          <button 
-            onClick={() => navigate(ROUTES.admin.zoneCreate)}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-          >
-            <Plus className="w-4 h-4" />
+            <button
+              onClick={openCellAddModal}
+              disabled={!selectedArea}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <PlusCircle className="w-4 h-4" />
+              새 셀 추가
+            </button>
+            <button 
+              onClick={() => navigate(ROUTES.admin.zoneCreate)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+            >
+              <Plus className="w-4 h-4" />
               새 존 추가
-          </button>
+            </button>
           </div>
         </div>
 
@@ -479,6 +623,25 @@ const AdminZonesPage = () => {
                 지도에서 셀을 선택해주세요
               </p>
               <p className="text-xs mt-2">총 {cells.length}개 셀</p>
+              
+              {/* 존 관리 버튼 */}
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={openAreaEditModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200"
+                >
+                  <Edit3 className="w-3 h-3" />
+                  존 수정
+                </button>
+                <button
+                  onClick={handleDeleteArea}
+                  disabled={deleteAreaMutation.isPending}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-100 text-rose-600 text-xs font-medium rounded-lg hover:bg-rose-200 disabled:opacity-50"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  존 삭제
+                </button>
+              </div>
             </div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-gray-400">
@@ -488,6 +651,172 @@ const AdminZonesPage = () => {
           )}
         </div>
       </div>
+
+      {/* 셀 추가 모달 */}
+      {cellAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">새 셀 추가</h3>
+            <p className="mt-1 text-xs text-gray-500">
+              {selectedArea?.name}에 새로운 셀(부스)을 추가합니다.
+            </p>
+            
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">셀 라벨 *</label>
+                <input
+                  type="text"
+                  value={newCellForm.label}
+                  onChange={(e) => setNewCellForm(prev => ({ ...prev, label: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                  placeholder="예: A-1, B구역 1번"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">상세 주소</label>
+                <input
+                  type="text"
+                  value={newCellForm.detailedAddress}
+                  onChange={(e) => setNewCellForm(prev => ({ ...prev, detailedAddress: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                  placeholder="예: 광주광역시 동구 충장로 100"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">위도 *</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={newCellForm.lat}
+                    onChange={(e) => setNewCellForm(prev => ({ ...prev, lat: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                    placeholder="35.1595"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">경도 *</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={newCellForm.lng}
+                    onChange={(e) => setNewCellForm(prev => ({ ...prev, lng: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                    placeholder="126.8526"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">최대 수용 인원</label>
+                <input
+                  type="number"
+                  value={newCellForm.maxCapacity}
+                  onChange={(e) => setNewCellForm(prev => ({ ...prev, maxCapacity: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                  placeholder="1"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">유의사항</label>
+                <textarea
+                  value={newCellForm.notice}
+                  onChange={(e) => setNewCellForm(prev => ({ ...prev, notice: e.target.value }))}
+                  rows={2}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none resize-none"
+                  placeholder="셀 운영 관련 유의사항"
+                />
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setCellAddModalOpen(false)}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateCell}
+                disabled={createCellMutation.isPending}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {createCellMutation.isPending ? '생성 중...' : '셀 생성'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 존 수정 모달 */}
+      {areaEditModalOpen && selectedArea && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">존 정보 수정</h3>
+            <p className="mt-1 text-xs text-gray-500">
+              존의 기본 정보를 수정합니다. 영역(폴리곤)은 변경할 수 없습니다.
+            </p>
+            
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">존 이름 *</label>
+                <input
+                  type="text"
+                  value={editAreaForm.name}
+                  onChange={(e) => setEditAreaForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
+                  placeholder="존 이름"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">최대 수용 인원</label>
+                <input
+                  type="number"
+                  value={editAreaForm.maxCapacity}
+                  onChange={(e) => setEditAreaForm(prev => ({ ...prev, maxCapacity: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
+                  placeholder="0"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">유의사항</label>
+                <textarea
+                  value={editAreaForm.notice}
+                  onChange={(e) => setEditAreaForm(prev => ({ ...prev, notice: e.target.value }))}
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none resize-none"
+                  placeholder="존 운영 관련 유의사항"
+                />
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setAreaEditModalOpen(false)}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleUpdateArea}
+                disabled={updateAreaMutation.isPending}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {updateAreaMutation.isPending ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

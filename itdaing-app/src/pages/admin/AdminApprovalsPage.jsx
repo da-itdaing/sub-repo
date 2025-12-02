@@ -4,7 +4,8 @@ import { Search, ChevronLeft, ChevronRight, CheckCircle2, Clock, XCircle, MapPin
 import { Map, Polygon, MapMarker } from 'react-kakao-maps-sdk';
 import { useToast } from '@/hooks/useToast';
 import { listPendingApprovals, approvePopup, rejectPopup, getPopupDetail } from '@/services/adminService';
-import { parseGeoJsonPolygon } from '@/services/geoZoneService';
+import { parseGeoJsonPolygon, listCells } from '@/services/geoZoneService';
+import apiClient from '@/api/client';
 
 const CATEGORY_OPTIONS = [
   '전체',
@@ -112,11 +113,45 @@ const AdminApprovalsPage = () => {
 
   const selectedRequest = requests.find((r) => r.id === selectedId) ?? null;
 
-  // 팝업 상세 조회
+  // 팝업 상세 조회 (zone_cell 위치 정보 포함)
   const fetchPopupDetail = useCallback(async (targetId) => {
     if (!targetId) return;
     try {
       const detail = await getPopupDetail(targetId);
+      
+      // zone_cell 위치 정보가 없으면 별도 조회
+      if (detail?.zoneCellId && !detail.zoneCellLat) {
+        try {
+          // /geo/cells/{cellId} 엔드포인트가 있다면 사용, 없으면 리스트에서 찾기
+          const cellData = await apiClient.get(`/geo/cells/${detail.zoneCellId}`);
+          if (cellData) {
+            // geometryData에서 좌표 추출
+            let lat = cellData.lat;
+            let lng = cellData.lng;
+            
+            if (!lat && cellData.geometryData) {
+              try {
+                const geo = JSON.parse(cellData.geometryData);
+                if (geo.type === 'Point' && geo.coordinates) {
+                  lng = geo.coordinates[0];
+                  lat = geo.coordinates[1];
+                } else if (geo.lat && geo.lng) {
+                  lat = geo.lat;
+                  lng = geo.lng;
+                }
+              } catch {}
+            }
+            
+            detail.zoneCellLat = lat;
+            detail.zoneCellLng = lng;
+            detail.zoneCellAddress = cellData.detailedAddress || '';
+            detail.zoneCellLabel = cellData.label || '';
+          }
+        } catch (cellErr) {
+          console.warn('zone_cell 정보 조회 실패:', cellErr);
+        }
+      }
+      
       setSelectedPopupDetail(detail);
     } catch (err) {
       console.error('팝업 상세 조회 실패:', err);
@@ -453,13 +488,36 @@ const AdminApprovalsPage = () => {
                     <MapPin className="h-4 w-4 text-gray-500" />
                     위치 정보
                   </h3>
-                  <div className="mt-3 h-48 w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100 flex items-center justify-center text-xs text-gray-400">
-                    {selectedPopupDetail?.zoneCellId ? (
-                      '셀 위치 정보 표시 영역'
+                  <div className="mt-3 h-48 w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+                    {selectedPopupDetail?.zoneCellLat && selectedPopupDetail?.zoneCellLng ? (
+                      <Map
+                        center={{ lat: selectedPopupDetail.zoneCellLat, lng: selectedPopupDetail.zoneCellLng }}
+                        style={{ width: '100%', height: '100%' }}
+                        level={3}
+                        draggable={false}
+                        zoomable={false}
+                      >
+                        <MapMarker
+                          position={{ lat: selectedPopupDetail.zoneCellLat, lng: selectedPopupDetail.zoneCellLng }}
+                        />
+                      </Map>
+                    ) : selectedPopupDetail?.zoneCellId ? (
+                      <div className="h-full flex flex-col items-center justify-center text-xs text-gray-400">
+                        <MapPin className="h-6 w-6 mb-2 opacity-30" />
+                        <p>셀 ID: {selectedPopupDetail.zoneCellId}</p>
+                        <p className="text-[10px]">(좌표 정보 로딩 필요)</p>
+                      </div>
                     ) : (
-                      '위치 정보가 없습니다.'
+                      <div className="h-full flex items-center justify-center text-xs text-gray-400">
+                        위치 정보가 없습니다.
+                      </div>
                     )}
                   </div>
+                  {selectedPopupDetail?.zoneCellAddress && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      📍 {selectedPopupDetail.zoneCellAddress}
+                    </p>
+                  )}
                 </div>
 
                 {/* 하단 액션 버튼 */}
