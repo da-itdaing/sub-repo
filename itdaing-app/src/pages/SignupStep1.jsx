@@ -50,7 +50,7 @@ const SignupStep1 = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header hideSearchBar />
       
-      <main className="flex-1 py-10">
+      <main className="flex-1 pt-10 pb-12 md:pt-12">
         <div className="w-full max-w-[500px] md:max-w-[760px] mx-auto px-5">
           <div className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-gray-100 md:p-8">
             <SignupStepHeader

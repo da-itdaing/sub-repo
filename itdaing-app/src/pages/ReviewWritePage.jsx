@@ -123,7 +123,7 @@ const ReviewWritePage = () => {
     <div className="min-h-screen flex flex-col bg-white">
       <Header hideSearchBar />
 
-      <main className="flex-1 w-full max-w-[600px] mx-auto px-5 py-8 pb-24">
+      <main className="flex-1 w-full max-w-[600px] mx-auto px-5 pt-8 md:pt-12 pb-24">
         {/* Top Navigation */}
         <div className="flex items-center mb-6">
           <button onClick={() => navigate(-1)} className="p-1 -ml-1">

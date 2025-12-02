@@ -18,7 +18,7 @@ const MyReviewsPage = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header hideSearchBar title="내 후기" />
       
-      <main className="flex-1 w-full max-w-[540px] mx-auto px-5 py-8">
+      <main className="flex-1 w-full max-w-[540px] mx-auto px-5 pt-8 pb-10 md:pt-10">
         <div className="flex items-center gap-3 mb-6">
           <button onClick={() => navigate(-1)} className="p-1">
             <ArrowLeft className="w-6 h-6 text-gray-700" />

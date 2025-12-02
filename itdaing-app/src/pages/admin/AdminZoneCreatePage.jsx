@@ -33,9 +33,69 @@ const REGIONS = [
 // 광주 중심 좌표
 const GWANGJU_CENTER = { lat: 35.1595, lng: 126.8526 };
 
+const normalizePolygonPath = (ring = []) => {
+  if (!Array.isArray(ring)) return [];
+  if (ring.length < 2) return ring;
+  const first = ring[0];
+  const last = ring[ring.length - 1];
+  if (first && last && first.lat === last.lat && first.lng === last.lng) {
+    return ring.slice(0, -1);
+  }
+  return ring;
+};
+
+const computeCentroid = (path = []) => {
+  if (!Array.isArray(path) || path.length === 0) {
+    return null;
+  }
+  const summed = path.reduce(
+    (acc, cur) => ({
+      lat: acc.lat + cur.lat / path.length,
+      lng: acc.lng + cur.lng / path.length,
+    }),
+    { lat: 0, lng: 0 }
+  );
+  return summed;
+};
+
+const parseCellGeometry = (geometryData) => {
+  if (!geometryData) return null;
+  try {
+    const geo = typeof geometryData === "string" ? JSON.parse(geometryData) : geometryData;
+    if (geo?.type === "Polygon" && Array.isArray(geo.coordinates?.[0])) {
+      const ring = geo.coordinates[0]
+        .map((coord) => {
+          if (!Array.isArray(coord) || coord.length < 2) return null;
+          const [lng, lat] = coord;
+          if (typeof lat !== "number" || typeof lng !== "number") return null;
+          return { lat, lng };
+        })
+        .filter(Boolean);
+      if (ring.length < 3) return null;
+      const normalized = normalizePolygonPath(ring);
+      const centroid = computeCentroid(normalized);
+      return { type: "polygon", path: normalized, centroid };
+    }
+
+    if (geo?.type === "Point" && Array.isArray(geo.coordinates)) {
+      const [lng, lat] = geo.coordinates;
+      if (typeof lat === "number" && typeof lng === "number") {
+        return { type: "point", position: { lat, lng } };
+      }
+    }
+
+    if (typeof geo?.lat === "number" && typeof geo?.lng === "number") {
+      return { type: "point", position: { lat: geo.lat, lng: geo.lng } };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+};
+
 const AdminZoneCreatePage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { addToast } = useToast();
 
   // 폼 상태
   const [zoneName, setZoneName] = useState("");
@@ -58,6 +118,7 @@ const AdminZoneCreatePage = () => {
   // 셀 추가 모드
   const [isAddingCell, setIsAddingCell] = useState(false);
   const [newCellLabel, setNewCellLabel] = useState("");
+  const [cellTempPath, setCellTempPath] = useState([]);
 
   // 수정 모드
   const [editMode, setEditMode] = useState(false);
@@ -70,11 +131,11 @@ const AdminZoneCreatePage = () => {
       setAreas(data.items || []);
     } catch (err) {
       console.error("존 목록 로드 실패:", err);
-      toast({ type: "error", message: "존 목록을 불러오는데 실패했습니다." });
+      addToast({ type: "error", message: "존 목록을 불러오는데 실패했습니다." });
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [addToast]);
 
   // 셀 목록 로드
   const loadCells = useCallback(async (areaId) => {
@@ -120,8 +181,8 @@ const AdminZoneCreatePage = () => {
         // 폴리곤 그리기 모드
         setTempPath((prev) => [...prev, point]);
       } else if (isAddingCell && selectedArea) {
-        // 셀 추가 모드
-        handleAddCell(point);
+        // 셀 폴리곤 그리기 모드
+        setCellTempPath((prev) => [...prev, point]);
       }
     },
     [isDrawing, isAddingCell, selectedArea]
@@ -134,19 +195,22 @@ const AdminZoneCreatePage = () => {
     setPolygonPath([]);
     setSelectedArea(null);
     setEditMode(false);
-    toast({ type: "info", message: "지도를 클릭하여 존 영역을 그려주세요. 완료 후 '그리기 완료' 버튼을 눌러주세요." });
+    setIsAddingCell(false);
+    setCellTempPath([]);
+    setNewCellLabel("");
+    addToast({ type: "info", message: "지도를 클릭하여 존 영역을 그려주세요. 완료 후 '그리기 완료' 버튼을 눌러주세요." });
   };
 
   // 폴리곤 그리기 완료
   const handleFinishDrawing = () => {
     if (tempPath.length < 3) {
-      toast({ type: "error", message: "최소 3개 이상의 점을 찍어주세요." });
+      addToast({ type: "error", message: "최소 3개 이상의 점을 찍어주세요." });
       return;
     }
     setPolygonPath(tempPath);
     setTempPath([]);
     setIsDrawing(false);
-    toast({ type: "success", message: "존 영역이 설정되었습니다. 정보를 입력하고 저장해주세요." });
+    addToast({ type: "success", message: "존 영역이 설정되었습니다. 정보를 입력하고 저장해주세요." });
   };
 
   // 폴리곤 그리기 취소
@@ -158,11 +222,11 @@ const AdminZoneCreatePage = () => {
   // 존 저장
   const handleSaveZone = async () => {
     if (!zoneName.trim()) {
-      toast({ type: "error", message: "존 이름을 입력해주세요." });
+      addToast({ type: "error", message: "존 이름을 입력해주세요." });
       return;
     }
     if (polygonPath.length < 3) {
-      toast({ type: "error", message: "존 영역을 먼저 그려주세요." });
+      addToast({ type: "error", message: "존 영역을 먼저 그려주세요." });
       return;
     }
 
@@ -179,7 +243,7 @@ const AdminZoneCreatePage = () => {
           maxCapacity: maxCapacity ? parseInt(maxCapacity, 10) : null,
           notice: notice || null,
         });
-        toast({ type: "success", message: "존이 수정되었습니다." });
+        addToast({ type: "success", message: "존이 수정되었습니다." });
       } else {
         // 생성 모드
         await createArea({
@@ -189,7 +253,7 @@ const AdminZoneCreatePage = () => {
           maxCapacity: maxCapacity ? parseInt(maxCapacity, 10) : null,
           notice: notice || null,
         });
-        toast({ type: "success", message: "존이 생성되었습니다." });
+        addToast({ type: "success", message: "존이 생성되었습니다." });
       }
 
       // 상태 초기화 및 목록 새로고침
@@ -197,7 +261,7 @@ const AdminZoneCreatePage = () => {
       await loadAreas();
     } catch (err) {
       console.error("존 저장 실패:", err);
-      toast({ type: "error", message: err.message || "존 저장에 실패했습니다." });
+      addToast({ type: "error", message: err.message || "존 저장에 실패했습니다." });
     } finally {
       setIsLoading(false);
     }
@@ -214,12 +278,12 @@ const AdminZoneCreatePage = () => {
     setIsLoading(true);
     try {
       await deleteArea(selectedArea.id);
-      toast({ type: "success", message: "존이 삭제되었습니다." });
+      addToast({ type: "success", message: "존이 삭제되었습니다." });
       resetForm();
       await loadAreas();
     } catch (err) {
       console.error("존 삭제 실패:", err);
-      toast({ type: "error", message: err.message || "존 삭제에 실패했습니다." });
+      addToast({ type: "error", message: err.message || "존 삭제에 실패했습니다." });
     } finally {
       setIsLoading(false);
     }
@@ -234,6 +298,8 @@ const AdminZoneCreatePage = () => {
     setNotice(area.notice || "");
     setEditMode(false);
     setIsAddingCell(false);
+    setCellTempPath([]);
+    setNewCellLabel("");
 
     // 지도 중심 이동
     const coords = parseGeoJsonPolygon(area.polygonGeoJson);
@@ -250,7 +316,7 @@ const AdminZoneCreatePage = () => {
   const handleEditMode = () => {
     if (!selectedArea) return;
     setEditMode(true);
-    toast({ type: "info", message: "수정 모드입니다. 정보를 수정하고 저장해주세요." });
+    addToast({ type: "info", message: "수정 모드입니다. 정보를 수정하고 저장해주세요." });
   };
 
   // 폼 초기화
@@ -265,50 +331,77 @@ const AdminZoneCreatePage = () => {
     setCells([]);
     setIsDrawing(false);
     setIsAddingCell(false);
+    setCellTempPath([]);
+    setNewCellLabel("");
     setEditMode(false);
   };
 
   // 셀 추가 모드 토글
   const handleToggleAddCell = () => {
     if (!selectedArea) {
-      toast({ type: "error", message: "먼저 존을 선택해주세요." });
+      addToast({ type: "error", message: "먼저 존을 선택해주세요." });
       return;
     }
-    setIsAddingCell(!isAddingCell);
-    if (!isAddingCell) {
-      toast({ type: "info", message: "지도에서 셀 위치를 클릭해주세요." });
+    if (isDrawing) {
+      addToast({ type: "error", message: "존 그리기 모드에서는 셀을 추가할 수 없습니다." });
+      return;
     }
+    setIsAddingCell((prev) => {
+      const next = !prev;
+      if (next) {
+        setCellTempPath([]);
+        addToast({ type: "info", message: "지도에서 셀 영역을 그려주세요. 최소 3개의 점이 필요합니다." });
+      } else {
+        setCellTempPath([]);
+        setNewCellLabel("");
+      }
+      return next;
+    });
   };
 
-  // 셀 추가
-  const handleAddCell = async (point) => {
-    if (!selectedArea) return;
+  // 셀 폴리곤 저장
+  const handleSaveCellPolygon = async () => {
+    if (!selectedArea) {
+      addToast({ type: "error", message: "먼저 존을 선택해주세요." });
+      return;
+    }
+    if (cellTempPath.length < 3) {
+      addToast({ type: "error", message: "셀 영역을 최소 3개 점 이상으로 그려주세요." });
+      return;
+    }
 
     const label = newCellLabel.trim() || `C-${cells.length + 1}`;
-    
-    // 셀 위치를 GeoJSON Point 형식으로 변환
-    // 백엔드에서 centroid 계산을 위해 Point 형식 사용
-    const cellGeoJson = JSON.stringify({
-      type: "Point",
-      coordinates: [point.lng, point.lat], // GeoJSON은 [lng, lat] 순서
-    });
-    
+    const cellGeoJson = toGeoJsonPolygon(cellTempPath);
+
     try {
       await createCell({
         areaId: selectedArea.id,
-        ownerId: 1, // 기본 관리자 ID
+        ownerId: 1, // TODO: 실제 운영 시 로그인 사용자 ID로 대체
         label,
         detailedAddress: "",
         geometryData: cellGeoJson,
         status: "APPROVED",
       });
-      toast({ type: "success", message: `셀 "${label}"이 추가되었습니다.` });
+      addToast({ type: "success", message: `셀 "${label}"이 저장되었습니다.` });
       setNewCellLabel("");
+      setCellTempPath([]);
       await loadCells(selectedArea.id);
     } catch (err) {
-      console.error("셀 추가 실패:", err);
-      toast({ type: "error", message: err.message || "셀 추가에 실패했습니다." });
+      console.error("셀 저장 실패:", err);
+      addToast({ type: "error", message: err.message || "셀 저장에 실패했습니다." });
     }
+  };
+
+  // 셀 폴리곤 취소
+  const handleCancelCellDrawing = () => {
+    setIsAddingCell(false);
+    setCellTempPath([]);
+    setNewCellLabel("");
+  };
+
+  // 셀 포인트 되돌리기
+  const handleUndoCellPoint = () => {
+    setCellTempPath((prev) => prev.slice(0, -1));
   };
 
   // 셀 삭제
@@ -319,11 +412,11 @@ const AdminZoneCreatePage = () => {
 
     try {
       await deleteCell(cellId);
-      toast({ type: "success", message: "셀이 삭제되었습니다." });
+      addToast({ type: "success", message: "셀이 삭제되었습니다." });
       await loadCells(selectedArea.id);
     } catch (err) {
       console.error("셀 삭제 실패:", err);
-      toast({ type: "error", message: err.message || "셀 삭제에 실패했습니다." });
+      addToast({ type: "error", message: err.message || "셀 삭제에 실패했습니다." });
     }
   };
 
@@ -540,33 +633,68 @@ const AdminZoneCreatePage = () => {
               />
             ))}
 
-            {/* 셀 마커 */}
-            {cells.map((cell) => {
-              let pos = null;
-              try {
-                const geo = JSON.parse(cell.geometryData || "{}");
-                // GeoJSON Point 형식: { type: "Point", coordinates: [lng, lat] }
-                if (geo.type === "Point" && geo.coordinates) {
-                  pos = { lat: geo.coordinates[1], lng: geo.coordinates[0] };
-                } else if (geo.lat && geo.lng) {
-                  // 레거시 형식: { lat, lng }
-                  pos = { lat: geo.lat, lng: geo.lng };
-                }
-              } catch {
-                // 파싱 실패 시 무시
-              }
-              if (!pos) return null;
+            {/* 셀 영역 그리는 중 */}
+            {cellTempPath.length >= 2 && (
+              <Polygon
+                path={cellTempPath}
+                strokeWeight={2}
+                strokeColor="#f97316"
+                strokeOpacity={0.9}
+                strokeStyle="shortdash"
+                fillColor="#f97316"
+                fillOpacity={0.2}
+              />
+            )}
+            {cellTempPath.map((point, idx) => (
+              <MapMarker
+                key={`cell-temp-${idx}`}
+                position={point}
+                image={{
+                  src: "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerRed.png",
+                  size: { width: 18, height: 24 },
+                }}
+              />
+            ))}
 
-              return (
-                <div key={cell.id}>
-                  <MapMarker position={pos} />
-                  <CustomOverlayMap position={pos} yAnchor={2.5}>
-                    <div className="bg-white px-2 py-1 rounded shadow text-xs font-semibold border border-gray-200">
-                      {cell.label}
-                    </div>
-                  </CustomOverlayMap>
-                </div>
-              );
+            {/* 셀 영역 */}
+            {cells.map((cell) => {
+              const geometry = parseCellGeometry(cell.geometryData);
+              if (!geometry) return null;
+
+              if (geometry.type === "polygon") {
+                return (
+                  <div key={cell.id}>
+                    <Polygon
+                      path={geometry.path}
+                      strokeWeight={2}
+                      strokeColor="#f59e0b"
+                      strokeOpacity={0.9}
+                      fillColor="#fcd34d"
+                      fillOpacity={0.25}
+                    />
+                    <CustomOverlayMap position={geometry.centroid} yAnchor={1.5}>
+                      <div className="bg-white px-2 py-1 rounded shadow text-xs font-semibold border border-amber-200 text-amber-800">
+                        {cell.label}
+                      </div>
+                    </CustomOverlayMap>
+                  </div>
+                );
+              }
+
+              if (geometry.type === "point") {
+                return (
+                  <div key={cell.id}>
+                    <MapMarker position={geometry.position} />
+                    <CustomOverlayMap position={geometry.position} yAnchor={2.5}>
+                      <div className="bg-white px-2 py-1 rounded shadow text-xs font-semibold border border-gray-200">
+                        {cell.label}
+                      </div>
+                    </CustomOverlayMap>
+                  </div>
+                );
+              }
+
+              return null;
             })}
           </Map>
 
@@ -577,21 +705,43 @@ const AdminZoneCreatePage = () => {
             </div>
           )}
           {isAddingCell && (
-            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-md text-sm text-gray-700 flex items-center gap-2">
-              <span>📍 셀 추가 모드</span>
+            <div className="absolute top-4 left-4 bg-white/95 backdrop-blur px-4 py-3 rounded-lg shadow-md text-gray-800 w-72 space-y-2">
+              <div className="text-sm font-semibold">📍 셀 영역 그리기</div>
+              <p className="text-xs text-gray-500">
+                지도를 클릭하여 셀 경계를 그려주세요. 현재 {cellTempPath.length}점
+              </p>
               <input
                 type="text"
                 value={newCellLabel}
                 onChange={(e) => setNewCellLabel(e.target.value)}
-                placeholder="셀 라벨"
-                className="px-2 py-1 text-xs border rounded w-20"
+                placeholder="셀 라벨 (예: A-1)"
+                className="w-full px-2 py-1 text-xs border rounded"
               />
-              <button
-                onClick={() => setIsAddingCell(false)}
-                className="text-xs text-red-500 hover:underline"
-              >
-                취소
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleUndoCellPoint}
+                  disabled={cellTempPath.length === 0}
+                  className="flex-1 text-xs px-2 py-1 rounded border border-gray-300 disabled:opacity-50"
+                >
+                  마지막 점 취소
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelCellDrawing}
+                  className="text-xs px-2 py-1 rounded border border-red-200 text-red-500"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveCellPolygon}
+                  disabled={cellTempPath.length < 3}
+                  className="text-xs px-3 py-1 rounded bg-primary text-white disabled:opacity-50"
+                >
+                  셀 저장
+                </button>
+              </div>
             </div>
           )}
         </div>

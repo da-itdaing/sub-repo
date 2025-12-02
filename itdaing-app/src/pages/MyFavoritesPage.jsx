@@ -33,7 +33,7 @@ const MyFavoritesPage = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
 
-      <main className="flex-1 w-full max-w-[1200px] mx-auto px-4 md:px-6 lg:px-8 py-8">
+      <main className="flex-1 w-full max-w-[1200px] mx-auto px-4 md:px-6 lg:px-8 pt-8 pb-12 md:pt-12">
           <div className="mb-6">
             <p className="text-sm text-gray-500">나의 관심 팝업 리스트</p>
             <h1 className="text-2xl font-bold">찜한 팝업</h1>

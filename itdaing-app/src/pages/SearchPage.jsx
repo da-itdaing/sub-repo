@@ -51,7 +51,7 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
-      <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto px-5 md:px-8 py-8 space-y-8">
+      <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto px-5 md:px-8 pt-8 md:pt-12 pb-10 space-y-8">
         <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-gray-100 md:p-6">
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">Search</p>
           <h1 className="text-2xl font-bold text-gray-900 mt-1">어떤 팝업을 찾고 계신가요?</h1>

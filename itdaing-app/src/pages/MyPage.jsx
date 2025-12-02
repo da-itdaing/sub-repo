@@ -146,7 +146,7 @@ const MyPage = () => {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         <Header />
-        <main className="flex-1 flex items-center justify-center px-4">
+        <main className="flex-1 flex items-center justify-center px-4 pt-16 md:pt-24 pb-12">
           <div className="w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-100">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50">
               <LogOut className="h-8 w-8 text-gray-400" />
@@ -173,10 +173,13 @@ const MyPage = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
 
-      <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto px-4 md:px-8 py-8 space-y-8">
+      <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto px-4 md:px-8 pt-16 pb-16 md:pt-24 md:pb-20 space-y-8">
         {/* 프로필 섹션 */}
         <section className="rounded-3xl bg-white shadow-sm ring-1 ring-gray-100 overflow-hidden">
-          <div className="relative bg-gradient-to-r from-[#FFC1DF] via-[#FFD8EA] to-[#FFC1DF] px-6 py-8 text-white">
+          <div
+            className="relative px-6 py-8 text-white"
+            style={{ background: 'linear-gradient(90deg, #FFC1DF 0%, #FFD8EA 50%, #FFC1DF 100%)' }}
+          >
             <div className="flex items-start justify-between mb-6">
               <button onClick={() => navigate(-1)} className="p-1 hover:bg-white/10 rounded-full transition">
                 <ChevronLeft className="w-6 h-6" />

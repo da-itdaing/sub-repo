@@ -12,7 +12,7 @@ const ConsumerChatbotPage = () => {
       <Header />
 
       {/* 챗봇 영역 - 화면 전체 사용 */}
-      <main className="flex-1 flex flex-col w-full max-w-[540px] mx-auto">
+      <main className="flex-1 flex flex-col w-full max-w-[540px] mx-auto pt-6 md:pt-10">
         <ChatLayout mode="consumer" />
       </main>
     </div>

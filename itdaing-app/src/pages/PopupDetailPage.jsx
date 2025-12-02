@@ -208,7 +208,7 @@ const PopupDetailPage = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
 
-      <main className="flex-1 w-full max-w-[800px] mx-auto bg-white pb-20">
+      <main className="flex-1 w-full max-w-[800px] mx-auto bg-white pt-8 md:pt-12 pb-20">
         {/* 큰 이미지 */}
         <div className="w-full">
           <img

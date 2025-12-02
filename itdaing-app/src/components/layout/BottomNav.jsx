@@ -12,6 +12,10 @@ const BottomNav = () => {
 
   const isActive = (path) => location.pathname === path;
 
+  const handleNavigate = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <>
       {/* 소비자용 플로팅 챗봇 팝업 */}
@@ -22,6 +26,7 @@ const BottomNav = () => {
           <div className="flex justify-around items-center h-16 md:h-22">
           <Link 
             to={ROUTES.nearby}
+            onClick={handleNavigate}
             className={`flex flex-col items-center gap-0.5 md:gap-2 hover:opacity-80 transition-opacity flex-1 ${
               isActive(ROUTES.nearby) ? 'text-primary' : 'text-white'
             }`}
@@ -32,6 +37,7 @@ const BottomNav = () => {
           
           <Link 
             to={ROUTES.home}
+            onClick={handleNavigate}
             className={`flex flex-col items-center gap-0.5 md:gap-2 hover:opacity-80 transition-opacity flex-1 ${
               isActive(ROUTES.home) ? 'text-primary' : 'text-white'
             }`}
@@ -42,6 +48,7 @@ const BottomNav = () => {
           
           <Link 
             to={ROUTES.mypage}
+            onClick={handleNavigate}
             className={`flex flex-col items-center gap-0.5 md:gap-2 hover:opacity-80 transition-opacity flex-1 ${
               isActive(ROUTES.mypage) ? 'text-primary' : 'text-white'
             }`}

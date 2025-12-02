@@ -3,6 +3,32 @@ import { createPortal } from 'react-dom';
 import { X, Minus, Maximize2, MessageCircle } from 'lucide-react';
 import ChatbotContent from '@/components/chatbot/ChatbotContent';
 
+const MOBILE_BOTTOM_NAV_HEIGHT_PX = 64; // BottomNav 높이(h-16)
+const MOBILE_BUTTON_GAP_PX = 24; // 여유 공간
+const POPUP_GAP_PX = 16;
+const DESKTOP_BOTTOM_NAV_HEIGHT_PX = 88; // BottomNav md:h-22
+const DESKTOP_BUTTON_GAP_PX = 32;
+const DESKTOP_POPUP_GAP_PX = 24;
+const MOBILE_CONTAINER_WIDTH_PX = 540;
+const DESKTOP_CONTAINER_WIDTH_PX = 1200;
+const MOBILE_BUTTON_SIDE_GAP_PX = 20;
+const DESKTOP_BUTTON_SIDE_GAP_PX = 32;
+
+const BUTTON_BOTTOM_OFFSET = `calc(env(safe-area-inset-bottom, 0px) + ${
+  MOBILE_BOTTOM_NAV_HEIGHT_PX + MOBILE_BUTTON_GAP_PX
+}px)`;
+const POPUP_BOTTOM_OFFSET = `calc(env(safe-area-inset-bottom, 0px) + ${
+  MOBILE_BOTTOM_NAV_HEIGHT_PX + POPUP_GAP_PX
+}px)`;
+const BUTTON_BOTTOM_OFFSET_DESKTOP = `calc(env(safe-area-inset-bottom, 0px) + ${
+  DESKTOP_BOTTOM_NAV_HEIGHT_PX + DESKTOP_BUTTON_GAP_PX
+}px)`;
+const POPUP_BOTTOM_OFFSET_DESKTOP = `calc(env(safe-area-inset-bottom, 0px) + ${
+  DESKTOP_BOTTOM_NAV_HEIGHT_PX + DESKTOP_POPUP_GAP_PX
+}px)`;
+const BUTTON_RIGHT_OFFSET = `calc((100vw - min(${MOBILE_CONTAINER_WIDTH_PX}px, 100vw)) / 2 + ${MOBILE_BUTTON_SIDE_GAP_PX}px)`;
+const DESKTOP_BUTTON_RIGHT_OFFSET = `calc((100vw - min(${DESKTOP_CONTAINER_WIDTH_PX}px, 100vw)) / 2 + ${DESKTOP_BUTTON_SIDE_GAP_PX}px)`;
+
 /**
  * 소비자용 플로팅 챗봇 팝업
  * - 우측 하단에 플로팅 버튼
@@ -64,8 +90,8 @@ const ConsumerChatbotPopup = () => {
           onClick={handleToggle}
           className="fixed z-[100] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#EB0000] to-[#c90000] text-white shadow-lg shadow-red-500/30 transition-all hover:scale-105 hover:shadow-xl hover:shadow-red-500/40 active:scale-95"
           style={{
-            bottom: 'max(7rem, calc(env(safe-area-inset-bottom, 0px) + 7rem))',
-            right: 'max(1.25rem, calc((100vw - min(540px, 100vw)) / 2 + 1.25rem))',
+            bottom: BUTTON_BOTTOM_OFFSET,
+            right: BUTTON_RIGHT_OFFSET,
           }}
           aria-label="AI 챗봇 열기"
         >
@@ -82,14 +108,17 @@ const ConsumerChatbotPopup = () => {
       {/* 챗봇 팝업 */}
       {isOpen && !isMinimized && (
         <div
+          data-chatbot-floating={isMaximized ? undefined : 'true'}
           className={`fixed z-[110] flex flex-col bg-white shadow-2xl transition-all duration-300 ${
             isMaximized
               ? 'inset-4 rounded-2xl'
               : 'bottom-6 right-4 w-[380px] h-[550px] max-h-[75vh] rounded-2xl md:w-[420px] md:h-[600px]'
           }`}
-          style={!isMaximized ? {
-            bottom: 'max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 1.5rem))',
-          } : undefined}
+          style={!isMaximized
+            ? {
+                bottom: POPUP_BOTTOM_OFFSET,
+              }
+            : undefined}
           role="dialog"
           aria-modal="false"
           aria-labelledby="consumer-chatbot-title"
@@ -152,8 +181,12 @@ const ConsumerChatbotPopup = () => {
       <style>{`
         @media (min-width: 768px) {
           button[aria-label="AI 챗봇 열기"] {
-            bottom: 2rem !important;
-            right: max(2rem, calc((100vw - 1200px) / 2 + 2rem)) !important;
+            bottom: ${BUTTON_BOTTOM_OFFSET_DESKTOP} !important;
+            right: ${DESKTOP_BUTTON_RIGHT_OFFSET} !important;
+          }
+          div[data-chatbot-floating="true"] {
+            bottom: ${POPUP_BOTTOM_OFFSET_DESKTOP} !important;
+            right: ${DESKTOP_BUTTON_RIGHT_OFFSET} !important;
           }
         }
       `}</style>
