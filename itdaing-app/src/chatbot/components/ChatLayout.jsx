@@ -105,6 +105,7 @@ const ChatLayout = ({ mode = 'consumer' }) => {
     messages,
     isLoading,
     isSlow,
+    isStreaming, // v14: 첫 토큰 도착 후 스트리밍 중 여부
     recommendations,
     sendMessage,
     resetSession,
@@ -177,8 +178,9 @@ const ChatLayout = ({ mode = 'consumer' }) => {
       <main className="flex-1 overflow-hidden min-h-0">
         <MessageList
           messages={messages}
-          isTyping={isLoading}
+          isTyping={isLoading && !isStreaming} // v14: 스트리밍 중에는 TypingIndicator 숨김
           isSlow={isSlow}
+          isStreaming={isStreaming} // v14: 스트리밍 상태 전달
           mode={mode}
         />
       </main>

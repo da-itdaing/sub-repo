@@ -193,14 +193,28 @@ const SlowResponseMessage = () => (
 );
 
 /**
- * 메시지 목록 컴포넌트
+ * 스트리밍 커서 - 텍스트가 입력되고 있음을 표시
+ * v14: 실제 토큰 스트리밍 중 표시
  */
-const MessageList = ({ messages, isTyping, isSlow }) => {
+const StreamingCursor = () => (
+  <span className="inline-block w-0.5 h-4 bg-rose-500 animate-pulse ml-0.5 align-middle" />
+);
+
+/**
+ * 메시지 목록 컴포넌트
+ * v14: isStreaming prop 추가 - 스트리밍 중 커서 표시
+ */
+const MessageList = ({ messages, isTyping, isSlow, isStreaming }) => {
   const bottomRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping, isSlow]);
+  }, [messages, isTyping, isSlow, isStreaming]);
+
+  // 마지막 봇 메시지 찾기 (스트리밍 커서 표시용)
+  const lastBotMessageIndex = messages.reduce((acc, msg, idx) => 
+    msg.sender === 'BOT' ? idx : acc, -1
+  );
 
   return (
     <div
@@ -208,8 +222,12 @@ const MessageList = ({ messages, isTyping, isSlow }) => {
       role="list"
       aria-label="채팅 메시지"
     >
-      {messages.map((msg) => (
-        <MessageBubble key={msg.id} message={msg} />
+      {messages.map((msg, idx) => (
+        <MessageBubble 
+          key={msg.id} 
+          message={msg}
+          showCursor={isStreaming && idx === lastBotMessageIndex} // v14: 스트리밍 중 커서 표시
+        />
       ))}
 
       {isTyping && <TypingIndicator />}

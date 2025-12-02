@@ -96,9 +96,18 @@ const parseMarkdown = (text) => {
 };
 
 /**
- * 메시지 말풍선
+ * 스트리밍 커서 - 텍스트가 입력되고 있음을 표시
+ * v14: 실제 토큰 스트리밍 중 깜빡이는 커서
  */
-const MessageBubble = ({ message }) => {
+const StreamingCursor = () => (
+  <span className="inline-block w-0.5 h-4 bg-rose-500 animate-pulse ml-0.5 align-text-bottom" />
+);
+
+/**
+ * 메시지 말풍선
+ * v14: showCursor prop 추가 - 스트리밍 중 커서 표시
+ */
+const MessageBubble = ({ message, showCursor = false }) => {
   const isBot = message.sender === 'BOT';
   const htmlContent = isBot ? parseMarkdown(message.text) : null;
 
@@ -121,7 +130,10 @@ const MessageBubble = ({ message }) => {
         )}
       >
         {isBot ? (
-          <div className="space-y-1" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+          <div className="space-y-1">
+            <span dangerouslySetInnerHTML={{ __html: htmlContent }} />
+            {showCursor && <StreamingCursor />}
+          </div>
         ) : (
           <div className="whitespace-pre-wrap font-medium">{message.text}</div>
         )}
