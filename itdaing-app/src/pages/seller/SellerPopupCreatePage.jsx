@@ -475,14 +475,15 @@ const SellerPopupFormPage = ({
     return true;
   };
 
-  // 존 선택 - 셀 지도 자동 표시
+  // 존 선택 - 셀 지도 자동 표시 (존 지도는 유지하여 다른 존도 선택 가능)
   const handleSelectArea = (area) => {
     if (isLocationLocked) return;
     setSelectedArea(area);
     setSelectedCell(null);
     setFormData((prev) => ({ ...prev, zoneCellId: null }));
     setShowMap(true); // 존 선택 시 셀 지도 자동 펼침
-    setShowZoneMap(false); // 존 지도는 접기 (셀 선택에 집중)
+    // 존 지도는 유지 (다른 존 선택 가능하도록)
+    setHoveredAreaId(null); // 호버 상태 리셋
   };
 
   // 셀 선택
@@ -709,14 +710,31 @@ const SellerPopupFormPage = ({
           
           {/* 존 선택 지도 - 폴리곤 표시, 호버 시 정보 표시 */}
           {showZoneMap && !isLocationLocked && areas.length > 0 && (
-            <div className="mt-3 h-[280px] rounded-lg overflow-hidden border border-gray-200 relative">
+            <div className="mt-3 h-[300px] rounded-lg overflow-hidden border border-gray-200 relative">
               <Map
-                center={GWANGJU_CENTER}
+                center={selectedArea ? (() => {
+                  // 선택된 존이 있으면 해당 존 중심으로 이동
+                  const coords = parseGeoJsonPolygon(selectedArea.polygonGeoJson);
+                  if (coords.length > 0) {
+                    return coords.reduce(
+                      (acc, c) => ({ lat: acc.lat + c.lat / coords.length, lng: acc.lng + c.lng / coords.length }),
+                      { lat: 0, lng: 0 }
+                    );
+                  }
+                  return GWANGJU_CENTER;
+                })() : GWANGJU_CENTER}
                 style={{ width: '100%', height: '100%' }}
-                level={8}
+                level={selectedArea ? 6 : 8}
               >
-                {/* 모든 존 폴리곤 표시 */}
-                {areas.map((area) => {
+                {/* 모든 존 폴리곤 표시 - 선택/호버 상태에 따라 z-index 조절 */}
+                {areas
+                  .sort((a, b) => {
+                    // 호버된 존 > 선택된 존 > 나머지 순으로 정렬 (나중에 그려져서 위에 표시)
+                    const aScore = (hoveredAreaId === a.id ? 2 : 0) + (selectedArea?.id === a.id ? 1 : 0);
+                    const bScore = (hoveredAreaId === b.id ? 2 : 0) + (selectedArea?.id === b.id ? 1 : 0);
+                    return aScore - bScore;
+                  })
+                  .map((area) => {
                   const coords = parseGeoJsonPolygon(area.polygonGeoJson);
                   if (coords.length < 3) return null;
                   
@@ -731,64 +749,116 @@ const SellerPopupFormPage = ({
                   
                   return (
                     <div key={area.id}>
-                      {/* 존 폴리곤 - 클릭 가능 */}
+                      {/* 존 폴리곤 - 클릭 가능, zIndex로 겹침 처리 */}
                       <Polygon
                         path={coords}
-                        strokeWeight={isSelected ? 3 : isHovered ? 2.5 : 1.5}
+                        strokeWeight={isSelected ? 3 : isHovered ? 3 : 1.5}
                         strokeColor={isSelected ? '#EB0000' : isHovered ? '#3B82F6' : '#6B7280'}
-                        strokeOpacity={isSelected ? 1 : isHovered ? 0.9 : 0.6}
+                        strokeOpacity={1}
                         fillColor={isSelected ? '#EB0000' : isHovered ? '#3B82F6' : '#9CA3AF'}
-                        fillOpacity={isSelected ? 0.35 : isHovered ? 0.3 : 0.1}
+                        fillOpacity={isSelected ? 0.4 : isHovered ? 0.35 : 0.15}
                         onClick={() => handleSelectArea(area)}
                         onMouseover={() => setHoveredAreaId(area.id)}
                         onMouseout={() => setHoveredAreaId(null)}
+                        zIndex={isHovered ? 10 : isSelected ? 5 : 1}
                       />
                       
-                      {/* 선택된 존에만 라벨 항상 표시 */}
-                      {isSelected && (
-                        <CustomOverlayMap position={center} yAnchor={0.5}>
-                          <div className="px-3 py-1.5 rounded-lg shadow-lg text-xs font-bold bg-[#EB0000] text-white border-2 border-white">
+                      {/* 선택된 존 라벨 */}
+                      {isSelected && !isHovered && (
+                        <CustomOverlayMap position={center} yAnchor={0.5} zIndex={20}>
+                          <div 
+                            className="px-3 py-1.5 rounded-lg shadow-lg text-xs font-bold bg-[#EB0000] text-white border-2 border-white cursor-pointer"
+                            onMouseEnter={() => setHoveredAreaId(area.id)}
+                          >
                             ✓ {area.name}
                           </div>
                         </CustomOverlayMap>
                       )}
                       
-                      {/* 호버 시 존 정보 카드 표시 (선택되지 않은 경우) */}
-                      {isHovered && !isSelected && (
-                        <CustomOverlayMap position={center} yAnchor={0.5}>
+                      {/* 호버 시 존 정보 카드 (선택 여부 상관없이) */}
+                      {isHovered && (
+                        <CustomOverlayMap position={center} yAnchor={0.5} zIndex={100}>
                           <div 
-                            onClick={() => handleSelectArea(area)}
+                            onClick={() => !isSelected && handleSelectArea(area)}
                             onMouseEnter={() => setHoveredAreaId(area.id)}
                             onMouseLeave={() => setHoveredAreaId(null)}
-                            className="cursor-pointer bg-white rounded-xl shadow-xl border border-blue-200 p-3 text-xs w-52 transform transition-all"
+                            className={`cursor-pointer bg-white rounded-xl shadow-2xl p-3 text-xs w-56 transform transition-all ${
+                              isSelected ? 'border-2 border-[#EB0000]' : 'border border-blue-300'
+                            }`}
                           >
-                            {/* 존 이름 */}
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
-                                <MapPin className="h-3.5 w-3.5 text-white" />
+                            {/* 헤더 */}
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                  isSelected ? 'bg-[#EB0000]' : 'bg-blue-500'
+                                }`}>
+                                  <MapPin className="h-3.5 w-3.5 text-white" />
+                                </div>
+                                <p className="font-bold text-gray-800">{area.name}</p>
                               </div>
-                              <p className="font-bold text-gray-800">{area.name}</p>
+                              {isSelected && (
+                                <span className="px-2 py-0.5 bg-[#EB0000] text-white rounded-full text-[10px] font-medium">
+                                  선택됨
+                                </span>
+                              )}
                             </div>
                             
-                            {/* 존 정보 */}
-                            <div className="space-y-1 text-gray-600 mb-2">
+                            {/* 존 상세 정보 */}
+                            <div className="space-y-1.5 text-gray-600 mb-3 bg-gray-50 rounded-lg p-2">
                               {area.district && (
-                                <p className="flex items-center gap-1">
-                                  <span className="text-gray-400">위치:</span> {area.district}
-                                </p>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-gray-400 text-[10px] w-12">위치</span>
+                                  <span className="font-medium">{area.district}</span>
+                                </div>
+                              )}
+                              {area.status && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-gray-400 text-[10px] w-12">상태</span>
+                                  <span className={`font-medium ${
+                                    area.status === 'APPROVED' ? 'text-green-600' : 
+                                    area.status === 'PENDING' ? 'text-yellow-600' : 'text-gray-600'
+                                  }`}>
+                                    {area.status === 'APPROVED' ? '운영중' : area.status === 'PENDING' ? '준비중' : area.status}
+                                  </span>
+                                </div>
+                              )}
+                              {area.maxCapacity && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-gray-400 text-[10px] w-12">수용</span>
+                                  <span className="font-medium">최대 {area.maxCapacity}개 부스</span>
+                                </div>
+                              )}
+                              {area.notice && (
+                                <div className="flex items-start gap-2">
+                                  <span className="text-gray-400 text-[10px] w-12 shrink-0">안내</span>
+                                  <span className="text-gray-500 line-clamp-2">{area.notice}</span>
+                                </div>
                               )}
                               {area.description && (
-                                <p className="line-clamp-2 text-gray-500">{area.description}</p>
+                                <div className="flex items-start gap-2">
+                                  <span className="text-gray-400 text-[10px] w-12 shrink-0">설명</span>
+                                  <span className="text-gray-500 line-clamp-2">{area.description}</span>
+                                </div>
+                              )}
+                              {/* 추가 정보가 없을 경우 기본 메시지 */}
+                              {!area.district && !area.maxCapacity && !area.notice && !area.description && (
+                                <p className="text-gray-400 text-center py-1">상세 정보가 없습니다</p>
                               )}
                             </div>
                             
-                            {/* 선택 버튼 */}
-                            <button
-                              type="button"
-                              className="w-full py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
-                            >
-                              이 존 선택하기
-                            </button>
+                            {/* 버튼 */}
+                            {isSelected ? (
+                              <div className="text-center text-[#EB0000] font-medium py-1">
+                                ✓ 현재 선택된 존입니다
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+                              >
+                                이 존 선택하기
+                              </button>
+                            )}
                           </div>
                         </CustomOverlayMap>
                       )}
@@ -799,8 +869,18 @@ const SellerPopupFormPage = ({
               
               {/* 안내 메시지 */}
               <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-sm rounded-full px-4 py-1.5 text-[11px] text-white shadow-lg">
-                🗺️ 지도에서 존 영역에 마우스를 올려 정보를 확인하세요
+                🗺️ 존 영역에 마우스를 올려 정보 확인 · 클릭하여 선택
               </div>
+              
+              {/* 선택된 존 표시 (우측 상단) */}
+              {selectedArea && (
+                <div className="absolute top-2 right-2 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 text-xs shadow-md border border-[#EB0000]/30">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-[#EB0000]" />
+                    <span className="font-medium text-gray-700">선택: {selectedArea.name}</span>
+                  </div>
+                </div>
+              )}
               
               {/* 지도 범례 */}
               <div className="absolute bottom-2 left-2 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 text-[10px] shadow-sm border border-gray-200">
@@ -810,12 +890,12 @@ const SellerPopupFormPage = ({
                     <span className="font-medium">선택됨</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-blue-500/30 border border-blue-500" />
+                    <div className="w-3 h-3 rounded bg-blue-500/35 border-2 border-blue-500" />
                     <span>호버</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div className="w-3 h-3 rounded bg-gray-200/50 border border-gray-400" />
-                    <span>선택 가능</span>
+                    <span>클릭 가능</span>
                   </div>
                 </div>
               </div>
