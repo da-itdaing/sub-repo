@@ -1,6 +1,10 @@
 import { useCallback, useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { RotateCcw, Zap, ChevronRight, Store, Users, DollarSign, TrendingUp, Percent, MapPin, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { 
+  RotateCcw, Zap, ChevronRight, Store, Users, DollarSign, 
+  Percent, MapPin, X, ChevronDown, ChevronUp, Map as MapIcon,
+  TrendingUp, Building2
+} from 'lucide-react';
 import MessageList from '@/chatbot/components/MessageList';
 import ChatInput from '@/chatbot/components/ChatInput';
 import useChatSession from '@/chatbot/hooks/useChatSession';
@@ -76,7 +80,47 @@ const resolveZoneId = (item = {}) =>
   item.zone_id || item.id || item.name || 'unknown';
 
 /**
- * 존 카드 컴포넌트 (지도 위 오버레이)
+ * 존 카드 컴포넌트 - 가로 스크롤용 컴팩트 버전
+ */
+const ZoneCardCompact = ({ item, index, isActive, onSelect }) => {
+  const registerLink = item.popup_register_url || `/seller/popups/create?zoneId=${item.zone_id}`;
+
+  return (
+    <div
+      className={`shrink-0 w-[160px] p-3 rounded-xl cursor-pointer transition-all snap-start ${
+        isActive 
+          ? 'bg-blue-50 ring-2 ring-blue-400 shadow-md' 
+          : 'bg-white hover:bg-gray-50 shadow-sm border border-gray-200'
+      }`}
+      onClick={onSelect}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${
+          index === 0 
+            ? 'bg-blue-500 text-white' 
+            : 'bg-gray-200 text-gray-600'
+        }`}>
+          {index + 1}
+        </span>
+        <p className="text-xs font-semibold text-gray-800 truncate flex-1">
+          {item.name || '존 이름 미정'}
+        </p>
+      </div>
+      
+      <div className="text-[10px] text-gray-500 space-y-0.5">
+        {item.district && <p>{item.district}</p>}
+        {item.available_cells !== undefined && (
+          <p className={item.available_cells > 0 ? 'text-green-600 font-medium' : ''}>
+            빈 셀 {item.available_cells}개
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * 존 카드 컴포넌트 - 상세 버전
  */
 const ZoneCard = ({ item, index, isActive, onSelect }) => {
   const registerLink = item.popup_register_url || `/seller/popups/create?zoneId=${item.zone_id}`;
@@ -150,7 +194,171 @@ const ZoneCard = ({ item, index, isActive, onSelect }) => {
 };
 
 /**
- * 오른쪽 패널: 지도 + 존 목록
+ * 존 상세 정보 패널 (전체화면 지도용)
+ */
+const ZoneDetailPanel = ({ zone }) => {
+  if (!zone) return null;
+
+  const registerLink = zone.popup_register_url || `/seller/popups/create?zoneId=${zone.zone_id}`;
+
+  return (
+    <div className="bg-white rounded-t-2xl shadow-lg border-t border-gray-200 p-4 space-y-3">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-base font-bold text-gray-900">{zone.name}</h3>
+          <p className="text-sm text-gray-500">{zone.district}</p>
+        </div>
+        {zone.available_cells > 0 && (
+          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+            예약 가능
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {zone.rent_per_day && (
+          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+            <DollarSign className="h-4 w-4 text-blue-500" />
+            <div>
+              <p className="text-[10px] text-gray-500">일 임대료</p>
+              <p className="text-sm font-semibold">{zone.rent_per_day.toLocaleString()}원</p>
+            </div>
+          </div>
+        )}
+        {zone.traffic_score && (
+          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+            <Users className="h-4 w-4 text-blue-500" />
+            <div>
+              <p className="text-[10px] text-gray-500">유동인구</p>
+              <p className="text-sm font-semibold">{zone.traffic_score}점</p>
+            </div>
+          </div>
+        )}
+        {zone.commercial_grade && (
+          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+            <Building2 className="h-4 w-4 text-blue-500" />
+            <div>
+              <p className="text-[10px] text-gray-500">상권등급</p>
+              <p className="text-sm font-semibold">{zone.commercial_grade}</p>
+            </div>
+          </div>
+        )}
+        {zone.available_cells !== undefined && (
+          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+            <TrendingUp className="h-4 w-4 text-blue-500" />
+            <div>
+              <p className="text-[10px] text-gray-500">빈 셀</p>
+              <p className="text-sm font-semibold">{zone.available_cells}/{zone.total_cells}개</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {zone.available_cells > 0 && (
+        <Link
+          to={registerLink}
+          className="flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold text-white bg-blue-500 rounded-xl hover:bg-blue-600 transition-all"
+        >
+          이 존에서 셀 선택하기
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+      )}
+    </div>
+  );
+};
+
+/**
+ * 모바일 전체화면 지도 오버레이
+ */
+const FullScreenMapOverlay = ({ 
+  recommendations, 
+  highlightId, 
+  setHighlightId, 
+  onClose 
+}) => {
+  const markers = useMemo(
+    () =>
+      recommendations
+        .map((item, index) => {
+          const lat = toNumber(item.lat);
+          const lng = toNumber(item.lng);
+          if (lat == null || lng == null) return null;
+          return {
+            id: resolveZoneId(item),
+            lat,
+            lng,
+            label: item.name,
+            content: `${index + 1}. ${item.name}`,
+            polygon: item.polygon,
+            onClick: () => setHighlightId(resolveZoneId(item)),
+          };
+        })
+        .filter(Boolean),
+    [recommendations, setHighlightId],
+  );
+
+  const center = useMemo(() => {
+    const activeMarker = markers.find((m) => m.id === highlightId);
+    if (activeMarker) return { lat: activeMarker.lat, lng: activeMarker.lng };
+    if (markers.length > 0) return { lat: markers[0].lat, lng: markers[0].lng };
+    return { lat: 35.14667451156048, lng: 126.92227158987355 };
+  }, [markers, highlightId]);
+
+  const selectedZone = recommendations.find(r => resolveZoneId(r) === highlightId);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+      {/* 헤더 */}
+      <header className="shrink-0 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <MapIcon className="h-5 w-5 text-blue-500" />
+          <span className="font-semibold text-gray-900">존 위치</span>
+          <span className="text-xs text-gray-500">({recommendations.length}곳)</span>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="닫기"
+        >
+          <X className="h-5 w-5 text-gray-600" />
+        </button>
+      </header>
+
+      {/* 지도 */}
+      <div className="flex-1 relative">
+        <ZonePolygonMap
+          center={center}
+          markers={markers}
+          height="100%"
+          level={recommendations.length === 1 ? 4 : 6}
+          highlightId={highlightId}
+        />
+      </div>
+
+      {/* 가로 스크롤 존 카드 */}
+      <div className="shrink-0 bg-gray-100 py-3 px-4">
+        <div className="flex gap-3 overflow-x-auto pb-2 snap-x scrollbar-hide">
+          {recommendations.map((item, index) => (
+            <ZoneCardCompact
+              key={resolveZoneId(item)}
+              item={item}
+              index={index}
+              isActive={resolveZoneId(item) === highlightId}
+              onSelect={() => setHighlightId(resolveZoneId(item))}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* 선택된 존 상세 정보 */}
+      <ZoneDetailPanel zone={selectedZone} />
+    </div>
+  );
+};
+
+/**
+ * 오른쪽 패널: 지도 + 존 목록 (데스크톱용)
  */
 const MapPanel = ({ recommendations, highlightId, setHighlightId }) => {
   const [isListExpanded, setIsListExpanded] = useState(true);
@@ -180,7 +388,7 @@ const MapPanel = ({ recommendations, highlightId, setHighlightId }) => {
     const activeMarker = markers.find((m) => m.id === highlightId);
     if (activeMarker) return { lat: activeMarker.lat, lng: activeMarker.lng };
     if (markers.length > 0) return { lat: markers[0].lat, lng: markers[0].lng };
-    return { lat: 35.14667451156048, lng: 126.92227158987355 }; // 광주 중심
+    return { lat: 35.14667451156048, lng: 126.92227158987355 };
   }, [markers, highlightId]);
 
   if (recommendations.length === 0) {
@@ -195,7 +403,6 @@ const MapPanel = ({ recommendations, highlightId, setHighlightId }) => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* 지도 영역 */}
       <div className={`transition-all duration-300 ${isListExpanded ? 'flex-1' : 'h-full'}`}>
         <ZonePolygonMap
           center={center}
@@ -206,7 +413,6 @@ const MapPanel = ({ recommendations, highlightId, setHighlightId }) => {
         />
       </div>
 
-      {/* 존 목록 토글 버튼 */}
       <button
         type="button"
         onClick={() => setIsListExpanded(!isListExpanded)}
@@ -216,7 +422,6 @@ const MapPanel = ({ recommendations, highlightId, setHighlightId }) => {
         {isListExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
       </button>
 
-      {/* 존 목록 */}
       {isListExpanded && (
         <div className="h-[200px] overflow-y-auto bg-gray-100 p-3 space-y-2">
           {recommendations.map((item, index) => (
@@ -235,9 +440,12 @@ const MapPanel = ({ recommendations, highlightId, setHighlightId }) => {
 };
 
 /**
- * 판매자용 챗봇 페이지 (Split View)
+ * 판매자용 챗봇 페이지 (반응형: 데스크톱 Split View, 모바일 전체화면 지도 토글)
+ * 
+ * @param {boolean} hideHeader - 외부 헤더 숨김 (통합 페이지에서 사용)
+ * @param {string} guestId - 게스트 ID (비로그인 체험 모드)
  */
-const SellerChatbotPage = () => {
+const SellerChatbotPage = ({ hideHeader = false, guestId = null }) => {
   const {
     messages,
     isLoading,
@@ -250,6 +458,7 @@ const SellerChatbotPage = () => {
 
   const [showQuickQuestions, setShowQuickQuestions] = useState(true);
   const [highlightId, setHighlightId] = useState(null);
+  const [showMobileMap, setShowMobileMap] = useState(false);
 
   // 추천 결과가 바뀌면 첫 번째 존 하이라이트
   useEffect(() => {
@@ -283,21 +492,24 @@ const SellerChatbotPage = () => {
   );
 
   const isInitialState = messages.length <= 1 && showQuickQuestions;
+  const hasRecommendations = recommendations.length > 0;
 
   return (
-    <div className="flex flex-col h-full">
-      {/* 페이지 헤더 */}
-      <div className="shrink-0 px-4 py-3 bg-white border-b border-gray-200">
-        <h1 className="text-lg font-semibold text-gray-900">AI 셀러 어시스턴트</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          존 추천, 운영 팁, 승인 절차 등 궁금한 점을 물어보세요
-        </p>
-      </div>
+    <div className={`flex flex-col ${hideHeader ? 'h-full' : 'h-dvh'} bg-white overflow-hidden`}>
+      {/* 페이지 헤더 (hideHeader가 false일 때만) */}
+      {!hideHeader && (
+        <div className="shrink-0 px-4 py-3 bg-white border-b border-gray-200">
+          <h1 className="text-lg font-semibold text-gray-900">AI 셀러 어시스턴트</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            존 추천, 운영 팁, 승인 절차 등 궁금한 점을 물어보세요
+          </p>
+        </div>
+      )}
 
-      {/* 메인 콘텐츠 (Split View) */}
+      {/* 메인 콘텐츠 */}
       <div className="flex-1 flex min-h-0">
-        {/* 왼쪽: 대화 영역 */}
-        <div className="w-1/2 flex flex-col border-r border-gray-200 bg-gradient-to-b from-blue-50/30 to-white">
+        {/* 채팅 영역 (모바일: 전체, 데스크톱: 1/2) */}
+        <div className="flex-1 lg:w-1/2 lg:flex-none flex flex-col border-r border-gray-200 bg-gradient-to-b from-blue-50/30 to-white">
           {/* 챗봇 헤더 */}
           <header className="shrink-0 bg-white/80 backdrop-blur-sm border-b border-blue-100/50 px-4 py-3">
             <div className="flex items-center justify-between">
@@ -315,20 +527,34 @@ const SellerChatbotPage = () => {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleReset}
-                className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-blue-500 transition-colors"
-                aria-label="대화 초기화"
-              >
-                <RotateCcw className="h-3 w-3" />
-                초기화
-              </button>
+              <div className="flex items-center gap-2">
+                {/* 모바일 지도 버튼 (추천 있을 때만) */}
+                {hasRecommendations && (
+                  <button
+                    type="button"
+                    onClick={() => setShowMobileMap(true)}
+                    className="lg:hidden flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100 transition-colors"
+                  >
+                    <MapIcon className="h-3.5 w-3.5" />
+                    지도 ({recommendations.length})
+                  </button>
+                )}
+                
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-blue-500 transition-colors"
+                  aria-label="대화 초기화"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  초기화
+                </button>
+              </div>
             </div>
           </header>
 
           {/* 메시지 영역 */}
-          <main className="flex-1 overflow-hidden min-h-0">
+          <main className="flex-1 overflow-y-auto min-h-0">
             <MessageList
               messages={messages}
               isTyping={isLoading && !isStreaming}
@@ -337,6 +563,36 @@ const SellerChatbotPage = () => {
               mode="seller"
             />
           </main>
+
+          {/* 모바일 추천 존 카드 (가로 스크롤) */}
+          {hasRecommendations && (
+            <div className="lg:hidden shrink-0 bg-gray-50 border-t border-gray-200 py-3 px-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-600">추천 존 {recommendations.length}곳</span>
+                <button
+                  type="button"
+                  onClick={() => setShowMobileMap(true)}
+                  className="text-xs text-blue-500 font-medium"
+                >
+                  지도 보기
+                </button>
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2 snap-x scrollbar-hide">
+                {recommendations.map((item, index) => (
+                  <ZoneCardCompact
+                    key={resolveZoneId(item)}
+                    item={item}
+                    index={index}
+                    isActive={resolveZoneId(item) === highlightId}
+                    onSelect={() => {
+                      setHighlightId(resolveZoneId(item));
+                      setShowMobileMap(true);
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 빠른 질문 */}
           {isInitialState && !isLoading && (
@@ -370,8 +626,8 @@ const SellerChatbotPage = () => {
           </footer>
         </div>
 
-        {/* 오른쪽: 지도 + 존 목록 */}
-        <div className="w-1/2 bg-gray-50">
+        {/* 데스크톱 지도 패널 (lg 이상에서만 표시) */}
+        <div className="hidden lg:block lg:w-1/2 bg-gray-50">
           <MapPanel
             recommendations={recommendations}
             highlightId={highlightId}
@@ -384,6 +640,16 @@ const SellerChatbotPage = () => {
       <p className="shrink-0 py-2 text-xs text-gray-400 text-center bg-white border-t border-gray-200">
         AI 답변은 참고용이며, 실제 정책과 다를 수 있습니다.
       </p>
+
+      {/* 모바일 전체화면 지도 오버레이 */}
+      {showMobileMap && hasRecommendations && (
+        <FullScreenMapOverlay
+          recommendations={recommendations}
+          highlightId={highlightId}
+          setHighlightId={setHighlightId}
+          onClose={() => setShowMobileMap(false)}
+        />
+      )}
     </div>
   );
 };
