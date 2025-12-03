@@ -30,10 +30,11 @@
 
 | 이름 | 역할 | GitHub |
 |------|------|--------|
-| **도형진** | AI/Infra | [@dorae222](https://github.com/dorae222) |
-| **팀원2** | Backend | - |
-| **팀원3** | Frontend | - |
-| **팀원4** | Frontend | - |
+| **황채리** | Frontend | [@ChaeRi0609](https://github.com/ChaeRi0609) |
+| **장주찬** | Backend | [@jangjuya](https://github.com/jangjuya) |
+| **김종하** | AI | [@Jongha611](https://github.com/Jongha611) |
+| **도형준** | AI/Infra | [@dorae222](https://github.com/dorae222) |
+| **정현희** | UI/UX Design (Figma) | - |
 
 ---
 
