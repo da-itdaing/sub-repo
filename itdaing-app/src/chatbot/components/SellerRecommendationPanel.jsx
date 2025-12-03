@@ -77,7 +77,7 @@ const SellerRecommendationPanel = ({ items = [] }) => {
     const zoneId = item.zone_id || item.metadata?.zone_id;
     if (zoneId) {
       // 팝업 등록 페이지로 이동 (zoneId 쿼리 파라미터 포함)
-      navigate(`/seller/popups/new?zoneId=${zoneId}`);
+      navigate(`/seller/popups/create?zoneId=${zoneId}`);
     }
   };
 

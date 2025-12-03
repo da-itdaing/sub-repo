@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
 import { MapPin, Calendar, Clock, Map as MapIcon, ChevronDown, Trash2, X, ArrowLeft } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
@@ -121,6 +121,7 @@ const SellerPopupFormPage = ({
 }) => {
   const navigate = useNavigate();
   const params = useParams();
+  const [searchParams] = useSearchParams();
   const routePopupId = params.popupId;
   const popupId = popupIdOverride ?? routePopupId;
   const isEditMode = mode === 'edit';
@@ -129,6 +130,9 @@ const SellerPopupFormPage = ({
   const queryClient = useQueryClient();
   const { categories, features, styles } = useMasterData();
   const isLocationLocked = isEditMode;
+  
+  // URL 쿼리 파라미터에서 zoneId 읽기 (챗봇에서 이동 시 사용)
+  const initialZoneId = searchParams.get('zoneId');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const updateSubmittingState = (value) => {
@@ -299,6 +303,22 @@ const SellerPopupFormPage = ({
       setSelectedArea(area);
     }
   }, [areas, isEditMode, popupDetail]);
+  
+  // URL 쿼리 파라미터에서 zoneId로 존 자동 선택 (챗봇에서 이동 시)
+  useEffect(() => {
+    if (isEditMode || !initialZoneId || !areas.length || selectedArea) return;
+    const zoneIdNum = Number(initialZoneId);
+    if (!Number.isFinite(zoneIdNum)) return;
+    const area = areas.find((item) => item.id === zoneIdNum);
+    if (area) {
+      setSelectedArea(area);
+      setShowMap(true); // 지도도 자동으로 펼침
+      addToast({
+        title: `${area.name} 존이 선택되었습니다.`,
+        description: '부스(셀) 위치를 선택해주세요.',
+      });
+    }
+  }, [areas, initialZoneId, isEditMode, selectedArea, addToast]);
 
   // 편집 모드: 셀 자동 선택
   useEffect(() => {

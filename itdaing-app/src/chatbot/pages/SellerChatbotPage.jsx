@@ -79,7 +79,7 @@ const resolveZoneId = (item = {}) =>
  * 존 카드 컴포넌트 (지도 위 오버레이)
  */
 const ZoneCard = ({ item, index, isActive, onSelect }) => {
-  const registerLink = item.popup_register_url || `/seller/popup/create?zoneId=${item.zone_id}`;
+  const registerLink = item.popup_register_url || `/seller/popups/create?zoneId=${item.zone_id}`;
 
   return (
     <div
