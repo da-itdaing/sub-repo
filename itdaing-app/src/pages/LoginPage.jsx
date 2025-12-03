@@ -74,7 +74,7 @@ const LoginPage = () => {
         {/* Logo */}
         <div className="flex justify-center mb-16">
           <h1 className="font-['Luckiest_Guy'] text-[32px] sm:text-[40px] md:text-[56px] text-primary leading-normal w-[280px] sm:w-auto text-center">
-            DA-ITDAING
+            DA ITDAING
           </h1>
         </div>
 

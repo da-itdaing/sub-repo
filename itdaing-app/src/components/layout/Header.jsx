@@ -176,7 +176,7 @@ const Header = ({ hideSearchBar = false, showRoleBanner = true }) => {
                     className="text-primary text-lg md:text-3xl whitespace-nowrap leading-none"
                     style={{ fontFamily: "'Luckiest Guy', sans-serif" }}
                   >
-                    DA-ITDAING
+                    DA ITDAING
                   </h1>
                 </div>
 

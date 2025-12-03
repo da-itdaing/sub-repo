@@ -139,7 +139,7 @@ const InstallPrompt = () => {
           {/* 텍스트 */}
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-gray-900 text-sm">
-              다-잇다잉 앱 설치
+              다잇다잉 앱 설치
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">
               홈 화면에 추가하고 더 빠르게 이용하세요!

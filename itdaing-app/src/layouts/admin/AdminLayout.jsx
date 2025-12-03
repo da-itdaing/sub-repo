@@ -181,7 +181,7 @@ const AdminLayout = () => {
             !isSidebarExpanded && 'hidden'
           )}
         >
-          © {new Date().getFullYear()} Da-Itdaing
+          © {new Date().getFullYear()} DaItdaing
         </div>
       </div>
     </aside>

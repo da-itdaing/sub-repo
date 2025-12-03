@@ -134,7 +134,7 @@ const SignupStepOne = () => {
             onClick={() => navigate('/')}
             className="hover:opacity-80 transition-opacity"
           >
-            <h1 className="font-display text-5xl text-brand tracking-tight">DA-ITDAING</h1>
+            <h1 className="font-display text-5xl text-brand tracking-tight">DA ITDAING</h1>
           </button>
           <p className="text-sm text-gray-500">다음 정보를 채워 회원가입을 진행해주세요.</p>
         </div>

@@ -24,7 +24,7 @@ const Footer = () => {
             className="text-2xl text-primary"
             style={{ fontFamily: "'Luckiest Guy', sans-serif" }}
           >
-            DA-ITDAING
+            DA ITDAING
           </h2>
           <p className="text-sm font-semibold mt-1">사람과 공간, 그리고 마음을 잇다</p>
           <p className="text-xs text-gray-400 mt-1">광주 팝업 큐레이션 플랫폼</p>
@@ -61,7 +61,7 @@ const Footer = () => {
               className="text-3xl text-primary mb-4"
               style={{ fontFamily: "'Luckiest Guy', sans-serif" }}
             >
-              DA-ITDAING
+              DA ITDAING
             </h2>
             <p className="text-base text-white font-semibold leading-relaxed">
               사람과 공간, 그리고 마음을 잇다
