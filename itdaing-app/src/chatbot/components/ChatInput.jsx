@@ -59,7 +59,7 @@ const ChatInput = forwardRef(({ onSend, disabled, mode = 'consumer' }, ref) => {
     // 최대 길이 제한
     if (value.length <= MAX_LENGTH) {
       setText(value);
-      adjustHeight();
+    adjustHeight();
     }
   };
 

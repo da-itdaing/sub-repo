@@ -109,9 +109,9 @@ const HomePage = () => {
       <Header />
       
       <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto bg-white pt-14 md:pt-20 ">
-        {/* Hero Carousel */}
-        <div className="px-5 md:px-8 pt-5">
-        <HeroCarousel items={heroItems} isLoading={isLoading} onSelect={handlePopupNavigate} />
+        {/* Hero Carousel - 헤더 바로 아래 배치 */}
+        <div className="px-5 md:px-8 pt-2">
+          <HeroCarousel items={heroItems} isLoading={isLoading} onSelect={handlePopupNavigate} />
         </div>
 
         {/* Event Banner */}

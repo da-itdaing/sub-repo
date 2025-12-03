@@ -144,7 +144,7 @@ const InstallGuideModal = ({ isOpen, onClose }) => {
 
 /**
  * 앱 다운로드 안내 배너
- * - 기존 이벤트 배너를 앱 설치 안내로 변경
+ * - 차분한 스타일 (브라운/웜 그레이 계열)
  */
 const HorizontalBanner = ({ onClick }) => {
   const [showModal, setShowModal] = useState(false);
@@ -159,38 +159,29 @@ const HorizontalBanner = ({ onClick }) => {
       <button
         type="button"
         onClick={handleClick}
-        className="group relative w-full overflow-hidden rounded-[20px] shadow-md focus:outline-none"
+        className="group relative w-full overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-r from-gray-50 to-white shadow-sm hover:shadow-md transition-all focus:outline-none"
       >
-        {/* 배경 - 빨간색 그라데이션 */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#eb0000] to-[#c70000]" />
-        
-        {/* 장식용 패턴 */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/20" />
-          <div className="absolute -left-4 -bottom-4 w-24 h-24 rounded-full bg-white/20" />
-        </div>
-        
         {/* 콘텐츠 */}
-        <div className="relative flex items-center justify-between px-5 py-4 sm:py-5">
+        <div className="relative flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            {/* 아이콘 */}
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-              <Download className="h-5 w-5 text-white" />
+            {/* 아이콘 - 차분한 빨간색 */}
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 border border-rose-100">
+              <Download className="h-5 w-5 text-rose-500" />
             </div>
             
             {/* 텍스트 */}
             <div className="text-left">
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              <h2 className="text-sm font-semibold text-gray-800">
                 다잇다잉 앱 설치하기
               </h2>
-              <p className="text-xs sm:text-sm text-white/80 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5">
                 홈 화면에 추가하고 더 빠르게 이용하세요
               </p>
             </div>
           </div>
           
           {/* 화살표 */}
-          <ChevronRight className="h-5 w-5 text-white/80 group-hover:translate-x-1 transition-transform" />
+          <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-rose-500 group-hover:translate-x-0.5 transition-all" />
         </div>
       </button>
 

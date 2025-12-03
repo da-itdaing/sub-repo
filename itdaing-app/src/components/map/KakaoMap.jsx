@@ -69,17 +69,17 @@ const KakaoMap = ({
         validMarkers.map((marker, index) => {
           const isSelected = marker.id === selectedMarkerId;
           return (
-            <div key={marker.id || `${marker.lat}-${marker.lng}`}>
+          <div key={marker.id || `${marker.lat}-${marker.lng}`}>
               {/* 숫자 마커 */}
-              <MapMarker
-                position={{ lat: marker.lat, lng: marker.lng }}
-                title={marker.label || ''}
-                onClick={() => marker.onClick?.(marker)}
-                clickable={!!marker.onClick}
+            <MapMarker
+              position={{ lat: marker.lat, lng: marker.lng }}
+              title={marker.label || ''}
+              onClick={() => marker.onClick?.(marker)}
+              clickable={!!marker.onClick}
                 image={getMarkerImage(index, isSelected)}
-              />
+            />
               {/* 라벨 오버레이 */}
-              {marker.content && (
+            {marker.content && (
                 <CustomOverlayMap position={{ lat: marker.lat, lng: marker.lng }} yAnchor={2.5}>
                   <div 
                     onClick={() => marker.onClick?.(marker)}
@@ -89,11 +89,11 @@ const KakaoMap = ({
                         : 'bg-white text-gray-700 border-gray-200 hover:border-[#EB0000] hover:shadow-lg'
                     }`}
                   >
-                    {marker.content}
-                  </div>
-                </CustomOverlayMap>
-              )}
-            </div>
+                  {marker.content}
+                </div>
+              </CustomOverlayMap>
+            )}
+          </div>
           );
         })
       )}

@@ -6,7 +6,6 @@ import { useAuthStore } from './store/authStore';
 import { fetchKakaoMapKey } from './utils/kakaoMapLoader';
 import { ToastProvider } from '@/components/ui/ToastProvider';
 import { LoginPromptProvider } from '@/components/ui/LoginPromptProvider';
-import InstallPrompt from '@/components/pwa/InstallPrompt';
 import SplashScreen from '@/components/pwa/SplashScreen';
 
 // React Query 클라이언트 생성
@@ -135,8 +134,6 @@ function App() {
         <LoginPromptProvider>
           <ToastProvider>
             <AppRouter />
-            {/* PWA 설치 프롬프트 */}
-            <InstallPrompt />
           </ToastProvider>
         </LoginPromptProvider>
       </KakaoLoader>

@@ -236,20 +236,26 @@ const MOCK_BOT_RESPONSE = MOCK_DATA[MOCK_SCENARIO]?.response || '';
 
 /**
  * 서버 delta에서 디버그 메시지를 제거하고 정리된 텍스트 반환
+ * 
+ * 주의: 공백을 제거하면 안 됨!
+ * - LLM 토큰은 " 주말에", " 추천할" 처럼 공백으로 시작할 수 있음
+ * - 시작/끝 공백 제거 시 띄어쓰기가 모두 사라지는 버그 발생
  */
 const sanitizeDelta = (delta) => {
   if (!delta) return '';
 
+  // 디버그 패턴 검사만 수행, 공백은 그대로 유지
   const lines = delta.split('\n');
-  const filtered = lines
-    .filter((line) => {
-      const trimmed = line.trim();
-      if (!trimmed) return true;
-      return !DEBUG_PATTERNS.some((pattern) => pattern.test(trimmed));
-    })
-    .map((line) => line.replace(/\s+$/g, '')); // 라인 끝 공백 제거
+  const filtered = lines.filter((line) => {
+    const trimmed = line.trim();
+    // 빈 줄은 유지 (줄바꿈 보존)
+    if (!trimmed) return true;
+    // 디버그 패턴만 필터링
+    return !DEBUG_PATTERNS.some((pattern) => pattern.test(trimmed));
+  });
 
-  return filtered.join('\n').replace(/^\s+/, ''); // 시작 공백 제거
+  // 공백 제거 없이 그대로 반환
+  return filtered.join('\n');
 };
 
 /**

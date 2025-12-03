@@ -17,20 +17,53 @@ export default defineConfig({
   build: {
     target: 'esnext',
     outDir: 'dist',
-    chunkSizeWarningLimit: 600, // 경고 임계값 상향
+    chunkSizeWarningLimit: 500, // 500KB로 낮춤
     rollupOptions: {
       output: {
-        manualChunks: {
-          // React 코어
-          'react-vendor': ['react', 'react-dom'],
-          // UI 라이브러리
-          'ui-vendor': ['lucide-react', 'clsx'],
-          // 라우팅 & 상태관리
-          'router-vendor': ['react-router-dom', 'zustand'],
-          // 데이터 페칭
-          'query-vendor': ['@tanstack/react-query', 'axios'],
-          // 카카오맵
-          'kakao-vendor': ['react-kakao-maps-sdk'],
+        manualChunks: (id) => {
+          // node_modules 청크 분리
+          if (id.includes('node_modules')) {
+            // React 코어
+            if (id.includes('react') && !id.includes('react-router') && !id.includes('react-kakao')) {
+              return 'react-vendor';
+            }
+            // 라우팅
+            if (id.includes('react-router')) {
+              return 'router-vendor';
+            }
+            // 상태관리
+            if (id.includes('zustand')) {
+              return 'state-vendor';
+            }
+            // 데이터 페칭
+            if (id.includes('@tanstack/react-query') || id.includes('axios')) {
+              return 'query-vendor';
+            }
+            // 카카오맵
+            if (id.includes('react-kakao-maps-sdk') || id.includes('kakao')) {
+              return 'kakao-vendor';
+            }
+            // UI 라이브러리
+            if (id.includes('lucide-react')) {
+              return 'icons-vendor';
+            }
+            if (id.includes('clsx') || id.includes('tailwind-merge')) {
+              return 'ui-vendor';
+            }
+          }
+          
+          // 앱 코드 페이지별 분리
+          if (id.includes('/src/pages/admin/')) {
+            return 'admin-pages';
+          }
+          if (id.includes('/src/pages/seller/')) {
+            return 'seller-pages';
+          }
+          if (id.includes('/src/chatbot/')) {
+            return 'chatbot';
+          }
+          
+          return undefined; // 기본 청크
         },
       },
     },
