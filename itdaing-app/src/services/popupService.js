@@ -89,14 +89,14 @@ export const createReview = async (popupId, reviewData) => {
 
 /**
  * 팝업 조회 이벤트 기록 (조회수 증가)
- * POST /api/metrics/events
+ * POST /api/events/view
  * @param {number} popupId
- * @param {string} source - 조회 소스 (예: 'detail_page', 'search', 'home')
+ * @param {string} source - 조회 소스 (예: 'popup_detail', 'search', 'home')
  * @param {string} sessionId - 세션 ID (중복 조회 방지용)
  */
-export const recordPopupView = async (popupId, source = 'detail_page', sessionId = null) => {
+export const recordPopupView = async (popupId, source = 'popup_detail', sessionId = null) => {
   try {
-    await apiClient.post('/metrics/events', {
+    await apiClient.post('/events/view', {
       popupId,
       source,
       sessionId: sessionId || getOrCreateSessionId(),
