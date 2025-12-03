@@ -98,6 +98,46 @@ itdaing/temp/
 !itdaing/app.jar
 
 # ============================================
+# chatbot (AI 서비스) 제외 항목
+# ============================================
+# 환경 변수 및 민감 정보
+chatbot/chatbot.env
+chatbot/.env
+chatbot/.env.*
+
+# Python 가상환경
+chatbot/.venv/
+chatbot/venv/
+chatbot/__pycache__/
+chatbot/**/__pycache__/
+chatbot/*.pyc
+
+# 로그 파일
+chatbot/*.log
+chatbot/logs/
+
+# 데이터 파일 (크롤링, 임시)
+chatbot/data/images/
+chatbot/data/scraped_events.json
+chatbot/data/events_with_s3_images.json
+chatbot/data/crawler_state.json
+
+# 실험 결과 (LangSmith에서 확인)
+chatbot/langsmith-test/experiments/*.json
+chatbot/langsmith-test/experiments/analysis/
+
+# 생성된 그래프 이미지 (mmd로 재생성 가능)
+chatbot/artifacts/graphs/*.png
+
+# IDE 캐시
+chatbot/.cursor/
+chatbot/.vscode/
+
+# 하위 Git 저장소 제외
+chatbot/.git/
+chatbot/.git-backup/
+
+# ============================================
 # itdaing-web (프론트엔드) 제외 항목
 # ============================================
 # 환경 변수
