@@ -136,11 +136,19 @@ const AdminApprovalsPage = () => {
     try {
       const detail = await getPopupDetail(targetId);
       
-      // zone_cell 위치 정보가 없으면 별도 조회
-      if (detail?.zoneCellId && !detail.zoneCellLat) {
+      // API 응답 필드명 정규화 (백엔드: latitude/longitude → 프론트: zoneCellLat/zoneCellLng)
+      if (detail) {
+        detail.zoneCellLat = detail.latitude;
+        detail.zoneCellLng = detail.longitude;
+        detail.zoneCellId = detail.cellId;
+        detail.zoneCellAddress = detail.address || '';
+        detail.zoneCellLabel = detail.cellName || '';
+      }
+      
+      // 좌표가 없고 cellId가 있으면 별도 조회
+      if (detail?.cellId && !detail.zoneCellLat) {
         try {
-          // /geo/cells/{cellId} 엔드포인트가 있다면 사용, 없으면 리스트에서 찾기
-          const cellData = await apiClient.get(`/geo/cells/${detail.zoneCellId}`);
+          const cellData = await apiClient.get(`/geo/cells/${detail.cellId}`);
           if (cellData) {
             // geometryData에서 좌표 추출
             let lat = cellData.lat;
@@ -161,8 +169,8 @@ const AdminApprovalsPage = () => {
             
             detail.zoneCellLat = lat;
             detail.zoneCellLng = lng;
-            detail.zoneCellAddress = cellData.detailedAddress || '';
-            detail.zoneCellLabel = cellData.label || '';
+            detail.zoneCellAddress = cellData.detailedAddress || detail.zoneCellAddress;
+            detail.zoneCellLabel = cellData.label || detail.zoneCellLabel;
           }
         } catch (cellErr) {
           console.warn('zone_cell 정보 조회 실패:', cellErr);
@@ -498,47 +506,47 @@ const AdminApprovalsPage = () => {
                   </dl>
                 </div>
 
-                {/* 팝업 이미지 (있는 경우) */}
-                {selectedPopupDetail?.images?.length > 0 && (
+                {/* 팝업 이미지 (gallery가 있는 경우) */}
+                {selectedPopupDetail?.gallery?.length > 0 && (
                   <div>
                     <h3 className="border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900">
                       팝업 이미지
                     </h3>
                     <div className="mt-3 grid grid-cols-2 gap-2">
-                      {selectedPopupDetail.images.slice(0, 4).map((img, idx) => (
+                      {selectedPopupDetail.gallery.slice(0, 4).map((img, idx) => (
                         <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-gray-100">
                           <img 
                             src={img.url || img.imageUrl} 
                             alt={`팝업 이미지 ${idx + 1}`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.currentTarget.src = '/placeholder-popup.png';
+                              e.currentTarget.src = 'https://placehold.co/400x400/f3f4f6/9ca3af?text=No+Image';
                             }}
                           />
                         </div>
                       ))}
                     </div>
-                    {selectedPopupDetail.images.length > 4 && (
+                    {selectedPopupDetail.gallery.length > 4 && (
                       <p className="text-xs text-gray-400 mt-2 text-center">
-                        +{selectedPopupDetail.images.length - 4}개 더 보기
+                        +{selectedPopupDetail.gallery.length - 4}개 더 보기
                       </p>
                     )}
                   </div>
                 )}
                 
-                {/* 대표 이미지만 있는 경우 */}
-                {selectedPopupDetail?.thumbnailUrl && !selectedPopupDetail?.images?.length && (
+                {/* 대표 이미지 (thumbnail) */}
+                {selectedPopupDetail?.thumbnail && !selectedPopupDetail?.gallery?.length && (
                   <div>
                     <h3 className="border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900">
                       대표 이미지
                     </h3>
                     <div className="mt-3 aspect-video rounded-lg overflow-hidden bg-gray-100">
                       <img 
-                        src={selectedPopupDetail.thumbnailUrl} 
+                        src={selectedPopupDetail.thumbnail.url || selectedPopupDetail.thumbnail.imageUrl} 
                         alt="대표 이미지"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          e.currentTarget.src = '/placeholder-popup.png';
+                          e.currentTarget.src = 'https://placehold.co/400x300/f3f4f6/9ca3af?text=No+Image';
                         }}
                       />
                     </div>
@@ -560,10 +568,20 @@ const AdminApprovalsPage = () => {
                           </dd>
                         </div>
                       )}
-                      {selectedPopupDetail.operatingTime && (
+                      {(selectedPopupDetail.hours || selectedPopupDetail.operatingHours?.length > 0) && (
                         <div className="flex justify-between gap-4">
                           <dt className="text-gray-500">운영 시간</dt>
-                          <dd className="text-gray-900">{selectedPopupDetail.operatingTime}</dd>
+                          <dd className="text-gray-900 text-right">
+                            {selectedPopupDetail.hours || selectedPopupDetail.operatingHours?.map(h => `${h.day} ${h.time}`).join(', ')}
+                          </dd>
+                        </div>
+                      )}
+                      {selectedPopupDetail.description && (
+                        <div className="mt-2">
+                          <dt className="text-gray-500 mb-1">소개</dt>
+                          <dd className="text-gray-900 text-xs bg-gray-50 p-2 rounded line-clamp-3">
+                            {selectedPopupDetail.description}
+                          </dd>
                         </div>
                       )}
                     </dl>
