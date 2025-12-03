@@ -7,6 +7,7 @@ import { usePopupById } from '@/hooks/usePopups';
 import { createReview } from '@/services/popupService';
 import { ROUTES } from '@/routes/paths';
 import { useToast } from '@/hooks/useToast';
+import { INPUT_LIMITS } from '@/constants/inputLimits';
 
 // 키워드 옵션 리스트 (상수)
 const REVIEW_KEYWORDS = [
@@ -193,10 +194,10 @@ const ReviewWritePage = () => {
               onChange={(e) => setContent(e.target.value)}
               placeholder="내용을 입력하세요"
               className="w-full h-40 p-4 text-sm text-gray-900 border border-gray-300 rounded-lg resize-none focus:outline-none focus:border-gray-900"
-              maxLength={150}
+              maxLength={INPUT_LIMITS.REVIEW}
             />
             <span className="absolute bottom-3 right-3 text-xs text-gray-400">
-              {content.length} / 150
+              {content.length} / {INPUT_LIMITS.REVIEW}
             </span>
           </div>
         </div>

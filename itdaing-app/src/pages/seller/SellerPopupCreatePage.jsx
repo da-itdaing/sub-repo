@@ -10,6 +10,7 @@ import { useMasterData } from '@/hooks/useMasterData';
 import { listAreas, listCells, parseGeoJsonPolygon } from '@/services/geoZoneService';
 import { Map, Polygon, MapMarker, CustomOverlayMap } from 'react-kakao-maps-sdk';
 import { getPopupById } from '@/services/popupService';
+import { INPUT_LIMITS } from '@/constants/inputLimits';
 
 // 광주 중심 좌표
 const GWANGJU_CENTER = { lat: 35.1595, lng: 126.8526 };
@@ -779,7 +780,7 @@ const SellerPopupFormPage = ({
               팝업명
               <span className="text-[#EB0000] ml-[3px]">*</span> 
             </label>
-            <span className="text-[10px] text-gray-400">{formData.title.length}/50</span>
+            <span className="text-[10px] text-gray-400">{formData.title.length}/{INPUT_LIMITS.TITLE}</span>
           </div>
           <input
             type="text"
@@ -787,7 +788,7 @@ const SellerPopupFormPage = ({
             value={formData.title}
             onChange={handleChange}
             required
-            maxLength={50}
+            maxLength={INPUT_LIMITS.TITLE}
             placeholder="팝업의 제목을 입력해주세요."
             className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
           />
@@ -1577,14 +1578,14 @@ const SellerPopupFormPage = ({
           <div className="md:col-span-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-gray-500">해시태그</label>
-              <span className="text-[10px] text-gray-400">{formData.hashtags.length}/100</span>
+              <span className="text-[10px] text-gray-400">{formData.hashtags.length}/{INPUT_LIMITS.HASHTAGS}</span>
             </div>
             <input
               type="text"
               name="hashtags"
               value={formData.hashtags}
               onChange={handleChange}
-              maxLength={100}
+              maxLength={INPUT_LIMITS.HASHTAGS}
               placeholder="#데이트 #핫플 (공백으로 구분)"
               className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
             />
@@ -1592,14 +1593,14 @@ const SellerPopupFormPage = ({
           <div>
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-gray-500">홈페이지 URL</label>
-              <span className="text-[10px] text-gray-400">{formData.homepageUrl.length}/200</span>
+              <span className="text-[10px] text-gray-400">{formData.homepageUrl.length}/{INPUT_LIMITS.URL}</span>
             </div>
             <input
               type="url"
               name="homepageUrl"
               value={formData.homepageUrl}
               onChange={handleChange}
-              maxLength={200}
+              maxLength={INPUT_LIMITS.URL}
               placeholder="https://"
               className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
             />
@@ -1607,14 +1608,14 @@ const SellerPopupFormPage = ({
           <div>
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-gray-500">SNS URL</label>
-              <span className="text-[10px] text-gray-400">{formData.snsUrl.length}/200</span>
+              <span className="text-[10px] text-gray-400">{formData.snsUrl.length}/{INPUT_LIMITS.URL}</span>
             </div>
             <input
               type="url"
               name="snsUrl"
               value={formData.snsUrl}
               onChange={handleChange}
-              maxLength={200}
+              maxLength={INPUT_LIMITS.URL}
               placeholder="https://instagram.com/..."
               className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
             />
@@ -1628,7 +1629,7 @@ const SellerPopupFormPage = ({
               팝업소개
               <span className="text-[#EB0000] ml-[3px]">*</span>
             </label>
-            <span className="text-[10px] text-gray-400">{formData.description.length}/2000</span>
+            <span className="text-[10px] text-gray-400">{formData.description.length}/{INPUT_LIMITS.DESCRIPTION}</span>
           </div>
           <textarea
             name="description"
@@ -1636,7 +1637,7 @@ const SellerPopupFormPage = ({
             onChange={handleChange}
             rows={6}
             required
-            maxLength={2000}
+            maxLength={INPUT_LIMITS.DESCRIPTION}
             placeholder="팝업에 대한 설명을 상세하게 작성해 주세요."
             className="mt-2 w-full rounded-2xl border border-gray-200 bg-white p-4 text-sm focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
           />

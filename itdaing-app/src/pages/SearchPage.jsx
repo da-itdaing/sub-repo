@@ -7,6 +7,7 @@ import BottomNav from '@/components/layout/BottomNav';
 import EventCard from '@/components/popup/EventCard';
 import { useSearchPopups } from '@/hooks/usePopups';
 import { ROUTES } from '@/routes/paths';
+import { INPUT_LIMITS } from '@/constants/inputLimits';
 
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,9 +62,13 @@ const SearchPage = () => {
               type="search"
               value={keyword}
               onChange={handleKeywordChange}
+              maxLength={INPUT_LIMITS.SEARCH_QUERY}
               placeholder="예: 남구 팝업, 푸드트럭"
               className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-primary focus:outline-none"
             />
+            <div className="flex justify-end mt-1">
+              <span className="text-[10px] text-gray-400">{keyword.length}/{INPUT_LIMITS.SEARCH_QUERY}</span>
+            </div>
           </div>
         </section>
 

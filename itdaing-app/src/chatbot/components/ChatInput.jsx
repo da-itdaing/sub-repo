@@ -1,12 +1,15 @@
 import { useRef, useState, useCallback, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { ArrowUp } from 'lucide-react';
+import { INPUT_LIMITS } from '@/constants/inputLimits';
 
 /**
  * 채팅 입력창 - 모던 & 미니멀
  * - ref를 통해 외부에서 focus() 호출 가능
+ * - 입력 길이 제한: 1000자
  */
-const ChatInput = forwardRef(({ onSend, disabled }, ref) => {
+const ChatInput = forwardRef(({ onSend, disabled, mode = 'consumer' }, ref) => {
   const [text, setText] = useState('');
+  const MAX_LENGTH = INPUT_LIMITS.CHAT_MESSAGE;
   const textareaRef = useRef(null);
 
   // 외부에서 focus 호출 가능하도록 expose
@@ -35,8 +38,12 @@ const ChatInput = forwardRef(({ onSend, disabled }, ref) => {
   }, []);
 
   const handleChange = (e) => {
-    setText(e.target.value);
-    adjustHeight();
+    const value = e.target.value;
+    // 최대 길이 제한
+    if (value.length <= MAX_LENGTH) {
+      setText(value);
+      adjustHeight();
+    }
   };
 
   const handleSubmit = useCallback(
@@ -75,6 +82,7 @@ const ChatInput = forwardRef(({ onSend, disabled }, ref) => {
             placeholder="메시지를 입력하세요..."
             disabled={disabled}
             rows={1}
+            maxLength={MAX_LENGTH}
             className="flex-1 resize-none bg-transparent px-3 py-2.5 text-[14px] text-gray-800 placeholder:text-gray-400 focus:outline-none disabled:opacity-50"
             style={{ minHeight: '40px', maxHeight: '120px' }}
           />
@@ -92,10 +100,13 @@ const ChatInput = forwardRef(({ onSend, disabled }, ref) => {
         </div>
       </form>
       
-      {/* 안내 텍스트 */}
-      <div className="flex items-center justify-center gap-4 mt-2">
+      {/* 안내 텍스트 + 글자수 */}
+      <div className="flex items-center justify-between mt-2 px-1">
         <span className="text-[10px] text-gray-300">
           Enter 전송 • Shift+Enter 줄바꿈
+        </span>
+        <span className={`text-[10px] ${text.length > MAX_LENGTH * 0.9 ? 'text-red-400' : 'text-gray-300'}`}>
+          {text.length}/{MAX_LENGTH}
         </span>
       </div>
     </div>
