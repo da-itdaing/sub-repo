@@ -1,32 +1,60 @@
 import clsx from 'clsx';
+import { Sparkles, Store } from 'lucide-react';
+
+// 모드별 색상 테마
+const THEME_COLORS = {
+  consumer: {
+    iconBg: 'from-rose-400 to-pink-500',
+    iconShadow: 'shadow-rose-200',
+    accentColor: '#F43F5E',
+    userBg: 'from-rose-500 to-pink-600',
+    userShadow: 'shadow-rose-200/50',
+    cursor: 'bg-rose-500',
+    codeBg: 'bg-rose-50 text-rose-600',
+    link: 'text-rose-500 hover:text-rose-600',
+    listBullet: 'text-rose-400',
+    listNumber: 'text-rose-500',
+    Icon: Sparkles,
+  },
+  seller: {
+    iconBg: 'from-blue-400 to-indigo-500',
+    iconShadow: 'shadow-blue-200',
+    accentColor: '#3B82F6',
+    userBg: 'from-blue-500 to-indigo-600',
+    userShadow: 'shadow-blue-200/50',
+    cursor: 'bg-blue-500',
+    codeBg: 'bg-blue-50 text-blue-600',
+    link: 'text-blue-500 hover:text-blue-600',
+    listBullet: 'text-blue-400',
+    listNumber: 'text-blue-500',
+    Icon: Store,
+  },
+};
 
 /**
- * 커스텀 봇 아이콘 - 더 세련된 디자인
+ * 친근한 버디 아이콘 - 심플한 스마일 캐릭터
  */
-const BotIcon = () => (
+const BuddyIcon = ({ accentColor = '#F43F5E' }) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
     className="h-5 w-5"
     xmlns="http://www.w3.org/2000/svg"
   >
-    {/* 얼굴 */}
-    <rect x="4" y="6" width="16" height="14" rx="4" fill="white" />
-    {/* 눈 */}
-    <circle cx="9" cy="12" r="2" fill="#EB0000" />
-    <circle cx="15" cy="12" r="2" fill="#EB0000" />
-    {/* 안테나 */}
+    {/* 얼굴 - 둥근 원 */}
+    <circle cx="12" cy="12" r="9" fill="white" />
+    {/* 볼터치 */}
+    <circle cx="7" cy="13" r="1.5" fill={accentColor} opacity="0.3" />
+    <circle cx="17" cy="13" r="1.5" fill={accentColor} opacity="0.3" />
+    {/* 눈 - 반짝이는 눈 */}
+    <circle cx="9" cy="10" r="1.5" fill="#1F2937" />
+    <circle cx="15" cy="10" r="1.5" fill="#1F2937" />
+    <circle cx="9.5" cy="9.5" r="0.5" fill="white" />
+    <circle cx="15.5" cy="9.5" r="0.5" fill="white" />
+    {/* 입 - 활짝 웃는 미소 */}
     <path
-      d="M12 6V3M12 3L10 5M12 3L14 5"
-      stroke="white"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    {/* 입 - 미소 */}
-    <path
-      d="M9 16C9 16 10.5 17.5 12 17.5C13.5 17.5 15 16 15 16"
-      stroke="#EB0000"
+      d="M8 14C8 14 9.5 16.5 12 16.5C14.5 16.5 16 14 16 14"
+      stroke="#1F2937"
       strokeWidth="1.5"
       strokeLinecap="round"
     />
@@ -85,9 +113,9 @@ const sanitizeMarkdown = (text) => {
 };
 
 /**
- * 간단한 마크다운 파싱
+ * 간단한 마크다운 파싱 - 모드별 색상 지원
  */
-const parseMarkdown = (text) => {
+const parseMarkdown = (text, theme) => {
   if (!text) return '';
 
   // 먼저 텍스트 정제
@@ -99,16 +127,18 @@ const parseMarkdown = (text) => {
     // **bold**
     line = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-800">$1</strong>');
     // `code`
-    line = line.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-rose-50 text-rose-600 rounded text-[13px] font-mono">$1</code>');
+    line = line.replace(/`([^`]+)`/g, `<code class="px-1.5 py-0.5 ${theme.codeBg} rounded text-[13px] font-mono">$1</code>`);
     // [링크](url)
-    line = line.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="text-rose-500 underline underline-offset-2 hover:text-rose-600 transition-colors">$1</a>');
+    line = line.replace(/\[([^\]]+)\]\(([^)]+)\)/g, `<a href="$2" target="_blank" class="${theme.link} underline underline-offset-2 transition-colors">$1</a>`);
 
     // 리스트 처리 (- 또는 숫자. 로 시작)
     const listMatch = line.match(/^(\s*)([\d]+\.|-)\s+(.+)$/);
     if (listMatch) {
       const [, , marker, content] = listMatch;
       const isOrdered = /^\d+\./.test(marker);
-      const bullet = isOrdered ? `<span class="text-rose-500 font-medium">${marker}</span>` : '<span class="text-rose-400">•</span>';
+      const bullet = isOrdered 
+        ? `<span class="${theme.listNumber} font-medium">${marker}</span>` 
+        : `<span class="${theme.listBullet}">•</span>`;
       parsed.push(`<div class="flex gap-2.5 py-0.5"><span class="shrink-0 w-4 text-right">${bullet}</span><span class="text-gray-600 leading-relaxed">${content}</span></div>`);
     } else if (line.trim()) {
       parsed.push(`<p class="leading-relaxed text-gray-600">${line}</p>`);
@@ -124,24 +154,26 @@ const parseMarkdown = (text) => {
  * 스트리밍 커서 - 텍스트가 입력되고 있음을 표시
  * v14: 실제 토큰 스트리밍 중 깜빡이는 커서
  */
-const StreamingCursor = () => (
-  <span className="inline-block w-0.5 h-4 bg-rose-500 animate-pulse ml-0.5 align-text-bottom" />
+const StreamingCursor = ({ color = 'bg-rose-500' }) => (
+  <span className={`inline-block w-0.5 h-4 ${color} animate-pulse ml-0.5 align-text-bottom`} />
 );
 
 /**
  * 메시지 말풍선
  * v14: showCursor prop 추가 - 스트리밍 중 커서 표시
+ * v15: mode prop 추가 - 소비자/판매자 색상 테마 지원
  */
-const MessageBubble = ({ message, showCursor = false }) => {
+const MessageBubble = ({ message, showCursor = false, mode = 'consumer' }) => {
   const isBot = message.sender === 'BOT';
-  const htmlContent = isBot ? parseMarkdown(message.text) : null;
+  const theme = THEME_COLORS[mode] || THEME_COLORS.consumer;
+  const htmlContent = isBot ? parseMarkdown(message.text, theme) : null;
 
   return (
     <div className={clsx('flex gap-2.5', isBot ? 'justify-start' : 'justify-end')}>
-      {/* 봇 아바타 - 그라데이션 배경 */}
+      {/* 버디 아바타 - 그라데이션 배경 */}
       {isBot && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-rose-500 to-red-600 shadow-sm shadow-rose-200">
-          <BotIcon />
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${theme.iconBg} shadow-sm ${theme.iconShadow}`}>
+          <BuddyIcon accentColor={theme.accentColor} />
         </div>
       )}
 
@@ -151,13 +183,13 @@ const MessageBubble = ({ message, showCursor = false }) => {
           'max-w-[80%] text-[14px] leading-[1.6]',
           isBot
             ? 'bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm ring-1 ring-gray-100'
-            : 'bg-linear-to-br from-rose-500 to-red-600 text-white rounded-2xl rounded-tr-sm px-4 py-3 shadow-md shadow-rose-200/50',
+            : `bg-gradient-to-br ${theme.userBg} text-white rounded-2xl rounded-tr-sm px-4 py-3 shadow-md ${theme.userShadow}`,
         )}
       >
         {isBot ? (
           <div className="space-y-1">
             <span dangerouslySetInnerHTML={{ __html: htmlContent }} />
-            {showCursor && <StreamingCursor />}
+            {showCursor && <StreamingCursor color={theme.cursor} />}
           </div>
         ) : (
           <div className="whitespace-pre-wrap font-medium">{message.text}</div>

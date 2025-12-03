@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
-import { RotateCcw, Zap } from 'lucide-react';
+import { RotateCcw, Sparkles, Store } from 'lucide-react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import RecommendationPanel from './RecommendationPanel';
@@ -21,15 +21,17 @@ const QUICK_QUESTIONS = {
   ],
 };
 
-// 모드별 설정
+// 모드별 설정 - 친근한 이름으로 변경
 const MODE_CONFIG = {
   consumer: {
-    title: '플리마켓 AI',
-    subtitle: '광주 플리마켓·팝업 추천',
+    title: '마켓버디',
+    subtitle: '광주 플리마켓 추천 친구',
+    Icon: Sparkles,
   },
   seller: {
-    title: '셀러 AI',
-    subtitle: '존 추천·운영 가이드',
+    title: '셀러버디',
+    subtitle: '존 추천·운영 도우미',
+    Icon: Store,
   },
 };
 
@@ -183,11 +185,11 @@ const ChatLayout = ({ mode = 'consumer', guestId = null }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {/* 미니 로고 아이콘 */}
-            <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${theme.iconBg} shadow-sm`}>
-              <Zap className="h-4 w-4 text-white" />
+            <div className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${theme.iconBg} shadow-sm`}>
+              <config.Icon className="h-4.5 w-4.5 text-white" strokeWidth={2} />
             </div>
             <div>
-              <h2 className="text-[14px] font-bold text-gray-900 tracking-tight">
+              <h2 className="text-[15px] font-bold text-gray-900 tracking-tight">
                 {config.title}
               </h2>
               <p className="text-[10px] text-gray-400">

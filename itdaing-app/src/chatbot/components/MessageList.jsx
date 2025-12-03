@@ -77,6 +77,7 @@ const MessageList = ({
           key={msg.id} 
           message={msg}
           showCursor={isStreaming && idx === lastBotMessageIndex}
+          mode={mode}
         />
       ))}
 

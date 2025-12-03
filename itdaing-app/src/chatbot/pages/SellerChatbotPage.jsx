@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  RotateCcw, Zap, ChevronRight, Store, Users, DollarSign, 
+  RotateCcw, Store, ChevronRight, Users, DollarSign, 
   Percent, MapPin, X, ChevronDown, ChevronUp, Map as MapIcon,
   TrendingUp, Building2
 } from 'lucide-react';
@@ -268,6 +268,40 @@ const ZoneDetailPanel = ({ zone }) => {
 };
 
 /**
+ * 숫자 마커 컴포넌트
+ */
+const NumberMarker = ({ number, isActive, name }) => (
+  <div className="relative flex flex-col items-center">
+    <div 
+      className={`
+        flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm
+        shadow-lg border-2 transition-all
+        ${isActive 
+          ? 'bg-blue-500 text-white border-blue-600 scale-110' 
+          : 'bg-white text-gray-700 border-gray-300'
+        }
+      `}
+    >
+      {number}
+    </div>
+    {/* 아래 삼각형 */}
+    <div 
+      className={`
+        w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] -mt-1
+        border-l-transparent border-r-transparent
+        ${isActive ? 'border-t-blue-500' : 'border-t-white'}
+      `}
+    />
+    {/* 이름 라벨 */}
+    {name && isActive && (
+      <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 bg-blue-500 text-white text-xs font-semibold rounded shadow-md">
+        {name}
+      </div>
+    )}
+  </div>
+);
+
+/**
  * 모바일 전체화면 지도 오버레이
  */
 const FullScreenMapOverlay = ({ 
@@ -276,6 +310,27 @@ const FullScreenMapOverlay = ({
   setHighlightId, 
   onClose 
 }) => {
+  // 존 데이터를 zones prop 형태로 변환 (폴리곤 표시용)
+  const zones = useMemo(
+    () =>
+      recommendations
+        .map((item) => {
+          const lat = toNumber(item.lat);
+          const lng = toNumber(item.lng);
+          if (lat == null || lng == null) return null;
+          return {
+            id: resolveZoneId(item),
+            name: item.name,
+            lat,
+            lng,
+            polygon: item.polygon || item.geometry_data,
+            isSelected: resolveZoneId(item) === highlightId,
+          };
+        })
+        .filter(Boolean),
+    [recommendations, highlightId],
+  );
+
   const markers = useMemo(
     () =>
       recommendations
@@ -289,7 +344,8 @@ const FullScreenMapOverlay = ({
             lng,
             label: item.name,
             content: `${index + 1}. ${item.name}`,
-            polygon: item.polygon,
+            number: index + 1,
+            polygon: item.polygon || item.geometry_data,
             onClick: () => setHighlightId(resolveZoneId(item)),
           };
         })
@@ -329,10 +385,12 @@ const FullScreenMapOverlay = ({
       <div className="flex-1 relative">
         <ZonePolygonMap
           center={center}
+          zones={zones}
           markers={markers}
           height="100%"
           level={recommendations.length === 1 ? 4 : 6}
           highlightId={highlightId}
+          onZoneClick={(zone) => setHighlightId(zone.id)}
         />
       </div>
 
@@ -363,6 +421,27 @@ const FullScreenMapOverlay = ({
 const MapPanel = ({ recommendations, highlightId, setHighlightId }) => {
   const [isListExpanded, setIsListExpanded] = useState(true);
 
+  // 존 데이터 (폴리곤 표시용)
+  const zones = useMemo(
+    () =>
+      recommendations
+        .map((item) => {
+          const lat = toNumber(item.lat);
+          const lng = toNumber(item.lng);
+          if (lat == null || lng == null) return null;
+          return {
+            id: resolveZoneId(item),
+            name: item.name,
+            lat,
+            lng,
+            polygon: item.polygon || item.geometry_data,
+            isSelected: resolveZoneId(item) === highlightId,
+          };
+        })
+        .filter(Boolean),
+    [recommendations, highlightId],
+  );
+
   const markers = useMemo(
     () =>
       recommendations
@@ -376,7 +455,8 @@ const MapPanel = ({ recommendations, highlightId, setHighlightId }) => {
             lng,
             label: item.name,
             content: `${index + 1}. ${item.name}`,
-            polygon: item.polygon,
+            number: index + 1,
+            polygon: item.polygon || item.geometry_data,
             onClick: () => setHighlightId(resolveZoneId(item)),
           };
         })
@@ -406,10 +486,12 @@ const MapPanel = ({ recommendations, highlightId, setHighlightId }) => {
       <div className={`transition-all duration-300 ${isListExpanded ? 'flex-1' : 'h-full'}`}>
         <ZonePolygonMap
           center={center}
+          zones={zones}
           markers={markers}
           height="100%"
           level={recommendations.length === 1 ? 4 : 6}
           highlightId={highlightId}
+          onZoneClick={(zone) => setHighlightId(zone.id)}
         />
       </div>
 
@@ -514,15 +596,15 @@ const SellerChatbotPage = ({ hideHeader = false, guestId = null }) => {
           <header className="shrink-0 bg-white/80 backdrop-blur-sm border-b border-blue-100/50 px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 shadow-sm">
-                  <Zap className="h-4 w-4 text-white" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 shadow-sm">
+                  <Store className="h-4.5 w-4.5 text-white" strokeWidth={2} />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-gray-900 tracking-tight">
-                    셀러 AI
+                  <h2 className="text-[15px] font-bold text-gray-900 tracking-tight">
+                    셀러버디
                   </h2>
                   <p className="text-[10px] text-gray-400">
-                    존 추천·운영 가이드
+                    존 추천·운영 도우미
                   </p>
                 </div>
               </div>
