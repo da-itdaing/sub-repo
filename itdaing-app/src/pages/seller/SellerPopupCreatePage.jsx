@@ -774,16 +774,20 @@ const SellerPopupFormPage = ({
       >
         {/* 1. 팝업명 */}
         <div>
-          <label className="text-xs font-semibold text-gray-500">
-            팝업명
-            <span className="text-[#EB0000] ml-[3px]">*</span> 
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-gray-500">
+              팝업명
+              <span className="text-[#EB0000] ml-[3px]">*</span> 
+            </label>
+            <span className="text-[10px] text-gray-400">{formData.title.length}/50</span>
+          </div>
           <input
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
             required
+            maxLength={50}
             placeholder="팝업의 제목을 입력해주세요."
             className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
           />
@@ -1571,52 +1575,68 @@ const SellerPopupFormPage = ({
         {/* 7. 해시태그 & 링크 */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label className="text-xs font-semibold text-gray-500">해시태그</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-gray-500">해시태그</label>
+              <span className="text-[10px] text-gray-400">{formData.hashtags.length}/100</span>
+            </div>
             <input
               type="text"
               name="hashtags"
               value={formData.hashtags}
               onChange={handleChange}
+              maxLength={100}
               placeholder="#데이트 #핫플 (공백으로 구분)"
               className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
             />
           </div>
           <div>
-             <label className="text-xs font-semibold text-gray-500">홈페이지 URL</label>
-             <input
-               type="text"
-               name="homepageUrl"
-               value={formData.homepageUrl}
-               onChange={handleChange}
-               placeholder="https://"
-               className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
-             />
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-gray-500">홈페이지 URL</label>
+              <span className="text-[10px] text-gray-400">{formData.homepageUrl.length}/200</span>
+            </div>
+            <input
+              type="url"
+              name="homepageUrl"
+              value={formData.homepageUrl}
+              onChange={handleChange}
+              maxLength={200}
+              placeholder="https://"
+              className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
+            />
           </div>
           <div>
-             <label className="text-xs font-semibold text-gray-500">SNS URL</label>
-             <input
-               type="text"
-               name="snsUrl"
-               value={formData.snsUrl}
-               onChange={handleChange}
-               placeholder="https://instagram.com/..."
-               className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
-             />
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-gray-500">SNS URL</label>
+              <span className="text-[10px] text-gray-400">{formData.snsUrl.length}/200</span>
+            </div>
+            <input
+              type="url"
+              name="snsUrl"
+              value={formData.snsUrl}
+              onChange={handleChange}
+              maxLength={200}
+              placeholder="https://instagram.com/..."
+              className="mt-1 w-full border-b border-gray-300 py-2 text-sm focus:border-primary focus:outline-none"
+            />
           </div>
         </div>
 
         {/* 8. 팝업 소개 */}
         <div>
-          <label className="text-xs font-semibold text-gray-500">
-            팝업소개
-            <span className="text-[#EB0000] ml-[3px]">*</span>
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-gray-500">
+              팝업소개
+              <span className="text-[#EB0000] ml-[3px]">*</span>
+            </label>
+            <span className="text-[10px] text-gray-400">{formData.description.length}/2000</span>
+          </div>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
             rows={6}
             required
+            maxLength={2000}
             placeholder="팝업에 대한 설명을 상세하게 작성해 주세요."
             className="mt-2 w-full rounded-2xl border border-gray-200 bg-white p-4 text-sm focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
@@ -1630,6 +1650,7 @@ const SellerPopupFormPage = ({
               <label className="text-xs font-semibold text-gray-500">
                 썸네일 이미지
                 <span className="text-[#EB0000] ml-[3px]">*</span>
+                <span className="text-[10px] text-gray-400 ml-2">(최대 5MB)</span>
               </label>
               <div className="mt-2 flex items-center gap-3">
                 <div className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-500 truncate">
@@ -1648,7 +1669,31 @@ const SellerPopupFormPage = ({
                 </label>
               </div>
 
-              {existingThumbnail && (
+              {/* 새 썸네일 미리보기 */}
+              {formData.thumbnail && (
+                <div className="mt-3 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
+                  <img
+                    src={URL.createObjectURL(formData.thumbnail)}
+                    alt="새 썸네일 미리보기"
+                    className="h-20 w-20 rounded-lg object-cover"
+                  />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-blue-700">새 이미지 미리보기</p>
+                    <p className="text-[10px] text-blue-500 mt-0.5">{formData.thumbnail.name}</p>
+                    <p className="text-[10px] text-gray-400">{(formData.thumbnail.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, thumbnail: null }))}
+                    className="rounded-full bg-white p-1 text-gray-400 transition hover:bg-gray-100 hover:text-red-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* 기존 썸네일 */}
+              {existingThumbnail && !formData.thumbnail && (
                 <div className="mt-3 flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
                   <img
                     src={existingThumbnail.url}
@@ -1667,7 +1712,10 @@ const SellerPopupFormPage = ({
               )}
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500">추가 이미지</label>
+              <label className="text-xs font-semibold text-gray-500">
+                추가 이미지
+                <span className="text-[10px] text-gray-400 ml-2">(최대 10장, 각 5MB)</span>
+              </label>
               <div className="mt-2 flex items-center gap-3">
                 <div className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-500 truncate">
                   {formData.images.length > 0
@@ -1689,20 +1737,57 @@ const SellerPopupFormPage = ({
                 </label>
               </div>
 
+              {/* 새 이미지 미리보기 */}
+              {formData.images.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs font-medium text-blue-700 mb-2">새 이미지 미리보기 ({formData.images.length}장)</p>
+                  <div className="grid grid-cols-3 gap-2 md:grid-cols-4">
+                    {formData.images.map((file, idx) => (
+                      <div key={`new-${idx}`} className="relative overflow-hidden rounded-lg border border-blue-200 bg-blue-50">
+                        <img 
+                          src={URL.createObjectURL(file)} 
+                          alt={`새 이미지 ${idx + 1}`} 
+                          className="h-20 w-full object-cover" 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              images: prev.images.filter((_, i) => i !== idx)
+                            }));
+                          }}
+                          className="absolute right-1 top-1 rounded-full bg-white/90 p-0.5 text-gray-500 hover:text-red-500"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-1 py-0.5">
+                          <p className="text-[8px] text-white truncate">{file.name}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 기존 이미지 */}
               {existingImages.length > 0 && (
-                <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
-                  {existingImages.map((image) => (
-                    <div key={image.key} className="relative overflow-hidden rounded-xl border">
-                      <img src={image.url} alt="등록된 이미지" className="h-28 w-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveExistingImage(image.key)}
-                        className="absolute right-2 top-2 rounded-full bg-white/80 p-1 text-gray-500 hover:bg-white"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                <div className="mt-3">
+                  <p className="text-xs font-medium text-gray-500 mb-2">현재 등록된 이미지 ({existingImages.length}장)</p>
+                  <div className="grid grid-cols-3 gap-2 md:grid-cols-4">
+                    {existingImages.map((image) => (
+                      <div key={image.key} className="relative overflow-hidden rounded-lg border border-gray-200">
+                        <img src={image.url} alt="등록된 이미지" className="h-20 w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveExistingImage(image.key)}
+                          className="absolute right-1 top-1 rounded-full bg-white/90 p-0.5 text-gray-500 hover:text-red-500"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
