@@ -134,8 +134,8 @@ const SellerChatbotPopup = () => {
             </div>
           </div>
 
-          {/* 챗봇 콘텐츠 */}
-          <div className="flex-1 overflow-hidden">
+          {/* 챗봇 콘텐츠 - flex-1과 min-h-0으로 스크롤 영역 확보 */}
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <ChatbotContent mode="seller" className="h-full" />
           </div>
         </div>

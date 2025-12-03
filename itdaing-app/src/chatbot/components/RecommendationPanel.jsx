@@ -240,6 +240,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
                 level={items.length === 1 ? 4 : 6}
                 center={centerMarker ? { lat: centerMarker.lat, lng: centerMarker.lng } : undefined}
                 markers={markers}
+                selectedMarkerId={highlightId}
               />
             </div>
 

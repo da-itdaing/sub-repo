@@ -166,6 +166,7 @@ const SellerPopupFormPage = ({
   const [selectedArea, setSelectedArea] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
   const [showMap, setShowMap] = useState(false);
+  const [hoveredCellId, setHoveredCellId] = useState(null); // 호버된 셀 ID
 
   // 존 목록 조회
   const { data: areasData, isLoading: isLoadingAreas } = useQuery({
@@ -802,36 +803,85 @@ const SellerPopupFormPage = ({
                   return null;
                 })()}
 
-                {/* 셀 마커 */}
-                {cells.map((cell) => {
+                {/* 셀 마커 - 호버 시 정보 표시 */}
+                {cells.map((cell, index) => {
                   const pos = getCellPosition(cell);
                   if (!pos) return null;
                   const isSelected = selectedCell?.id === cell.id;
+                  const isHovered = hoveredCellId === cell.id;
+                  const hasPopup = cell.hasPopup || cell.popupCount > 0;
+                  const isAvailable = cell.status === 'APPROVED' && !hasPopup;
 
                   return (
                     <div key={cell.id}>
+                      {/* 숫자 마커 */}
                       <MapMarker
                         position={pos}
-                        onClick={() => handleSelectCell(cell)}
-                        image={
-                          isSelected
-                            ? undefined
-                            : {
-                                src: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
-                                size: { width: 32, height: 35 },
-                              }
-                        }
+                        onClick={() => !isLocationLocked && handleSelectCell(cell)}
+                        clickable={!isLocationLocked}
+                        image={{
+                          src: isSelected 
+                            ? 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_number_blue.png'
+                            : 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_number_blue.png',
+                          size: { width: 36, height: 37 },
+                          options: {
+                            spriteSize: { width: 36, height: 691 },
+                            spriteOrigin: { x: 0, y: ((index % 10) * 46) + 10 },
+                            offset: { x: 13, y: 37 },
+                          },
+                        }}
                       />
+                      
+                      {/* 라벨 + 호버 정보 */}
                       <CustomOverlayMap position={pos} yAnchor={2.5}>
                         <div
-                          onClick={() => handleSelectCell(cell)}
-                          className={`cursor-pointer px-2 py-1 rounded shadow text-xs font-semibold border ${
-                            isSelected
-                              ? 'bg-[#EB0000] text-white border-[#EB0000]'
-                              : 'bg-white text-gray-700 border-gray-200 hover:border-[#EB0000]'
-                          }`}
+                          onClick={() => !isLocationLocked && handleSelectCell(cell)}
+                          onMouseEnter={() => setHoveredCellId(cell.id)}
+                          onMouseLeave={() => setHoveredCellId(null)}
+                          className="relative"
                         >
-                          {cell.label}
+                          {/* 기본 라벨 */}
+                          <div
+                            className={`cursor-pointer px-2 py-1 rounded shadow text-xs font-semibold border transition-all ${
+                              isSelected
+                                ? 'bg-[#EB0000] text-white border-[#EB0000] scale-110'
+                                : isHovered
+                                  ? 'bg-blue-500 text-white border-blue-500 scale-105'
+                                  : isAvailable
+                                    ? 'bg-white text-gray-700 border-gray-200 hover:border-[#EB0000]'
+                                    : 'bg-gray-200 text-gray-500 border-gray-300'
+                            }`}
+                          >
+                            {cell.label}
+                            {!isAvailable && !isSelected && <span className="ml-1 text-[8px]">예약됨</span>}
+                          </div>
+
+                          {/* 호버 시 상세 정보 툴팁 */}
+                          {isHovered && (
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-44 p-3 bg-white rounded-lg shadow-xl border border-gray-200 text-xs z-50">
+                              <p className="font-bold text-gray-800 mb-1.5">{cell.label}</p>
+                              <div className="space-y-1 text-gray-600">
+                                <p className="flex items-center gap-1">
+                                  <span className={`w-2 h-2 rounded-full ${
+                                    cell.status === 'APPROVED' ? 'bg-green-500' : 
+                                    cell.status === 'PENDING' ? 'bg-yellow-500' : 'bg-red-500'
+                                  }`} />
+                                  상태: {cell.status === 'APPROVED' ? '승인됨' : cell.status === 'PENDING' ? '대기중' : '거절됨'}
+                                </p>
+                                {cell.detailedAddress && (
+                                  <p className="truncate">📍 {cell.detailedAddress}</p>
+                                )}
+                                {hasPopup && (
+                                  <p className="text-amber-600">⚠️ 이미 팝업이 등록되어 있습니다</p>
+                                )}
+                              </div>
+                              <div className={`mt-2 pt-2 border-t border-gray-100 font-semibold ${
+                                isAvailable ? 'text-green-600' : 'text-red-500'
+                              }`}>
+                                {isAvailable ? '✓ 클릭하여 선택' : '✕ 선택 불가'}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </CustomOverlayMap>
                     </div>
