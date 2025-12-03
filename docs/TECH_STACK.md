@@ -1,59 +1,53 @@
 # 기술 스택
 
-## 🔧 백엔드 (현재 운영)
+## Backend (itdaing/)
 
 | 계층 | 사용 기술 | 비고 |
 |------|-----------|------|
-| 애플리케이션 | Spring Boot 3.5.7 (Java 21), Gradle (Kotlin DSL) | REST API, JWT 인증, OpenAPI |
-| 데이터베이스 | PostgreSQL 15 + pgvector (**AWS RDS**) | 트랜잭션 + 임베딩 저장, 다중 AZ |
-| 캐시/세션 | Redis 7.x (**Backend EC2 내부 설치**) | 세션, 캐시, Rate Limiting |
-| 스토리지 | AWS S3 | 이미지/정적 자원 업로드, presigned URL |
-| 메시징/잡 | Spring Scheduler, Application Events | 배치/캐시 무효화 등 |
-| 보안 | AWS Secrets Manager + SSM Parameter Store | systemd EnvironmentFile로 주입 |
-| 배포 | AMI(+systemd) + Nginx Reverse Proxy | `itdaing-backend.service` 자동 실행 |
-| 접근제어 | Bastion Host + Security Group | Private Subnet 자산 접근 통제 |
+| 애플리케이션 | Spring Boot 3.5.7 (Java 21), Gradle | REST API, JWT 인증, OpenAPI |
+| 데이터베이스 | PostgreSQL 15 + pgvector (AWS RDS) | 트랜잭션 + 임베딩 저장 |
+| 캐시/세션 | Redis 7.x | 세션, 캐시 |
+| 스토리지 | AWS S3 | 이미지 업로드, presigned URL |
+| 보안 | AWS Secrets Manager + SSM | 환경변수 주입 |
+| 배포 | ASG + ALB | Auto Scaling 지원 |
 
----
+## Frontend (itdaing-app/)
 
-## 💻 프론트엔드 (itdaing-app)
-
-| 영역 | 스택 | 설명 |
+| 영역 | 스택 | 버전 |
 |------|------|------|
-| 프레임워크 | React 19 · Vite 7 · JavaScript | 완전 JS 전환, React Router v7 |
-| 상태 관리 | Zustand (Client) · React Query (Server) | Lightweight + 캐싱 |
-| UI/스타일 | Tailwind CSS v4 (Pure) · Lucide Icons | Safe-area · PWA 친화 |
-| HTTP/검증 | Axios · React Hook Form · Zod | API wrapper + 런타임 검증 |
-| 빌드/배포 | `npm run build` → Nginx 정적 루트 복사 | Service Worker + offline.html 포함 |
-| 기타 | Kakao Map SDK, Kakao OAuth | 지역 탐색/지도 렌더링 |
+| 프레임워크 | React + Vite | 19.2.0 / 7.0.0 |
+| 상태 관리 | Zustand + TanStack Query | 5.0.8 / 5.90 |
+| UI/스타일 | Tailwind CSS + Motion | 4.1.0 / 11.15 |
+| HTTP/검증 | Axios + Zod | 1.13.2 / 4.1.12 |
+| 지도 | react-kakao-maps-sdk | 1.2.0 |
+| 배포 | S3 + CloudFront | CDN |
 
-> ⚠️ `itdaing-web` (React 18 + TypeScript 버전)은 레거시 레퍼런스로만 유지하고 있습니다.
+## AI (chatbot/)
 
----
+| 영역 | 스택 | 버전 |
+|------|------|------|
+| 프레임워크 | FastAPI | 0.110 |
+| 오케스트레이션 | LangGraph + LangChain | 1.0.3 / 1.0.5 |
+| LLM | OpenAI GPT-4o-mini | - |
+| 벡터DB | pgvector | 0.3.6 |
+| 체크포인트 | AsyncPostgresSaver | - |
+| 배포 | ASG + ALB (/ai/*) | Port 9001 |
 
-## 🤖 AI / 챗봇 (별도 EC2)
+## 인프라 아키텍처
 
-- **LangGraph**: 대화 플로우 및 툴 호출 구성
-- **FastAPI (Port 9000)**: REST/WebSocket 엔드포인트
-- **PostgresSaver + pgvector**: 문서/대화 임베딩 저장소 (RDS 공유)
-- **배포**: 전용 EC2 인스턴스에 systemd/Docker로 기동, Gateway → FastAPI → LLM/Vector DB 체계
-
----
-
-## ☁️ 인프라 & 네트워크
-
-```text
-User Browser → CloudFront(예정) → ACM+ALB → Nginx(EC2)
-                          ├─ / (React PWA 정적 파일)
-                          └─ /api (Spring Boot 8080)
-Spring Boot (EC2) ── Redis(Local) ── AWS RDS (PostgreSQL/pgvector)
-                                   └─ S3 (이미지)
-LangGraph FastAPI (별도 EC2) ── RDS (pgvector)
-Bastion Host → Private Subnet (Backend EC2, Redis)
+```
+User → CloudFront → ALB ─┬─ /api/* → Spring Boot ASG → RDS + Redis
+                         └─ /ai/*  → FastAPI ASG    → RDS (pgvector)
+                         
+CloudFront → S3 (정적 파일)
 ```
 
-- **Reverse Proxy**: Nginx (EC2) + AWS ACM 인증서가 연결된 ALB
-- **정적 배포**: 현재 Nginx + EBS, 추후 S3 + CloudFront로 이전 예정
-- **모니터링**: `journalctl`, CloudWatch Logs/Alarms (준비 중)
+| 리소스 | 설정 |
+|--------|------|
+| CloudFront | `d13zy39nisv09l.cloudfront.net` |
+| S3 버킷 | `daitdaing-frontend-prod` |
+| ALB | `aischool-bastion-alb` |
+| RDS | `db.t3.medium` (PostgreSQL 15) |
 
 ---
 

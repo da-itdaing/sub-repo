@@ -1,47 +1,53 @@
 # 브랜치 전략 및 워크플로우
 
-## 🌿 브랜치 전략
+## 브랜치 전략
 
 ### 주요 브랜치
 
-- **main**: 유일한 통합/배포 브랜치. 모든 릴리스는 PR 승인을 거쳐 main에 병합한다.
-- **dev/be**: 백엔드 스테이징 (`itdaing/`). main에서 분기해 개발 후 **PR → main**.
-- **dev/fe**: 프론트/통합 스테이징 (`itdaing-app/`, `itdaing-web/`). dev/be 변경을 흡수한 뒤 **PR → main**.
-- **test/fe**: QA·핫픽스용 임시 브랜치. 향후 `hotfix/fe`로 이름을 바꾸고, main 기반 긴급 패치를 검증하는 트랙으로 재정의한다.
-- **gh-pages**: API 문서 자동 배포 브랜치
+| 브랜치 | 담당 폴더 | 담당자 | 배포 대상 |
+|--------|----------|--------|----------|
+| `main` | 전체 | - | 통합 브랜치 |
+| `dev/fe` | `itdaing-app/` | 황채리 | S3 + CloudFront |
+| `dev/be` | `itdaing/` | 장주찬 | Spring ASG |
+| `dev/ai` | `chatbot/` | 김종하, 도형준 | Chatbot ASG |
+| `gh-pages` | API 문서 | 자동 | GitHub Pages |
+| `archive/itdaing-web` | 레거시 | - | 보관용 |
 
 ### 브랜치 간 관계
 
 ```
 main (통합/프로덕션)
-└── dev/be (백엔드 스테이징)
-    └── dev/fe (프론트 + 통합 스테이징)
-        └── test/fe (QA·실험 핫픽스)
+├── dev/be (백엔드)
+├── dev/fe (프론트엔드)
+├── dev/ai (AI 챗봇)
+├── gh-pages (API 문서)
+└── archive/itdaing-web (레거시)
 ```
 
-### 동기화 및 PR 규칙
+### 동기화 규칙
 
-1. **main → dev/be**: 배포 직후 main을 dev/be에 fast-forward 하여 백엔드 스테이징을 최신 상태로 유지합니다.
-2. **dev/be → dev/fe**: 프론트/통합 작업 전 `git checkout dev/fe && git merge --ff-only dev/be`로 백엔드 변경을 흡수합니다.
-3. **dev/be → main PR**: 백엔드 기능이 준비되면 `dev/be`에서 main 대상으로 Pull Request를 열고 코드 리뷰 후 병합합니다.
-4. **dev/fe → main PR**: 프론트/통합 기능도 동일하게 `dev/fe`에서 main으로 PR을 열어 리뷰 후 병합합니다. dev/fe는 dev/be가 main에 병합된 뒤 다시 fast-forward 합니다.
-5. **test/fe / hotfix/fe**: 긴급 픽스는 main에서 분기한 `test/fe`(=soon `hotfix/fe`)에서 작업하고, 검증 완료 시 `dev/fe`와 main으로 각각 PR을 생성합니다. 적용 후 브랜치를 삭제하거나 `backup/hotfix-yyyymmdd`로 보관합니다.
+각 dev 브랜치에서 작업 후 main으로 PR을 생성합니다.
 
-### 브랜치별 트래킹 파일
+```bash
+# 1. 브랜치에서 작업
+git checkout dev/fe  # 또는 dev/be, dev/ai
+# ... 작업 ...
+git commit -m "✨ feat: 새 기능"
+git push origin dev/fe
 
-| 브랜치 | 트래킹 디렉토리 | 기술 스택 | 목적 |
-|--------|----------------|-----------|------|
-| **main** | 전체 | - | 통합 |
-| **dev/be** | `itdaing/` | Spring Boot | 백엔드 개발 |
-| **dev/fe** | `itdaing-app/`, `itdaing-web/` | React 19 + Tailwind v4 | 프론트/통합 스테이징 |
-| **test/fe** *(soon `hotfix/fe`)* | `itdaing-app/` | React 19 + Tailwind v4 | QA·긴급 핫픽스 (main 기반) |
+# 2. main과 동기화 (정기적으로)
+git checkout dev/fe
+git merge main --no-edit
+git push origin dev/fe
+```
 
-> 🔄 **핫픽스 리네이밍 계획**  
-> `test/fe` 브랜치는 hotfix 전용 역할로 고정하며, 네이밍도 `hotfix/fe`로 교체 예정이다.  
-> - 생성: `git checkout -b hotfix/fe origin/main`  
-> - 검증: 필요한 경우 QA 환경에서 빠르게 확인  
-> - 병합: main에 PR → dev/fe에도 PR (동일 커밋 유지)  
-> - 종료: 머지 후 브랜치 삭제 또는 `backup/hotfix-yyyymmdd` 태깅
+### 배포 흐름
+
+| 브랜치 | 배포 대상 | 배포 방법 |
+|--------|----------|----------|
+| `dev/fe` → S3 | CloudFront | `npm run build && aws s3 sync` |
+| `dev/be` → Spring | private-tg | AMI + ASG |
+| `dev/ai` → Chatbot | chatbot-tg | AMI + ASG |
 
 ---
 
