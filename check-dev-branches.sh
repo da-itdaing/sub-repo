@@ -1,1 +1,0 @@
-/home/ubuntu/scripts/check-dev-branches.sh

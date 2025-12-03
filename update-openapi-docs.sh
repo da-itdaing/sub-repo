@@ -1,1 +1,0 @@
-/home/ubuntu/scripts/update-openapi-docs.sh
