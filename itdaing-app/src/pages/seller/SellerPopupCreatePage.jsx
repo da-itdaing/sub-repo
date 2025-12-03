@@ -475,12 +475,14 @@ const SellerPopupFormPage = ({
     return true;
   };
 
-  // 존 선택
+  // 존 선택 - 셀 지도 자동 표시
   const handleSelectArea = (area) => {
     if (isLocationLocked) return;
     setSelectedArea(area);
     setSelectedCell(null);
     setFormData((prev) => ({ ...prev, zoneCellId: null }));
+    setShowMap(true); // 존 선택 시 셀 지도 자동 펼침
+    setShowZoneMap(false); // 존 지도는 접기 (셀 선택에 집중)
   };
 
   // 셀 선택
@@ -705,7 +707,7 @@ const SellerPopupFormPage = ({
             )}
           </div>
           
-          {/* 존 선택 지도 - 모든 존 폴리곤 표시 */}
+          {/* 존 선택 지도 - 폴리곤 표시, 호버 시 정보 표시 */}
           {showZoneMap && !isLocationLocked && areas.length > 0 && (
             <div className="mt-3 h-[280px] rounded-lg overflow-hidden border border-gray-200 relative">
               <Map
@@ -729,49 +731,64 @@ const SellerPopupFormPage = ({
                   
                   return (
                     <div key={area.id}>
-                      {/* 존 폴리곤 */}
+                      {/* 존 폴리곤 - 클릭 가능 */}
                       <Polygon
                         path={coords}
-                        strokeWeight={isSelected ? 3 : 2}
+                        strokeWeight={isSelected ? 3 : isHovered ? 2.5 : 1.5}
                         strokeColor={isSelected ? '#EB0000' : isHovered ? '#3B82F6' : '#6B7280'}
-                        strokeOpacity={0.8}
+                        strokeOpacity={isSelected ? 1 : isHovered ? 0.9 : 0.6}
                         fillColor={isSelected ? '#EB0000' : isHovered ? '#3B82F6' : '#9CA3AF'}
-                        fillOpacity={isSelected ? 0.3 : isHovered ? 0.25 : 0.15}
+                        fillOpacity={isSelected ? 0.35 : isHovered ? 0.3 : 0.1}
                         onClick={() => handleSelectArea(area)}
                         onMouseover={() => setHoveredAreaId(area.id)}
                         onMouseout={() => setHoveredAreaId(null)}
                       />
                       
-                      {/* 존 라벨 */}
-                      <CustomOverlayMap position={center} yAnchor={0.5}>
-                        <div
-                          onClick={() => handleSelectArea(area)}
-                          onMouseEnter={() => setHoveredAreaId(area.id)}
-                          onMouseLeave={() => setHoveredAreaId(null)}
-                          className={`cursor-pointer px-3 py-1.5 rounded-lg shadow-md text-xs font-semibold transition-all ${
-                            isSelected
-                              ? 'bg-[#EB0000] text-white scale-110'
-                              : isHovered
-                                ? 'bg-blue-500 text-white scale-105'
-                                : 'bg-white text-gray-700 border border-gray-200'
-                          }`}
-                        >
-                          {area.name}
-                        </div>
-                      </CustomOverlayMap>
+                      {/* 선택된 존에만 라벨 항상 표시 */}
+                      {isSelected && (
+                        <CustomOverlayMap position={center} yAnchor={0.5}>
+                          <div className="px-3 py-1.5 rounded-lg shadow-lg text-xs font-bold bg-[#EB0000] text-white border-2 border-white">
+                            ✓ {area.name}
+                          </div>
+                        </CustomOverlayMap>
+                      )}
                       
-                      {/* 호버 시 존 정보 툴팁 */}
+                      {/* 호버 시 존 정보 카드 표시 (선택되지 않은 경우) */}
                       {isHovered && !isSelected && (
-                        <CustomOverlayMap position={center} yAnchor={-0.8}>
-                          <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-3 text-xs w-48 z-50">
-                            <p className="font-bold text-gray-800 mb-1">{area.name}</p>
-                            {area.district && (
-                              <p className="text-gray-500">📍 {area.district}</p>
-                            )}
-                            {area.description && (
-                              <p className="text-gray-500 mt-1 line-clamp-2">{area.description}</p>
-                            )}
-                            <p className="text-[#EB0000] font-medium mt-2">클릭하여 선택</p>
+                        <CustomOverlayMap position={center} yAnchor={0.5}>
+                          <div 
+                            onClick={() => handleSelectArea(area)}
+                            onMouseEnter={() => setHoveredAreaId(area.id)}
+                            onMouseLeave={() => setHoveredAreaId(null)}
+                            className="cursor-pointer bg-white rounded-xl shadow-xl border border-blue-200 p-3 text-xs w-52 transform transition-all"
+                          >
+                            {/* 존 이름 */}
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+                                <MapPin className="h-3.5 w-3.5 text-white" />
+                              </div>
+                              <p className="font-bold text-gray-800">{area.name}</p>
+                            </div>
+                            
+                            {/* 존 정보 */}
+                            <div className="space-y-1 text-gray-600 mb-2">
+                              {area.district && (
+                                <p className="flex items-center gap-1">
+                                  <span className="text-gray-400">위치:</span> {area.district}
+                                </p>
+                              )}
+                              {area.description && (
+                                <p className="line-clamp-2 text-gray-500">{area.description}</p>
+                              )}
+                            </div>
+                            
+                            {/* 선택 버튼 */}
+                            <button
+                              type="button"
+                              className="w-full py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+                            >
+                              이 존 선택하기
+                            </button>
                           </div>
                         </CustomOverlayMap>
                       )}
@@ -780,15 +797,24 @@ const SellerPopupFormPage = ({
                 })}
               </Map>
               
+              {/* 안내 메시지 */}
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-sm rounded-full px-4 py-1.5 text-[11px] text-white shadow-lg">
+                🗺️ 지도에서 존 영역에 마우스를 올려 정보를 확인하세요
+              </div>
+              
               {/* 지도 범례 */}
-              <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-[10px] shadow-sm border border-gray-200">
+              <div className="absolute bottom-2 left-2 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 text-[10px] shadow-sm border border-gray-200">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-[#EB0000]/30 border border-[#EB0000]" />
-                    <span>선택됨</span>
+                    <div className="w-3 h-3 rounded bg-[#EB0000]/40 border-2 border-[#EB0000]" />
+                    <span className="font-medium">선택됨</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-gray-300/50 border border-gray-400" />
+                    <div className="w-3 h-3 rounded bg-blue-500/30 border border-blue-500" />
+                    <span>호버</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded bg-gray-200/50 border border-gray-400" />
                     <span>선택 가능</span>
                   </div>
                 </div>
