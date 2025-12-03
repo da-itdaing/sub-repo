@@ -1436,16 +1436,39 @@ const SellerPopupFormPage = ({
           </div>
           <div className="mt-4">
             <label className="text-xs font-semibold text-gray-500">운영 시간</label>
-            <div className="relative mt-1">
-                <Clock className="absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  name="openingHours"
-                  value={formData.openingHours}
-                  onChange={handleChange}
-                  placeholder="예: 10:00 - 22:00"
-                  className="w-full border-b border-gray-300 py-2 pl-6 text-sm focus:border-primary focus:outline-none"
-              />
+            <div className="flex items-center gap-2 mt-2">
+              <Clock className="h-4 w-4 text-gray-400 shrink-0" />
+              <select
+                value={formData.openingHours?.split(' - ')[0] || '10:00'}
+                onChange={(e) => {
+                  const endTime = formData.openingHours?.split(' - ')[1] || '22:00';
+                  setFormData(prev => ({ ...prev, openingHours: `${e.target.value} - ${endTime}` }));
+                }}
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-[#EB0000] focus:outline-none"
+              >
+                {Array.from({ length: 24 }, (_, i) => {
+                  const hour = i.toString().padStart(2, '0');
+                  return (
+                    <option key={`start-${hour}`} value={`${hour}:00`}>{hour}:00</option>
+                  );
+                })}
+              </select>
+              <span className="text-gray-400">~</span>
+              <select
+                value={formData.openingHours?.split(' - ')[1] || '22:00'}
+                onChange={(e) => {
+                  const startTime = formData.openingHours?.split(' - ')[0] || '10:00';
+                  setFormData(prev => ({ ...prev, openingHours: `${startTime} - ${e.target.value}` }));
+                }}
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-[#EB0000] focus:outline-none"
+              >
+                {Array.from({ length: 24 }, (_, i) => {
+                  const hour = i.toString().padStart(2, '0');
+                  return (
+                    <option key={`end-${hour}`} value={`${hour}:00`}>{hour}:00</option>
+                  );
+                })}
+              </select>
             </div>
           </div>
         </div>
@@ -1454,7 +1477,6 @@ const SellerPopupFormPage = ({
         <div>
           <label className="mb-3 block text-xs font-semibold text-gray-500">카테고리
             <span className="text-[#EB0000] ml-[3px]">*</span>
-            (최소 한개 선택)
           </label>
           <div className="flex flex-wrap gap-2">
             {categories?.map((cat) => (
@@ -1470,45 +1492,79 @@ const SellerPopupFormPage = ({
           </div>
         </div>
 
-        {/* 5. 스타일 (다중) */}
+        {/* 5. 스타일 (순위 선택) */}
         <div>
-          <label className="mb-3 block text-xs font-semibold text-gray-500">
+          <label className="mb-2 block text-xs font-semibold text-gray-500">
             분위기/스타일
-            <span className="text-[#EB0000] ml-[3px]">*</span> 
-            <span className="text-[#8d8d8d] ml-[3px]">(최소 1개 - 최대 3개 선택)</span>
+            <span className="text-[#EB0000] ml-[3px]">*</span>
+            <span className="text-[#8d8d8d] ml-[3px]">(1~3순위 선택)</span>
           </label>
+          <p className="text-[10px] text-gray-400 mb-3">클릭 순서대로 순위가 지정됩니다. 다시 클릭하면 해제됩니다.</p>
           <div className="flex flex-wrap gap-2">
-            {styles?.map((style) => (
-              <button
-                key={style.id}
-                type="button"
-                onClick={() => toggleArrayItem('styleIds', style.id)}
-                className={getButtonStyle(formData.styleIds.includes(style.id))}
-              >
-                {style.name}
-              </button>
-            ))}
+            {styles?.map((style) => {
+              const rankIndex = formData.styleIds.indexOf(style.id);
+              const rank = rankIndex >= 0 ? rankIndex + 1 : null;
+              return (
+                <button
+                  key={style.id}
+                  type="button"
+                  onClick={() => toggleArrayItem('styleIds', style.id)}
+                  disabled={!rank && formData.styleIds.length >= 3}
+                  className={`relative px-4 py-2 text-sm rounded-full border transition-all ${
+                    rank
+                      ? 'bg-[#EB0000] text-white border-[#EB0000]'
+                      : formData.styleIds.length >= 3
+                        ? 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-[#EB0000] hover:text-[#EB0000]'
+                  }`}
+                >
+                  {rank && (
+                    <span className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-white text-[#EB0000] text-[10px] font-bold border-2 border-[#EB0000] flex items-center justify-center">
+                      {rank}
+                    </span>
+                  )}
+                  {style.name}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* 6. 편의/특징 (다중) */}
+        {/* 6. 편의/특징 (순위 선택) */}
         <div>
-          <label className="mb-3 block text-xs font-semibold text-gray-500">
+          <label className="mb-2 block text-xs font-semibold text-gray-500">
             편의/특징
-            <span className="text-[#EB0000] ml-[3px]">*</span> 
-            <span className="text-[#8d8d8d] ml-[3px]">(최소 1개 - 최대 3개 선택)</span>
+            <span className="text-[#EB0000] ml-[3px]">*</span>
+            <span className="text-[#8d8d8d] ml-[3px]">(1~3순위 선택)</span>
           </label>
+          <p className="text-[10px] text-gray-400 mb-3">클릭 순서대로 순위가 지정됩니다. 다시 클릭하면 해제됩니다.</p>
           <div className="flex flex-wrap gap-2">
-            {features?.map((feat) => (
-              <button
-                key={feat.id}
-                type="button"
-                onClick={() => toggleArrayItem('featureIds', feat.id)}
-                className={getButtonStyle(formData.featureIds.includes(feat.id))}
-              >
-                {feat.name}
-              </button>
-            ))}
+            {features?.map((feat) => {
+              const rankIndex = formData.featureIds.indexOf(feat.id);
+              const rank = rankIndex >= 0 ? rankIndex + 1 : null;
+              return (
+                <button
+                  key={feat.id}
+                  type="button"
+                  onClick={() => toggleArrayItem('featureIds', feat.id)}
+                  disabled={!rank && formData.featureIds.length >= 3}
+                  className={`relative px-4 py-2 text-sm rounded-full border transition-all ${
+                    rank
+                      ? 'bg-[#EB0000] text-white border-[#EB0000]'
+                      : formData.featureIds.length >= 3
+                        ? 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-[#EB0000] hover:text-[#EB0000]'
+                  }`}
+                >
+                  {rank && (
+                    <span className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-white text-[#EB0000] text-[10px] font-bold border-2 border-[#EB0000] flex items-center justify-center">
+                      {rank}
+                    </span>
+                  )}
+                  {feat.name}
+                </button>
+              );
+            })}
           </div>
         </div>
 

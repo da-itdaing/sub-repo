@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Minus, Maximize2, MessageCircle } from 'lucide-react';
+import { X, Minus, Maximize2, Minimize2, MessageCircle } from 'lucide-react';
 import ChatbotContent from '@/components/chatbot/ChatbotContent';
 
 /**
@@ -112,14 +112,14 @@ const SellerChatbotPopup = () => {
                 <Minus className="h-4 w-4" />
               </button>
 
-              {/* 최대화 버튼 */}
+              {/* 최대화/축소 버튼 - 상태에 따라 아이콘 변경 */}
               <button
                 type="button"
                 onClick={handleMaximize}
                 className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/20 hover:text-white"
                 aria-label={isMaximized ? '원래 크기로' : '최대화'}
               >
-                <Maximize2 className="h-4 w-4" />
+                {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
               </button>
 
               {/* 닫기 버튼 */}
