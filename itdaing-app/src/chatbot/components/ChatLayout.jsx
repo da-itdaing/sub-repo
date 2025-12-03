@@ -55,11 +55,42 @@ const MARKET_TIPS = {
   ],
 };
 
+// 모드별 색상 테마
+const THEME_COLORS = {
+  consumer: {
+    bgGradient: 'from-rose-50/50 to-white',
+    headerBorder: 'border-rose-100/50',
+    iconBg: 'from-rose-500 to-red-600',
+    resetHover: 'hover:text-rose-500',
+    quickBg: 'bg-rose-50',
+    quickText: 'text-rose-600',
+    quickHover: 'hover:bg-rose-100 hover:text-rose-700',
+    tipBg: 'from-rose-50/80 to-amber-50/80',
+    tipBorder: 'border-rose-100/30',
+    tipIcon: 'text-rose-400',
+    inputBorder: 'border-rose-100/50',
+  },
+  seller: {
+    bgGradient: 'from-blue-50/50 to-white',
+    headerBorder: 'border-blue-100/50',
+    iconBg: 'from-blue-500 to-cyan-600',
+    resetHover: 'hover:text-blue-500',
+    quickBg: 'bg-blue-50',
+    quickText: 'text-blue-600',
+    quickHover: 'hover:bg-blue-100 hover:text-blue-700',
+    tipBg: 'from-blue-50/80 to-cyan-50/80',
+    tipBorder: 'border-blue-100/30',
+    tipIcon: 'text-blue-400',
+    inputBorder: 'border-blue-100/50',
+  },
+};
+
 /**
  * 플리마켓 팁 메시지 (로테이션)
  */
 const MarketTipBanner = ({ mode, isLoading }) => {
   const tips = MARKET_TIPS[mode] || MARKET_TIPS.consumer;
+  const theme = THEME_COLORS[mode] || THEME_COLORS.consumer;
   const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * tips.length));
   const [isVisible, setIsVisible] = useState(true);
 
@@ -83,11 +114,11 @@ const MarketTipBanner = ({ mode, isLoading }) => {
   return (
     <div className="px-4 pb-2">
       <div 
-        className={`flex items-center justify-center gap-2 py-2 px-3 bg-gradient-to-r from-rose-50/80 to-amber-50/80 rounded-xl border border-rose-100/30 transition-all duration-200 ${
+        className={`flex items-center justify-center gap-2 py-2 px-3 bg-gradient-to-r ${theme.tipBg} rounded-xl border ${theme.tipBorder} transition-all duration-200 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
         }`}
       >
-        <span className="text-xs font-medium text-rose-400">💡</span>
+        <span className={`text-xs font-medium ${theme.tipIcon}`}>💡</span>
         <span className="text-[11px] text-gray-500">
           <span className="text-base mr-1">{tip.emoji}</span>
           {tip.text}
@@ -116,6 +147,7 @@ const ChatLayout = ({ mode = 'consumer', guestId = null }) => {
   const [showQuickQuestions, setShowQuickQuestions] = useState(true);
   const config = MODE_CONFIG[mode] || MODE_CONFIG.consumer;
   const quickQuestions = QUICK_QUESTIONS[mode] || QUICK_QUESTIONS.consumer;
+  const theme = THEME_COLORS[mode] || THEME_COLORS.consumer;
 
   const handleReset = useCallback(() => {
     resetSession();
@@ -142,16 +174,16 @@ const ChatLayout = ({ mode = 'consumer', guestId = null }) => {
 
   return (
     <div
-      className="flex h-full flex-col bg-linear-to-b from-rose-50/50 to-white overflow-hidden"
+      className={`flex h-full flex-col bg-gradient-to-b ${theme.bgGradient} overflow-hidden`}
       role="region"
       aria-label="AI 챗봇"
     >
       {/* 헤더 - 미니멀 & 세련됨 */}
-      <header className="shrink-0 bg-white/80 backdrop-blur-sm border-b border-rose-100/50 px-4 py-3">
+      <header className={`shrink-0 bg-white/80 backdrop-blur-sm border-b ${theme.headerBorder} px-4 py-3`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {/* 미니 로고 아이콘 */}
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-rose-500 to-red-600 shadow-sm">
+            <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${theme.iconBg} shadow-sm`}>
               <Zap className="h-4 w-4 text-white" />
             </div>
             <div>
@@ -167,7 +199,7 @@ const ChatLayout = ({ mode = 'consumer', guestId = null }) => {
           <button
             type="button"
             onClick={handleReset}
-            className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-rose-500 transition-colors"
+            className={`flex items-center gap-1 text-[11px] text-gray-400 ${theme.resetHover} transition-colors`}
             aria-label="대화 초기화"
           >
             <RotateCcw className="h-3 w-3" />
@@ -200,7 +232,7 @@ const ChatLayout = ({ mode = 'consumer', guestId = null }) => {
                   key={idx}
                   type="button"
                   onClick={() => handleQuickQuestion(q)}
-                  className="rounded-full bg-rose-50 px-3.5 py-2 text-[12px] font-medium text-rose-600 hover:bg-rose-100 hover:text-rose-700 transition-all active:scale-95"
+                  className={`rounded-full ${theme.quickBg} px-3.5 py-2 text-[12px] font-medium ${theme.quickText} ${theme.quickHover} transition-all active:scale-95`}
                 >
                   {q}
                 </button>

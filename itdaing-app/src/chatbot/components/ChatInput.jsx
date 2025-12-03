@@ -117,15 +117,17 @@ const ChatInput = forwardRef(({ onSend, disabled, mode = 'consumer' }, ref) => {
         ring: 'focus-within:ring-blue-400',
         button: 'from-blue-500 to-cyan-600',
         shadow: 'shadow-blue-200/50 hover:shadow-blue-300/50',
+        border: 'border-blue-100/50',
       }
     : {
         ring: 'focus-within:ring-rose-400',
         button: 'from-rose-500 to-red-600',
         shadow: 'shadow-rose-200/50 hover:shadow-rose-300/50',
+        border: 'border-rose-100/50',
       };
 
   return (
-    <div className="bg-white border-t border-rose-100/50 px-4 py-3 safe-area-pb">
+    <div className={`bg-white border-t ${themeColors.border} px-4 py-3 safe-area-pb`}>
       <form onSubmit={handleSubmit} className="relative">
         <div className={`flex items-end gap-2 bg-gray-50 rounded-2xl p-1.5 ring-1 ring-gray-200 focus-within:ring-2 ${themeColors.ring} focus-within:bg-white transition-all`}>
           <textarea
