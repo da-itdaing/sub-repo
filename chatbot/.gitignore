@@ -1,0 +1,83 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+.cursor/
+*.swp
+*.swo
+*~
+
+# Environment files (secrets)
+chatbot.env
+*.env
+!.env.example
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ===== 프로젝트 특화 제외 =====
+
+# 크롤링 데이터 (DB 관리용, 챗봇과 무관)
+data/images/
+data/scraped_events.json
+data/events_with_s3_images.json
+data/crawler_state.json
+
+# 크롤링 스크립트
+scripts/scrape_playgwangju.py
+scripts/daily_crawler.py
+scripts/daily-crawler.service
+scripts/download_and_upload_images.py
+scripts/sync_popup_to_db.py
+
+# 로그
+*.log
+logs/
+
+# 임시 파일
+*.tmp
+*.temp
+
+# 실험 결과 (LangSmith에서 확인 가능)
+langsmith-test/experiments/*.log
+langsmith-test/experiments/*.json
+langsmith-test/experiments/analysis/
+
+# 아카이브된 데이터셋
+langsmith-test/input/archive/
+
+# 생성된 그래프 이미지 (mmd로 재생성 가능)
+artifacts/graphs/*.png
+
+# 서버 인프라 설정 문서 (배포 서버에서 직접 관리)
+docs/NGINX_STREAMING_CONFIG.md
