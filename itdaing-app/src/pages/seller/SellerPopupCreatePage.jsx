@@ -537,6 +537,9 @@ const SellerPopupFormPage = ({
         featureIds: formData.featureIds,
         thumbnailImage,
         images: [...existingImages, ...uploadedImages],
+        homepageUrl: formData.homepageUrl || null,
+        snsUrl: formData.snsUrl || null,
+        hashtags: formData.hashtags || null,
       };
       console.log('[SellerPopupForm] submit payload', requestData);
       popupMutation.mutate(requestData);
