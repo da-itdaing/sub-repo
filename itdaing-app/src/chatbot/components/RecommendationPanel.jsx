@@ -124,7 +124,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
         {/* 카드 리스트 - 수평 스크롤 */}
         {isExpanded && (
           <div className="pb-2 overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 px-3" style={{ minWidth: 'min-content' }}>
+            <div className="flex gap-2 px-3 pb-1" style={{ minWidth: 'min-content' }}>
               {items.map((item, index) => {
                 const id = resolveItemId(item);
                 const isActive = id === highlightId;
@@ -134,7 +134,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
                 return (
                   <div
                     key={id}
-                    className={`flex-shrink-0 ${mode === 'seller' ? 'w-[160px]' : 'w-[140px]'} p-2 rounded-lg cursor-pointer transition-all ${
+                    className={`flex-shrink-0 w-[110px] p-2 rounded-lg cursor-pointer transition-all ${
                       isActive ? bgActive : 'bg-gray-50 hover:bg-gray-100'
                     }`}
                     onClick={() => setHighlightId(id)}
@@ -146,41 +146,22 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
                       }`}>
                         {index + 1}
                       </span>
-                      <p className="text-[11px] font-semibold text-gray-800 line-clamp-2 leading-tight">
+                      <p className="text-[10px] font-semibold text-gray-800 line-clamp-2 leading-tight flex-1 min-w-0">
                         {item.name || '이름 미정'}
                       </p>
                     </div>
 
-                    {/* 판매자 모드: 상권 정보 표시 */}
+                    {/* 판매자 모드: 상권 정보 (간소화) */}
                     {mode === 'seller' && (
-                      <div className="space-y-0.5 mb-1.5">
+                      <div className="space-y-0.5 mb-1.5 text-[9px] text-gray-500">
                         {item.district && (
-                          <p className="text-[9px] text-gray-500">{item.district}</p>
-                        )}
-                        {item.rent_per_day && (
-                          <p className="text-[9px] text-gray-500 flex items-center gap-0.5">
-                            <DollarSign className="h-2.5 w-2.5" />
-                            {item.rent_per_day.toLocaleString()}원/일
-                          </p>
-                        )}
-                        {item.traffic_score && (
-                          <p className="text-[9px] text-gray-500 flex items-center gap-0.5">
-                            <Users className="h-2.5 w-2.5" />
-                            유동인구 {item.traffic_score}점
-                          </p>
-                        )}
-                        {item.commercial_grade && (
-                          <p className="text-[9px] text-gray-500 flex items-center gap-0.5">
-                            <Store className="h-2.5 w-2.5" />
-                            상권 {item.commercial_grade}
-                          </p>
+                          <p className="truncate">{item.district}</p>
                         )}
                         {item.available_cells !== undefined && item.total_cells !== undefined && (
-                          <p className={`text-[9px] flex items-center gap-0.5 ${
-                            item.available_cells > 0 ? 'text-green-600 font-medium' : 'text-gray-400'
+                          <p className={`font-medium ${
+                            item.available_cells > 0 ? 'text-green-600' : 'text-gray-400'
                           }`}>
-                            <Percent className="h-2.5 w-2.5" />
-                            빈 셀 {item.available_cells}/{item.total_cells}개
+                            빈 셀 {item.available_cells}개
                           </p>
                         )}
                       </div>
@@ -190,17 +171,17 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
                     {mode === 'consumer' && consumerLink && (
                       <Link
                         to={consumerLink}
-                        className={`mt-1.5 flex items-center justify-center gap-0.5 w-full py-1 text-[10px] bg-white rounded border ${btnColor} transition-all`}
+                        className={`mt-1 flex items-center justify-center gap-0.5 w-full py-1 text-[9px] bg-white rounded border ${btnColor} transition-all`}
                         onClick={(e) => e.stopPropagation()}
                       >
-                        상세보기
+                        상세
                         <ChevronRight className="h-2.5 w-2.5" />
                       </Link>
                     )}
                     {mode === 'seller' && sellerLink && item.available_cells > 0 && (
                       <Link
                         to={sellerLink}
-                        className={`flex items-center justify-center gap-0.5 w-full py-1 text-[10px] bg-white rounded border ${btnColor} transition-all`}
+                        className={`flex items-center justify-center gap-0.5 w-full py-1 text-[9px] bg-white rounded border ${btnColor} transition-all`}
                         onClick={(e) => e.stopPropagation()}
                       >
                         셀 선택
@@ -211,6 +192,16 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
                 );
               })}
             </div>
+            {/* 스크롤 힌트 - 카드가 3개 이상일 때 */}
+            {items.length > 2 && (
+              <div className="flex justify-center pt-1">
+                <div className="flex gap-1">
+                  {items.map((_, i) => (
+                    <div key={i} className={`w-1 h-1 rounded-full ${i === 0 ? 'bg-gray-400' : 'bg-gray-200'}`} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
