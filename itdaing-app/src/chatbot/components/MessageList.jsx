@@ -218,7 +218,7 @@ const MessageList = ({ messages, isTyping, isSlow, isStreaming }) => {
 
   return (
     <div
-      className="h-full overflow-y-auto px-4 py-5 space-y-4"
+      className="px-4 py-5 space-y-4"
       role="list"
       aria-label="채팅 메시지"
     >
@@ -226,7 +226,7 @@ const MessageList = ({ messages, isTyping, isSlow, isStreaming }) => {
         <MessageBubble 
           key={msg.id} 
           message={msg}
-          showCursor={isStreaming && idx === lastBotMessageIndex} // v14: 스트리밍 중 커서 표시
+          showCursor={isStreaming && idx === lastBotMessageIndex}
         />
       ))}
 

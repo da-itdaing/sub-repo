@@ -140,7 +140,7 @@ const ChatLayout = ({ mode = 'consumer' }) => {
 
   return (
     <div
-      className="flex flex-1 flex-col bg-linear-to-b from-rose-50/50 to-white"
+      className="flex h-full flex-col bg-linear-to-b from-rose-50/50 to-white overflow-hidden"
       role="region"
       aria-label="AI 챗봇"
     >
@@ -174,13 +174,13 @@ const ChatLayout = ({ mode = 'consumer' }) => {
         </div>
       </header>
 
-      {/* 메시지 영역 */}
-      <main className="flex-1 overflow-hidden min-h-0">
+      {/* 메시지 영역 - 스크롤 가능 */}
+      <main className="flex-1 overflow-y-auto min-h-0">
         <MessageList
           messages={messages}
-          isTyping={isLoading && !isStreaming} // v14: 스트리밍 중에는 TypingIndicator 숨김
+          isTyping={isLoading && !isStreaming}
           isSlow={isSlow}
-          isStreaming={isStreaming} // v14: 스트리밍 상태 전달
+          isStreaming={isStreaming}
           mode={mode}
         />
       </main>
@@ -208,9 +208,9 @@ const ChatLayout = ({ mode = 'consumer' }) => {
         </div>
       )}
 
-      {/* 추천 패널 - 펼쳐도 입력창 보이도록 max-h 조정 */}
+      {/* 추천 패널 - 최대 높이 제한 */}
       {recommendations.length > 0 && (
-        <aside className="shrink-0">
+        <aside className="shrink-0 max-h-[35%] overflow-y-auto border-t border-gray-100">
           <RecommendationPanel items={recommendations} mode={mode} />
         </aside>
       )}
@@ -218,8 +218,8 @@ const ChatLayout = ({ mode = 'consumer' }) => {
       {/* 팁 메시지 - 입력창 위에 항상 표시 (로딩 중 아닐 때) */}
       <MarketTipBanner mode={mode} isLoading={isLoading} />
 
-      {/* 입력 영역 */}
-      <footer className="shrink-0">
+      {/* 입력 영역 - 항상 보이게 */}
+      <footer className="shrink-0 border-t border-gray-100 bg-white">
         <ChatInput onSend={handleSendMessage} disabled={isLoading} mode={mode} />
       </footer>
     </div>

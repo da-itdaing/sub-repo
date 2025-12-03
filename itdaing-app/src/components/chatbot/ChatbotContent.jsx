@@ -7,7 +7,7 @@ import ChatLayout from '@/chatbot/components/ChatLayout';
  */
 const ChatbotContent = ({ className = '', mode = 'consumer' }) => {
   return (
-    <div className={`h-full ${className}`}>
+    <div className={`flex flex-col h-full overflow-hidden ${className}`}>
       <ChatLayout mode={mode} />
     </div>
   );
