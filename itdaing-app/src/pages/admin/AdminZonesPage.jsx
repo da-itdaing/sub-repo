@@ -15,6 +15,7 @@ import {
   updateArea,
   deleteArea,
   parseGeoJsonPolygon,
+  toGeoJsonPolygon,
 } from '@/services/geoZoneService';
 
 // 광주광역시 5개 구
@@ -124,6 +125,11 @@ const AdminZonesPage = () => {
     maxCapacity: 0,
     notice: '',
   });
+
+  // 존 폴리곤 편집 모드
+  const [polygonEditMode, setPolygonEditMode] = useState(false);
+  const [editingPolygonCoords, setEditingPolygonCoords] = useState([]); // [{lat, lng}, ...]
+  const [draggingVertexIndex, setDraggingVertexIndex] = useState(null);
 
   // 셀 상태 필터 ('all' | 'APPROVED' | 'PENDING' | 'REJECTED')
   const [cellStatusFilter, setCellStatusFilter] = useState('all');
@@ -356,12 +362,29 @@ const AdminZonesPage = () => {
       maxCapacity: selectedArea.maxCapacity || 0,
       notice: selectedArea.notice || '',
     });
+    // 폴리곤 좌표 로드
+    const coords = parseGeoJsonPolygon(selectedArea.polygonGeoJson);
+    // 마지막 좌표가 첫 번째와 같으면 제거 (닫힌 폴리곤)
+    if (coords.length > 1 && 
+        coords[0].lat === coords[coords.length - 1].lat && 
+        coords[0].lng === coords[coords.length - 1].lng) {
+      coords.pop();
+    }
+    setEditingPolygonCoords(coords);
+    setPolygonEditMode(false);
     setAreaEditModalOpen(true);
   };
 
   // 존 수정 처리
   const handleUpdateArea = () => {
     if (!selectedArea) return;
+    
+    // 폴리곤 편집 모드였으면 편집된 좌표로 GeoJSON 생성
+    let polygonGeoJson = selectedArea.polygonGeoJson;
+    if (polygonEditMode && editingPolygonCoords.length >= 3) {
+      polygonGeoJson = toGeoJsonPolygon(editingPolygonCoords);
+    }
+    
     updateAreaMutation.mutate({
       areaId: selectedArea.id,
       data: {
@@ -369,9 +392,36 @@ const AdminZonesPage = () => {
         maxCapacity: parseInt(editAreaForm.maxCapacity, 10) || null,
         notice: editAreaForm.notice.trim() || null,
         regionId: selectedArea.regionId,
-        polygonGeoJson: selectedArea.polygonGeoJson,
+        polygonGeoJson,
       },
     });
+  };
+
+  // 폴리곤 꼭짓점 드래그 핸들러
+  const handleVertexDrag = (index, newPosition) => {
+    setEditingPolygonCoords(prev => {
+      const updated = [...prev];
+      updated[index] = { lat: newPosition.getLat(), lng: newPosition.getLng() };
+      return updated;
+    });
+  };
+
+  // 폴리곤 꼭짓점 추가 (두 점 사이 클릭)
+  const handleAddVertex = (afterIndex, position) => {
+    setEditingPolygonCoords(prev => {
+      const updated = [...prev];
+      updated.splice(afterIndex + 1, 0, { lat: position.lat, lng: position.lng });
+      return updated;
+    });
+  };
+
+  // 폴리곤 꼭짓점 삭제
+  const handleRemoveVertex = (index) => {
+    if (editingPolygonCoords.length <= 3) {
+      addToast({ title: '최소 3개의 꼭짓점이 필요합니다.', variant: 'error' });
+      return;
+    }
+    setEditingPolygonCoords(prev => prev.filter((_, i) => i !== index));
   };
 
   // 존 삭제 처리
@@ -1086,54 +1136,203 @@ const AdminZonesPage = () => {
         </div>
       )}
 
-      {/* 존 수정 모달 */}
+      {/* 존 수정 모달 - 폴리곤 편집 지원 */}
       {areaEditModalOpen && selectedArea && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900">존 정보 수정</h3>
-            <p className="mt-1 text-xs text-gray-500">
-              존의 기본 정보를 수정합니다. 영역(폴리곤)은 변경할 수 없습니다.
-            </p>
-
-            <div className="mt-4 space-y-3">
+          <div className={clsx(
+            'rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto',
+            polygonEditMode ? 'w-full max-w-4xl' : 'w-full max-w-md'
+          )}>
+            <div className="flex items-center justify-between">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">존 이름 *</label>
-                <input
-                  type="text"
-                  value={editAreaForm.name}
-                  onChange={(e) => setEditAreaForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
-                  placeholder="존 이름"
-                />
+                <h3 className="text-lg font-semibold text-gray-900">존 정보 수정</h3>
+                <p className="mt-1 text-xs text-gray-500">
+                  {polygonEditMode 
+                    ? '지도에서 꼭짓점(●)을 드래그하여 영역을 수정하세요. 꼭짓점 우클릭으로 삭제합니다.'
+                    : '존의 기본 정보와 영역을 수정합니다.'}
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setPolygonEditMode(!polygonEditMode)}
+                className={clsx(
+                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                  polygonEditMode 
+                    ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-300' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                )}
+              >
+                {polygonEditMode ? '✓ 영역 편집 중' : '📐 영역 편집'}
+              </button>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">최대 수용 인원</label>
-                <input
-                  type="number"
-                  value={editAreaForm.maxCapacity}
-                  onChange={(e) => setEditAreaForm(prev => ({ ...prev, maxCapacity: e.target.value }))}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
-                  placeholder="0"
-                />
-              </div>
+            <div className={clsx('mt-4', polygonEditMode ? 'grid grid-cols-2 gap-6' : '')}>
+              {/* 폴리곤 편집 지도 */}
+              {polygonEditMode && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    영역 편집 <span className="text-xs text-gray-400">(꼭짓점 드래그로 수정)</span>
+                  </label>
+                  <div className="h-[350px] rounded-xl overflow-hidden border-2 border-blue-300 ring-2 ring-blue-100">
+                    <Map
+                      center={editingPolygonCoords.length > 0 
+                        ? editingPolygonCoords.reduce(
+                            (acc, c) => ({ 
+                              lat: acc.lat + c.lat / editingPolygonCoords.length, 
+                              lng: acc.lng + c.lng / editingPolygonCoords.length 
+                            }),
+                            { lat: 0, lng: 0 }
+                          )
+                        : selectedDistrict.center}
+                      style={{ width: '100%', height: '100%' }}
+                      level={4}
+                    >
+                      {/* 편집 중인 폴리곤 */}
+                      {editingPolygonCoords.length >= 3 && (
+                        <Polygon
+                          path={editingPolygonCoords}
+                          strokeWeight={3}
+                          strokeColor="#2563eb"
+                          strokeOpacity={0.9}
+                          fillColor="#3b82f6"
+                          fillOpacity={0.3}
+                        />
+                      )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">유의사항</label>
-                <textarea
-                  value={editAreaForm.notice}
-                  onChange={(e) => setEditAreaForm(prev => ({ ...prev, notice: e.target.value }))}
-                  rows={3}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none resize-none"
-                  placeholder="존 운영 관련 유의사항"
-                />
+                      {/* 꼭짓점 마커 (드래그 가능) */}
+                      {editingPolygonCoords.map((coord, idx) => (
+                        <MapMarker
+                          key={`vertex-${idx}`}
+                          position={coord}
+                          draggable={true}
+                          onDragEnd={(marker) => handleVertexDrag(idx, marker.getPosition())}
+                          onClick={() => {}}
+                          onRightClick={() => handleRemoveVertex(idx)}
+                          image={{
+                            src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+                                <circle cx="10" cy="10" r="8" fill="#2563eb" stroke="white" stroke-width="2"/>
+                                <text x="10" y="14" text-anchor="middle" fill="white" font-size="8" font-weight="bold">${idx + 1}</text>
+                              </svg>
+                            `)}`,
+                            size: { width: 20, height: 20 },
+                          }}
+                        />
+                      ))}
+                    </Map>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-xs">
+                    <span className="text-gray-500">꼭짓점: {editingPolygonCoords.length}개</span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // 중앙에 새 꼭짓점 추가
+                          if (editingPolygonCoords.length >= 2) {
+                            const lastIdx = editingPolygonCoords.length - 1;
+                            const midLat = (editingPolygonCoords[lastIdx].lat + editingPolygonCoords[0].lat) / 2;
+                            const midLng = (editingPolygonCoords[lastIdx].lng + editingPolygonCoords[0].lng) / 2;
+                            handleAddVertex(lastIdx, { lat: midLat, lng: midLng });
+                          }
+                        }}
+                        className="text-blue-600 hover:underline"
+                      >
+                        + 꼭짓점 추가
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const coords = parseGeoJsonPolygon(selectedArea.polygonGeoJson);
+                          if (coords.length > 1 && 
+                              coords[0].lat === coords[coords.length - 1].lat && 
+                              coords[0].lng === coords[coords.length - 1].lng) {
+                            coords.pop();
+                          }
+                          setEditingPolygonCoords(coords);
+                        }}
+                        className="text-gray-500 hover:underline"
+                      >
+                        ↺ 초기화
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 기본 정보 폼 */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">존 이름 *</label>
+                  <input
+                    type="text"
+                    value={editAreaForm.name}
+                    onChange={(e) => setEditAreaForm(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
+                    placeholder="존 이름"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">최대 수용 인원</label>
+                  <input
+                    type="number"
+                    value={editAreaForm.maxCapacity}
+                    onChange={(e) => setEditAreaForm(prev => ({ ...prev, maxCapacity: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">유의사항</label>
+                  <textarea
+                    value={editAreaForm.notice}
+                    onChange={(e) => setEditAreaForm(prev => ({ ...prev, notice: e.target.value }))}
+                    rows={polygonEditMode ? 4 : 3}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none resize-none"
+                    placeholder="존 운영 관련 유의사항"
+                  />
+                </div>
+
+                {/* 폴리곤 미리보기 (편집 모드 아닐 때) */}
+                {!polygonEditMode && editingPolygonCoords.length >= 3 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">현재 영역</label>
+                    <div className="h-32 rounded-lg overflow-hidden border border-gray-200">
+                      <Map
+                        center={editingPolygonCoords.reduce(
+                          (acc, c) => ({ 
+                            lat: acc.lat + c.lat / editingPolygonCoords.length, 
+                            lng: acc.lng + c.lng / editingPolygonCoords.length 
+                          }),
+                          { lat: 0, lng: 0 }
+                        )}
+                        style={{ width: '100%', height: '100%' }}
+                        level={5}
+                        draggable={false}
+                        zoomable={false}
+                      >
+                        <Polygon
+                          path={editingPolygonCoords}
+                          strokeWeight={2}
+                          strokeColor="#eb0000"
+                          fillColor="#eb0000"
+                          fillOpacity={0.2}
+                        />
+                      </Map>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="mt-6 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setAreaEditModalOpen(false)}
+                onClick={() => {
+                  setAreaEditModalOpen(false);
+                  setPolygonEditMode(false);
+                }}
                 className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
               >
                 취소
