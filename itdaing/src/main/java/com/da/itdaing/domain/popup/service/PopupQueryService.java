@@ -311,7 +311,10 @@ public class PopupQueryService {
             reviewSummary,
             false, // isFavorite (기본값)
             createdAt,
-            updatedAt
+            updatedAt,
+            popup.getHomepageUrl(),
+            popup.getSnsUrl(),
+            popup.getHashtags()
         );
     }
 

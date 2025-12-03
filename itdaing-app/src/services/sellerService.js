@@ -110,6 +110,18 @@ export const getMyNotices = async (page = 0, size = 20) => {
 };
 
 /**
+ * 전체 공지사항 조회 (ALL + SELLER 대상)
+ * GET /api/sellers/notices/all
+ * @param {number} page
+ * @param {number} size
+ */
+export const getAllNotices = async (page = 0, size = 20) => {
+  return apiClient.get('/sellers/notices/all', {
+    params: { page, size },
+  });
+};
+
+/**
  * 공지사항 상세 조회
  * GET /api/sellers/notices/{noticeId}
  * @param {string|number} noticeId

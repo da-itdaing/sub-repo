@@ -20,10 +20,26 @@ public class SellerNoticeController {
     private final SellerNoticeService sellerNoticeService;
 
     /**
-     * 판매자용 전체 공지사항 조회 (ALL + SELLER 대상)
+     * 내가 작성한 공지사항 목록 조회
      * GET /api/sellers/me/notices
      */
     @GetMapping("/me/notices")
+    public ApiResponse<Page<NoticeResponse>> getMyNotices(
+        Principal principal,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "100") int size
+    ) {
+        Long sellerUserId = Long.valueOf(principal.getName());
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Page<NoticeResponse> responsePage = sellerNoticeService.getMyNotices(sellerUserId, pageRequest);
+        return ApiResponse.success(responsePage);
+    }
+
+    /**
+     * 판매자용 전체 공지사항 조회 (ALL + SELLER 대상)
+     * GET /api/sellers/notices/all
+     */
+    @GetMapping("/notices/all")
     public ApiResponse<Page<NoticeResponse>> getSellerNotices(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "100") int size

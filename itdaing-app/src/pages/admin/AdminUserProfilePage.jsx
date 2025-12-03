@@ -51,6 +51,17 @@ const AdminUserProfilePage = () => {
   // location.state에서 전달된 사용자 정보 사용
   const user = location.state?.user;
 
+  // 이전 페이지로 돌아가기 (필터 상태 유지)
+  const goBack = () => {
+    // location.state에 이전 필터 상태가 있으면 전달
+    const prevState = location.state?.prevFilters;
+    if (prevState) {
+      navigate(ROUTES.admin.users, { state: prevState });
+    } else {
+      navigate(-1);
+    }
+  };
+
   // 상태 변경 Mutation
   const updateStatusMutation = useMutation({
     mutationFn: ({ userId, status }) => updateUserStatus(userId, status),
@@ -60,7 +71,10 @@ const AdminUserProfilePage = () => {
       // 상태 업데이트 반영
       if (data) {
         navigate(location.pathname, { 
-          state: { user: { ...user, status: data.status } },
+          state: { 
+            user: { ...user, status: data.status },
+            prevFilters: location.state?.prevFilters 
+          },
           replace: true 
         });
       }
@@ -106,7 +120,7 @@ const AdminUserProfilePage = () => {
       {/* 헤더 */}
       <div className="flex items-center gap-4">
         <button
-          onClick={() => navigate(ROUTES.admin.users)}
+          onClick={goBack}
           className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
         >
           <ArrowLeft className="h-5 w-5 text-gray-600" />
@@ -281,7 +295,7 @@ const AdminUserProfilePage = () => {
       {/* 하단 버튼 */}
       <div className="flex justify-end">
         <button
-          onClick={() => navigate(ROUTES.admin.users)}
+          onClick={goBack}
           className="px-6 py-2.5 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors"
         >
           목록으로

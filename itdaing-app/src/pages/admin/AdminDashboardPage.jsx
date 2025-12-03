@@ -81,6 +81,38 @@ const AdminDashboardPage = () => {
     return areas.filter((a) => a.regionId === selectedDistrict.id);
   }, [areas, selectedDistrict.id]);
 
+  // 존들의 bounding box 중앙값 계산
+  const calculatedMapCenter = useMemo(() => {
+    if (filteredAreas.length === 0) {
+      return selectedDistrict.center;
+    }
+
+    let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+    let hasValidCoords = false;
+
+    filteredAreas.forEach((area) => {
+      const coords = parseGeoJsonPolygon(area.polygonGeoJson);
+      coords.forEach((coord) => {
+        if (coord.lat && coord.lng) {
+          hasValidCoords = true;
+          minLat = Math.min(minLat, coord.lat);
+          maxLat = Math.max(maxLat, coord.lat);
+          minLng = Math.min(minLng, coord.lng);
+          maxLng = Math.max(maxLng, coord.lng);
+        }
+      });
+    });
+
+    if (!hasValidCoords) {
+      return selectedDistrict.center;
+    }
+
+    return {
+      lat: (minLat + maxLat) / 2,
+      lng: (minLng + maxLng) / 2,
+    };
+  }, [filteredAreas, selectedDistrict.center]);
+
   // 승인 대기 목록
   const approvalItems = approvalsData?.items || [];
   const totalPages = Math.max(1, Math.ceil(approvalItems.length / PAGE_SIZE));
@@ -89,12 +121,10 @@ const AdminDashboardPage = () => {
     currentPage * PAGE_SIZE
   );
 
-  // 구 선택 시 지도 중심 이동
+  // 구 선택 시 지도 중심을 존들의 bounding box 중앙으로 이동
   useEffect(() => {
-    if (selectedDistrict) {
-      setMapCenter(selectedDistrict.center);
-    }
-  }, [selectedDistrict]);
+    setMapCenter(calculatedMapCenter);
+  }, [calculatedMapCenter]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -294,7 +324,13 @@ const AdminDashboardPage = () => {
                   </tr>
                 ) : (
                   currentData.map((item, idx) => (
-                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr 
+                      key={item.id} 
+                      className="hover:bg-slate-50/50 transition-colors cursor-pointer"
+                      onClick={() => navigate(ROUTES.admin.approvals, { 
+                        state: { statusFilter: item.currentStatus, targetId: item.targetId } 
+                      })}
+                    >
                       <td className="px-6 py-4 text-center text-gray-500">
                         {(currentPage - 1) * PAGE_SIZE + idx + 1}
                       </td>

@@ -153,6 +153,19 @@ const SellerDashboardPage = () => {
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
+  // 반려 사유 모달 상태
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [selectedRejection, setSelectedRejection] = useState({ title: '', reason: '' });
+
+  // 반려 사유 모달 열기
+  const openRejectModal = (popup) => {
+    setSelectedRejection({
+      title: popup.title || '팝업',
+      reason: popup.rejectionReason || '반려 사유가 기록되지 않았습니다.',
+    });
+    setRejectModalOpen(true);
+  };
+
   // getSellerDashboard 대신 getMyPopups 호출
   const { data: popups = [], isLoading } = useQuery({
     queryKey: ['myPopups'],
@@ -329,8 +342,12 @@ const SellerDashboardPage = () => {
                         {p.status === 'REJECTED' ? (
                           <button
                             type="button"
-                            onClick={(event) => event.stopPropagation()}
-                            className="rounded-full p-1 text-gray-400 hover:text-gray-600"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openRejectModal(p);
+                            }}
+                            className="rounded-full p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
+                            title="반려 사유 보기"
                           >
                             <FileText className="w-5 h-5" />
                           </button>
@@ -388,6 +405,35 @@ const SellerDashboardPage = () => {
         </div>
 
       </div>
+
+      {/* 반려 사유 모달 */}
+      {rejectModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-center gap-2 mb-4">
+              <XCircle className="w-6 h-6 text-rose-500" />
+              <h3 className="text-lg font-bold text-gray-900">반려 사유</h3>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4 mb-4">
+              <p className="text-sm text-gray-500 mb-1">팝업명</p>
+              <p className="text-base font-semibold text-gray-900">{selectedRejection.title}</p>
+            </div>
+            <div className="bg-rose-50 rounded-xl p-4 mb-6">
+              <p className="text-sm text-rose-500 mb-1">반려 사유</p>
+              <p className="text-sm text-gray-800 whitespace-pre-wrap">{selectedRejection.reason}</p>
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setRejectModalOpen(false)}
+                className="px-6 py-2.5 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

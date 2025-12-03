@@ -71,10 +71,20 @@ public class Popup extends BaseTimeEntity {
     @Column(name = "favorite_count", nullable = false)
     private Long favoriteCount = 0L;
 
+    @Column(name = "homepage_url", length = 500)
+    private String homepageUrl;
+
+    @Column(name = "sns_url", length = 500)
+    private String snsUrl;
+
+    @Column(name = "hashtags", length = 500)
+    private String hashtags;
+
     @Builder
     public Popup(Users seller, ZoneCell zoneCell, String name, String description,
                  LocalDate startDate, LocalDate endDate, String operatingTime,
-                 ApprovalStatus approvalStatus, String rejectionReason, Long viewCount, Long favoriteCount) {
+                 ApprovalStatus approvalStatus, String rejectionReason, Long viewCount, Long favoriteCount,
+                 String homepageUrl, String snsUrl, String hashtags) {
         this.seller = seller;
         this.zoneCell = zoneCell;
         this.name = name;
@@ -85,17 +95,24 @@ public class Popup extends BaseTimeEntity {
         this.approvalStatus = approvalStatus != null ? approvalStatus : ApprovalStatus.PENDING;
         this.rejectionReason = rejectionReason;
         this.viewCount = viewCount != null ? viewCount : 0L;
-        this.favoriteCount= favoriteCount != null ? favoriteCount : 0L;
+        this.favoriteCount = favoriteCount != null ? favoriteCount : 0L;
+        this.homepageUrl = homepageUrl;
+        this.snsUrl = snsUrl;
+        this.hashtags = hashtags;
     }
 
     public void update(ZoneCell zoneCell, String name, String description,
-                       LocalDate startDate, LocalDate endDate, String operatingTime) {
+                       LocalDate startDate, LocalDate endDate, String operatingTime,
+                       String homepageUrl, String snsUrl, String hashtags) {
         this.zoneCell = zoneCell;
         this.name = name;
         this.description = description;
         this.startDate = startDate;
         this.endDate = endDate;
         this.operatingTime = operatingTime;
+        this.homepageUrl = homepageUrl;
+        this.snsUrl = snsUrl;
+        this.hashtags = hashtags;
     }
 
     /** 승인 상태 변경 (관리자용) */

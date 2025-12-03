@@ -1,44 +1,32 @@
 import { useState } from 'react';
-import { ImageOff } from 'lucide-react';
 import clsx from 'clsx';
 
+// 외부 Placeholder 이미지 URL (via.placeholder.com 사용)
+const FALLBACK_IMAGE_URL = 'https://via.placeholder.com/400x300/f3f4f6/9ca3af?text=No+Image';
+
 /**
- * 이미지 로드 실패 시 플레이스홀더를 표시하는 컴포넌트
+ * 이미지 로드 실패 시 외부 placeholder 이미지를 표시하는 컴포넌트
  */
 const ImageWithFallback = ({
   src,
   alt = '',
   className = '',
   placeholderClassName = '',
-  placeholderText = '이미지 없음',
-  showIcon = true,
-  iconSize = 'md',
+  fallbackSrc = FALLBACK_IMAGE_URL,
   ...props
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const iconSizes = {
-    sm: 'w-4 h-4',
-    md: 'w-6 h-6',
-    lg: 'w-8 h-8',
-    xl: 'w-12 h-12',
-  };
-
-  // 이미지 URL이 없거나 에러 발생 시 플레이스홀더 표시
+  // 이미지 URL이 없거나 에러 발생 시 외부 placeholder 이미지 표시
   if (!src || hasError) {
     return (
-      <div
-        className={clsx(
-          'flex flex-col items-center justify-center bg-gray-100 text-gray-400',
-          className,
-          placeholderClassName
-        )}
+      <img
+        src={fallbackSrc}
+        alt={alt || '이미지 없음'}
+        className={clsx(className, placeholderClassName)}
         {...props}
-      >
-        {showIcon && <ImageOff className={clsx(iconSizes[iconSize], 'mb-1')} />}
-        <span className="text-xs font-medium">{placeholderText}</span>
-      </div>
+      />
     );
   }
 

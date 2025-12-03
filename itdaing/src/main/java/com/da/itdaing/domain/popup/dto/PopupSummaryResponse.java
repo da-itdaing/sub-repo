@@ -31,7 +31,10 @@ public record PopupSummaryResponse(
     PopupReviewSummaryResponse reviewSummary,
     Boolean isFavorite,
     String createdAt,
-    String updatedAt
+    String updatedAt,
+    String homepageUrl,
+    String snsUrl,
+    String hashtags
 ) {
 }
 

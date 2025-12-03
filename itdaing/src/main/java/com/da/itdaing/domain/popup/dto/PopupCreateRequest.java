@@ -26,7 +26,13 @@ public record PopupCreateRequest(
     List<Long> featureIds,
     List<Long> styleIds,
     ImagePayload thumbnailImage,
-    List<ImagePayload> images
+    List<ImagePayload> images,
+    @Size(max = 500, message = "홈페이지 URL은 500자를 초과할 수 없습니다.")
+    String homepageUrl,
+    @Size(max = 500, message = "SNS URL은 500자를 초과할 수 없습니다.")
+    String snsUrl,
+    @Size(max = 500, message = "해시태그는 500자를 초과할 수 없습니다.")
+    String hashtags
 ) {
     public PopupCreateRequest {
         Objects.requireNonNull(title, "팝업 제목은 필수입니다.");

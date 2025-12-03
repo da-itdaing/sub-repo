@@ -1,29 +1,46 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, ChevronLeft, ChevronRight, Megaphone } from 'lucide-react';
+import { Search, Plus, ChevronLeft, ChevronRight, Megaphone, Bell } from 'lucide-react';
 import clsx from 'clsx';
 import { ROUTES } from '@/routes/paths';
-import { getMyNotices, deleteNotices, getMyPopups } from '@/services/sellerService';
+import { getMyNotices, getAllNotices, deleteNotices, getMyPopups } from '@/services/sellerService';
 import { useToast } from '@/hooks/useToast';
 
 const ITEMS_PER_PAGE = 10;
+const NOTICE_TABS = [
+  { id: 'my', label: '내 공지' },
+  { id: 'all', label: '전체 공지' },
+];
 
 const SellerNoticesPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { addToast } = useToast();
 
+  const [activeTab, setActiveTab] = useState('my');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 공지사항 목록 조회
-  const { data: noticesData, isLoading, error } = useQuery({
+  // 내 공지사항 목록 조회
+  const { data: myNoticesData, isLoading: isLoadingMy } = useQuery({
     queryKey: ['myNotices'],
-    queryFn: () => getMyNotices(0, 100), // 전체 조회 후 프론트엔드에서 페이징
+    queryFn: () => getMyNotices(0, 100),
     staleTime: 2 * 60 * 1000,
+    enabled: activeTab === 'my',
   });
+
+  // 전체 공지사항 목록 조회 (ALL + SELLER 대상)
+  const { data: allNoticesData, isLoading: isLoadingAll } = useQuery({
+    queryKey: ['allNotices'],
+    queryFn: () => getAllNotices(0, 100),
+    staleTime: 2 * 60 * 1000,
+    enabled: activeTab === 'all',
+  });
+
+  const noticesData = activeTab === 'my' ? myNoticesData : allNoticesData;
+  const isLoading = activeTab === 'my' ? isLoadingMy : isLoadingAll;
 
   // 팝업 목록 조회 (팝업명 매핑용)
   const { data: popups = [] } = useQuery({
@@ -68,6 +85,7 @@ const SellerNoticesPage = () => {
       isImportant: n.isImportant || n.important || false,
       popupId: n.popupId,
       popupName: popupNameMap[n.popupId] || n.popupName || '전체',
+      authorName: n.authorName || '관리자',
       title: n.title,
       content: n.content,
       date: n.createdAt?.split('T')[0] || n.date || '-',
@@ -146,6 +164,13 @@ const SellerNoticesPage = () => {
     );
   }
 
+  // 탭 변경 핸들러
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setCurrentPage(1);
+    setSelectedIds([]);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header & Search */}
@@ -166,16 +191,37 @@ const SellerNoticesPage = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => navigate(ROUTES.seller.noticeCreate)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" />
-            공지 등록
-          </button>
+          {activeTab === 'my' && (
+            <button
+              type="button"
+              onClick={() => navigate(ROUTES.seller.noticeCreate)}
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              공지 등록
+            </button>
+          )}
         </div>
       </section>
+
+      {/* 탭 네비게이션 */}
+      <div className="flex gap-2">
+        {NOTICE_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => handleTabChange(tab.id)}
+            className={clsx(
+              'flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all',
+              activeTab === tab.id
+                ? 'bg-[#EB0000] text-white shadow-lg shadow-primary/30'
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            )}
+          >
+            {tab.id === 'my' ? <Megaphone className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {/* Empty State */}
       {notices.length === 0 ? (
@@ -197,19 +243,23 @@ const SellerNoticesPage = () => {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-[#333333] text-white">
-                  <th className="w-12 py-3 pl-4 text-left">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-gray-300 text-[#EB0000] focus:ring-[#EB0000]"
-                      checked={
-                        filteredNotices.length > 0 &&
-                        filteredNotices.every((n) => selectedIds.includes(n.id))
-                      }
-                      onChange={handleSelectAll}
-                    />
-                  </th>
+                  {activeTab === 'my' && (
+                    <th className="w-12 py-3 pl-4 text-left">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-[#EB0000] focus:ring-[#EB0000]"
+                        checked={
+                          filteredNotices.length > 0 &&
+                          filteredNotices.every((n) => selectedIds.includes(n.id))
+                        }
+                        onChange={handleSelectAll}
+                      />
+                    </th>
+                  )}
                   <th className="w-20 py-3 text-center text-sm font-medium">구분</th>
-                  <th className="w-1/4 py-3 text-center text-sm font-medium">팝업명</th>
+                  <th className="w-1/4 py-3 text-center text-sm font-medium">
+                    {activeTab === 'my' ? '팝업명' : '작성자'}
+                  </th>
                   <th className="py-3 text-center text-sm font-medium">제목</th>
                   <th className="w-32 py-3 pr-4 text-center text-sm font-medium">게시 일자</th>
                 </tr>
@@ -221,18 +271,24 @@ const SellerNoticesPage = () => {
                     onClick={() => navigate(ROUTES.seller.noticeDetail(notice.id))}
                     className="border-b border-dashed border-gray-200 hover:bg-gray-50 cursor-pointer"
                   >
-                    <td className="py-4 pl-4" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-[#EB0000] focus:ring-[#EB0000]"
-                        checked={selectedIds.includes(notice.id)}
-                        onChange={() => handleSelectOne(notice.id)}
-                      />
-                    </td>
+                    {activeTab === 'my' && (
+                      <td className="py-4 pl-4" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-[#EB0000] focus:ring-[#EB0000]"
+                          checked={selectedIds.includes(notice.id)}
+                          onChange={() => handleSelectOne(notice.id)}
+                        />
+                      </td>
+                    )}
                     <td className="py-4 text-center">
                       {notice.isImportant ? (
                         <span className="inline-block rounded-full border border-[#EB0000] px-2 py-0.5 text-xs font-bold text-[#EB0000]">
                           중요
+                        </span>
+                      ) : activeTab === 'all' ? (
+                        <span className="inline-block rounded-full border border-blue-500 bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">
+                          공지
                         </span>
                       ) : (
                         <span className="inline-block rounded-full border border-emerald-500 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
@@ -241,7 +297,7 @@ const SellerNoticesPage = () => {
                       )}
                     </td>
                     <td className="py-4 text-center text-sm text-gray-600 truncate max-w-[200px]">
-                      {notice.popupName}
+                      {activeTab === 'my' ? notice.popupName : (notice.authorName || '관리자')}
                     </td>
                     <td className="py-4 text-left pl-8 text-sm text-gray-900">
                       {notice.title}
@@ -255,8 +311,8 @@ const SellerNoticesPage = () => {
                 {/* Empty Search Result */}
                 {paginatedNotices.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-10 text-center text-sm text-gray-500">
-                      {searchTerm ? '검색 결과가 없습니다.' : '등록된 공지사항이 없습니다.'}
+                    <td colSpan={activeTab === 'my' ? 5 : 4} className="py-10 text-center text-sm text-gray-500">
+                      {searchTerm ? '검색 결과가 없습니다.' : (activeTab === 'my' ? '등록된 공지사항이 없습니다.' : '전체 공지사항이 없습니다.')}
                     </td>
                   </tr>
                 )}
@@ -288,19 +344,23 @@ const SellerNoticesPage = () => {
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={selectedIds.length === 0 || deleteMutation.isPending}
-              className={clsx(
-                "rounded-lg px-6 py-2 text-sm font-bold text-white shadow-sm transition",
-                selectedIds.length > 0 
-                  ? "bg-[#EB0000] hover:bg-[#c90000]" 
-                  : "bg-gray-300 cursor-not-allowed"
-              )}
-            >
-              {deleteMutation.isPending ? '삭제 중...' : '삭제'}
-            </button>
+            {activeTab === 'my' ? (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={selectedIds.length === 0 || deleteMutation.isPending}
+                className={clsx(
+                  "rounded-lg px-6 py-2 text-sm font-bold text-white shadow-sm transition",
+                  selectedIds.length > 0 
+                    ? "bg-[#EB0000] hover:bg-[#c90000]" 
+                    : "bg-gray-300 cursor-not-allowed"
+                )}
+              >
+                {deleteMutation.isPending ? '삭제 중...' : '삭제'}
+              </button>
+            ) : (
+              <div className="w-20"></div>
+            )}
           </div>
         </>
       )}

@@ -1,5 +1,6 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
 import { Search, ChevronLeft, ChevronRight, CheckCircle2, Clock, XCircle, MapPin, RefreshCw } from 'lucide-react';
 import { Map, Polygon, MapMarker } from 'react-kakao-maps-sdk';
 import { useToast } from '@/hooks/useToast';
@@ -54,11 +55,16 @@ const formatDate = (dateStr) => {
 const AdminApprovalsPage = () => {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
+  const location = useLocation();
+
+  // location.state에서 초기 필터 값 수신 (대시보드에서 전달)
+  const initialStatusFilter = location.state?.statusFilter || '전체';
+  const initialTargetId = location.state?.targetId || null;
 
   // 필터 상태
   const [categoryFilter, setCategoryFilter] = useState('전체');
   const [districtFilter, setDistrictFilter] = useState('전체');
-  const [statusFilter, setStatusFilter] = useState('전체');
+  const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -78,6 +84,17 @@ const AdminApprovalsPage = () => {
   });
 
   const requests = approvalsData?.items || [];
+
+  // 대시보드에서 특정 항목을 클릭해서 온 경우 자동 선택
+  useEffect(() => {
+    if (initialTargetId && requests.length > 0 && !selectedId) {
+      const targetRequest = requests.find((r) => r.targetId === initialTargetId);
+      if (targetRequest) {
+        setSelectedId(targetRequest.id);
+        fetchPopupDetail(targetRequest.targetId);
+      }
+    }
+  }, [initialTargetId, requests, selectedId]);
 
   // 승인/대기/반려 현황 카운트
   const approvalStats = useMemo(() => {
@@ -218,9 +235,17 @@ const AdminApprovalsPage = () => {
     <div className="flex h-[calc(100vh-4rem)] gap-6">
       {/* 왼쪽: 승인 현황 + 검수 관리 테이블 */}
       <div className="flex-[2] flex flex-col gap-4 min-w-0">
-        {/* 승인 현황 카드 */}
+        {/* 승인 현황 카드 - 클릭 시 해당 상태로 필터링 */}
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="flex items-center gap-4 rounded-3xl border border-gray-100 bg-white px-6 py-4 shadow-sm">
+          <div 
+            className={`flex items-center gap-4 rounded-3xl border px-6 py-4 shadow-sm cursor-pointer transition-all ${
+              statusFilter === 'APPROVED' ? 'border-emerald-400 bg-emerald-50 ring-2 ring-emerald-200' : 'border-gray-100 bg-white hover:border-emerald-200'
+            }`}
+            onClick={() => {
+              setStatusFilter(statusFilter === 'APPROVED' ? '전체' : 'APPROVED');
+              setCurrentPage(1);
+            }}
+          >
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
               <CheckCircle2 className="h-6 w-6" />
             </div>
@@ -229,7 +254,15 @@ const AdminApprovalsPage = () => {
               <p className="mt-1 text-3xl font-bold text-gray-900">{approvalStats.approved}</p>
             </div>
           </div>
-          <div className="flex items-center gap-4 rounded-3xl border border-gray-100 bg-white px-6 py-4 shadow-sm">
+          <div 
+            className={`flex items-center gap-4 rounded-3xl border px-6 py-4 shadow-sm cursor-pointer transition-all ${
+              statusFilter === 'PENDING' ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-200' : 'border-gray-100 bg-white hover:border-amber-200'
+            }`}
+            onClick={() => {
+              setStatusFilter(statusFilter === 'PENDING' ? '전체' : 'PENDING');
+              setCurrentPage(1);
+            }}
+          >
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-600">
               <Clock className="h-6 w-6" />
             </div>
@@ -238,7 +271,15 @@ const AdminApprovalsPage = () => {
               <p className="mt-1 text-3xl font-bold text-gray-900">{approvalStats.pending}</p>
             </div>
           </div>
-          <div className="flex items-center gap-4 rounded-3xl border border-gray-100 bg-white px-6 py-4 shadow-sm">
+          <div 
+            className={`flex items-center gap-4 rounded-3xl border px-6 py-4 shadow-sm cursor-pointer transition-all ${
+              statusFilter === 'REJECTED' ? 'border-rose-400 bg-rose-50 ring-2 ring-rose-200' : 'border-gray-100 bg-white hover:border-rose-200'
+            }`}
+            onClick={() => {
+              setStatusFilter(statusFilter === 'REJECTED' ? '전체' : 'REJECTED');
+              setCurrentPage(1);
+            }}
+          >
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-600">
               <XCircle className="h-6 w-6" />
             </div>

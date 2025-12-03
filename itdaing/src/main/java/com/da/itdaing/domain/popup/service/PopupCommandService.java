@@ -85,6 +85,9 @@ public class PopupCommandService {
                 .approvalStatus(ApprovalStatus.PENDING)
                 .viewCount(0L)
                 .favoriteCount(0L)
+                .homepageUrl(request.homepageUrl())
+                .snsUrl(request.snsUrl())
+                .hashtags(request.hashtags())
                 .build()
         );
 
@@ -116,7 +119,10 @@ public class PopupCommandService {
             request.description(),
             request.startDate(),
             request.endDate(),
-            request.operatingTime());
+            request.operatingTime(),
+            request.homepageUrl(),
+            request.snsUrl(),
+            request.hashtags());
 
         popupCategoryRepository.deleteByPopup(popup);
         popupFeatureRepository.deleteByPopup(popup);
