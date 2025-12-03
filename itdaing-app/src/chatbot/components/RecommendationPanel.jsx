@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, ChevronDown, ChevronUp, Map, List, X } from 'lucide-react';
+import { ChevronRight, ChevronDown, ChevronUp, Map, X, Store, Users, DollarSign, Percent } from 'lucide-react';
 import KakaoMap from '@/components/map/KakaoMap';
 import { ROUTES } from '@/routes/paths';
 
@@ -13,11 +13,9 @@ const resolveItemId = (item = {}) =>
   item.market_id || item.metadata?.market_id || item.zone_id || item.name || 'unknown';
 
 /**
- * 추천 결과 패널 - v15
- * - 기본: 접힌 상태 (헤더만)
- * - 펼치기: 카드 리스트 (수평 스크롤)
- * - 지도 버튼: 지도 모달 (선택적)
- * - 입력창이 항상 보이도록 컴팩트하게 설계
+ * 추천 결과 패널 - v16
+ * - 소비자 모드: 팝업 상세 링크
+ * - 판매자 모드: 상권 정보 + 셀 가용성 + 팝업 등록 링크
  */
 const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
   const [highlightId, setHighlightId] = useState(null);
@@ -58,22 +56,38 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
   const centerMarker = markers.find((m) => m.id === highlightId) || markers[0];
   const hasValidMarkers = markers.length > 0;
 
-  const getDetailLink = (item) => {
-    if (mode === 'consumer') {
-      const popupId = item.market_id || item.metadata?.market_id;
-      if (popupId) {
-        const numericId = popupId.toString().replace(/^(popup-|M0*)/, '');
-        if (numericId && /^\d+$/.test(numericId)) {
-          return ROUTES.popupDetail(parseInt(numericId, 10));
-        }
-        if (/^\d+$/.test(popupId.toString())) {
-          return ROUTES.popupDetail(parseInt(popupId, 10));
-        }
-        return ROUTES.popupDetail(popupId);
+  // 소비자: 팝업 상세 링크
+  const getConsumerDetailLink = (item) => {
+    const popupId = item.market_id || item.metadata?.market_id;
+    if (popupId) {
+      const numericId = popupId.toString().replace(/^(popup-|M0*)/, '');
+      if (numericId && /^\d+$/.test(numericId)) {
+        return ROUTES.popupDetail(parseInt(numericId, 10));
       }
+      if (/^\d+$/.test(popupId.toString())) {
+        return ROUTES.popupDetail(parseInt(popupId, 10));
+      }
+      return ROUTES.popupDetail(popupId);
     }
     return null;
   };
+
+  // 판매자: 팝업 등록 링크
+  const getSellerRegisterLink = (item) => {
+    const zoneId = item.zone_id;
+    if (zoneId) {
+      return item.popup_register_url || `/seller/popups/create?zoneId=${zoneId}`;
+    }
+    return null;
+  };
+
+  // 테마 색상 (모드별)
+  const themeColor = mode === 'seller' ? 'blue' : 'rose';
+  const bgActive = mode === 'seller' ? 'bg-blue-50 ring-1 ring-blue-200' : 'bg-rose-50 ring-1 ring-rose-200';
+  const badgePrimary = mode === 'seller' ? 'bg-blue-500 text-white' : 'bg-rose-500 text-white';
+  const btnColor = mode === 'seller' 
+    ? 'text-blue-500 border-blue-200 hover:bg-blue-50' 
+    : 'text-rose-500 border-rose-200 hover:bg-rose-50';
 
   return (
     <>
@@ -86,7 +100,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700"
           >
-            📍 추천 {items.length}곳
+            📍 {mode === 'seller' ? '추천 존' : '추천'} {items.length}곳
             {isExpanded ? (
               <ChevronUp className="h-3.5 w-3.5 text-gray-400" />
             ) : (
@@ -114,24 +128,21 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
               {items.map((item, index) => {
                 const id = resolveItemId(item);
                 const isActive = id === highlightId;
-                const detailLink = getDetailLink(item);
+                const consumerLink = mode === 'consumer' ? getConsumerDetailLink(item) : null;
+                const sellerLink = mode === 'seller' ? getSellerRegisterLink(item) : null;
 
                 return (
                   <div
                     key={id}
-                    className={`flex-shrink-0 w-[140px] p-2 rounded-lg cursor-pointer transition-all ${
-                      isActive 
-                        ? 'bg-rose-50 ring-1 ring-rose-200' 
-                        : 'bg-gray-50 hover:bg-gray-100'
+                    className={`flex-shrink-0 ${mode === 'seller' ? 'w-[160px]' : 'w-[140px]'} p-2 rounded-lg cursor-pointer transition-all ${
+                      isActive ? bgActive : 'bg-gray-50 hover:bg-gray-100'
                     }`}
                     onClick={() => setHighlightId(id)}
                   >
                     {/* 순위 + 이름 */}
-                    <div className="flex items-start gap-1.5">
+                    <div className="flex items-start gap-1.5 mb-1">
                       <span className={`flex-shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[9px] font-bold ${
-                        index === 0 
-                          ? 'bg-rose-500 text-white' 
-                          : 'bg-gray-200 text-gray-500'
+                        index === 0 ? badgePrimary : 'bg-gray-200 text-gray-500'
                       }`}>
                         {index + 1}
                       </span>
@@ -140,14 +151,59 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
                       </p>
                     </div>
 
-                    {/* 상세 버튼 */}
-                    {detailLink && (
+                    {/* 판매자 모드: 상권 정보 표시 */}
+                    {mode === 'seller' && (
+                      <div className="space-y-0.5 mb-1.5">
+                        {item.district && (
+                          <p className="text-[9px] text-gray-500">{item.district}</p>
+                        )}
+                        {item.rent_per_day && (
+                          <p className="text-[9px] text-gray-500 flex items-center gap-0.5">
+                            <DollarSign className="h-2.5 w-2.5" />
+                            {item.rent_per_day.toLocaleString()}원/일
+                          </p>
+                        )}
+                        {item.traffic_score && (
+                          <p className="text-[9px] text-gray-500 flex items-center gap-0.5">
+                            <Users className="h-2.5 w-2.5" />
+                            유동인구 {item.traffic_score}점
+                          </p>
+                        )}
+                        {item.commercial_grade && (
+                          <p className="text-[9px] text-gray-500 flex items-center gap-0.5">
+                            <Store className="h-2.5 w-2.5" />
+                            상권 {item.commercial_grade}
+                          </p>
+                        )}
+                        {item.available_cells !== undefined && item.total_cells !== undefined && (
+                          <p className={`text-[9px] flex items-center gap-0.5 ${
+                            item.available_cells > 0 ? 'text-green-600 font-medium' : 'text-gray-400'
+                          }`}>
+                            <Percent className="h-2.5 w-2.5" />
+                            빈 셀 {item.available_cells}/{item.total_cells}개
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 버튼 */}
+                    {mode === 'consumer' && consumerLink && (
                       <Link
-                        to={detailLink}
-                        className="mt-1.5 flex items-center justify-center gap-0.5 w-full py-1 text-[10px] text-rose-500 bg-white rounded border border-rose-200 hover:bg-rose-50 transition-all"
+                        to={consumerLink}
+                        className={`mt-1.5 flex items-center justify-center gap-0.5 w-full py-1 text-[10px] bg-white rounded border ${btnColor} transition-all`}
                         onClick={(e) => e.stopPropagation()}
                       >
                         상세보기
+                        <ChevronRight className="h-2.5 w-2.5" />
+                      </Link>
+                    )}
+                    {mode === 'seller' && sellerLink && item.available_cells > 0 && (
+                      <Link
+                        to={sellerLink}
+                        className={`flex items-center justify-center gap-0.5 w-full py-1 text-[10px] bg-white rounded border ${btnColor} transition-all`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        셀 선택
                         <ChevronRight className="h-2.5 w-2.5" />
                       </Link>
                     )}
@@ -166,7 +222,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
             {/* 모달 헤더 */}
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <span className="text-sm font-semibold text-gray-800">
-                📍 추천 위치
+                📍 {mode === 'seller' ? '추천 존 위치' : '추천 위치'}
               </span>
               <button
                 type="button"
@@ -192,23 +248,20 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
               {items.map((item, index) => {
                 const id = resolveItemId(item);
                 const isActive = id === highlightId;
-                const detailLink = getDetailLink(item);
+                const consumerLink = mode === 'consumer' ? getConsumerDetailLink(item) : null;
+                const sellerLink = mode === 'seller' ? getSellerRegisterLink(item) : null;
                 const address = item.address || item.metadata?.address || item.metadata?.location;
 
                 return (
                   <div
                     key={id}
                     className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
-                      isActive 
-                        ? 'bg-rose-50 ring-1 ring-rose-200' 
-                        : 'bg-gray-50 hover:bg-gray-100'
+                      isActive ? bgActive : 'bg-gray-50 hover:bg-gray-100'
                     }`}
                     onClick={() => setHighlightId(id)}
                   >
                     <span className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${
-                      index === 0 
-                        ? 'bg-rose-500 text-white' 
-                        : 'bg-gray-200 text-gray-500'
+                      index === 0 ? badgePrimary : 'bg-gray-200 text-gray-500'
                     }`}>
                       {index + 1}
                     </span>
@@ -221,14 +274,28 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
                           {address}
                         </p>
                       )}
+                      {mode === 'seller' && item.available_cells !== undefined && (
+                        <p className={`text-[10px] ${item.available_cells > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                          빈 셀 {item.available_cells}/{item.total_cells}개
+                        </p>
+                      )}
                     </div>
-                    {detailLink && (
+                    {mode === 'consumer' && consumerLink && (
                       <Link
-                        to={detailLink}
-                        className="flex-shrink-0 px-2 py-1 text-[10px] text-rose-500 bg-white rounded border border-rose-200 hover:bg-rose-50"
+                        to={consumerLink}
+                        className={`flex-shrink-0 px-2 py-1 text-[10px] bg-white rounded border ${btnColor}`}
                         onClick={(e) => e.stopPropagation()}
                       >
                         상세
+                      </Link>
+                    )}
+                    {mode === 'seller' && sellerLink && item.available_cells > 0 && (
+                      <Link
+                        to={sellerLink}
+                        className={`flex-shrink-0 px-2 py-1 text-[10px] bg-white rounded border ${btnColor}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        셀 선택
                       </Link>
                     )}
                   </div>
@@ -267,4 +334,3 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
 };
 
 export default RecommendationPanel;
-
