@@ -22,11 +22,11 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showMap, setShowMap] = useState(false);
 
-  // 새 추천이 오면 접힌 상태로 리셋
+  // 새 추천이 오면 펼친 상태로 시작
   useEffect(() => {
     if (items.length > 0) {
       setHighlightId(resolveItemId(items[0]));
-      setIsExpanded(false);
+      setIsExpanded(true);
       setShowMap(false);
     }
   }, [items]);
@@ -121,87 +121,73 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
           )}
         </div>
 
-        {/* 카드 리스트 - 수평 스크롤 */}
+        {/* 카드 리스트 - 세로 리스트 */}
         {isExpanded && (
-          <div className="pb-2 overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 px-3 pb-1" style={{ minWidth: 'min-content' }}>
-              {items.map((item, index) => {
-                const id = resolveItemId(item);
-                const isActive = id === highlightId;
-                const consumerLink = mode === 'consumer' ? getConsumerDetailLink(item) : null;
-                const sellerLink = mode === 'seller' ? getSellerRegisterLink(item) : null;
+          <div className="px-3 pb-2 space-y-1.5 max-h-[180px] overflow-y-auto">
+            {items.map((item, index) => {
+              const id = resolveItemId(item);
+              const isActive = id === highlightId;
+              const consumerLink = mode === 'consumer' ? getConsumerDetailLink(item) : null;
+              const sellerLink = mode === 'seller' ? getSellerRegisterLink(item) : null;
 
-                return (
-                  <div
-                    key={id}
-                    className={`flex-shrink-0 w-[110px] p-2 rounded-lg cursor-pointer transition-all ${
-                      isActive ? bgActive : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                    onClick={() => setHighlightId(id)}
-                  >
-                    {/* 순위 + 이름 */}
-                    <div className="flex items-start gap-1.5 mb-1">
-                      <span className={`flex-shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[9px] font-bold ${
-                        index === 0 ? badgePrimary : 'bg-gray-200 text-gray-500'
-                      }`}>
-                        {index + 1}
-                      </span>
-                      <p className="text-[10px] font-semibold text-gray-800 line-clamp-2 leading-tight flex-1 min-w-0">
-                        {item.name || '이름 미정'}
-                      </p>
+              return (
+                <div
+                  key={id}
+                  className={`flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer transition-all ${
+                    isActive ? bgActive : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                  onClick={() => setHighlightId(id)}
+                >
+                  {/* 순위 배지 */}
+                  <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-[11px] font-bold ${
+                    index === 0 ? badgePrimary : 'bg-gray-200 text-gray-500'
+                  }`}>
+                    {index + 1}
+                  </span>
+
+                  {/* 정보 */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-semibold text-gray-800 truncate">
+                      {item.name || '이름 미정'}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {item.district && (
+                        <span className="text-[10px] text-gray-500">{item.district}</span>
+                      )}
+                      {mode === 'seller' && item.available_cells !== undefined && (
+                        <span className={`text-[10px] font-medium ${
+                          item.available_cells > 0 ? 'text-green-600' : 'text-gray-400'
+                        }`}>
+                          빈 셀 {item.available_cells}개
+                        </span>
+                      )}
                     </div>
-
-                    {/* 판매자 모드: 상권 정보 (간소화) */}
-                    {mode === 'seller' && (
-                      <div className="space-y-0.5 mb-1.5 text-[9px] text-gray-500">
-                        {item.district && (
-                          <p className="truncate">{item.district}</p>
-                        )}
-                        {item.available_cells !== undefined && item.total_cells !== undefined && (
-                          <p className={`font-medium ${
-                            item.available_cells > 0 ? 'text-green-600' : 'text-gray-400'
-                          }`}>
-                            빈 셀 {item.available_cells}개
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* 버튼 */}
-                    {mode === 'consumer' && consumerLink && (
-                      <Link
-                        to={consumerLink}
-                        className={`mt-1 flex items-center justify-center gap-0.5 w-full py-1 text-[9px] bg-white rounded border ${btnColor} transition-all`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        상세
-                        <ChevronRight className="h-2.5 w-2.5" />
-                      </Link>
-                    )}
-                    {mode === 'seller' && sellerLink && item.available_cells > 0 && (
-                      <Link
-                        to={sellerLink}
-                        className={`flex items-center justify-center gap-0.5 w-full py-1 text-[9px] bg-white rounded border ${btnColor} transition-all`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        셀 선택
-                        <ChevronRight className="h-2.5 w-2.5" />
-                      </Link>
-                    )}
                   </div>
-                );
-              })}
-            </div>
-            {/* 스크롤 힌트 - 카드가 3개 이상일 때 */}
-            {items.length > 2 && (
-              <div className="flex justify-center pt-1">
-                <div className="flex gap-1">
-                  {items.map((_, i) => (
-                    <div key={i} className={`w-1 h-1 rounded-full ${i === 0 ? 'bg-gray-400' : 'bg-gray-200'}`} />
-                  ))}
+
+                  {/* 버튼 */}
+                  {mode === 'consumer' && consumerLink && (
+                    <Link
+                      to={consumerLink}
+                      className={`flex-shrink-0 flex items-center gap-0.5 px-2.5 py-1.5 text-[10px] font-medium bg-white rounded-lg border ${btnColor} transition-all`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      상세
+                      <ChevronRight className="h-3 w-3" />
+                    </Link>
+                  )}
+                  {mode === 'seller' && sellerLink && item.available_cells > 0 && (
+                    <Link
+                      to={sellerLink}
+                      className={`flex-shrink-0 flex items-center gap-0.5 px-2.5 py-1.5 text-[10px] font-medium bg-white rounded-lg border ${btnColor} transition-all`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      셀 선택
+                      <ChevronRight className="h-3 w-3" />
+                    </Link>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })}
           </div>
         )}
       </div>
