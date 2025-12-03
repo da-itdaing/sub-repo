@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
-import { MapPin, Calendar, Clock, Map as MapIcon, ChevronDown, Trash2, X, ArrowLeft } from 'lucide-react';
+import { MapPin, Calendar, Clock, Map as MapIcon, ChevronDown, Trash2, X, ArrowLeft, Users, TrendingUp, Store, ChevronRight } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { createPopup, updatePopup, deletePopup } from '@/services/sellerService';
 import { uploadImage } from '@/services/uploadService';
@@ -171,6 +171,9 @@ const SellerPopupFormPage = ({
   const [hoveredAreaId, setHoveredAreaId] = useState(null); // 호버된 존 ID
   const [overlappingAreas, setOverlappingAreas] = useState([]); // 클릭 위치에서 겹치는 존들
   const [showOverlapMenu, setShowOverlapMenu] = useState(false); // 겹치는 존 메뉴 표시
+  const [commercialData, setCommercialData] = useState(null); // 상권 정보 데이터
+  const cellSectionRef = useRef(null); // 셀 선택 영역 ref (자동 스크롤용)
+  const [locationStep, setLocationStep] = useState(1); // 1: 존 선택, 2: 셀 선택
 
   // 존 목록 조회
   const { data: areasData, isLoading: isLoadingAreas } = useQuery({
@@ -202,6 +205,46 @@ const SellerPopupFormPage = ({
       setFormData((prev) => ({ ...prev, zoneCellId: selectedCell.id }));
     }
   }, [selectedCell]);
+
+  // 상권 데이터 로드
+  useEffect(() => {
+    fetch('/data/gwangju_commercial_data.json')
+      .then(res => res.json())
+      .then(data => setCommercialData(data))
+      .catch(err => console.warn('상권 데이터 로드 실패:', err));
+  }, []);
+
+  // 존 선택 시 스텝 2로 이동 + 자동 스크롤
+  useEffect(() => {
+    if (selectedArea && cellSectionRef.current) {
+      setLocationStep(2);
+      // 약간의 딜레이 후 스크롤 (DOM 업데이트 대기)
+      setTimeout(() => {
+        cellSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [selectedArea]);
+
+  // 선택된 존의 구/동 상권 정보 가져오기
+  const getDistrictCommercialInfo = () => {
+    if (!commercialData || !selectedArea) return null;
+    
+    // 존 이름이나 district에서 구 이름 추출
+    const districtName = selectedArea.district || selectedArea.name;
+    if (!districtName) return null;
+    
+    // 구 이름 매칭 (동구, 서구, 남구, 북구, 광산구)
+    const districts = ['동구', '서구', '남구', '북구', '광산구'];
+    const matchedDistrict = districts.find(d => districtName.includes(d));
+    
+    if (matchedDistrict && commercialData.districts?.[matchedDistrict]) {
+      return {
+        district: matchedDistrict,
+        data: commercialData.districts[matchedDistrict]
+      };
+    }
+    return null;
+  };
 
   const popupMutation = useMutation({
     mutationFn: (payload) =>
@@ -750,31 +793,68 @@ const SellerPopupFormPage = ({
           />
         </div>
 
-        {/* 2. 존/셀 선택 (지도) */}
-        <div>
-          <div className="flex items-center justify-between">
-            <div>
-              <label className="text-xs font-semibold text-gray-500">
-                부스 위치 선택 
-                <span className="text-[#EB0000] ml-[3px]">*</span>
-              </label>
-              <p className="text-xs text-gray-400 mt-1">
-                {isLocationLocked
-                  ? '등록된 부스 위치는 수정할 수 없습니다.'
-                  : '지도에서 존을 클릭하여 선택하고, 해당 존 안에서 부스(셀)를 선택해주세요.'}
-              </p>
+        {/* 2. 존/셀 선택 (스텝 형태) */}
+        <div className="space-y-4">
+          {/* 스텝 인디케이터 */}
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              locationStep === 1 || !selectedArea 
+                ? 'bg-[#EB0000] text-white' 
+                : 'bg-green-100 text-green-700'
+            }`}>
+              <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                {selectedArea ? '✓' : '1'}
+              </span>
+              존 선택
             </div>
-            {!isLocationLocked && (
-              <button
-                type="button"
-                onClick={() => setShowZoneMap(!showZoneMap)}
-                className="flex items-center gap-1 text-xs text-[#EB0000] hover:underline"
-              >
-                <MapIcon className="h-4 w-4" />
-                {showZoneMap ? '지도 숨기기' : '지도로 선택'}
-              </button>
+            <ChevronRight className="h-4 w-4 text-gray-300" />
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              locationStep === 2 && selectedArea
+                ? selectedCell ? 'bg-green-100 text-green-700' : 'bg-[#EB0000] text-white'
+                : 'bg-gray-100 text-gray-400'
+            }`}>
+              <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                {selectedCell ? '✓' : '2'}
+              </span>
+              셀 선택
+            </div>
+            
+            {/* 선택 완료 표시 */}
+            {selectedArea && selectedCell && (
+              <div className="ml-auto flex items-center gap-1 text-xs text-green-600 font-medium">
+                <span className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">✓</span>
+                위치 선택 완료
+              </div>
             )}
           </div>
+
+          {/* Step 1: 존 선택 */}
+          <div className={`rounded-xl border ${locationStep === 1 ? 'border-[#EB0000]/30 bg-[#EB0000]/5' : 'border-gray-200 bg-gray-50'} p-4`}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                  selectedArea ? 'bg-green-500 text-white' : 'bg-[#EB0000] text-white'
+                }`}>
+                  {selectedArea ? '✓' : '1'}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-800">존(Zone) 선택</h4>
+                  <p className="text-[10px] text-gray-400">
+                    {isLocationLocked ? '등록된 위치는 수정 불가' : '지도에서 운영할 구역 선택'}
+                  </p>
+                </div>
+              </div>
+              {!isLocationLocked && (
+                <button
+                  type="button"
+                  onClick={() => setShowZoneMap(!showZoneMap)}
+                  className="flex items-center gap-1 text-xs text-[#EB0000] hover:underline"
+                >
+                  <MapIcon className="h-4 w-4" />
+                  {showZoneMap ? '접기' : '펼치기'}
+                </button>
+              )}
+            </div>
           
           {/* 존 선택 지도 + 정보 패널 */}
           {showZoneMap && !isLocationLocked && areas.length > 0 && (
@@ -914,28 +994,38 @@ const SellerPopupFormPage = ({
                 </div>
               </div>
               
-              {/* 선택된 존 정보 패널 */}
-              {selectedArea && (
-                <div className="bg-gradient-to-r from-[#EB0000]/5 to-transparent rounded-xl border border-[#EB0000]/20 p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    {/* 좌측: 존 기본 정보 */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-[#EB0000] flex items-center justify-center">
+              {/* 선택된 존 정보 패널 + 상권 정보 */}
+              {selectedArea && (() => {
+                const commercialInfo = getDistrictCommercialInfo();
+                return (
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    {/* 헤더 */}
+                    <div className="bg-gradient-to-r from-[#EB0000] to-[#FF4444] px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
                           <MapPin className="h-4 w-4 text-white" />
                         </div>
-                        <div>
-                          <h4 className="font-bold text-gray-900">{selectedArea.name}</h4>
+                        <div className="text-white">
+                          <h4 className="font-bold">{selectedArea.name}</h4>
                           {selectedArea.district && (
-                            <p className="text-xs text-gray-500">{selectedArea.district}</p>
+                            <p className="text-xs text-white/80">{selectedArea.district}</p>
                           )}
                         </div>
                       </div>
-                      
-                      {/* 존 상세 정보 그리드 */}
-                      <div className="grid grid-cols-2 gap-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectArea(selectedArea)}
+                        className="px-3 py-1 text-xs text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                      >
+                        선택 해제
+                      </button>
+                    </div>
+                    
+                    {/* 존 기본 정보 */}
+                    <div className="p-4 border-b border-gray-100">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                         {selectedArea.status && (
-                          <div className="bg-white rounded-lg px-3 py-2 border border-gray-100">
+                          <div className="bg-gray-50 rounded-lg px-3 py-2">
                             <span className="text-gray-400 text-[10px]">상태</span>
                             <p className={`font-semibold ${
                               selectedArea.status === 'APPROVED' || selectedArea.status === 'AVAILABLE' ? 'text-green-600' : 
@@ -947,40 +1037,122 @@ const SellerPopupFormPage = ({
                           </div>
                         )}
                         {selectedArea.maxCapacity && (
-                          <div className="bg-white rounded-lg px-3 py-2 border border-gray-100">
-                            <span className="text-gray-400 text-[10px]">수용 인원</span>
-                            <p className="font-semibold text-gray-700">최대 {selectedArea.maxCapacity}개 부스</p>
+                          <div className="bg-gray-50 rounded-lg px-3 py-2">
+                            <span className="text-gray-400 text-[10px]">최대 부스</span>
+                            <p className="font-semibold text-gray-700">{selectedArea.maxCapacity}개</p>
+                          </div>
+                        )}
+                        {cells && (
+                          <div className="bg-gray-50 rounded-lg px-3 py-2">
+                            <span className="text-gray-400 text-[10px]">빈 셀</span>
+                            <p className="font-semibold text-blue-600">
+                              {cells.filter(c => c.status === 'AVAILABLE').length}/{cells.length}개
+                            </p>
                           </div>
                         )}
                       </div>
                       
-                      {/* 안내사항 */}
                       {selectedArea.notice && (
-                        <div className="mt-2 bg-amber-50 rounded-lg px-3 py-2 border border-amber-100">
+                        <div className="mt-3 bg-amber-50 rounded-lg px-3 py-2 border border-amber-100">
                           <span className="text-amber-600 text-[10px] font-medium">📢 안내</span>
                           <p className="text-xs text-amber-700 mt-0.5">{selectedArea.notice}</p>
                         </div>
                       )}
-                      
-                      {/* 설명 */}
-                      {selectedArea.description && (
-                        <p className="mt-2 text-xs text-gray-500 line-clamp-2">{selectedArea.description}</p>
-                      )}
                     </div>
                     
-                    {/* 우측: 액션 버튼 */}
-                    <div className="flex flex-col gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleSelectArea(selectedArea)}
-                        className="px-3 py-1.5 text-xs text-gray-500 hover:text-[#EB0000] hover:bg-[#EB0000]/5 rounded-lg transition-colors"
-                      >
-                        선택 해제
-                      </button>
-                    </div>
+                    {/* 상권 정보 (commercialData에서 가져옴) */}
+                    {commercialInfo && (
+                      <div className="p-4 bg-blue-50/50">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Store className="h-4 w-4 text-blue-600" />
+                          <h5 className="text-sm font-semibold text-gray-800">
+                            {commercialInfo.district} 상권 정보
+                          </h5>
+                          <span className="ml-auto text-[10px] text-gray-400">
+                            판매자 참고용
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                          {/* 유동인구 */}
+                          {commercialInfo.data.total_population && (
+                            <div className="bg-white rounded-lg px-3 py-2 border border-blue-100">
+                              <div className="flex items-center gap-1 text-gray-400 text-[10px] mb-0.5">
+                                <Users className="h-3 w-3" />
+                                거주인구
+                              </div>
+                              <p className="font-semibold text-gray-700">
+                                {(commercialInfo.data.total_population / 1000).toFixed(0)}천명
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* 주요 상권 */}
+                          {commercialInfo.data.main_commercial_areas && (
+                            <div className="bg-white rounded-lg px-3 py-2 border border-blue-100 col-span-2">
+                              <div className="flex items-center gap-1 text-gray-400 text-[10px] mb-0.5">
+                                <TrendingUp className="h-3 w-3" />
+                                주요 상권
+                              </div>
+                              <p className="font-medium text-gray-700 truncate">
+                                {commercialInfo.data.main_commercial_areas.slice(0, 3).join(', ')}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* 특성 */}
+                          {commercialInfo.data.characteristics && (
+                            <div className="bg-white rounded-lg px-3 py-2 border border-blue-100 col-span-2 sm:col-span-3">
+                              <div className="text-gray-400 text-[10px] mb-1">지역 특성</div>
+                              <div className="flex flex-wrap gap-1">
+                                {commercialInfo.data.characteristics.slice(0, 4).map((char, i) => (
+                                  <span key={i} className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-[10px]">
+                                    {char}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* 추천 업종 (첫 번째 동의 정보 활용) */}
+                        {commercialInfo.data.neighborhoods && Object.keys(commercialInfo.data.neighborhoods).length > 0 && (() => {
+                          const firstNeighborhood = Object.values(commercialInfo.data.neighborhoods)[0];
+                          const commercialDetail = firstNeighborhood?.commercial_info;
+                          return commercialDetail?.recommended_business ? (
+                            <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-100">
+                              <div className="flex items-center gap-1 text-green-600 text-[10px] font-medium mb-1">
+                                💡 추천 업종 ({Object.keys(commercialInfo.data.neighborhoods)[0]} 기준)
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {commercialDetail.recommended_business.map((biz, i) => (
+                                  <span key={i} className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-medium">
+                                    {biz}
+                                  </span>
+                                ))}
+                              </div>
+                              {commercialDetail.avg_rent_per_pyeong && (
+                                <p className="mt-2 text-[10px] text-gray-500">
+                                  평균 임대료: {commercialDetail.avg_rent_per_pyeong.toLocaleString()}원/평
+                                </p>
+                              )}
+                            </div>
+                          ) : null;
+                        })()}
+                      </div>
+                    )}
+                    
+                    {/* 상권 정보 없을 때 */}
+                    {!commercialInfo && (
+                      <div className="p-4 bg-gray-50 text-center">
+                        <p className="text-xs text-gray-400">
+                          상권 정보가 준비 중입니다
+                        </p>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
               
               {/* 존 미선택 시 안내 */}
               {!selectedArea && (
@@ -996,31 +1168,65 @@ const SellerPopupFormPage = ({
             </div>
           )}
           
-          {/* 존/셀 선택 드롭다운 (지도 아래 또는 지도 숨김 시) */}
-          <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className="text-xs text-gray-500">존 선택</label>
-              <div className="relative mt-1">
-                <select
-                  value={selectedArea?.id || ''}
-                  onChange={(e) => {
-                    const area = areas.find((a) => a.id === Number(e.target.value));
-                    handleSelectArea(area);
-                  }}
-                  disabled={isLocationLocked}
-                  className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2 pr-8 text-sm focus:border-[#EB0000] focus:outline-none focus:ring-1 focus:ring-[#EB0000] disabled:bg-gray-100 disabled:text-gray-400"
-                >
-                  <option value="">존을 선택하세요</option>
-                  {areas.map((area) => (
-                    <option key={area.id} value={area.id}>
-                      {area.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            {/* 존 선택 드롭다운 (지도 대안) */}
+            {!showZoneMap && (
+              <div className="mt-3">
+                <label className="text-xs text-gray-500">또는 드롭다운으로 선택</label>
+                <div className="relative mt-1">
+                  <select
+                    value={selectedArea?.id || ''}
+                    onChange={(e) => {
+                      const area = areas.find((a) => a.id === Number(e.target.value));
+                      handleSelectArea(area);
+                    }}
+                    disabled={isLocationLocked}
+                    className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2 pr-8 text-sm focus:border-[#EB0000] focus:outline-none focus:ring-1 focus:ring-[#EB0000] disabled:bg-gray-100 disabled:text-gray-400"
+                  >
+                    <option value="">존을 선택하세요</option>
+                    {areas.map((area) => (
+                      <option key={area.id} value={area.id}>
+                        {area.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
               </div>
+            )}
+          </div>
+
+          {/* Step 2: 셀 선택 */}
+          <div 
+            ref={cellSectionRef}
+            className={`rounded-xl border ${locationStep === 2 && selectedArea ? 'border-[#EB0000]/30 bg-[#EB0000]/5' : 'border-gray-200 bg-gray-50'} p-4 transition-all ${!selectedArea ? 'opacity-50' : ''}`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                  selectedCell ? 'bg-green-500 text-white' : selectedArea ? 'bg-[#EB0000] text-white' : 'bg-gray-300 text-gray-500'
+                }`}>
+                  {selectedCell ? '✓' : '2'}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-800">셀(부스) 선택</h4>
+                  <p className="text-[10px] text-gray-400">
+                    {!selectedArea ? '먼저 존을 선택해주세요' : selectedCell ? `${selectedCell.label || selectedCell.name} 선택됨` : '부스를 배치할 셀 선택'}
+                  </p>
+                </div>
+              </div>
+              {selectedArea && (
+                <button
+                  type="button"
+                  onClick={() => setShowMap(!showMap)}
+                  className="flex items-center gap-1 text-xs text-[#EB0000] hover:underline"
+                >
+                  <MapIcon className="h-4 w-4" />
+                  {showMap ? '지도 숨기기' : '지도로 선택'}
+                </button>
+              )}
             </div>
 
+            {/* 셀 선택 드롭다운 */}
             <div>
               <label className="text-xs text-gray-500">셀(부스) 선택</label>
               <div className="relative mt-1">
@@ -1051,39 +1257,10 @@ const SellerPopupFormPage = ({
                 <ChevronDown className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
             </div>
-          </div>
 
-          {/* 선택된 존/셀 정보 */}
-          {selectedArea && (
-            <div className="mt-3 rounded-lg bg-gray-50 p-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{selectedArea.name}</p>
-                  {selectedCell && (
-                    <p className="text-xs text-[#EB0000] mt-1">
-                      선택된 부스: {selectedCell.label}
-                    </p>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isLocationLocked) return;
-                    setShowMap(!showMap);
-                  }}
-                  disabled={isLocationLocked}
-                  className="flex items-center gap-1 text-xs text-[#EB0000] hover:underline disabled:text-gray-400 disabled:hover:no-underline"
-                >
-                  <MapIcon className="h-4 w-4" />
-                  {showMap ? '셀 지도 숨기기' : isLocationLocked ? '위치 수정 불가' : '셀 지도 보기'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* 지도 (토글) */}
-          {showMap && selectedArea && (
-            <div className="mt-3 h-[300px] rounded-lg overflow-hidden border border-gray-200">
+            {/* 셀 지도 (토글) */}
+            {showMap && selectedArea && (
+              <div className="mt-3 h-[250px] rounded-lg overflow-hidden border border-gray-200 relative">
               <Map
                 center={(() => {
                   const coords = parseGeoJsonPolygon(selectedArea.polygonGeoJson);
@@ -1201,8 +1378,37 @@ const SellerPopupFormPage = ({
                   );
                 })}
               </Map>
-            </div>
-          )}
+              </div>
+            )}
+            
+            {/* 선택된 셀 정보 */}
+            {selectedCell && (
+              <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs">✓</span>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">{selectedCell.label || selectedCell.name}</p>
+                      {selectedCell.detailedAddress && (
+                        <p className="text-xs text-gray-500">📍 {selectedCell.detailedAddress}</p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCell(null);
+                      setFormData((prev) => ({ ...prev, zoneCellId: null }));
+                    }}
+                    disabled={isLocationLocked}
+                    className="text-xs text-gray-500 hover:text-red-500 disabled:text-gray-300"
+                  >
+                    선택 해제
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 3. 팝업 기간 & 운영 시간 */}
