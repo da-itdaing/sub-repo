@@ -102,6 +102,10 @@ const AdminZonesPage = () => {
     notice: '',
   });
 
+  // 셀 위치 수정 모드
+  const [cellLocationEditMode, setCellLocationEditMode] = useState(false);
+  const [newCellLocation, setNewCellLocation] = useState({ lat: '', lng: '', address: '' });
+
   // 셀 추가 모달 상태
   const [cellAddModalOpen, setCellAddModalOpen] = useState(false);
   const [newCellForm, setNewCellForm] = useState({
@@ -233,6 +237,14 @@ const AdminZonesPage = () => {
         maxCapacity: selectedCell.maxCapacity || 0,
         notice: selectedCell.notice || '',
       });
+      // 위치 수정 모드 초기화
+      setCellLocationEditMode(false);
+      const pos = getCellPosition(selectedCell);
+      if (pos) {
+        setNewCellLocation({ lat: pos.lat.toFixed(6), lng: pos.lng.toFixed(6), address: selectedCell.detailedAddress || '' });
+      } else {
+        setNewCellLocation({ lat: '', lng: '', address: '' });
+      }
     }
   }, [selectedCell]);
 
@@ -263,17 +275,30 @@ const AdminZonesPage = () => {
     setEditForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 셀 저장
+  // 셀 저장 (위치 포함)
   const handleSave = () => {
     if (!selectedCell) return;
+
+    const updateData = {
+      status: editForm.status,
+      maxCapacity: editForm.maxCapacity ? parseInt(editForm.maxCapacity, 10) : null,
+      notice: editForm.notice || null,
+    };
+
+    // 위치가 변경된 경우 geometryData와 detailedAddress도 업데이트
+    if (cellLocationEditMode && newCellLocation.lat && newCellLocation.lng) {
+      updateData.geometryData = JSON.stringify({
+        type: 'Point',
+        coordinates: [parseFloat(newCellLocation.lng), parseFloat(newCellLocation.lat)],
+      });
+      updateData.detailedAddress = newCellLocation.address || null;
+    }
+
     updateCellMutation.mutate({
       cellId: selectedCell.id,
-      data: {
-        status: editForm.status,
-        maxCapacity: editForm.maxCapacity ? parseInt(editForm.maxCapacity, 10) : null,
-        notice: editForm.notice || null,
-      },
+      data: updateData,
     });
+    setCellLocationEditMode(false);
   };
 
   // 셀 삭제
@@ -621,23 +646,79 @@ const AdminZonesPage = () => {
             /* 셀 상세 정보 */
             <div className="p-6 overflow-y-auto flex-1">
               <div className="space-y-6">
-                {/* Mini Map for Cell */}
-                <div className="w-full h-40 bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
-                  {(() => {
-                    const pos = getCellPosition(selectedCell);
-                    if (!pos) return <div className="h-full flex items-center justify-center text-gray-400">위치 정보 없음</div>;
-                    return (
-                      <Map
-                        center={pos}
-                        style={{ width: '100%', height: '100%' }}
-                        level={3}
-                        draggable={false}
-                        zoomable={false}
-                      >
-                        <MapMarker position={pos} />
-                      </Map>
-                    );
-                  })()}
+                {/* Mini Map for Cell - 위치 수정 모드 지원 */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-gray-500">셀 위치</label>
+                    <button
+                      type="button"
+                      onClick={() => setCellLocationEditMode(!cellLocationEditMode)}
+                      className={clsx(
+                        'text-xs font-medium px-2 py-1 rounded',
+                        cellLocationEditMode 
+                          ? 'bg-blue-100 text-blue-700' 
+                          : 'text-blue-600 hover:bg-blue-50'
+                      )}
+                    >
+                      {cellLocationEditMode ? '✓ 수정 중' : '📍 위치 변경'}
+                    </button>
+                  </div>
+                  <div className={clsx(
+                    'w-full bg-gray-100 rounded-xl overflow-hidden border',
+                    cellLocationEditMode ? 'h-56 border-blue-400 ring-2 ring-blue-200' : 'h-40 border-gray-200'
+                  )}>
+                    {(() => {
+                      const currentPos = cellLocationEditMode && newCellLocation.lat && newCellLocation.lng
+                        ? { lat: parseFloat(newCellLocation.lat), lng: parseFloat(newCellLocation.lng) }
+                        : getCellPosition(selectedCell);
+                      if (!currentPos && !cellLocationEditMode) {
+                        return <div className="h-full flex items-center justify-center text-gray-400">위치 정보 없음</div>;
+                      }
+                      return (
+                        <Map
+                          center={currentPos || selectedDistrict.center}
+                          style={{ width: '100%', height: '100%' }}
+                          level={3}
+                          draggable={cellLocationEditMode}
+                          zoomable={cellLocationEditMode}
+                          onClick={cellLocationEditMode ? (_map, mouseEvent) => {
+                            const latlng = mouseEvent.latLng;
+                            const lat = latlng.getLat();
+                            const lng = latlng.getLng();
+                            setNewCellLocation(prev => ({ ...prev, lat: lat.toFixed(6), lng: lng.toFixed(6) }));
+                            
+                            // 카카오 주소 검색 API로 도로명 주소 조회
+                            if (window.kakao?.maps?.services) {
+                              const geocoder = new window.kakao.maps.services.Geocoder();
+                              geocoder.coord2Address(lng, lat, (result, status) => {
+                                if (status === window.kakao.maps.services.Status.OK && result[0]) {
+                                  const address = result[0].road_address
+                                    ? result[0].road_address.address_name
+                                    : result[0].address.address_name;
+                                  setNewCellLocation(prev => ({ ...prev, address }));
+                                }
+                              });
+                            }
+                          } : undefined}
+                        >
+                          {currentPos && <MapMarker position={currentPos} />}
+                        </Map>
+                      );
+                    })()}
+                  </div>
+                  {cellLocationEditMode && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded-lg">
+                      <p className="text-xs text-blue-700 mb-1">📍 지도를 클릭하여 새 위치를 선택하세요</p>
+                      {newCellLocation.lat && newCellLocation.lng && (
+                        <p className="text-xs text-gray-600">
+                          좌표: {newCellLocation.lat}, {newCellLocation.lng}
+                        </p>
+                      )}
+                      {newCellLocation.address && (
+                        <p className="text-xs text-gray-600 mt-0.5">주소: {newCellLocation.address}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Cell Info */}
