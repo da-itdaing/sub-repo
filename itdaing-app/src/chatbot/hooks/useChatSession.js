@@ -259,27 +259,101 @@ const sanitizeDelta = (delta) => {
 };
 
 /**
+ * 로그인 사용자의 세션 데이터 저장 키 생성
+ */
+const getSessionStorageKey = (mode, userId) => {
+  if (!userId || userId.startsWith('guest-')) return null;
+  return `chatbot_session_${mode}_${userId}`;
+};
+
+/**
+ * 로그인 사용자의 세션 데이터 로드
+ */
+const loadSavedSession = (mode, userId) => {
+  const key = getSessionStorageKey(mode, userId);
+  if (!key) return null;
+  
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // 24시간 이내 세션만 복원
+      if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+        return parsed;
+      }
+      // 오래된 세션 삭제
+      localStorage.removeItem(key);
+    }
+  } catch (e) {
+    console.warn('[useChatSession] Failed to load saved session:', e);
+  }
+  return null;
+};
+
+/**
+ * 로그인 사용자의 세션 데이터 저장
+ */
+const saveSession = (mode, userId, sessionId, threadId) => {
+  const key = getSessionStorageKey(mode, userId);
+  if (!key || !threadId) return;
+  
+  try {
+    localStorage.setItem(key, JSON.stringify({
+      sessionId,
+      threadId,
+      timestamp: Date.now(),
+    }));
+  } catch (e) {
+    console.warn('[useChatSession] Failed to save session:', e);
+  }
+};
+
+/**
+ * 로그인 사용자의 세션 데이터 삭제
+ */
+const clearSavedSession = (mode, userId) => {
+  const key = getSessionStorageKey(mode, userId);
+  if (key) {
+    localStorage.removeItem(key);
+  }
+};
+
+/**
  * 챗봇 세션 관리 훅
  * - 메시지 상태, 스트리밍, 추천 결과 등을 통합 관리
  * - mode: 'consumer' | 'seller'
  * - userId: 로그인 사용자 ID 또는 게스트 ID
+ * - 로그인 사용자: threadId를 localStorage에 저장하여 세션 유지 (24시간)
  */
 const useChatSession = ({ mode = 'consumer', userId = null } = {}) => {
+  // 로그인 사용자인지 확인
+  const isLoggedIn = userId && !userId.startsWith('guest-');
+  
+  // 저장된 세션 로드 (로그인 사용자만)
+  const savedSession = useMemo(() => {
+    if (isLoggedIn) {
+      return loadSavedSession(mode, userId);
+    }
+    return null;
+  }, [mode, userId, isLoggedIn]);
+  
   // 초기 봇 메시지
   const initialMessage = useMemo(
     () => ({
       id: `bot-init-${mode}`,
       sender: 'BOT',
-      text: BOT_GREETINGS[mode] ?? BOT_GREETINGS.consumer,
+      text: savedSession 
+        ? '이전 대화를 이어갑니다. 무엇이든 물어보세요!'
+        : (BOT_GREETINGS[mode] ?? BOT_GREETINGS.consumer),
       createdAt: new Date().toISOString(),
     }),
-    [mode],
+    [mode, savedSession],
   );
 
-  // 세션/스레드 상태
-  const [sessionId, setSessionId] = useState(null);
-  const [threadId, setThreadId] = useState(null);
-  const threadIdRef = useRef(null);
+  // 세션/스레드 상태 (저장된 세션이 있으면 복원)
+  const [sessionId, setSessionId] = useState(savedSession?.sessionId || null);
+  const [threadId, setThreadId] = useState(savedSession?.threadId || null);
+  const threadIdRef = useRef(savedSession?.threadId || null);
 
   // 메시지 및 추천 상태
   const [messages, setMessages] = useState([initialMessage]);
@@ -292,10 +366,15 @@ const useChatSession = ({ mode = 'consumer', userId = null } = {}) => {
   const slowTimerRef = useRef(null);
   const abortControllerRef = useRef(null);
 
-  // threadId 동기화
+  // threadId 동기화 및 저장 (로그인 사용자만)
   useEffect(() => {
     threadIdRef.current = threadId;
-  }, [threadId]);
+    
+    // 로그인 사용자의 경우 세션 저장
+    if (isLoggedIn && threadId) {
+      saveSession(mode, userId, sessionId, threadId);
+    }
+  }, [threadId, sessionId, mode, userId, isLoggedIn]);
 
   // 모드 변경 시 세션 리셋
   useEffect(() => {
@@ -334,7 +413,7 @@ const useChatSession = ({ mode = 'consumer', userId = null } = {}) => {
     };
   }, [clearSlowTimer]);
 
-  // 세션 초기화
+  // 세션 초기화 (초기화 버튼 클릭 시)
   const resetSession = useCallback(() => {
     // 진행 중인 요청 취소
     abortControllerRef.current?.abort();
@@ -343,11 +422,21 @@ const useChatSession = ({ mode = 'consumer', userId = null } = {}) => {
     clearSlowTimer();
     setSessionId(null);
     setThreadId(null);
-    setMessages([initialMessage]);
+    setMessages([{
+      id: `bot-init-${mode}`,
+      sender: 'BOT',
+      text: BOT_GREETINGS[mode] ?? BOT_GREETINGS.consumer,
+      createdAt: new Date().toISOString(),
+    }]);
     setRecommendations([]);
     setIsLoading(false);
     setIsStreaming(false); // v14: 스트리밍 상태 초기화
-  }, [clearSlowTimer, initialMessage]);
+    
+    // 저장된 세션 삭제 (로그인 사용자)
+    if (isLoggedIn) {
+      clearSavedSession(mode, userId);
+    }
+  }, [clearSlowTimer, mode, isLoggedIn, userId]);
 
   // 메시지 전송
   const sendMessage = useCallback(

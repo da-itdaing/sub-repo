@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Store, LogIn, Home, X } from 'lucide-react';
 import ConsumerChatbotPage from '@/chatbot/pages/ConsumerChatbotPage';
@@ -15,8 +15,11 @@ const generateGuestId = () => {
 
 /**
  * 컴팩트 헤더 - 홈 버튼 + 모드 선택 + 체험 모드 뱃지
+ * - isGuest: 비로그인 상태 여부
+ * - canSwitchMode: 모드 전환 가능 여부 (비로그인 시에만)
+ * - 로그인 시: 역할에 맞는 챗봇만 표시 (모드 선택 불가)
  */
-const CompactHeader = ({ mode, setMode, isGuest, onGoHome, onLogin }) => (
+const CompactHeader = ({ mode, setMode, isGuest, canSwitchMode, onGoHome, onLogin }) => (
   <header className="shrink-0 flex items-center justify-between px-3 py-2 bg-white border-b border-gray-200">
     {/* 왼쪽: 홈 버튼 */}
     <button
@@ -28,33 +31,46 @@ const CompactHeader = ({ mode, setMode, isGuest, onGoHome, onLogin }) => (
       <Home className="h-5 w-5 text-gray-600" />
     </button>
 
-    {/* 중앙: 모드 선택 (컴팩트 토글) */}
-    <div className="flex items-center bg-gray-100 rounded-full p-0.5">
-      <button
-        type="button"
-        onClick={() => setMode('consumer')}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-          mode === 'consumer'
-            ? 'bg-rose-500 text-white shadow-sm'
-            : 'text-gray-500 hover:text-gray-700'
-        }`}
-      >
-        <Users className="h-3.5 w-3.5" />
-        <span className="hidden xs:inline">소비자</span>
-      </button>
-      <button
-        type="button"
-        onClick={() => setMode('seller')}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-          mode === 'seller'
-            ? 'bg-blue-500 text-white shadow-sm'
-            : 'text-gray-500 hover:text-gray-700'
-        }`}
-      >
-        <Store className="h-3.5 w-3.5" />
-        <span className="hidden xs:inline">판매자</span>
-      </button>
-    </div>
+    {/* 중앙: 모드 표시 또는 선택 */}
+    {canSwitchMode ? (
+      // 비로그인(체험 모드): 모드 선택 가능
+      <div className="flex items-center bg-gray-100 rounded-full p-0.5">
+        <button
+          type="button"
+          onClick={() => setMode('consumer')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+            mode === 'consumer'
+              ? 'bg-rose-500 text-white shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <Users className="h-3.5 w-3.5" />
+          <span className="hidden xs:inline">소비자</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('seller')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+            mode === 'seller'
+              ? 'bg-blue-500 text-white shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <Store className="h-3.5 w-3.5" />
+          <span className="hidden xs:inline">판매자</span>
+        </button>
+      </div>
+    ) : (
+      // 로그인 상태: 역할에 맞는 모드만 표시 (선택 불가)
+      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+        mode === 'consumer'
+          ? 'bg-rose-500 text-white'
+          : 'bg-blue-500 text-white'
+      }`}>
+        {mode === 'consumer' ? <Users className="h-3.5 w-3.5" /> : <Store className="h-3.5 w-3.5" />}
+        <span>{mode === 'consumer' ? '소비자' : '판매자'}</span>
+      </div>
+    )}
 
     {/* 오른쪽: 체험 모드 뱃지 또는 로그인 */}
     {isGuest ? (
@@ -104,20 +120,32 @@ const GuestBanner = ({ onLogin, onDismiss }) => (
 
 /**
  * 통합 챗봇 페이지
- * - 소비자/판매자 모드 선택 가능
- * - 비로그인 시 체험 모드로 작동 (게스트 ID 사용)
+ * - 비로그인(체험 모드): 소비자/판매자 모드 선택 가능
+ * - 로그인 시: 역할에 맞는 챗봇만 사용 (모드 선택 불가)
  * - 컴팩트한 헤더 + 홈 버튼
  */
 const ChatbotPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, role, user } = useAuthStore();
   
-  // 모드 상태 (로그인 시 역할에 따라 초기값 설정)
-  const [mode, setMode] = useState(() => {
-    const currentRole = user?.role || role;
+  // 현재 사용자 역할 (CONSUMER, SELLER, ADMIN)
+  const currentRole = user?.role || role;
+  
+  // 로그인 시 역할에 따른 고정 모드 결정
+  const fixedMode = useMemo(() => {
+    if (!isAuthenticated) return null; // 비로그인은 선택 가능
     if (currentRole === 'SELLER') return 'seller';
-    return 'consumer';
-  });
+    return 'consumer'; // CONSUMER, ADMIN 등은 소비자 모드
+  }, [isAuthenticated, currentRole]);
+  
+  // 비로그인 시 선택 가능한 모드 (체험 모드용)
+  const [selectedMode, setSelectedMode] = useState('consumer');
+  
+  // 실제 사용 모드: 로그인 시 fixedMode, 비로그인 시 selectedMode
+  const mode = fixedMode || selectedMode;
+  
+  // 모드 전환 가능 여부 (비로그인 시에만)
+  const canSwitchMode = !isAuthenticated;
   
   // 게스트 상태
   const [guestId, setGuestId] = useState(null);
@@ -167,8 +195,9 @@ const ChatbotPage = () => {
       {/* 컴팩트 헤더 */}
       <CompactHeader 
         mode={mode} 
-        setMode={setMode} 
+        setMode={setSelectedMode}
         isGuest={isGuest}
+        canSwitchMode={canSwitchMode}
         onGoHome={handleGoHome}
         onLogin={handleLogin}
       />
