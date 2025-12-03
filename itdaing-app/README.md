@@ -1,36 +1,46 @@
 # Itdaing App
 
-React + Vite 기반 팝업 스토어 추천 서비스 Consumer App
+React + Vite 기반 팝업 스토어 추천 서비스 (Consumer / Seller / Admin)
 
 ## 프로젝트 구조
 
 ```
 src/
 ├── api/              # API 클라이언트 (Axios)
+├── chatbot/          # AI 챗봇 UI (마켓버디 & 셀러버디)
 ├── components/       # 공통 컴포넌트
-│   ├── layout/      # Header, Footer, BottomNav
-│   ├── common/      # HeroCarousel 등
-│   └── popup/       # EventCard, EventSection
-├── pages/           # 페이지 컴포넌트
-├── hooks/           # Custom Hooks
-├── routes/          # 라우팅 설정
-├── services/        # API 서비스 레이어
-├── store/           # Zustand 스토어 (인증)
-├── styles/          # 글로벌 CSS
-└── utils/           # 유틸리티 (이미지, 토큰 등)
+│   ├── layout/       # Header, Footer, BottomNav
+│   ├── common/       # HeroCarousel 등
+│   ├── consumer/     # 소비자 전용 컴포넌트
+│   ├── seller/       # 판매자 전용 컴포넌트
+│   └── popup/        # EventCard, EventSection
+├── pages/            # 페이지 컴포넌트
+├── layouts/          # 레이아웃 (Consumer, Seller, Admin)
+├── hooks/            # Custom Hooks
+├── routes/           # 라우팅 설정
+├── services/         # API 서비스 레이어
+├── store/            # Zustand 스토어 (인증)
+├── styles/           # 글로벌 CSS
+├── constants/        # 상수 (입력 제한 등)
+└── utils/            # 유틸리티 (이미지, 토큰 등)
 ```
 
 ## 기술 스택
 
-- **React 18** - UI 라이브러리
-- **Vite 5** - 빌드 도구
-- **React Router v7** - 라우팅
-- **Zustand** - 클라이언트 상태 관리
-- **React Query** - 서버 상태 관리
-- **Axios** - HTTP 클라이언트
-- **Tailwind CSS 3** - 스타일링
-- **React Hook Form + Zod** - 폼 관리 및 검증
-- **Lucide React** - 아이콘
+| 라이브러리 | 버전 | 용도 |
+|-----------|------|------|
+| **React** | 19.2.0 | UI 라이브러리 |
+| **Vite** | 7.0.0 | 빌드 도구 |
+| **React Router** | 7.9.6 | 라우팅 |
+| **TanStack Query** | 5.90 | 서버 상태 관리 |
+| **Zustand** | 5.0.8 | 클라이언트 상태 관리 |
+| **Axios** | 1.13.2 | HTTP 클라이언트 |
+| **Tailwind CSS** | 4.1.0 | 스타일링 |
+| **React Hook Form** | 7.66 | 폼 관리 |
+| **Zod** | 4.1.12 | 스키마 검증 |
+| **Motion** | 11.15 | 애니메이션 |
+| **Lucide React** | 0.554 | 아이콘 |
+| **react-kakao-maps-sdk** | 1.2.0 | 카카오맵 |
 
 ## 시작하기
 
@@ -104,12 +114,12 @@ VITE_KAKAO_MAP_KEY=YOUR_KAKAO_MAP_KEY_HERE
 npm run dev
 ```
 
-**프론트엔드 포트**: `3000` (고정, 변경 불가)  
-**접속 URL**: http://localhost:3000
+**프론트엔드 포트**: `5173` (기본값)  
+**접속 URL**: http://localhost:5173
 
-> ⚠️ **포트 충돌 해결**: `lsof -ti:3000 | xargs kill -9`
+> ⚠️ **포트 충돌 해결**: `lsof -ti:5173 | xargs kill -9`
 > 
-> 📌 **중요**: 프론트엔드는 항상 **포트 3000**을 사용해야 합니다. Vite proxy 설정이 백엔드(8080)로 연결되어 있습니다.
+> 📌 **중요**: Vite proxy 설정이 `/api/*` 요청을 백엔드(8080)로 자동 전달합니다.
 
 ### 4. 빌드
 
@@ -196,12 +206,14 @@ http://localhost:8080
 
 ## 포트 구성
 
-| 서비스 | 포트 | 변경 가능 여부 | 비고 |
-|--------|------|---------------|------|
-| 백엔드 (Spring Boot) | 8080 | ❌ 불가 | 프론트 Vite proxy 설정에 하드코딩 |
-| 프론트엔드 (Vite) | 3000 | ❌ 불가 | vite.config.js에 고정 |
+| 서비스 | 포트 | 비고 |
+|--------|------|------|
+| 프론트엔드 (Vite) | 5173 | 개발 서버 |
+| 백엔드 (Spring Boot) | 8080 | REST API |
+| Redis | 6379 | 세션/캐시 |
+| PostgreSQL | 5432 | 메인 DB |
 
-> ⚠️ **포트 변경 시 주의**: 포트를 변경하려면 `vite.config.js`의 proxy 설정도 함께 수정해야 합니다.
+> 📌 `vite.config.js`의 proxy 설정으로 `/api/*` 요청이 자동으로 백엔드로 전달됩니다.
 
 ## 백엔드 종료 방법
 
@@ -219,7 +231,7 @@ kill $(lsof -ti:8080) 2>/dev/null || echo "백엔드 미실행"
 ## 데이터 흐름
 
 ```
-Frontend (Port 3000)
+Frontend (Port 5173)
     │ HTTP Request (/api/*)
     ▼
 Vite Proxy (자동 전달)

@@ -10,16 +10,13 @@ cd ~/itdaing
 # 중지:  ./scripts/stop-backend.sh
 ```
 
-### Frontend (itdaing-app, React 19 + Vite 7)
+### Frontend (itdaing-app, React 19.2 + Vite 7)
 ```bash
 cd ~/itdaing-app
-export NVM_DIR="$HOME/.nvm"
-source "$NVM_DIR/nvm.sh"
-nvm use
 npm install   # 최초 1회
-npm run dev -- --host 0.0.0.0 --port 3000
-# 로그: tail -f /tmp/itdaing-frontend.log
-# 중지: pkill -f "vite"
+npm run dev
+# 접속: http://localhost:5173
+# 중지: Ctrl+C 또는 pkill -f "vite"
 ```
 
 팝업스토어 추천 플랫폼 - 풀스택 웹 애플리케이션
@@ -42,30 +39,32 @@ npm run dev -- --host 0.0.0.0 --port 3000
 - **주요 라이브러리**: Spring Web, Security, Data JPA, MapStruct
 - **스토리지**: AWS S3
 
-#### 프론트엔드 (현재 운영: `itdaing-app`)
-- **프레임워크**: React 19
-- **언어**: JavaScript (전환 완료)
-- **빌드 도구**: Vite 7
-- **UI/스타일**: Tailwind CSS v4 (Pure) + Custom Components
-- **상태 관리**: Zustand + React Query
-- **라우팅**: React Router v7
-- **API 통신**: Axios
-> 레거시 TypeScript 버전(`itdaing-web`)은 참고용으로만 보관합니다.
+#### 프론트엔드 (`itdaing-app`)
+- **프레임워크**: React 19.2
+- **언어**: JavaScript (ES6+)
+- **빌드 도구**: Vite 7.0
+- **UI/스타일**: Tailwind CSS 4.1 + Motion
+- **상태 관리**: Zustand 5.0 + TanStack Query 5.90
+- **라우팅**: React Router 7.9
+- **API 통신**: Axios 1.13
+- **지도**: react-kakao-maps-sdk
 
 ## 📁 프로젝트 구조
 
 ```
-/home/ubuntu/
-├── itdaing/               # 백엔드 (Spring Boot)
-│   ├── src/main/java/     # Java 소스
+daitdaing/
+├── itdaing/               # 백엔드 (Spring Boot 3.5.7)
+│   ├── src/main/java/     # Java 소스 (DDD 구조)
 │   ├── src/main/resources # 설정/리소스
 │   ├── docs/              # 백엔드 문서 & OpenAPI
 │   └── scripts/           # 배포/운영 스크립트
-├── itdaing-app/           # 프론트엔드 v2 (React 19 + JS)
+├── itdaing-app/           # 프론트엔드 (React 19.2 + Vite 7)
 │   ├── src/               # React 코드
 │   ├── public/            # 정적/PWA 자산
 │   └── docs/              # FE 아키텍처/배포 문서
-└── itdaing-web/           # 레거시 프론트 (React 18 + TS, 참고용)
+└── chatbot/               # AI 챗봇 (FastAPI + LangGraph)
+    ├── app/               # FastAPI 애플리케이션
+    └── data/              # 상권 분석 데이터
 ```
 
 ## 🚀 개발 환경

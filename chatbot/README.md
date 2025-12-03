@@ -1,8 +1,10 @@
-## Itdaing LangGraph Chatbot (FastAPI)
+# 🤖 Itdaing AI Chatbot
 
-### 개요
+> **마켓버디 & 셀러버디** - LangGraph 기반 RAG 챗봇 서비스
 
-- 이 서비스는 **Spring Boot 백엔드에서 호출하는 LangGraph 기반 챗봇**입니다.
+## 개요
+
+- **FastAPI + LangGraph** 기반의 AI 챗봇 서비스입니다.
 - 주요 역할:
   - 소비자용 플리마켓 추천 챗봇 (`bot4c_v2_multiturn.py` 로직 이식)
   - 판매자용 존 추천 챗봇 (`bot4s.py` 로직 이식)
