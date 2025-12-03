@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Star, ChevronRight, ChevronDown, ChevronUp, Map } from 'lucide-react';
+import { ChevronRight, ChevronDown, ChevronUp, Map, List, X } from 'lucide-react';
 import KakaoMap from '@/components/map/KakaoMap';
 import { ROUTES } from '@/routes/paths';
 
@@ -13,20 +13,23 @@ const resolveItemId = (item = {}) =>
   item.market_id || item.metadata?.market_id || item.zone_id || item.name || 'unknown';
 
 /**
- * 추천 결과 패널 - v14.5
- * - 접기/펼치기로 지도+카드 함께 토글
- * - 기본은 접힌 상태 (헤더만 표시)
- * - 펼치면 지도 + 카드 리스트 표시
+ * 추천 결과 패널 - v15
+ * - 기본: 접힌 상태 (헤더만)
+ * - 펼치기: 카드 리스트 (수평 스크롤)
+ * - 지도 버튼: 지도 모달 (선택적)
+ * - 입력창이 항상 보이도록 컴팩트하게 설계
  */
 const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
   const [highlightId, setHighlightId] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   // 새 추천이 오면 접힌 상태로 리셋
   useEffect(() => {
     if (items.length > 0) {
       setHighlightId(resolveItemId(items[0]));
       setIsExpanded(false);
+      setShowMap(false);
     }
   }, [items]);
 
@@ -73,140 +76,195 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
   };
 
   return (
-    <div className="bg-white border-t border-gray-100">
-      {/* 헤더 - 항상 표시 (클릭하면 토글) */}
-      <button
-        type="button"
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-[13px] font-semibold text-gray-700">
+    <>
+      <div className="bg-white border-t border-gray-100">
+        {/* 헤더 - 항상 표시 */}
+        <div className="flex items-center justify-between px-3 py-2">
+          {/* 왼쪽: 토글 버튼 */}
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700"
+          >
             📍 추천 {items.length}곳
-          </span>
+            {isExpanded ? (
+              <ChevronUp className="h-3.5 w-3.5 text-gray-400" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
+            )}
+          </button>
+
+          {/* 오른쪽: 지도 버튼 */}
           {hasValidMarkers && (
-            <span className="flex items-center gap-1 text-[11px] text-gray-400">
+            <button
+              type="button"
+              onClick={() => setShowMap(true)}
+              className="flex items-center gap-1 px-2 py-1 text-[11px] text-gray-500 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+            >
               <Map className="h-3 w-3" />
               지도
-            </span>
+            </button>
           )}
         </div>
-        
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] text-gray-400">
-            {isExpanded ? '접기' : '펼치기'}
-          </span>
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4 text-gray-400" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-gray-400" />
-          )}
-        </div>
-      </button>
 
-      {/* 펼쳐진 내용 */}
-      {isExpanded && (
-        <div className="animate-expand">
-          {/* 지도 */}
-          {hasValidMarkers && (
-            <div className="h-[180px] mx-3 mb-2 rounded-xl overflow-hidden ring-1 ring-gray-100">
+        {/* 카드 리스트 - 수평 스크롤 */}
+        {isExpanded && (
+          <div className="pb-2 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 px-3" style={{ minWidth: 'min-content' }}>
+              {items.map((item, index) => {
+                const id = resolveItemId(item);
+                const isActive = id === highlightId;
+                const detailLink = getDetailLink(item);
+
+                return (
+                  <div
+                    key={id}
+                    className={`flex-shrink-0 w-[140px] p-2 rounded-lg cursor-pointer transition-all ${
+                      isActive 
+                        ? 'bg-rose-50 ring-1 ring-rose-200' 
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                    onClick={() => setHighlightId(id)}
+                  >
+                    {/* 순위 + 이름 */}
+                    <div className="flex items-start gap-1.5">
+                      <span className={`flex-shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[9px] font-bold ${
+                        index === 0 
+                          ? 'bg-rose-500 text-white' 
+                          : 'bg-gray-200 text-gray-500'
+                      }`}>
+                        {index + 1}
+                      </span>
+                      <p className="text-[11px] font-semibold text-gray-800 line-clamp-2 leading-tight">
+                        {item.name || '이름 미정'}
+                      </p>
+                    </div>
+
+                    {/* 상세 버튼 */}
+                    {detailLink && (
+                      <Link
+                        to={detailLink}
+                        className="mt-1.5 flex items-center justify-center gap-0.5 w-full py-1 text-[10px] text-rose-500 bg-white rounded border border-rose-200 hover:bg-rose-50 transition-all"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        상세보기
+                        <ChevronRight className="h-2.5 w-2.5" />
+                      </Link>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 지도 모달 (오버레이) */}
+      {showMap && hasValidMarkers && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
+          <div className="w-full max-w-[480px] bg-white rounded-t-2xl overflow-hidden animate-slideUp">
+            {/* 모달 헤더 */}
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <span className="text-sm font-semibold text-gray-800">
+                📍 추천 위치
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowMap(false)}
+                className="p-1 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* 지도 */}
+            <div className="h-[250px]">
               <KakaoMap
                 height="100%"
-                level={items.length === 1 ? 3 : 5}
+                level={items.length === 1 ? 4 : 6}
                 center={centerMarker ? { lat: centerMarker.lat, lng: centerMarker.lng } : undefined}
                 markers={markers}
               />
             </div>
-          )}
 
-          {/* 카드 리스트 */}
-          <div className="px-3 pb-3 space-y-1.5">
-            {items.map((item, index) => {
-              const id = resolveItemId(item);
-              const isActive = id === highlightId;
-              const detailLink = getDetailLink(item);
-              const address = item.address || item.metadata?.address || item.metadata?.location;
+            {/* 마커 리스트 */}
+            <div className="max-h-[150px] overflow-y-auto p-3 space-y-1.5">
+              {items.map((item, index) => {
+                const id = resolveItemId(item);
+                const isActive = id === highlightId;
+                const detailLink = getDetailLink(item);
+                const address = item.address || item.metadata?.address || item.metadata?.location;
 
-              return (
-                <div
-                  key={id}
-                  className={`flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer transition-all ${
-                    isActive 
-                      ? 'bg-rose-50 ring-1 ring-rose-200' 
-                      : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
-                  onClick={() => setHighlightId(id)}
-                >
-                  {/* 순위 */}
-                  <span className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${
-                    index === 0 
-                      ? 'bg-rose-500 text-white' 
-                      : 'bg-gray-200 text-gray-500'
-                  }`}>
-                    {index + 1}
-                  </span>
-
-                  {/* 정보 */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-gray-800 truncate">
-                      {item.name || '이름 미정'}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
+                return (
+                  <div
+                    key={id}
+                    className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
+                      isActive 
+                        ? 'bg-rose-50 ring-1 ring-rose-200' 
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                    onClick={() => setHighlightId(id)}
+                  >
+                    <span className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${
+                      index === 0 
+                        ? 'bg-rose-500 text-white' 
+                        : 'bg-gray-200 text-gray-500'
+                    }`}>
+                      {index + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold text-gray-800 truncate">
+                        {item.name || '이름 미정'}
+                      </p>
                       {address && (
-                        <span className="text-[10px] text-gray-400 truncate flex items-center gap-0.5">
-                          <MapPin className="h-2.5 w-2.5" />
-                          {address.split(' ').slice(0, 2).join(' ')}
-                        </span>
-                      )}
-                      {typeof item.rating === 'number' && (
-                        <span className="text-[10px] text-gray-500 flex items-center gap-0.5">
-                          <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400" />
-                          {item.rating.toFixed(1)}
-                        </span>
-                      )}
-                      {item.category && (
-                        <span className="text-[9px] text-gray-400 bg-white px-1 py-0.5 rounded">
-                          {item.category}
-                        </span>
+                        <p className="text-[10px] text-gray-400 truncate">
+                          {address}
+                        </p>
                       )}
                     </div>
+                    {detailLink && (
+                      <Link
+                        to={detailLink}
+                        className="flex-shrink-0 px-2 py-1 text-[10px] text-rose-500 bg-white rounded border border-rose-200 hover:bg-rose-50"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        상세
+                      </Link>
+                    )}
                   </div>
-
-                  {/* 상세 버튼 */}
-                  {detailLink && (
-                    <Link
-                      to={detailLink}
-                      className="flex-shrink-0 p-1.5 rounded-lg bg-white ring-1 ring-gray-200 text-gray-400 hover:text-rose-500 hover:ring-rose-200 transition-all"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </Link>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
 
       {/* 애니메이션 스타일 */}
       <style>{`
-        @keyframes expand {
+        @keyframes slideUp {
           from {
+            transform: translateY(100%);
             opacity: 0;
-            max-height: 0;
           }
           to {
+            transform: translateY(0);
             opacity: 1;
-            max-height: 500px;
           }
         }
-        .animate-expand {
-          animation: expand 0.25s ease-out;
+        .animate-slideUp {
+          animation: slideUp 0.3s ease-out;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
-    </div>
+    </>
   );
 };
 
 export default RecommendationPanel;
+

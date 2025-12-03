@@ -16,7 +16,7 @@ const IconButton = ({ icon, label, href = '#', className = '' }) => (
 
 const Footer = () => {
   return (
-    <footer className="bg-[#2a2a2a] text-white mt-auto pb-10 md:pb-16 mb-4 md:mb-6">
+    <footer className="bg-[#2a2a2a] text-white mt-auto pb-10 md:pb-16">
       {/* Mobile */}
       <div className="md:hidden w-full max-w-[540px] mx-auto px-5 py-8 flex flex-col items-center text-center gap-4">
         <div>

@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
@@ -28,13 +28,26 @@ const getStatusChipClass = (status) => {
 
 const AdminUsersPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { addToast } = useToast();
 
+  // 대시보드에서 전달된 roleFilter 사용
+  const initialRoleFilter = location.state?.roleFilter || 'CONSUMER';
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('CONSUMER'); // 'CONSUMER' | 'SELLER'
+  const [roleFilter, setRoleFilter] = useState(initialRoleFilter); // 'CONSUMER' | 'SELLER'
   const [selectedIds, setSelectedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // location.state 변경 시 roleFilter 업데이트
+  useEffect(() => {
+    if (location.state?.roleFilter) {
+      setRoleFilter(location.state.roleFilter);
+      setCurrentPage(1);
+      setSelectedIds([]);
+    }
+  }, [location.state?.roleFilter]);
 
   // 사용자 목록 조회
   const { data: usersData, isLoading, refetch } = useQuery({

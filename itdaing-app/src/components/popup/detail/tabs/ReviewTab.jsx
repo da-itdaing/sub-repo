@@ -46,17 +46,17 @@ const ReviewTab = ({ popup, reviews, onWriteClick }) => {
   return (
     <div className="pt-6 pb-20 max-w-[960px] mx-auto px-6">
 
-      {/* ⭐ 리뷰 통계 — 좌우정렬 + 중앙정렬 + 간격 증가 */}
+      {/* ⭐ 리뷰 통계 — 모바일: 세로, 데스크탑: 가로 */}
       {summary.total > 0 && (
-        <div className="flex items-center justify-center gap-30 mb-10">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-12 mb-8">
 
           {/* ⭐ 큰 별 평점 */}
           <div className="flex flex-col items-center">
-            <div className="flex gap-1.5">
+            <div className="flex gap-1">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-8 h-8 ${
+                  className={`w-6 h-6 md:w-7 md:h-7 ${
                     i < Math.round(summary.average)
                       ? 'text-[#eb0000] fill-[#eb0000]'
                       : 'text-gray-200 fill-gray-200'
@@ -64,21 +64,24 @@ const ReviewTab = ({ popup, reviews, onWriteClick }) => {
                 />
               ))}
             </div>
+            <span className="text-sm text-gray-500 mt-1">
+              {summary.average?.toFixed(1) || '0.0'} ({summary.total}개)
+            </span>
           </div>
 
-          {/* 📊 그래프 — 막대 굵게 (h-3) */}
-          <div className="flex flex-col gap-2">
+          {/* 📊 그래프 — 모바일 대응 */}
+          <div className="flex flex-col gap-1.5 w-full max-w-[280px]">
             {[5, 4, 3, 2, 1].map((score, index) => {
               const count = distribution[index] || 0;
               const percentage = (count / totalCount) * 100;
 
               return (
-                <div key={score} className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-900 w-6 text-right">
+                <div key={score} className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-gray-600 w-5 text-right shrink-0">
                     {score}점
                   </span>
 
-                  <div className="w-56 h-5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-[#ff0f0f] to-[#e67777]"
                       style={{ width: `${percentage}%` }}

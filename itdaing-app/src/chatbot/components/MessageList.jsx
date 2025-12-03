@@ -230,8 +230,9 @@ const MessageList = ({ messages, isTyping, isSlow, isStreaming }) => {
         />
       ))}
 
-      {isTyping && <TypingIndicator />}
-      {isSlow && <SlowResponseMessage />}
+      {/* 로딩 표시: 처음엔 TypingIndicator, 3초 후 SlowResponseMessage로 전환 */}
+      {isTyping && !isSlow && <TypingIndicator />}
+      {isTyping && isSlow && <SlowResponseMessage />}
 
       <div ref={bottomRef} />
     </div>
