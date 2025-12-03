@@ -214,14 +214,10 @@ const SellerPopupFormPage = ({
       .catch(err => console.warn('상권 데이터 로드 실패:', err));
   }, []);
 
-  // 존 선택 시 스텝 2로 이동 + 자동 스크롤
+  // 존 선택 시 스텝 2로 이동 (자동 스크롤 제거 - 정보 패널이 우측에 보이므로)
   useEffect(() => {
-    if (selectedArea && cellSectionRef.current) {
+    if (selectedArea) {
       setLocationStep(2);
-      // 약간의 딜레이 후 스크롤 (DOM 업데이트 대기)
-      setTimeout(() => {
-        cellSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
     }
   }, [selectedArea]);
 
@@ -856,26 +852,27 @@ const SellerPopupFormPage = ({
               )}
             </div>
           
-          {/* 존 선택 지도 + 정보 패널 */}
+          {/* 존 선택 지도 + 정보 패널 (좌우 분할) */}
           {showZoneMap && !isLocationLocked && areas.length > 0 && (
-            <div className="mt-3 space-y-3">
-              {/* 지도 영역 */}
-              <div className="h-[250px] rounded-lg overflow-hidden border border-gray-200 relative">
-                <Map
-                  center={selectedArea ? (() => {
-                    const coords = parseGeoJsonPolygon(selectedArea.polygonGeoJson);
-                    if (coords.length > 0) {
-                      return coords.reduce(
-                        (acc, c) => ({ lat: acc.lat + c.lat / coords.length, lng: acc.lng + c.lng / coords.length }),
-                        { lat: 0, lng: 0 }
-                      );
-                    }
-                    return GWANGJU_CENTER;
-                  })() : GWANGJU_CENTER}
-                  style={{ width: '100%', height: '100%' }}
-                  level={selectedArea ? 5 : 8}
-                  onClick={() => setShowOverlapMenu(false)}
-                >
+            <div className="mt-3 flex flex-col lg:flex-row gap-3">
+              {/* 왼쪽: 지도 영역 */}
+              <div className="flex-1 min-w-0">
+                <div className="h-[300px] lg:h-[350px] rounded-lg overflow-hidden border border-gray-200 relative">
+                  <Map
+                    center={selectedArea ? (() => {
+                      const coords = parseGeoJsonPolygon(selectedArea.polygonGeoJson);
+                      if (coords.length > 0) {
+                        return coords.reduce(
+                          (acc, c) => ({ lat: acc.lat + c.lat / coords.length, lng: acc.lng + c.lng / coords.length }),
+                          { lat: 0, lng: 0 }
+                        );
+                      }
+                      return GWANGJU_CENTER;
+                    })() : GWANGJU_CENTER}
+                    style={{ width: '100%', height: '100%' }}
+                    level={selectedArea ? 5 : 8}
+                    onClick={() => setShowOverlapMenu(false)}
+                  >
                   {/* 모든 존 폴리곤 표시 */}
                   {areas
                     .sort((a, b) => {
@@ -979,192 +976,187 @@ const SellerPopupFormPage = ({
                   </div>
                 )}
                 
-                {/* 지도 범례 */}
-                <div className="absolute bottom-2 left-2 bg-white/95 backdrop-blur-sm rounded-lg px-2 py-1.5 text-[9px] shadow-sm border border-gray-200">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2.5 h-2.5 rounded bg-[#EB0000]/40 border border-[#EB0000]" />
-                      <span>선택</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2.5 h-2.5 rounded bg-blue-500/35 border border-blue-500" />
-                      <span>호버</span>
+                  {/* 지도 범례 */}
+                  <div className="absolute bottom-2 left-2 bg-white/95 backdrop-blur-sm rounded-lg px-2 py-1.5 text-[9px] shadow-sm border border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2.5 h-2.5 rounded bg-[#EB0000]/40 border border-[#EB0000]" />
+                        <span>선택</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2.5 h-2.5 rounded bg-blue-500/35 border border-blue-500" />
+                        <span>호버</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
               
-              {/* 선택된 존 정보 패널 + 상권 정보 */}
-              {selectedArea && (() => {
-                const commercialInfo = getDistrictCommercialInfo();
-                return (
-                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    {/* 헤더 */}
-                    <div className="bg-gradient-to-r from-[#EB0000] to-[#FF4444] px-4 py-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                          <MapPin className="h-4 w-4 text-white" />
+              {/* 오른쪽: 존 정보 + 상권 정보 패널 */}
+              <div className="w-full lg:w-80 shrink-0">
+                {/* 선택된 존 정보 패널 + 상권 정보 */}
+                {selectedArea && (() => {
+                  const commercialInfo = getDistrictCommercialInfo();
+                  return (
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-full max-h-[350px] overflow-y-auto">
+                      {/* 헤더 */}
+                      <div className="bg-gradient-to-r from-[#EB0000] to-[#FF4444] px-3 py-2 flex items-center justify-between sticky top-0 z-10">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                            <MapPin className="h-3 w-3 text-white" />
+                          </div>
+                          <div className="text-white">
+                            <h4 className="font-bold text-sm">{selectedArea.name}</h4>
+                            {selectedArea.district && (
+                              <p className="text-[10px] text-white/80">{selectedArea.district}</p>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-white">
-                          <h4 className="font-bold">{selectedArea.name}</h4>
-                          {selectedArea.district && (
-                            <p className="text-xs text-white/80">{selectedArea.district}</p>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectArea(selectedArea)}
+                          className="px-2 py-1 text-[10px] text-white/80 hover:text-white hover:bg-white/10 rounded transition-colors"
+                        >
+                          해제
+                        </button>
+                      </div>
+                    
+                      {/* 존 기본 정보 */}
+                      <div className="p-3 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-1.5 text-xs">
+                          {selectedArea.status && (
+                            <div className="bg-gray-50 rounded-lg px-2 py-1.5">
+                              <span className="text-gray-400 text-[9px]">상태</span>
+                              <p className={`font-semibold text-[11px] ${
+                                selectedArea.status === 'APPROVED' || selectedArea.status === 'AVAILABLE' ? 'text-green-600' : 
+                                selectedArea.status === 'PENDING' ? 'text-yellow-600' : 'text-gray-600'
+                              }`}>
+                                {selectedArea.status === 'APPROVED' || selectedArea.status === 'AVAILABLE' ? '✓ 운영중' : 
+                                 selectedArea.status === 'PENDING' ? '⏳ 준비중' : selectedArea.status}
+                              </p>
+                            </div>
                           )}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectArea(selectedArea)}
-                        className="px-3 py-1 text-xs text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                      >
-                        선택 해제
-                      </button>
-                    </div>
-                    
-                    {/* 존 기본 정보 */}
-                    <div className="p-4 border-b border-gray-100">
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                        {selectedArea.status && (
-                          <div className="bg-gray-50 rounded-lg px-3 py-2">
-                            <span className="text-gray-400 text-[10px]">상태</span>
-                            <p className={`font-semibold ${
-                              selectedArea.status === 'APPROVED' || selectedArea.status === 'AVAILABLE' ? 'text-green-600' : 
-                              selectedArea.status === 'PENDING' ? 'text-yellow-600' : 'text-gray-600'
-                            }`}>
-                              {selectedArea.status === 'APPROVED' || selectedArea.status === 'AVAILABLE' ? '✓ 운영중' : 
-                               selectedArea.status === 'PENDING' ? '⏳ 준비중' : selectedArea.status}
-                            </p>
-                          </div>
-                        )}
-                        {selectedArea.maxCapacity && (
-                          <div className="bg-gray-50 rounded-lg px-3 py-2">
-                            <span className="text-gray-400 text-[10px]">최대 부스</span>
-                            <p className="font-semibold text-gray-700">{selectedArea.maxCapacity}개</p>
-                          </div>
-                        )}
-                        {cells && (
-                          <div className="bg-gray-50 rounded-lg px-3 py-2">
-                            <span className="text-gray-400 text-[10px]">빈 셀</span>
-                            <p className="font-semibold text-blue-600">
-                              {cells.filter(c => c.status === 'AVAILABLE').length}/{cells.length}개
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {selectedArea.notice && (
-                        <div className="mt-3 bg-amber-50 rounded-lg px-3 py-2 border border-amber-100">
-                          <span className="text-amber-600 text-[10px] font-medium">📢 안내</span>
-                          <p className="text-xs text-amber-700 mt-0.5">{selectedArea.notice}</p>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* 상권 정보 (commercialData에서 가져옴) */}
-                    {commercialInfo && (
-                      <div className="p-4 bg-blue-50/50">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Store className="h-4 w-4 text-blue-600" />
-                          <h5 className="text-sm font-semibold text-gray-800">
-                            {commercialInfo.district} 상권 정보
-                          </h5>
-                          <span className="ml-auto text-[10px] text-gray-400">
-                            판매자 참고용
-                          </span>
+                          {selectedArea.maxCapacity && (
+                            <div className="bg-gray-50 rounded-lg px-2 py-1.5">
+                              <span className="text-gray-400 text-[9px]">최대</span>
+                              <p className="font-semibold text-gray-700 text-[11px]">{selectedArea.maxCapacity}개</p>
+                            </div>
+                          )}
+                          {cells && (
+                            <div className="bg-gray-50 rounded-lg px-2 py-1.5">
+                              <span className="text-gray-400 text-[9px]">빈 셀</span>
+                              <p className="font-semibold text-blue-600 text-[11px]">
+                                {cells.filter(c => c.status === 'AVAILABLE').length}/{cells.length}개
+                              </p>
+                            </div>
+                          )}
                         </div>
                         
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                          {/* 유동인구 */}
-                          {commercialInfo.data.total_population && (
-                            <div className="bg-white rounded-lg px-3 py-2 border border-blue-100">
-                              <div className="flex items-center gap-1 text-gray-400 text-[10px] mb-0.5">
-                                <Users className="h-3 w-3" />
-                                거주인구
-                              </div>
-                              <p className="font-semibold text-gray-700">
-                                {(commercialInfo.data.total_population / 1000).toFixed(0)}천명
-                              </p>
-                            </div>
-                          )}
+                        {selectedArea.notice && (
+                          <div className="mt-2 bg-amber-50 rounded-lg px-2 py-1.5 border border-amber-100">
+                            <span className="text-amber-600 text-[9px] font-medium">📢</span>
+                            <p className="text-[10px] text-amber-700 mt-0.5 line-clamp-2">{selectedArea.notice}</p>
+                          </div>
+                        )}
+                      </div>
+                    
+                      {/* 상권 정보 (commercialData에서 가져옴) */}
+                      {commercialInfo && (
+                        <div className="p-3 bg-blue-50/50">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <Store className="h-3.5 w-3.5 text-blue-600" />
+                            <h5 className="text-[11px] font-semibold text-gray-800">
+                              {commercialInfo.district} 상권
+                            </h5>
+                          </div>
                           
-                          {/* 주요 상권 */}
-                          {commercialInfo.data.main_commercial_areas && (
-                            <div className="bg-white rounded-lg px-3 py-2 border border-blue-100 col-span-2">
-                              <div className="flex items-center gap-1 text-gray-400 text-[10px] mb-0.5">
-                                <TrendingUp className="h-3 w-3" />
-                                주요 상권
-                              </div>
-                              <p className="font-medium text-gray-700 truncate">
-                                {commercialInfo.data.main_commercial_areas.slice(0, 3).join(', ')}
-                              </p>
+                          <div className="space-y-1.5 text-[10px]">
+                            {/* 인구 + 주요상권 */}
+                            <div className="flex gap-1.5">
+                              {commercialInfo.data.total_population && (
+                                <div className="flex-1 bg-white rounded px-2 py-1.5 border border-blue-100">
+                                  <span className="text-gray-400 text-[9px]">거주</span>
+                                  <p className="font-semibold text-gray-700">
+                                    {(commercialInfo.data.total_population / 1000).toFixed(0)}천명
+                                  </p>
+                                </div>
+                              )}
+                              {commercialInfo.data.main_commercial_areas && (
+                                <div className="flex-[2] bg-white rounded px-2 py-1.5 border border-blue-100">
+                                  <span className="text-gray-400 text-[9px]">주요 상권</span>
+                                  <p className="font-medium text-gray-700 truncate">
+                                    {commercialInfo.data.main_commercial_areas.slice(0, 2).join(', ')}
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                          )}
-                          
-                          {/* 특성 */}
-                          {commercialInfo.data.characteristics && (
-                            <div className="bg-white rounded-lg px-3 py-2 border border-blue-100 col-span-2 sm:col-span-3">
-                              <div className="text-gray-400 text-[10px] mb-1">지역 특성</div>
+                            
+                            {/* 지역 특성 */}
+                            {commercialInfo.data.characteristics && (
                               <div className="flex flex-wrap gap-1">
-                                {commercialInfo.data.characteristics.slice(0, 4).map((char, i) => (
-                                  <span key={i} className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-[10px]">
+                                {commercialInfo.data.characteristics.slice(0, 3).map((char, i) => (
+                                  <span key={i} className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[9px]">
                                     {char}
                                   </span>
                                 ))}
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
+                          
+                          {/* 추천 업종 */}
+                          {commercialInfo.data.neighborhoods && Object.keys(commercialInfo.data.neighborhoods).length > 0 && (() => {
+                            const firstNeighborhood = Object.values(commercialInfo.data.neighborhoods)[0];
+                            const commercialDetail = firstNeighborhood?.commercial_info;
+                            return commercialDetail?.recommended_business ? (
+                              <div className="mt-2 p-2 bg-green-50 rounded border border-green-100">
+                                <div className="text-green-600 text-[9px] font-medium mb-1">
+                                  💡 추천 업종
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {commercialDetail.recommended_business.slice(0, 4).map((biz, i) => (
+                                    <span key={i} className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-[9px]">
+                                      {biz}
+                                    </span>
+                                  ))}
+                                </div>
+                                {commercialDetail.avg_rent_per_pyeong && (
+                                  <p className="mt-1 text-[9px] text-gray-500">
+                                    임대료: {commercialDetail.avg_rent_per_pyeong.toLocaleString()}원/평
+                                  </p>
+                                )}
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
-                        
-                        {/* 추천 업종 (첫 번째 동의 정보 활용) */}
-                        {commercialInfo.data.neighborhoods && Object.keys(commercialInfo.data.neighborhoods).length > 0 && (() => {
-                          const firstNeighborhood = Object.values(commercialInfo.data.neighborhoods)[0];
-                          const commercialDetail = firstNeighborhood?.commercial_info;
-                          return commercialDetail?.recommended_business ? (
-                            <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-100">
-                              <div className="flex items-center gap-1 text-green-600 text-[10px] font-medium mb-1">
-                                💡 추천 업종 ({Object.keys(commercialInfo.data.neighborhoods)[0]} 기준)
-                              </div>
-                              <div className="flex flex-wrap gap-1">
-                                {commercialDetail.recommended_business.map((biz, i) => (
-                                  <span key={i} className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-medium">
-                                    {biz}
-                                  </span>
-                                ))}
-                              </div>
-                              {commercialDetail.avg_rent_per_pyeong && (
-                                <p className="mt-2 text-[10px] text-gray-500">
-                                  평균 임대료: {commercialDetail.avg_rent_per_pyeong.toLocaleString()}원/평
-                                </p>
-                              )}
-                            </div>
-                          ) : null;
-                        })()}
-                      </div>
-                    )}
+                      )}
                     
-                    {/* 상권 정보 없을 때 */}
-                    {!commercialInfo && (
-                      <div className="p-4 bg-gray-50 text-center">
-                        <p className="text-xs text-gray-400">
-                          상권 정보가 준비 중입니다
-                        </p>
-                      </div>
-                    )}
+                      {/* 상권 정보 없을 때 */}
+                      {!commercialInfo && (
+                        <div className="p-3 bg-gray-50 text-center">
+                          <p className="text-[10px] text-gray-400">
+                            상권 정보 준비 중
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+                
+                {/* 존 미선택 시 안내 */}
+                {!selectedArea && (
+                  <div className="h-full min-h-[200px] lg:min-h-[350px] bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center p-4 text-center">
+                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                      <MapPin className="h-6 w-6 text-gray-400" />
+                    </div>
+                    <p className="text-sm text-gray-500 font-medium">
+                      존을 선택해주세요
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      지도에서 원하는 존을 클릭하면<br/>상권 정보를 확인할 수 있습니다
+                    </p>
                   </div>
-                );
-              })()}
-              
-              {/* 존 미선택 시 안내 */}
-              {!selectedArea && (
-                <div className="bg-gray-50 rounded-xl border border-dashed border-gray-200 p-4 text-center">
-                  <p className="text-sm text-gray-500">
-                    위 지도에서 원하시는 <span className="font-semibold text-[#EB0000]">존</span>을 클릭하여 선택해주세요
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    존에 마우스를 올리면 이름이 표시됩니다
-                  </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
           
