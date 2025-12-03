@@ -29,16 +29,27 @@ public class ApprovalService {
     private final ApprovalRecordRepository approvalRecordRepository;
     private final UserRepository userRepository;
 
-    /** 관리자: 승인 대기 목록 조회 */
+    /** 관리자: 승인 목록 조회 (status로 필터링 가능, null이면 전체 조회) */
     @Transactional(readOnly = true)
-    public ApprovalListResponse listPendingApprovals(int page, int size) {
+    public ApprovalListResponse listApprovals(String status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         
         // 현재는 팝업만 지원
-        Page<Popup> pendingPopups = popupRepository.findByApprovalStatus(
-            ApprovalStatus.PENDING, pageable);
+        Page<Popup> popups;
+        if (status != null && !status.isBlank()) {
+            try {
+                ApprovalStatus approvalStatus = ApprovalStatus.valueOf(status.toUpperCase());
+                popups = popupRepository.findByApprovalStatus(approvalStatus, pageable);
+            } catch (IllegalArgumentException e) {
+                // 잘못된 status 값이면 전체 조회
+                popups = popupRepository.findAll(pageable);
+            }
+        } else {
+            // status 없으면 전체 조회
+            popups = popupRepository.findAll(pageable);
+        }
 
-        List<ApprovalItemResponse> items = pendingPopups.getContent().stream()
+        List<ApprovalItemResponse> items = popups.getContent().stream()
             .map(popup -> ApprovalItemResponse.builder()
                 .id(popup.getId())
                 .targetType(ApprovalTargetType.POPUP)
@@ -56,11 +67,17 @@ public class ApprovalService {
 
         return ApprovalListResponse.builder()
             .items(items)
-            .totalElements(pendingPopups.getTotalElements())
-            .totalPages(pendingPopups.getTotalPages())
+            .totalElements(popups.getTotalElements())
+            .totalPages(popups.getTotalPages())
             .page(page)
             .size(size)
             .build();
+    }
+
+    /** 관리자: 승인 대기 목록 조회 (PENDING만) - 하위 호환용 */
+    @Transactional(readOnly = true)
+    public ApprovalListResponse listPendingApprovals(int page, int size) {
+        return listApprovals("PENDING", page, size);
     }
 
     /** 관리자: 승인 처리 */

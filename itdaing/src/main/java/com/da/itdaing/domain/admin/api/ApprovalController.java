@@ -21,12 +21,13 @@ public class ApprovalController {
 
     private final ApprovalService approvalService;
 
-    @Operation(summary = "승인 대기 목록 조회 (관리자)")
+    @Operation(summary = "승인 목록 조회 (관리자) - status 파라미터로 필터링 가능, 생략 시 전체 조회")
     @GetMapping
-    public ApiResponse<ApprovalListResponse> listPendingApprovals(
+    public ApiResponse<ApprovalListResponse> listApprovals(
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(approvalService.listPendingApprovals(page, size));
+        return ApiResponse.success(approvalService.listApprovals(status, page, size));
     }
 
     @Operation(summary = "승인 처리 (관리자)")

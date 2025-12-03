@@ -15,16 +15,27 @@ const BASE_URL = '/admin';
 /* ============ 승인 관리 API ============ */
 
 /**
- * 승인 대기 목록 조회
+ * 승인 목록 조회 (전체 상태)
+ * @param {Object} params - { status, page, size }
+ * @param {string} params.status - 'PENDING' | 'APPROVED' | 'REJECTED' | null (전체)
+ * @returns {Promise<{items: Array, totalElements: number, totalPages: number, page: number, size: number}>}
+ */
+export const listApprovals = async ({ status, page = 0, size = 100 } = {}) => {
+  const params = { page, size };
+  if (status) {
+    params.status = status;
+  }
+  const data = await apiClient.get(`${BASE_URL}/approvals`, { params });
+  return data;
+};
+
+/**
+ * 승인 대기 목록 조회 (PENDING만) - 하위 호환용
  * @param {Object} params - { page, size }
  * @returns {Promise<{items: Array, totalElements: number, totalPages: number, page: number, size: number}>}
  */
-export const listPendingApprovals = async ({ page = 0, size = 20 } = {}) => {
-  // apiClient interceptor가 response.data.data를 반환하므로 그대로 사용
-  const data = await apiClient.get(`${BASE_URL}/approvals`, {
-    params: { page, size },
-  });
-  return data;
+export const listPendingApprovals = async ({ page = 0, size = 100 } = {}) => {
+  return listApprovals({ status: null, page, size });
 };
 
 /**
@@ -85,19 +96,23 @@ export const updateUserStatus = async (userId, status) => {
  */
 export const getDashboardStats = async () => {
   try {
-    // 승인 대기 목록에서 통계 계산
-    const approvals = await listPendingApprovals({ page: 0, size: 100 });
+    // 전체 승인 목록 조회
+    const allApprovals = await listApprovals({ status: null, page: 0, size: 200 });
     
     // 사용자 수 조회
     const consumers = await listUsers({ role: 'CONSUMER', page: 0, size: 1 });
     const sellers = await listUsers({ role: 'SELLER', page: 0, size: 1 });
     
+    // PENDING 상태만 카운트
+    const items = allApprovals?.items || [];
+    const pendingCount = items.filter(item => item.currentStatus === 'PENDING').length;
+    
     return {
       totalUsers: (consumers?.totalElements || 0) + (sellers?.totalElements || 0),
       totalConsumers: consumers?.totalElements || 0,
       totalSellers: sellers?.totalElements || 0,
-      pendingApprovals: approvals?.totalElements || 0,
-      approvalItems: approvals?.items || [],
+      pendingApprovals: pendingCount,
+      approvalItems: items,
     };
   } catch (error) {
     console.error('대시보드 통계 조회 실패:', error);
@@ -134,6 +149,7 @@ export const getPopupDetail = async (popupId) => {
 };
 
 export default {
+  listApprovals,
   listPendingApprovals,
   approvePopup,
   rejectPopup,
