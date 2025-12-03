@@ -49,5 +49,12 @@ public class ApprovalDtos {
         private String reason;
         private LocalDateTime processedAt;
     }
+
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor
+    @Schema(description = "상태 변경 요청")
+    public static class StatusChangeRequest {
+        @Schema(description = "변경할 상태 (PENDING, APPROVED, REJECTED)")
+        private String status;
+    }
 }
 

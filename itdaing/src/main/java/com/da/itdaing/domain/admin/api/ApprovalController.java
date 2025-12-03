@@ -52,5 +52,16 @@ public class ApprovalController {
         Long adminId = Long.valueOf(principal.getName());
         return ApiResponse.success(approvalService.reject(id, adminId, req));
     }
+
+    @Operation(summary = "상태 직접 변경 (관리자) - 승인/반려 후에도 다른 상태로 변경 가능")
+    @PatchMapping("/{id}/status")
+    public ApiResponse<Void> changeStatus(
+            @PathVariable Long id,
+            Principal principal,
+            @RequestBody StatusChangeRequest req) {
+        Long adminId = Long.valueOf(principal.getName());
+        approvalService.changeStatus(id, req.getStatus(), adminId);
+        return ApiResponse.success(null);
+    }
 }
 

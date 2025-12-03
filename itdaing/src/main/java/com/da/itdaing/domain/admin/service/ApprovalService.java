@@ -80,17 +80,22 @@ public class ApprovalService {
         return listApprovals("PENDING", page, size);
     }
 
-    /** 관리자: 승인 처리 */
+    /** 관리자: 승인 처리 (모든 상태에서 가능) */
     public ApprovalDecisionResponse approve(Long approvalId, Long adminId, ApprovalDecisionRequest req) {
         Objects.requireNonNull(approvalId, "approvalId must not be null");
         Objects.requireNonNull(adminId, "adminId must not be null");
         Objects.requireNonNull(req, "request must not be null");
-        // 현재는 팝업만 지원
+        
         Popup popup = popupRepository.findById(approvalId)
-            .orElseThrow(() -> new IllegalArgumentException("승인 대기 항목을 찾을 수 없습니다: " + approvalId));
+            .orElseThrow(() -> new IllegalArgumentException("팝업을 찾을 수 없습니다: " + approvalId));
 
-        if (popup.getApprovalStatus() != ApprovalStatus.PENDING) {
-            throw new IllegalStateException("이미 처리된 항목입니다. 현재 상태: " + popup.getApprovalStatus());
+        // 이미 승인된 상태면 스킵
+        if (popup.getApprovalStatus() == ApprovalStatus.APPROVED) {
+            return ApprovalDecisionResponse.builder()
+                .targetType(ApprovalTargetType.POPUP)
+                .targetId(popup.getId())
+                .decision(DecisionType.APPROVE)
+                .build();
         }
 
         Users admin = userRepository.findById(adminId)
@@ -120,23 +125,28 @@ public class ApprovalService {
             .build();
     }
 
-    /** 관리자: 거부 처리 */
+    /** 관리자: 거부 처리 (모든 상태에서 가능) */
     public ApprovalDecisionResponse reject(Long approvalId, Long adminId, ApprovalDecisionRequest req) {
         Objects.requireNonNull(approvalId, "approvalId must not be null");
         Objects.requireNonNull(adminId, "adminId must not be null");
-        // 현재는 팝업만 지원
+        
         Popup popup = popupRepository.findById(approvalId)
-            .orElseThrow(() -> new IllegalArgumentException("승인 대기 항목을 찾을 수 없습니다: " + approvalId));
+            .orElseThrow(() -> new IllegalArgumentException("팝업을 찾을 수 없습니다: " + approvalId));
 
-        if (popup.getApprovalStatus() != ApprovalStatus.PENDING) {
-            throw new IllegalStateException("이미 처리된 항목입니다. 현재 상태: " + popup.getApprovalStatus());
+        // 이미 거부된 상태면 스킵
+        if (popup.getApprovalStatus() == ApprovalStatus.REJECTED) {
+            return ApprovalDecisionResponse.builder()
+                .targetType(ApprovalTargetType.POPUP)
+                .targetId(popup.getId())
+                .decision(DecisionType.REJECT)
+                .build();
         }
 
         Users admin = userRepository.findById(adminId)
             .orElseThrow(() -> new IllegalArgumentException("관리자를 찾을 수 없습니다: " + adminId));
 
         // 팝업 상태 변경
-        popup.updateApprovalStatus(ApprovalStatus.REJECTED, req.getReason());
+        popup.updateApprovalStatus(ApprovalStatus.REJECTED, req != null ? req.getReason() : null);
         popupRepository.save(popup);
 
         // 거부 기록 생성
@@ -154,9 +164,33 @@ public class ApprovalService {
             .targetType(ApprovalTargetType.POPUP)
             .targetId(popup.getId())
             .decision(DecisionType.REJECT)
-            .reason(req.getReason())
+            .reason(req != null ? req.getReason() : null)
             .processedAt(record.getCreatedAt())
             .build();
+    }
+
+    /** 관리자: 상태 직접 변경 (승인/반려 후에도 다시 대기로 변경 등) */
+    public void changeStatus(Long popupId, String status, Long adminId) {
+        Objects.requireNonNull(popupId, "popupId must not be null");
+        Objects.requireNonNull(status, "status must not be null");
+        
+        Popup popup = popupRepository.findById(popupId)
+            .orElseThrow(() -> new IllegalArgumentException("팝업을 찾을 수 없습니다: " + popupId));
+
+        ApprovalStatus newStatus;
+        try {
+            newStatus = ApprovalStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("유효하지 않은 상태입니다: " + status);
+        }
+
+        // 같은 상태면 스킵
+        if (popup.getApprovalStatus() == newStatus) {
+            return;
+        }
+
+        popup.updateApprovalStatus(newStatus, null);
+        popupRepository.save(popup);
     }
 }
 

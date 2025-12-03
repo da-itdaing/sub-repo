@@ -209,6 +209,24 @@ const AdminApprovalsPage = () => {
     },
   });
 
+  // 상태 변경 Mutation (PENDING으로 되돌리기 등)
+  const changeStatusMutation = useMutation({
+    mutationFn: ({ id, status }) => apiClient.patch(`/admin/approvals/${id}/status`, { status }),
+    onSuccess: (_, variables) => {
+      const statusLabel = variables.status === 'PENDING' ? '대기' : variables.status === 'APPROVED' ? '승인' : '반려';
+      addToast({ title: `${statusLabel} 상태로 변경되었습니다.` });
+      queryClient.invalidateQueries({ queryKey: ['adminApprovals'] });
+    },
+    onError: (error) => {
+      addToast({ title: '상태 변경 실패', description: error.message, variant: 'error' });
+    },
+  });
+
+  const handleChangeStatus = (newStatus) => {
+    if (!selectedRequest) return;
+    changeStatusMutation.mutate({ id: selectedRequest.id, status: newStatus });
+  };
+
   const handleChangePage = (page) => {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
@@ -506,47 +524,47 @@ const AdminApprovalsPage = () => {
                   </dl>
                 </div>
 
-                {/* 팝업 이미지 (gallery가 있는 경우) */}
+                {/* 팝업 이미지 (gallery가 있는 경우) - 작은 썸네일로 표시 */}
                 {selectedPopupDetail?.gallery?.length > 0 && (
                   <div>
                     <h3 className="border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900">
                       팝업 이미지
                     </h3>
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      {selectedPopupDetail.gallery.slice(0, 4).map((img, idx) => (
-                        <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+                    <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+                      {selectedPopupDetail.gallery.slice(0, 6).map((img, idx) => (
+                        <div key={idx} className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                           <img 
                             src={img.url || img.imageUrl} 
                             alt={`팝업 이미지 ${idx + 1}`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.currentTarget.src = 'https://placehold.co/400x400/f3f4f6/9ca3af?text=No+Image';
+                              e.currentTarget.src = 'https://placehold.co/100x100/f3f4f6/9ca3af?text=No';
                             }}
                           />
                         </div>
                       ))}
+                      {selectedPopupDetail.gallery.length > 6 && (
+                        <div className="w-14 h-14 flex-shrink-0 rounded-lg bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                          +{selectedPopupDetail.gallery.length - 6}
+                        </div>
+                      )}
                     </div>
-                    {selectedPopupDetail.gallery.length > 4 && (
-                      <p className="text-xs text-gray-400 mt-2 text-center">
-                        +{selectedPopupDetail.gallery.length - 4}개 더 보기
-                      </p>
-                    )}
                   </div>
                 )}
                 
-                {/* 대표 이미지 (thumbnail) */}
+                {/* 대표 이미지 (thumbnail) - 작게 표시 */}
                 {selectedPopupDetail?.thumbnail && !selectedPopupDetail?.gallery?.length && (
                   <div>
                     <h3 className="border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900">
                       대표 이미지
                     </h3>
-                    <div className="mt-3 aspect-video rounded-lg overflow-hidden bg-gray-100">
+                    <div className="mt-2 w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
                       <img 
                         src={selectedPopupDetail.thumbnail.url || selectedPopupDetail.thumbnail.imageUrl} 
                         alt="대표 이미지"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          e.currentTarget.src = 'https://placehold.co/400x300/f3f4f6/9ca3af?text=No+Image';
+                          e.currentTarget.src = 'https://placehold.co/100x100/f3f4f6/9ca3af?text=No';
                         }}
                       />
                     </div>
@@ -588,20 +606,20 @@ const AdminApprovalsPage = () => {
                   </div>
                 )}
 
-                {/* 지도 영역 */}
+                {/* 지도 영역 - 드래그/줌 가능 */}
                 <div>
                   <h3 className="flex items-center gap-1.5 border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900">
                     <MapPin className="h-4 w-4 text-gray-500" />
                     위치 정보
                   </h3>
-                  <div className="mt-3 h-48 w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+                  <div className="mt-2 h-36 w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
                     {selectedPopupDetail?.zoneCellLat && selectedPopupDetail?.zoneCellLng ? (
                       <Map
                         center={{ lat: selectedPopupDetail.zoneCellLat, lng: selectedPopupDetail.zoneCellLng }}
                         style={{ width: '100%', height: '100%' }}
-                        level={3}
-                        draggable={false}
-                        zoomable={false}
+                        level={4}
+                        draggable={true}
+                        zoomable={true}
                       >
                         <MapMarker
                           position={{ lat: selectedPopupDetail.zoneCellLat, lng: selectedPopupDetail.zoneCellLng }}
@@ -620,32 +638,47 @@ const AdminApprovalsPage = () => {
                     )}
                   </div>
                   {selectedPopupDetail?.zoneCellAddress && (
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-gray-500 truncate">
                       📍 {selectedPopupDetail.zoneCellAddress}
                     </p>
                   )}
                 </div>
 
-                {/* 하단 액션 버튼 */}
-                {selectedRequest.currentStatus === 'PENDING' && (
-                  <div className="flex justify-end gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={handleApprove}
-                      disabled={approveMutation.isPending}
-                      className="min-w-[96px] rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:opacity-50"
-                    >
-                      {approveMutation.isPending ? '처리 중...' : '승인'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={openRejectModal}
-                      className="min-w-[96px] rounded-lg bg-[#eb0000] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#d60000]"
-                    >
-                      반려
-                    </button>
+                {/* 하단 액션 버튼 - 모든 상태에서 변경 가능 */}
+                <div className="pt-2 border-t border-gray-100">
+                  <p className="text-xs text-gray-400 mb-2">상태 변경</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedRequest.currentStatus !== 'APPROVED' && (
+                      <button
+                        type="button"
+                        onClick={handleApprove}
+                        disabled={approveMutation.isPending}
+                        className="flex-1 min-w-[80px] rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        {approveMutation.isPending ? '처리 중...' : '✓ 승인'}
+                      </button>
+                    )}
+                    {selectedRequest.currentStatus !== 'PENDING' && (
+                      <button
+                        type="button"
+                        onClick={() => handleChangeStatus('PENDING')}
+                        disabled={changeStatusMutation?.isPending}
+                        className="flex-1 min-w-[80px] rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-amber-600 disabled:opacity-50"
+                      >
+                        ⏳ 대기로
+                      </button>
+                    )}
+                    {selectedRequest.currentStatus !== 'REJECTED' && (
+                      <button
+                        type="button"
+                        onClick={openRejectModal}
+                        className="flex-1 min-w-[80px] rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700"
+                      >
+                        ✕ 반려
+                      </button>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </>
           ) : (
