@@ -1,277 +1,206 @@
-# Itdaing App
+# 📱 Itdaing App
 
-React + Vite 기반 팝업 스토어 추천 서비스 (Consumer / Seller / Admin)
+> 다잇다잉 프론트엔드 - React 19 + Vite 7 기반 팝업스토어 추천 서비스
 
-## 프로젝트 구조
+## 📋 개요
+
+**Itdaing App**은 팝업스토어 추천 플랫폼의 프론트엔드입니다.  
+소비자, 판매자, 관리자를 위한 반응형 웹 앱으로, PWA를 지원합니다.
+
+## 🛠️ 기술 스택
+
+| 분류 | 기술 | 버전 |
+|------|------|------|
+| **Framework** | React | 19.2.0 |
+| **Build Tool** | Vite | 7.0.0 |
+| **Routing** | React Router | 7.9.6 |
+| **Server State** | TanStack Query | 5.90.10 |
+| **Client State** | Zustand | 5.0.8 |
+| **HTTP Client** | Axios | 1.13.2 |
+| **Styling** | Tailwind CSS | 4.1.0 |
+| **Form** | React Hook Form | 7.66.1 |
+| **Validation** | Zod | 4.1.12 |
+| **Animation** | Motion | 11.15.0 |
+| **Icons** | Lucide React | 0.554.0 |
+| **Map** | react-kakao-maps-sdk | 1.2.0 |
+
+## 📁 프로젝트 구조
 
 ```
-src/
-├── api/              # API 클라이언트 (Axios)
-├── chatbot/          # AI 챗봇 UI (마켓버디 & 셀러버디)
-├── components/       # 공통 컴포넌트
-│   ├── layout/       # Header, Footer, BottomNav
-│   ├── common/       # HeroCarousel 등
-│   ├── consumer/     # 소비자 전용 컴포넌트
-│   ├── seller/       # 판매자 전용 컴포넌트
-│   └── popup/        # EventCard, EventSection
-├── pages/            # 페이지 컴포넌트
-├── layouts/          # 레이아웃 (Consumer, Seller, Admin)
-├── hooks/            # Custom Hooks
-├── routes/           # 라우팅 설정
-├── services/         # API 서비스 레이어
-├── store/            # Zustand 스토어 (인증)
-├── styles/           # 글로벌 CSS
-├── constants/        # 상수 (입력 제한 등)
-└── utils/            # 유틸리티 (이미지, 토큰 등)
+itdaing-app/
+├── src/
+│   ├── api/              # Axios 클라이언트 & 인터셉터
+│   ├── chatbot/          # AI 챗봇 UI (마켓버디 & 셀러버디)
+│   │   ├── components/   # ChatLayout, MessageBubble, ChatMotions
+│   │   ├── hooks/        # useChatSession
+│   │   └── pages/        # ConsumerChatbotPage, SellerChatbotPage
+│   ├── components/       # 공통 컴포넌트
+│   │   ├── layout/       # Header, Footer, BottomNav
+│   │   ├── common/       # HeroCarousel, NumberedMarker
+│   │   ├── consumer/     # 소비자 전용 (HorizontalBanner 등)
+│   │   ├── seller/       # 판매자 전용 (SellerChatbotPopup 등)
+│   │   ├── popup/        # EventCard, EventSection
+│   │   ├── map/          # ZonePolygonMap, MapComponents
+│   │   └── pwa/          # SplashScreen, InstallGuide
+│   ├── pages/            # 페이지 컴포넌트
+│   │   ├── consumer/     # 소비자 페이지
+│   │   ├── seller/       # 판매자 페이지
+│   │   └── admin/        # 관리자 페이지
+│   ├── layouts/          # 레이아웃 (Consumer, Seller, Admin)
+│   ├── hooks/            # Custom Hooks
+│   ├── routes/           # 라우팅 설정
+│   ├── services/         # API 서비스 레이어
+│   ├── store/            # Zustand 스토어 (인증)
+│   ├── constants/        # 상수 (입력 제한 등)
+│   └── utils/            # 유틸리티 (이미지, 토큰 등)
+├── public/               # 정적 파일 & PWA 자산
+├── docs/                 # 문서
+└── vite.config.js        # Vite 설정 (proxy, 코드 스플리팅)
 ```
 
-## 기술 스택
+## 🚀 실행 방법
 
-| 라이브러리 | 버전 | 용도 |
-|-----------|------|------|
-| **React** | 19.2.0 | UI 라이브러리 |
-| **Vite** | 7.0.0 | 빌드 도구 |
-| **React Router** | 7.9.6 | 라우팅 |
-| **TanStack Query** | 5.90 | 서버 상태 관리 |
-| **Zustand** | 5.0.8 | 클라이언트 상태 관리 |
-| **Axios** | 1.13.2 | HTTP 클라이언트 |
-| **Tailwind CSS** | 4.1.0 | 스타일링 |
-| **React Hook Form** | 7.66 | 폼 관리 |
-| **Zod** | 4.1.12 | 스키마 검증 |
-| **Motion** | 11.15 | 애니메이션 |
-| **Lucide React** | 0.554 | 아이콘 |
-| **react-kakao-maps-sdk** | 1.2.0 | 카카오맵 |
-
-## 시작하기
-
-### 1. 백엔드 서버 실행 (필수)
-
-프론트엔드는 백엔드 API에 의존하므로 **반드시 백엔드와 Redis를 먼저 실행**해야 합니다.
-
-#### Redis 서버 확인 (필수)
-
-백엔드는 **Redis**를 캐싱과 세션 관리에 사용합니다.
+### 개발 환경
 
 ```bash
-# Redis 실행 상태 확인
-ps aux | grep redis
+cd itdaing-app
 
-# Redis 연결 테스트
-redis-cli ping  # "PONG" 응답이 나와야 함
-```
-
-Redis가 실행되지 않았다면:
-```bash
-sudo systemctl start redis-server
-# 또는
-redis-server
-```
-
-#### Spring Boot 서버 실행
-
-```bash
-cd /home/ubuntu/itdaing
-
-# JAR 파일이 있는 경우 (권장)
-java -jar app.jar
-
-# 또는 Gradle로 실행
-./gradlew bootRun --args='--spring.profiles.active=local'
-```
-
-**백엔드 포트**: `8080` (고정)  
-**Redis 포트**: `6379`  
-**Health Check**: http://localhost:8080/actuator/health
-
-> ⚠️ **포트 충돌 해결**: `lsof -ti:8080 | xargs kill -9`
-
-### 2. Node.js 버전 확인 및 의존성 설치
-
-```bash
-cd /home/ubuntu/itdaing-app
-
-# Node.js 버전 설정 (.nvmrc 기준)
-export NVM_DIR="$HOME/.nvm"
-source "$NVM_DIR/nvm.sh"
+# Node.js 버전 설정 (v20.19+)
 nvm use
 
 # 의존성 설치
 npm install
-```
 
-### 3. 환경 변수 설정 (선택)
-
-Kakao Map API 키는 백엔드에서 자동으로 로드됩니다. 필요 시 `.env` 파일 생성:
-
-```env
-VITE_API_BASE_URL=http://localhost:8080
-VITE_KAKAO_MAP_KEY=YOUR_KAKAO_MAP_KEY_HERE
-```
-
-### 4. 프론트엔드 개발 서버 실행
-
-```bash
+# 개발 서버 실행
 npm run dev
 ```
 
-**프론트엔드 포트**: `5173` (기본값)  
-**접속 URL**: http://localhost:5173
+**접속 URL:** http://localhost:5173
 
-> ⚠️ **포트 충돌 해결**: `lsof -ti:5173 | xargs kill -9`
-> 
-> 📌 **중요**: Vite proxy 설정이 `/api/*` 요청을 백엔드(8080)로 자동 전달합니다.
-
-### 4. 빌드
+### 빌드 & 배포
 
 ```bash
+# 프로덕션 빌드
 npm run build
+
+# S3 배포 (CloudFront)
+aws s3 sync dist/ s3://daitdaing-frontend-prod/ --delete
+aws cloudfront create-invalidation --distribution-id E3V0JILQTE8I63 --paths "/*"
 ```
 
-## 주요 기능
+## 🎯 주요 기능
 
-### ✅ 완료된 기능
+### 소비자 (Consumer)
 
-- **인증 시스템**
-  - 로그인 (`/login`)
-  - 회원가입 2단계 (`/signup/step1`, `/signup/step2`)
-  - JWT 토큰 기반 인증
-  - Silent Refresh (401 에러 시 자동 토큰 갱신)
-  - Zustand를 통한 인증 상태 관리
+| 기능 | 경로 | 설명 |
+|------|------|------|
+| 홈 | `/` | 팝업 목록, 캐러셀, 카테고리 |
+| 팝업 상세 | `/popup/:id` | 상세 정보, 리뷰, 지도 |
+| 검색 | `/search` | 팝업 검색 |
+| 마이페이지 | `/mypage` | 프로필, 찜, 리뷰 |
+| 챗봇 | `/chatbot` | 마켓버디 AI 추천 |
 
-- **홈 페이지** (`/`)
-  - Hero Carousel (자동 슬라이드)
-  - 팝업 목록 섹션 (곧 오픈, 울 동네, 카테고리별)
-  - React Query를 통한 데이터 캐싱
-  - 더보기/접기 기능
+### 판매자 (Seller)
 
-- **팝업 상세** (`/popup/:id`)
-  - 팝업 정보 (제목, 위치, 날짜, 운영시간)
-  - 이미지 갤러리
-  - 리뷰 목록 및 평점
+| 기능 | 경로 | 설명 |
+|------|------|------|
+| 대시보드 | `/seller` | 통계, 팝업 관리 |
+| 팝업 등록 | `/seller/popup/create` | 새 팝업 등록 |
+| 팝업 수정 | `/seller/popup/:id/edit` | 팝업 수정 |
+| 챗봇 | (팝업) | 셀러버디 존 추천 |
 
-- **마이페이지** (`/mypage`)
-  - 프로필 정보
-  - 찜한 팝업, 리뷰, 설정 메뉴
-  - Protected Route (로그인 필요)
+### 관리자 (Admin)
 
-- **내 주변 탐색** (`/nearby`)
-  - 지도 기반 팝업 탐색 (Kakao Map 연동 예정)
+| 기능 | 경로 | 설명 |
+|------|------|------|
+| 대시보드 | `/admin` | 전체 통계 |
+| 사용자 관리 | `/admin/users` | 회원 관리 |
+| 검수 관리 | `/admin/popups` | 팝업 승인/반려 |
+| 존/셀 관리 | `/admin/zones` | 지역 관리 |
 
-- **레이아웃 컴포넌트**
-  - Header (로고, 검색바, 로그인/로그아웃)
-  - Footer (회사 정보, SNS 링크)
-  - BottomNav (하단 네비게이션 바)
+## 🤖 AI 챗봇
 
-### 🔄 추가 개발 필요
+### 마켓버디 (Consumer)
+- 팝업스토어 맞춤 추천
+- 지역/카테고리/분위기 기반 검색
+- 빨간색 테마
 
-- Kakao Map API 실제 연동
-- 회원가입 2단계 마스터 데이터 동적 로드
-- 찜하기 기능
-- 리뷰 작성 기능
-- 이미지 업로드
-- 검색 기능
-- 푸시 알림
+### 셀러버디 (Seller)
+- 존/상권 추천
+- 유동인구, 업종 분석
+- 파란색 테마
+- 지도 연동 (존/셀 시각화)
 
-## API 통신
+## 📱 PWA 지원
 
-### Base URL
-```
-http://localhost:8080
-```
+- **오프라인 지원**: Service Worker
+- **앱 설치**: iOS Safari, Android Chrome
+- **푸시 알림**: (예정)
 
-### 주요 엔드포인트
+설치 가이드: 홈 화면의 "앱 다운로드 안내" 배너 클릭
 
-- `POST /api/auth/login` - 로그인
-- `POST /api/auth/signup/consumer` - 소비자 회원가입
-- `POST /api/auth/refresh` - 토큰 갱신
-- `GET /api/users/me` - 내 프로필 조회
-- `GET /api/popups` - 팝업 목록
-- `GET /api/popups/:id` - 팝업 상세
-- `GET /api/popups/:id/reviews` - 팝업 리뷰 목록
+## 🔧 환경 변수
 
-자세한 API 스펙은 `openapi.json` 참고
-
-## 이미지 처리
-
-백엔드에서 S3 URL을 포함한 ImagePayload 객체를 반환합니다:
-
-```javascript
-{
-  url: "https://s3.amazonaws.com/...",
-  key: "uploads/..."
-}
+```env
+VITE_API_BASE_URL=http://localhost:8080
+VITE_KAKAO_MAP_KEY=YOUR_KAKAO_MAP_KEY
 ```
 
-`getImageUrl()` 및 `getImageUrls()` 유틸리티 함수를 사용하여 처리합니다.
+> ⚠️ 프로덕션에서는 CloudFront를 통해 API 요청이 ALB로 라우팅됩니다.
 
-## 포트 구성
+## 📊 코드 스플리팅
 
-| 서비스 | 포트 | 비고 |
-|--------|------|------|
-| 프론트엔드 (Vite) | 5173 | 개발 서버 |
-| 백엔드 (Spring Boot) | 8080 | REST API |
-| Redis | 6379 | 세션/캐시 |
-| PostgreSQL | 5432 | 메인 DB |
+`vite.config.js`에서 자동 청크 분리:
 
-> 📌 `vite.config.js`의 proxy 설정으로 `/api/*` 요청이 자동으로 백엔드로 전달됩니다.
+| 청크 | 포함 내용 |
+|------|----------|
+| `react-vendor` | React 코어 |
+| `router-vendor` | React Router |
+| `query-vendor` | TanStack Query, Axios |
+| `kakao-vendor` | Kakao Maps SDK |
+| `ui-vendor` | Lucide, clsx, tailwind-merge |
+| `admin-pages` | 관리자 페이지 |
+| `seller-pages` | 판매자 페이지 |
+| `chatbot` | 챗봇 모듈 |
 
-## 백엔드 종료 방법
+## 🌐 프록시 설정
 
-```bash
-# 포트 8080 프로세스 찾기
-lsof -ti:8080
+개발 서버에서 API 요청 자동 프록시:
 
-# 프로세스 종료
-lsof -ti:8080 | xargs kill -9
+| 경로 | 대상 |
+|------|------|
+| `/api/*` | `http://localhost:8080` (Spring) |
+| `/ai/*` | 챗봇 서버 (FastAPI) |
 
-# 또는 한 번에
-kill $(lsof -ti:8080) 2>/dev/null || echo "백엔드 미실행"
-```
+> ⚠️ 프록시 대상은 `vite.config.js`에서 환경에 맞게 설정
 
-## 데이터 흐름
+## 📚 문서
 
-```
-Frontend (Port 5173)
-    │ HTTP Request (/api/*)
-    ▼
-Vite Proxy (자동 전달)
-    │
-    ▼
-Backend (Port 8080)
-    │
-    ├─► Redis (Port 6379)    - 캐싱 및 세션
-    │
-    └─► PostgreSQL (Port 5432) - 메인 DB
-```
+| 문서 | 설명 |
+|------|------|
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | 시스템 아키텍처 |
+| [CUSTOMER_GUIDE.md](./docs/CUSTOMER_GUIDE.md) | 소비자 기능 가이드 |
+| [SELLER_GUIDE.md](./docs/SELLER_GUIDE.md) | 판매자 기능 가이드 |
+| [KAKAO_MAP_INTEGRATION.md](./docs/KAKAO_MAP_INTEGRATION.md) | 카카오맵 연동 |
+| [QUICK_START.md](./QUICK_START.md) | 빠른 시작 가이드 |
 
-1. **프론트엔드**에서 `/api/popups` 호출
-2. **Vite Proxy**가 `http://localhost:8080/api/popups`로 전달
-3. **백엔드**가 요청 처리:
-   - Redis 캐시 확인 → 있으면 즉시 반환
-   - 없으면 PostgreSQL 조회 → Redis에 캐싱
-4. **응답**을 프론트엔드로 반환
-5. **React Query**가 클라이언트에서 추가 캐싱
+## 🎨 디자인 시스템
 
-자세한 내용은 [ARCHITECTURE.md](./docs/ARCHITECTURE.md)를 참고하세요.
+### 색상
 
-## 주의사항
+| 용도 | 색상 | Tailwind |
+|------|------|----------|
+| 브랜드 (Primary) | #eb0000 | `text-[#eb0000]` |
+| 소비자 테마 | Rose/Red | `bg-rose-*` |
+| 판매자 테마 | Blue/Cyan | `bg-blue-*` |
 
-- **Node.js 버전**: v20.19.5 이상 권장 (`.nvmrc` 참고)
-- **Redis 필수**: 백엔드는 Redis에 의존합니다 (캐싱, 세션)
-- **백엔드 필수**: 프론트엔드 실행 전 `http://localhost:8080`에서 백엔드가 실행 중이어야 합니다
-- **Vite Proxy**: `/api` 요청이 자동으로 백엔드(`http://localhost:8080`)로 전달됩니다
-- **우분투 환경**: 이 프로젝트는 Ubuntu 서버에서 개발/실행됩니다
+### 레이아웃
 
-## 문서
+- **소비자**: 모바일 퍼스트 (max-w-[480px])
+- **판매자/관리자**: 데스크탑 퍼스트 (사이드바 레이아웃)
 
-- [QUICK_START.md](./QUICK_START.md) - 빠른 시작 가이드
-- [UBUNTU_DEVELOPMENT_GUIDE.md](./UBUNTU_DEVELOPMENT_GUIDE.md) - Ubuntu 개발 환경 가이드
-- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) - 시스템 아키텍처 및 데이터 흐름
-- [docs/DEPLOYMENT_STATUS.md](./docs/DEPLOYMENT_STATUS.md) - 배포 및 실행 상태
-- [docs/TEST_ACCOUNTS.md](./docs/TEST_ACCOUNTS.md) - 테스트 계정 정보
-- [docs/KAKAO_MAP_INTEGRATION.md](./docs/KAKAO_MAP_INTEGRATION.md) - Kakao Map 통합 가이드
-- [docs/SELLER_GUIDE.md](./docs/SELLER_GUIDE.md) - 판매자 기능 가이드
+## 📄 라이선스
 
-## 라이센스
+인공지능 사관학교 6기 프로젝트
 
 © 2025 Da-Itdaing. All rights reserved.

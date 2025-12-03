@@ -268,7 +268,7 @@ export const usePopups = (filters) => {
 
 ```bash
 # Backend: prod.env (AWS Parameter Store에서 자동 생성)
-SPRING_DATASOURCE_URL=jdbc:postgresql://itdaing-db.xxx.rds.amazonaws.com:5432/itdaing-db
+SPRING_DATASOURCE_URL=jdbc:postgresql://<RDS_HOST>:5432/itdaing-db
 SPRING_DATA_REDIS_HOST=itdaing-redis.xxx.cache.amazonaws.com
 SPRING_DATA_REDIS_PORT=6379
 CHATBOT_BASE_URL=http://localhost:9000

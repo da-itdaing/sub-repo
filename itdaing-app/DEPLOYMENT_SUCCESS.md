@@ -101,7 +101,7 @@ https://aischool-bastion-alb-1858295846.ap-northeast-2.elb.amazonaws.com
 
 ### Infrastructure
 - AWS ALB (Internet-facing)
-- Private EC2 (10.0.145.136)
+- Private EC2 ((Private IP))
 - Nginx 1.24.0
 - SSL Certificate: *.daitdaing.link
 

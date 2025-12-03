@@ -518,17 +518,17 @@
 
 ### 소비자 (CONSUMER)
 - `loginId`: `consumer1`
-- `password`: `pass!1234`
+- `password`: `(환경변수 참조)`
 - 총 10개 페르소나 (consumer1 ~ consumer10)
 
 ### 판매자 (SELLER)
 - `loginId`: `seller1`
-- `password`: `pass!1234`
+- `password`: `(환경변수 참조)`
 - 총 50개 계정 (seller1 ~ seller50)
 
 ### 관리자 (ADMIN)
 - `loginId`: `admin1`
-- `password`: `pass!1234`
+- `password`: `(환경변수 참조)`
 - 총 3개 계정 (admin1 ~ admin3)
 
 ---

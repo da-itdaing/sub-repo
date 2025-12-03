@@ -374,7 +374,7 @@ EOF
 curl http://localhost:8080/api/popups
 curl http://localhost:8080/api/auth/login -X POST \
   -H "Content-Type: application/json" \
-  -d '{"loginId":"consumer1","password":"pass!1234"}'
+  -d '{"loginId":"consumer1","password":"(환경변수 참조)"}'
 
 # Swagger UI 접속
 # http://localhost:8080/swagger-ui/index.html

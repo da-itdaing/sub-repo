@@ -19,15 +19,15 @@
 ```bash
 cd /home/ubuntu/itdaing
 source prod.env
-PGPASSWORD="$SPRING_DATASOURCE_PASSWORD" psql \
-  -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com \
+PGPASSWORD="$DB_PASSWORD" psql \
+  -h "$DB_HOST" \
   -p 5432 \
-  -U "$SPRING_DATASOURCE_USERNAME" \
-  -d itdaing-db \
+  -U "$DB_USERNAME" \
+  -d "$DB_NAME" \
   -f scripts/init-all-data.sql
 ```
 
-**모든 계정 비밀번호:** `pass!1234`
+> ⚠️ 계정 비밀번호는 팀 내부 문서 참조
 
 ### init-postgres.sql
 **PostgreSQL 초기 설정 스크립트**
@@ -39,11 +39,11 @@ PGPASSWORD="$SPRING_DATASOURCE_PASSWORD" psql \
 ```bash
 cd /home/ubuntu/itdaing
 source prod.env
-PGPASSWORD="$SPRING_DATASOURCE_PASSWORD" psql \
-  -h itdaing-db.cl4qagmger70.ap-northeast-2.rds.amazonaws.com \
+PGPASSWORD="$DB_PASSWORD" psql \
+  -h "$DB_HOST" \
   -p 5432 \
-  -U "$SPRING_DATASOURCE_USERNAME" \
-  -d itdaing-db \
+  -U "$DB_USERNAME" \
+  -d "$DB_NAME" \
   -f scripts/init-postgres.sql
 ```
 

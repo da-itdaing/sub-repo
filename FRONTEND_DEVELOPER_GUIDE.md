@@ -370,9 +370,9 @@ npm run dev
 ### 역할별 테스트
 
 ```
-소비자: consumer1 / pass!1234
-판매자: seller1 / pass!1234
-관리자: admin1 / pass!1234
+소비자: consumer1 / (환경변수 참조)
+판매자: seller1 / (환경변수 참조)
+관리자: admin1 / (환경변수 참조)
 ```
 
 ---

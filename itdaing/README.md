@@ -1,336 +1,85 @@
-# Itdaing (잇다잉)
+# 🏪 Itdaing Backend
 
-## ⚡ 빠른 실행 가이드
+> 다잇다잉 백엔드 서버 - Spring Boot 3.5.7 기반 REST API
 
-### Backend (Spring Boot)
-```bash
-cd ~/itdaing
-./scripts/start-backend.sh
-# 로그: tail -f /tmp/itdaing-boot.log
-# 중지:  ./scripts/stop-backend.sh
-```
+## 📋 개요
 
-### Frontend (itdaing-app, React 19.2 + Vite 7)
-```bash
-cd ~/itdaing-app
-npm install   # 최초 1회
-npm run dev
-# 접속: http://localhost:5173
-# 중지: Ctrl+C 또는 pkill -f "vite"
-```
+**Itdaing Backend**는 팝업스토어 추천 플랫폼의 핵심 API 서버입니다.  
+소비자, 판매자, 관리자를 위한 인증, 팝업 관리, 존/셀 관리, 리뷰/즐겨찾기 등의 기능을 제공합니다.
 
-팝업스토어 추천 플랫폼 - 풀스택 웹 애플리케이션
+## 🛠️ 기술 스택
 
-## 📋 프로젝트 개요
-
-**Itdaing**은 소비자에게 맞춤형 팝업스토어를 추천하고, 판매자가 팝업을 등록·관리할 수 있는 플랫폼입니다.
-
-### 기술 스택
-
-#### 백엔드
-- **프레임워크**: Spring Boot 3.5.7
-- **언어**: Java 21
-- **빌드 도구**: Gradle (Kotlin DSL)
-- **데이터베이스**: PostgreSQL 15 + pgvector (AWS RDS)
-- **ORM**: JPA/Hibernate + QueryDSL
-- **마이그레이션**: Flyway
-- **인증**: JWT (jjwt 0.12.x)
-- **API 문서**: OpenAPI 3.0 (Swagger UI)
-- **주요 라이브러리**: Spring Web, Security, Data JPA, MapStruct
-- **스토리지**: AWS S3
-
-#### 프론트엔드 (`itdaing-app`)
-- **프레임워크**: React 19.2
-- **언어**: JavaScript (ES6+)
-- **빌드 도구**: Vite 7.0
-- **UI/스타일**: Tailwind CSS 4.1 + Motion
-- **상태 관리**: Zustand 5.0 + TanStack Query 5.90
-- **라우팅**: React Router 7.9
-- **API 통신**: Axios 1.13
-- **지도**: react-kakao-maps-sdk
+| 분류 | 기술 | 버전 |
+|------|------|------|
+| **Framework** | Spring Boot | 3.5.7 |
+| **Language** | Java | 21 |
+| **Build Tool** | Gradle (Kotlin DSL) | 8.x |
+| **Database** | PostgreSQL + pgvector | 15+ |
+| **ORM** | Hibernate + Hibernate Spatial | 6.6.29 |
+| **Query** | QueryDSL | 5.0.0 |
+| **Migration** | Flyway | - |
+| **Auth** | JWT (jjwt) | 0.12.5 |
+| **Cache** | Redis | - |
+| **Storage** | AWS S3 | SDK 2.25.66 |
+| **Mapping** | MapStruct | 1.6.3 |
+| **API Docs** | SpringDoc OpenAPI | 2.7.0 |
+| **Spatial** | JTS Core | 1.19.0 |
 
 ## 📁 프로젝트 구조
 
 ```
-daitdaing/
-├── itdaing/               # 백엔드 (Spring Boot 3.5.7)
-│   ├── src/main/java/     # Java 소스 (DDD 구조)
-│   ├── src/main/resources # 설정/리소스
-│   ├── docs/              # 백엔드 문서 & OpenAPI
-│   └── scripts/           # 배포/운영 스크립트
-├── itdaing-app/           # 프론트엔드 (React 19.2 + Vite 7)
-│   ├── src/               # React 코드
-│   ├── public/            # 정적/PWA 자산
-│   └── docs/              # FE 아키텍처/배포 문서
-└── chatbot/               # AI 챗봇 (FastAPI + LangGraph)
-    ├── app/               # FastAPI 애플리케이션
-    └── data/              # 상권 분석 데이터
+itdaing/
+├── src/main/java/com/da/itdaing/
+│   ├── config/                 # 설정 클래스
+│   ├── domain/                 # 도메인별 DDD 구조
+│   │   ├── admin/              # 관리자 기능
+│   │   ├── audit/              # 감사 로그
+│   │   ├── file/               # 파일 업로드
+│   │   ├── geo/                # 존/셀 지리 정보
+│   │   ├── master/             # 마스터 데이터 (카테고리, 스타일 등)
+│   │   ├── messaging/          # 메시지/문의
+│   │   ├── metric/             # 조회수/통계
+│   │   ├── popup/              # 팝업스토어
+│   │   ├── reco/               # 추천 시스템
+│   │   ├── seller/             # 판매자
+│   │   ├── social/             # 리뷰/즐겨찾기
+│   │   └── user/               # 사용자/인증
+│   └── global/                 # 공통 모듈
+│       ├── api/                # ApiResponse 래퍼
+│       ├── config/             # 전역 설정
+│       ├── error/              # 예외 처리
+│       ├── security/           # JWT, 인증 필터
+│       └── util/               # 유틸리티
+├── src/main/resources/
+│   ├── application.yml         # 기본 설정
+│   ├── application-prod.yml    # 프로덕션 설정
+│   └── db/migration/           # Flyway 마이그레이션
+├── docs/                       # API 문서 & 가이드
+├── scripts/                    # 운영 스크립트
+└── build.gradle.kts            # Gradle 빌드 설정
 ```
 
-## 🚀 개발 환경
+## 🚀 실행 방법
 
-### Private EC2 접근
-
-모든 개발 및 테스트는 Private EC2에서 수행됩니다. 이 인스턴스 내에서 제공되는 스크립트를 사용하세요.
-
-```bash
-# 프로젝트 디렉토리
-cd ~/itdaing
-
-# 환경 점검 (로컬 모드 자동)
-./scripts/check-private-ec2-env.sh
-```
-
-자세한 내용은 [Private EC2 접근 가이드](docs/deployment/PRIVATE_EC2_ACCESS.md)를 참고하세요.
-
-### 백엔드 서버 시작
+### 개발 환경
 
 ```bash
 cd ~/itdaing
 
-# 시작
+# 환경 변수 설정
+source prod.env
+
+# 서버 시작
 ./scripts/start-backend.sh
 
 # 로그 확인
 ./scripts/tail-backend-log.sh
 
-# 중지
+# 서버 중지
 ./scripts/stop-backend.sh
 ```
 
-### 프론트엔드 서버 시작
-
-```bash
-# 시작
-/home/ubuntu/root_scripts/start-frontend.sh
-
-# 로그 확인
-/home/ubuntu/root_scripts/tail-frontend-log.sh
-
-# 중지
-/home/ubuntu/root_scripts/stop-frontend.sh
-```
-
-### 양쪽 서버 동시 제어
-
-```bash
-# 모든 서버 시작
-/home/ubuntu/root_scripts/start-all.sh
-
-# 서버 상태 확인
-/home/ubuntu/root_scripts/status.sh
-
-# 모든 서버 중지
-/home/ubuntu/root_scripts/stop-all.sh
-```
-
-### 프론트엔드 빌드 및 배포
-
-```bash
-# 프론트엔드 정적 배포 (nginx 사용 시 /var/www/itdaing)
-cd ~/itdaing
-./scripts/deploy-frontend.sh
-```
-
-## 🔧 프로파일 개요
-
-### 백엔드 프로파일
-
-- **`prod`**: 프로덕션 환경 (AWS RDS PostgreSQL + AWS S3 사용)
-- **`dev`**: 개발 환경 (환경변수 주입)
-- **`chatbot`**: 챗봇 기능용 (PostgreSQL + pgvector)
-
-프로파일 활성화:
-```bash
-# Private EC2에서
-cd ~/itdaing
-source prod.env  # SPRING_PROFILES_ACTIVE=prod
-./gradlew bootRun
-```
-
-### Storage Provider
-
-프로덕션 환경에서는 항상 **AWS S3**를 사용합니다.
-
-## 📝 API 엔드포인트
-
-### 공개 API
-- `POST /api/auth/login` - 로그인
-- `POST /api/auth/signup/consumer` - 소비자 회원가입
-- `POST /api/auth/signup/seller` - 판매자 회원가입
-- `GET /api/master/**` - 마스터 데이터 조회
-- `GET /api/popups/**` - 팝업 조회
-- `GET /api/zones/**` - 존 조회
-- `GET /api/sellers/**` - 판매자 조회
-
-### 인증 필요 API
-- `GET /api/sellers/me/profile` - 내 프로필 조회
-- `PUT /api/sellers/me/profile` - 내 프로필 수정
-- `POST /api/inquiries` - 메시지 스레드 생성
-
-루트 "/"는 인증 필요로 401이 정상입니다.
-
-## 🧪 테스트
-
-### 백엔드 테스트
-
-```bash
-# 전체 테스트 실행
-./gradlew test
-
-# 특정 도메인 테스트
-./gradlew testMaster      # 마스터 데이터
-./gradlew testUser        # 사용자 도메인
-./gradlew testGeo         # 지리 정보
-./gradlew testPopup       # 팝업 도메인
-./gradlew testSocial      # 소셜 기능
-./gradlew testMsg         # 메시지
-
-# 특정 클래스 테스트
-./gradlew test --tests '*RepositoryTest'
-```
-
-### 샘플 계정
-
-- **소비자**: `consumer1` ~ `consumer10` / `pass!1234`
-- **판매자**: `seller1` ~ `seller50` / `pass!1234`
-- **관리자**: `admin1` ~ `admin3` / `pass!1234`
-
-## 🔐 보안 설정
-
-### JWT 설정
-
-- HS256은 최소 256비트(32바이트) 이상의 secret을 요구합니다.
-- `application-*.yml` 기본값이 있으며, 운영/배포 환경에서는 `prod.env`로 덮어씁니다.
-- 만료시간 등 민감 설정은 `prod.env`에서 관리하세요.
-
-### 환경 변수
-
-- `.env` 파일은 Git에 커밋하지 않습니다.
-- 프로덕션 환경 변수는 `prod.env` 파일로 관리합니다 (서버에만 존재).
-
-## 📚 개발 계획 및 문서
-
-프로젝트 개발 시 다음 문서를 참고하세요:
-
-- **백엔드 계획**: [`docs/plan/BE-plan.md`](docs/plan/BE-plan.md)
-- **프론트엔드 계획**: [`docs/plan/FE-plan.md`](docs/plan/FE-plan.md)
-- **통합 계획**: [`docs/plan/integration-plan.md`](docs/plan/integration-plan.md)
-- **현재 작업 지침**: [`docs/plan/INTEGRATION_WORK_INSTRUCTION.md`](docs/plan/INTEGRATION_WORK_INSTRUCTION.md)
-- **Private EC2 접근**: [`docs/deployment/PRIVATE_EC2_ACCESS.md`](docs/deployment/PRIVATE_EC2_ACCESS.md)
-- **배포 가이드**: [`docs/deployment/DEPLOY_TO_PRIVATE_EC2.md`](docs/deployment/DEPLOY_TO_PRIVATE_EC2.md)
-- **환경 설정**: [`docs/deployment/PRIVATE_EC2_ENV_SETUP.md`](docs/deployment/PRIVATE_EC2_ENV_SETUP.md)
-- **S3 버킷 정책**: [`docs/deployment/S3_BUCKET_POLICY.md`](docs/deployment/S3_BUCKET_POLICY.md)
-
-모든 문서는 [`docs/README.md`](docs/README.md)에서 확인할 수 있습니다.
-
-## 🚢 배포
-
-### Private EC2 배포
-
-- 문서: [`docs/deployment/DEPLOY_TO_PRIVATE_EC2.md`](docs/deployment/DEPLOY_TO_PRIVATE_EC2.md) 참조
-- 핵심: `application-prod.yml` + 환경변수 기반 구성, systemd로 서비스 관리
-- 초기 설정: [`docs/deployment/SETUP_PRIVATE_EC2.md`](docs/deployment/SETUP_PRIVATE_EC2.md) 참조
-
-## 💾 데이터베이스 백업 및 복원
-
-### 수동 백업
-
-현재 데이터베이스를 백업 파일로 저장합니다:
-
-```bash
-cd ~/itdaing
-./scripts/backup-database.sh
-```
-
-백업 파일은 `backups/` 디렉토리에 저장됩니다 (예: `db_backup_20251118_120000.sql`).
-
-### 백업 파일 목록 확인
-
-```bash
-./scripts/list-backups.sh
-```
-
-### 데이터베이스 복원
-
-⚠️ **주의**: 복원은 현재 데이터베이스의 모든 데이터를 백업 파일의 데이터로 덮어씁니다!
-
-```bash
-./scripts/restore-database.sh backups/db_backup_20251118_120000.sql
-```
-
-### 자동 백업 설정
-
-정기적인 자동 백업을 설정할 수 있습니다:
-
-```bash
-./scripts/setup-auto-backup.sh
-```
-
-대화형 메뉴에서 원하는 백업 일정을 선택하세요:
-- 매일 새벽 2시 (권장)
-- 매주 일요일 새벽 3시
-- 6시간마다
-- 기타
-
-자동 백업은:
-- 자동으로 압축됩니다 (.sql.gz)
-- 7일 이상 된 백업은 자동 삭제됩니다
-- 로그는 `backups/backup.log`에 기록됩니다
-
-### 상세 가이드
-
-전체 백업/복원 가이드는 [`docs/DATABASE_BACKUP_RESTORE.md`](docs/DATABASE_BACKUP_RESTORE.md)를 참조하세요:
-- 백업/복원 방법
-- 자동 백업 설정
-- 문제 해결
-- 베스트 프랙티스
-
-## 📖 OpenAPI/Swagger 문서
-
-### 로컬에서 문서 생성
-
-```bash
-./gradlew generateOpenApiDocs
-# 산출물: build/openapi/openapi.yaml
-```
-
-### GitHub Pages로 공개
-
-본 레포지토리는 OpenAPI 문서를 Gradle 태스크로 생성하고, GitHub Pages(gh-pages 브랜치)에 정적 Swagger UI를 배포하는 워크플로를 포함합니다.
-
-- 워크플로: `.github/workflows/publish-openapi.yml`
-- 트리거: 기본 push 및 수동 실행(workflow_dispatch)
-- 첫 실행 후 GitHub Pages 설정에서 Source를 `gh-pages` 브랜치로 지정하세요.
-
-배포 주소(예시):
-- 사용자/오거나이제이션 페이지: https://da-itdaing.github.io/sub-repo/
-
-### 권한 정책이 엄격한 조직에서의 설정(Deploy Key 사용)
-
-1) 로컬에서 배포 전용 키 생성(비밀번호 없이):
-```bash
-ssh-keygen -t ed25519 -C "gh-pages deploy" -f gh-pages -N ""
-```
-
-2) GitHub → Repository → Settings → Deploy keys → Add deploy key
-   - Title: gh-pages
-   - Key: `gh-pages.pub` 내용 붙여넣기
-   - Allow write access 체크
-
-3) GitHub → Repository → Settings → Secrets and variables → Actions → New repository secret
-   - Name: `GH_PAGES_DEPLOY_KEY`
-   - Secret: `gh-pages`(개인키) 파일 내용 전체 붙여넣기
-
-4) Actions 탭에서 "Publish OpenAPI to GitHub Pages" 실행
-
-5) Settings → Pages → Branch: `gh-pages` / Folder: `/ (root)` 설정
-
-위 절차를 마치면 상단 주소에서 Swagger UI가 공개됩니다.
-
-## 📦 빌드
-
-### 백엔드 빌드
+### 빌드
 
 ```bash
 # 전체 빌드 (테스트 포함)
@@ -339,26 +88,140 @@ ssh-keygen -t ed25519 -C "gh-pages deploy" -f gh-pages -N ""
 # 테스트 제외 빌드
 ./gradlew build -x test
 
-# JAR 파일 생성
+# JAR 생성
 ./gradlew bootJar
 ```
 
-### 프론트엔드 빌드
+## 📝 API 엔드포인트
+
+### 공개 API (인증 불필요)
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | `/api/auth/login` | 로그인 |
+| POST | `/api/auth/signup/consumer` | 소비자 회원가입 |
+| POST | `/api/auth/signup/seller` | 판매자 회원가입 |
+| GET | `/api/master/**` | 마스터 데이터 조회 |
+| GET | `/api/popups` | 팝업 목록 조회 |
+| GET | `/api/popups/{id}` | 팝업 상세 조회 |
+| GET | `/api/zones` | 존 목록 조회 |
+| GET | `/api/sellers/{id}` | 판매자 정보 조회 |
+
+### 인증 필요 API
+
+| 메서드 | 경로 | 역할 | 설명 |
+|--------|------|------|------|
+| GET | `/api/users/me` | ALL | 내 정보 조회 |
+| PUT | `/api/users/me` | ALL | 내 정보 수정 |
+| POST | `/api/popups` | SELLER | 팝업 등록 |
+| PUT | `/api/popups/{id}` | SELLER | 팝업 수정 |
+| GET | `/api/admin/**` | ADMIN | 관리자 기능 |
+
+### API 문서
+
+- **Swagger UI**: https://da-itdaing.github.io/sub-repo/
+- **OpenAPI JSON**: `/docs/openapi.json`
+
+## 🔐 인증 & 보안
+
+### JWT 토큰
+
+- **Access Token**: 15분 유효 (Header)
+- **Refresh Token**: 14일 유효 (Redis 저장)
+
+### 역할 (Role)
+
+| 역할 | 설명 |
+|------|------|
+| `CONSUMER` | 소비자 - 팝업 조회, 리뷰 작성 |
+| `SELLER` | 판매자 - 팝업 등록/관리 |
+| `ADMIN` | 관리자 - 전체 관리 |
+
+## 🧪 테스트
 
 ```bash
-cd itdaing-web
+# 전체 테스트
+./gradlew test
 
-# 프로덕션 빌드
-npm run build
-
-# 빌드 결과 미리보기
-npm run preview
+# 도메인별 테스트
+./gradlew testMaster      # 마스터 데이터
+./gradlew testUser        # 사용자
+./gradlew testPopup       # 팝업
+./gradlew testGeo         # 지리 정보
+./gradlew testSocial      # 소셜 (리뷰/즐겨찾기)
 ```
 
-## 🐛 알려진 이슈
+### 테스트 계정
 
-일부 컨트롤러 테스트(판매자 프로필) 실패 케이스가 있으며, 실행에는 영향을 주지 않습니다. 필요 시 별도 이슈로 보정 가능합니다.
+| 역할 | 아이디 | 비밀번호 |
+|------|--------|----------|
+| 소비자 | consumer1~10 | (환경변수 참조) |
+| 판매자 | seller1~50 | (환경변수 참조) |
+| 관리자 | admin1~3 | (환경변수 참조) |
+
+> ⚠️ 실제 비밀번호는 `prod.env` 또는 팀 내부 문서 참조
+
+## 💾 데이터베이스
+
+### 백업 & 복원
+
+```bash
+# 수동 백업
+./scripts/backup-database.sh
+
+# 백업 목록 확인
+./scripts/list-backups.sh
+
+# 복원
+./scripts/restore-database.sh backups/db_backup_YYYYMMDD_HHMMSS.sql
+
+# 자동 백업 설정
+./scripts/setup-auto-backup.sh
+```
+
+## 📚 문서
+
+| 문서 | 설명 |
+|------|------|
+| [BACKEND_GUIDE.md](docs/BACKEND_GUIDE.md) | 아키텍처 & 보안 플로우 |
+| [BACKEND_FOUNDATION.md](docs/BACKEND_FOUNDATION.md) | 마스터 데이터 & 패키지 규칙 |
+| [DB_SCHEMA.md](docs/DB_SCHEMA.md) | 데이터베이스 스키마 |
+| [scripts/README.md](scripts/README.md) | 스크립트 사용법 |
+
+## 🔧 환경 변수
+
+| 변수 | 설명 | 기본값 |
+|------|------|--------|
+| `SPRING_PROFILES_ACTIVE` | 활성 프로파일 | `prod` |
+| `DB_URL` | PostgreSQL 연결 URL | - |
+| `DB_USERNAME` | DB 사용자명 | - |
+| `DB_PASSWORD` | DB 비밀번호 | - |
+| `JWT_SECRET` | JWT 서명 키 (256bit+) | - |
+| `AWS_ACCESS_KEY_ID` | AWS 액세스 키 | - |
+| `AWS_SECRET_ACCESS_KEY` | AWS 시크릿 키 | - |
+| `S3_BUCKET_NAME` | S3 버킷명 | - |
+
+## 🚢 배포
+
+### systemd 서비스
+
+```bash
+# 서비스 상태 확인
+sudo systemctl status itdaing-backend
+
+# 서비스 재시작
+sudo systemctl restart itdaing-backend
+
+# 로그 확인
+journalctl -u itdaing-backend -f
+```
+
+### 프로덕션 구성
+
+```
+사용자 → CloudFront → ALB → private-tg → Spring Boot (8080)
+```
 
 ## 📄 라이선스
 
-사내/프로젝트 정책에 따릅니다.
+인공지능 사관학교 6기 프로젝트

@@ -9,7 +9,7 @@
 #### Seller 1
 ```
 로그인 ID: seller1
-비밀번호: pass!1234
+비밀번호: (환경변수 참조)
 이름: 박판매
 닉네임: 팝업왕
 이메일: seller1@itdaing.com
@@ -19,7 +19,7 @@
 #### Seller 2
 ```
 로그인 ID: seller2
-비밀번호: pass!1234
+비밀번호: (환경변수 참조)
 이름: 이판매
 닉네임: 플레이팩토리
 이메일: seller2@itdaing.com
@@ -31,7 +31,7 @@
 #### Consumer 1
 ```
 로그인 ID: consumer1
-비밀번호: pass!1234
+비밀번호: (환경변수 참조)
 이름: 김소비
 이메일: consumer1@itdaing.com
 역할: CONSUMER
@@ -40,7 +40,7 @@
 #### Consumer 2
 ```
 로그인 ID: consumer2
-비밀번호: pass!1234
+비밀번호: (환경변수 참조)
 이름: 이소비
 이메일: consumer2@itdaing.com
 역할: CONSUMER
@@ -50,7 +50,7 @@
 
 ```
 로그인 ID: admin
-비밀번호: pass!1234
+비밀번호: (환경변수 참조)
 이름: 관리자
 이메일: admin@itdaing.com
 역할: ADMIN
@@ -130,7 +130,7 @@ URL: http://localhost:3000/login
 ```bash
 # 1. seller1 계정으로 로그인
 로그인 ID: seller1
-비밀번호: pass!1234
+비밀번호: (환경변수 참조)
 
 # 2. 대시보드 확인
 - 통계 카드 (팝업 수, 조회수 등)
@@ -157,7 +157,7 @@ URL: http://localhost:3000/login
 ```bash
 # 1. consumer1 계정으로 로그인
 로그인 ID: consumer1
-비밀번호: pass!1234
+비밀번호: (환경변수 참조)
 
 # 2. 메인 페이지 확인
 - 팝업 목록 (곧 오픈/울 동네/카테고리별)
@@ -196,7 +196,7 @@ URL: http://localhost:3000/login
 
 ### 비밀번호 보안
 
-- 현재 모든 테스트 계정의 비밀번호는 `pass!1234`로 동일합니다
+- 현재 모든 테스트 계정의 비밀번호는 `(환경변수 참조)`로 동일합니다
 - 프로덕션 환경에서는 강력한 비밀번호를 사용하세요
 - 비밀번호는 절대 코드에 하드코딩하지 마세요
 
