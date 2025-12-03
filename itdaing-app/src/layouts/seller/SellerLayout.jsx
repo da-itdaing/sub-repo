@@ -8,7 +8,6 @@ import {
   Plus,
   User2,
   Stars,
-  Megaphone,
   CalendarClock,
 } from 'lucide-react';
 import { ROUTES } from '@/routes/paths';
@@ -45,12 +44,6 @@ const NAV_ITEMS = [
     description: '고객 리뷰 확인 및 응대',
     path: ROUTES.seller.reviews,
     icon: Stars,
-  },
-  {
-    label: '공지사항',
-    description: '서비스 업데이트 소식',
-    path: `${ROUTES.seller.root}/notices`,
-    icon: Megaphone,
   },
 ];
 

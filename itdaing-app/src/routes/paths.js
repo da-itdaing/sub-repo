@@ -26,7 +26,7 @@ export const ROUTES = {
   mypageSettings: '/mypage/settings',
   sellerInfo: (sellerId = ':sellerId') => `/seller-info/${sellerId}`,
   
-  // Seller 대시보드 (추후 구현)
+  // Seller 대시보드
   seller: {
     root: '/seller',
     dashboard: '/seller/dashboard',
@@ -37,10 +37,6 @@ export const ROUTES = {
     popupCreate: '/seller/popups/create',
     popupDetail: (id) => `/seller/popups/${id}`,
     popupEdit: (id) => `/seller/popups/${id}/edit`,
-    notices: '/seller/notices',
-    noticeCreate: '/seller/notices/create',
-    noticeDetail: (id) => `/seller/notices/${id}`,
-    noticeEdit: (id) => `/seller/notices/${id}/edit`,
   },
 
   // Admin 대시보드

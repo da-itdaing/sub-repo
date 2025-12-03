@@ -25,9 +25,6 @@ import SellerPopupsPage from '@/pages/seller/SellerPopupsPage';
 import SellerProfilePage from '@/pages/seller/SellerProfilePage';
 import SellerPopupCreatePage, { SellerPopupEditPage } from '@/pages/seller/SellerPopupCreatePage';
 import SellerPopupDetailPage from '@/pages/seller/SellerPopupDetailPage';
-import SellerNoticesPage from '@/pages/seller/SellerNoticesPage';
-import SellerNoticeCreatePage from '@/pages/seller/SellerNoticeCreatePage';
-import SellerNoticeDetailPage from '@/pages/seller/SellerNoticeDetailPage';
 import SellerReviewsPage from '@/pages/seller/SellerReviewsPage';
 import SellerCalendarPage from '@/pages/seller/SellerCalendarPage';
 import SellerLayout from '@/layouts/seller/SellerLayout';
@@ -50,10 +47,6 @@ const SELLER_ROUTE_SEGMENTS = {
   popupEdit: 'popups/:popupId/edit',
   calendar: 'calendar',
   reviews: 'reviews',
-  notices: 'notices',
-  noticeCreate: 'notices/create',
-  noticeDetail: 'notices/:id',
-  noticeEdit: 'notices/:id/edit',
 };
 
 const ADMIN_ROUTE_SEGMENTS = {
@@ -184,22 +177,6 @@ const router = createBrowserRouter([
       {
         path: SELLER_ROUTE_SEGMENTS.popupEdit,
         element: <SellerPopupEditPage />,
-      },
-      {
-        path: SELLER_ROUTE_SEGMENTS.notices,
-        element: <SellerNoticesPage />,
-      },
-      {
-        path: SELLER_ROUTE_SEGMENTS.noticeCreate,
-        element: <SellerNoticeCreatePage />,
-      },
-      {
-        path: SELLER_ROUTE_SEGMENTS.noticeDetail,
-        element: <SellerNoticeDetailPage />,
-      },
-      {
-        path: SELLER_ROUTE_SEGMENTS.noticeEdit,
-        element: <SellerNoticeCreatePage />,
       },
     ],
   },
