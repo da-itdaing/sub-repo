@@ -82,7 +82,7 @@ const MessageList = ({
       ))}
 
       {/* 로딩 표시 */}
-      {isTyping && !isSlow && <TypingIndicator />}
+      {isTyping && !isSlow && <TypingIndicator mode={mode} />}
       
       {/* 느린 응답 또는 상황별 모션 */}
       {isTyping && isSlow && (
