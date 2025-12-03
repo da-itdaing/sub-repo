@@ -1492,79 +1492,79 @@ const SellerPopupFormPage = ({
           </div>
         </div>
 
-        {/* 5. 스타일 (순위 선택) */}
+        {/* 5. 스타일 (드롭다운 순위 선택) */}
         <div>
           <label className="mb-2 block text-xs font-semibold text-gray-500">
             분위기/스타일
             <span className="text-[#EB0000] ml-[3px]">*</span>
-            <span className="text-[#8d8d8d] ml-[3px]">(1~3순위 선택)</span>
+            <span className="text-[#8d8d8d] ml-[3px]">(1~3순위)</span>
           </label>
-          <p className="text-[10px] text-gray-400 mb-3">클릭 순서대로 순위가 지정됩니다. 다시 클릭하면 해제됩니다.</p>
-          <div className="flex flex-wrap gap-2">
-            {styles?.map((style) => {
-              const rankIndex = formData.styleIds.indexOf(style.id);
-              const rank = rankIndex >= 0 ? rankIndex + 1 : null;
-              return (
-                <button
-                  key={style.id}
-                  type="button"
-                  onClick={() => toggleArrayItem('styleIds', style.id)}
-                  disabled={!rank && formData.styleIds.length >= 3}
-                  className={`relative px-4 py-2 text-sm rounded-full border transition-all ${
-                    rank
-                      ? 'bg-[#EB0000] text-white border-[#EB0000]'
-                      : formData.styleIds.length >= 3
-                        ? 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-[#EB0000] hover:text-[#EB0000]'
-                  }`}
+          <div className="grid grid-cols-3 gap-2">
+            {[0, 1, 2].map((idx) => (
+              <div key={`style-${idx}`}>
+                <label className="text-[10px] text-gray-400 mb-1 block">{idx + 1}순위{idx === 0 && <span className="text-[#EB0000]">*</span>}</label>
+                <select
+                  value={formData.styleIds[idx] || ''}
+                  onChange={(e) => {
+                    const newValue = e.target.value ? Number(e.target.value) : null;
+                    setFormData(prev => {
+                      const newIds = [...prev.styleIds];
+                      if (newValue) {
+                        newIds[idx] = newValue;
+                      } else {
+                        newIds.splice(idx, 1);
+                      }
+                      return { ...prev, styleIds: newIds.filter(Boolean) };
+                    });
+                  }}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-[#EB0000] focus:outline-none"
                 >
-                  {rank && (
-                    <span className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-white text-[#EB0000] text-[10px] font-bold border-2 border-[#EB0000] flex items-center justify-center">
-                      {rank}
-                    </span>
-                  )}
-                  {style.name}
-                </button>
-              );
-            })}
+                  <option value="">선택</option>
+                  {styles?.filter(s => !formData.styleIds.includes(s.id) || formData.styleIds[idx] === s.id)
+                    .map((style) => (
+                      <option key={style.id} value={style.id}>{style.name}</option>
+                    ))}
+                </select>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* 6. 편의/특징 (순위 선택) */}
+        {/* 6. 편의/특징 (드롭다운 순위 선택) */}
         <div>
           <label className="mb-2 block text-xs font-semibold text-gray-500">
             편의/특징
             <span className="text-[#EB0000] ml-[3px]">*</span>
-            <span className="text-[#8d8d8d] ml-[3px]">(1~3순위 선택)</span>
+            <span className="text-[#8d8d8d] ml-[3px]">(1~3순위)</span>
           </label>
-          <p className="text-[10px] text-gray-400 mb-3">클릭 순서대로 순위가 지정됩니다. 다시 클릭하면 해제됩니다.</p>
-          <div className="flex flex-wrap gap-2">
-            {features?.map((feat) => {
-              const rankIndex = formData.featureIds.indexOf(feat.id);
-              const rank = rankIndex >= 0 ? rankIndex + 1 : null;
-              return (
-                <button
-                  key={feat.id}
-                  type="button"
-                  onClick={() => toggleArrayItem('featureIds', feat.id)}
-                  disabled={!rank && formData.featureIds.length >= 3}
-                  className={`relative px-4 py-2 text-sm rounded-full border transition-all ${
-                    rank
-                      ? 'bg-[#EB0000] text-white border-[#EB0000]'
-                      : formData.featureIds.length >= 3
-                        ? 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-[#EB0000] hover:text-[#EB0000]'
-                  }`}
+          <div className="grid grid-cols-3 gap-2">
+            {[0, 1, 2].map((idx) => (
+              <div key={`feature-${idx}`}>
+                <label className="text-[10px] text-gray-400 mb-1 block">{idx + 1}순위{idx === 0 && <span className="text-[#EB0000]">*</span>}</label>
+                <select
+                  value={formData.featureIds[idx] || ''}
+                  onChange={(e) => {
+                    const newValue = e.target.value ? Number(e.target.value) : null;
+                    setFormData(prev => {
+                      const newIds = [...prev.featureIds];
+                      if (newValue) {
+                        newIds[idx] = newValue;
+                      } else {
+                        newIds.splice(idx, 1);
+                      }
+                      return { ...prev, featureIds: newIds.filter(Boolean) };
+                    });
+                  }}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-[#EB0000] focus:outline-none"
                 >
-                  {rank && (
-                    <span className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-white text-[#EB0000] text-[10px] font-bold border-2 border-[#EB0000] flex items-center justify-center">
-                      {rank}
-                    </span>
-                  )}
-                  {feat.name}
-                </button>
-              );
-            })}
+                  <option value="">선택</option>
+                  {features?.filter(f => !formData.featureIds.includes(f.id) || formData.featureIds[idx] === f.id)
+                    .map((feat) => (
+                      <option key={feat.id} value={feat.id}>{feat.name}</option>
+                    ))}
+                </select>
+              </div>
+            ))}
           </div>
         </div>
 
