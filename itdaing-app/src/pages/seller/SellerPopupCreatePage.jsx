@@ -167,6 +167,8 @@ const SellerPopupFormPage = ({
   const [selectedCell, setSelectedCell] = useState(null);
   const [showMap, setShowMap] = useState(false);
   const [hoveredCellId, setHoveredCellId] = useState(null); // 호버된 셀 ID
+  const [showZoneMap, setShowZoneMap] = useState(true); // 존 선택 지도 표시 (기본 펼침)
+  const [hoveredAreaId, setHoveredAreaId] = useState(null); // 호버된 존 ID
 
   // 존 목록 조회
   const { data: areasData, isLoading: isLoadingAreas } = useQuery({
@@ -306,20 +308,26 @@ const SellerPopupFormPage = ({
   }, [areas, isEditMode, popupDetail]);
   
   // URL 쿼리 파라미터에서 zoneId로 존 자동 선택 (챗봇에서 이동 시)
+  // initialZoneId가 변경되면 항상 해당 존으로 변경 (이미 페이지에 있는 상태에서도)
   useEffect(() => {
-    if (isEditMode || !initialZoneId || !areas.length || selectedArea) return;
+    if (isEditMode || !initialZoneId || !areas.length) return;
     const zoneIdNum = Number(initialZoneId);
     if (!Number.isFinite(zoneIdNum)) return;
+    
+    // 이미 같은 존이 선택되어 있으면 스킵
+    if (selectedArea?.id === zoneIdNum) return;
+    
     const area = areas.find((item) => item.id === zoneIdNum);
     if (area) {
       setSelectedArea(area);
+      setSelectedCell(null); // 셀은 리셋
       setShowMap(true); // 지도도 자동으로 펼침
       addToast({
         title: `${area.name} 존이 선택되었습니다.`,
         description: '부스(셀) 위치를 선택해주세요.',
       });
     }
-  }, [areas, initialZoneId, isEditMode, selectedArea, addToast]);
+  }, [areas, initialZoneId, isEditMode, addToast]); // selectedArea를 의존성에서 제거
 
   // 편집 모드: 셀 자동 선택
   useEffect(() => {
@@ -673,17 +681,122 @@ const SellerPopupFormPage = ({
 
         {/* 2. 존/셀 선택 (지도) */}
         <div>
-          <label className="text-xs font-semibold text-gray-500">
-            부스 위치 선택 
-            <span className="text-[#EB0000] ml-[3px]">*</span>
-          </label>
-          <p className="text-xs text-gray-400 mt-1">
-            {isLocationLocked
-              ? '등록된 부스 위치는 수정할 수 없습니다.'
-              : '행사가 열리는 존을 선택하고, 해당 존 안에서 부스(셀) 위치를 선택해주세요.'}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-xs font-semibold text-gray-500">
+                부스 위치 선택 
+                <span className="text-[#EB0000] ml-[3px]">*</span>
+              </label>
+              <p className="text-xs text-gray-400 mt-1">
+                {isLocationLocked
+                  ? '등록된 부스 위치는 수정할 수 없습니다.'
+                  : '지도에서 존을 클릭하여 선택하고, 해당 존 안에서 부스(셀)를 선택해주세요.'}
+              </p>
+            </div>
+            {!isLocationLocked && (
+              <button
+                type="button"
+                onClick={() => setShowZoneMap(!showZoneMap)}
+                className="flex items-center gap-1 text-xs text-[#EB0000] hover:underline"
+              >
+                <MapIcon className="h-4 w-4" />
+                {showZoneMap ? '지도 숨기기' : '지도로 선택'}
+              </button>
+            )}
+          </div>
           
-          {/* 존 선택 드롭다운 */}
+          {/* 존 선택 지도 - 모든 존 폴리곤 표시 */}
+          {showZoneMap && !isLocationLocked && areas.length > 0 && (
+            <div className="mt-3 h-[280px] rounded-lg overflow-hidden border border-gray-200 relative">
+              <Map
+                center={GWANGJU_CENTER}
+                style={{ width: '100%', height: '100%' }}
+                level={8}
+              >
+                {/* 모든 존 폴리곤 표시 */}
+                {areas.map((area) => {
+                  const coords = parseGeoJsonPolygon(area.polygonGeoJson);
+                  if (coords.length < 3) return null;
+                  
+                  const isSelected = selectedArea?.id === area.id;
+                  const isHovered = hoveredAreaId === area.id;
+                  
+                  // 존 중심점 계산
+                  const center = coords.reduce(
+                    (acc, c) => ({ lat: acc.lat + c.lat / coords.length, lng: acc.lng + c.lng / coords.length }),
+                    { lat: 0, lng: 0 }
+                  );
+                  
+                  return (
+                    <div key={area.id}>
+                      {/* 존 폴리곤 */}
+                      <Polygon
+                        path={coords}
+                        strokeWeight={isSelected ? 3 : 2}
+                        strokeColor={isSelected ? '#EB0000' : isHovered ? '#3B82F6' : '#6B7280'}
+                        strokeOpacity={0.8}
+                        fillColor={isSelected ? '#EB0000' : isHovered ? '#3B82F6' : '#9CA3AF'}
+                        fillOpacity={isSelected ? 0.3 : isHovered ? 0.25 : 0.15}
+                        onClick={() => handleSelectArea(area)}
+                        onMouseover={() => setHoveredAreaId(area.id)}
+                        onMouseout={() => setHoveredAreaId(null)}
+                      />
+                      
+                      {/* 존 라벨 */}
+                      <CustomOverlayMap position={center} yAnchor={0.5}>
+                        <div
+                          onClick={() => handleSelectArea(area)}
+                          onMouseEnter={() => setHoveredAreaId(area.id)}
+                          onMouseLeave={() => setHoveredAreaId(null)}
+                          className={`cursor-pointer px-3 py-1.5 rounded-lg shadow-md text-xs font-semibold transition-all ${
+                            isSelected
+                              ? 'bg-[#EB0000] text-white scale-110'
+                              : isHovered
+                                ? 'bg-blue-500 text-white scale-105'
+                                : 'bg-white text-gray-700 border border-gray-200'
+                          }`}
+                        >
+                          {area.name}
+                        </div>
+                      </CustomOverlayMap>
+                      
+                      {/* 호버 시 존 정보 툴팁 */}
+                      {isHovered && !isSelected && (
+                        <CustomOverlayMap position={center} yAnchor={-0.8}>
+                          <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-3 text-xs w-48 z-50">
+                            <p className="font-bold text-gray-800 mb-1">{area.name}</p>
+                            {area.district && (
+                              <p className="text-gray-500">📍 {area.district}</p>
+                            )}
+                            {area.description && (
+                              <p className="text-gray-500 mt-1 line-clamp-2">{area.description}</p>
+                            )}
+                            <p className="text-[#EB0000] font-medium mt-2">클릭하여 선택</p>
+                          </div>
+                        </CustomOverlayMap>
+                      )}
+                    </div>
+                  );
+                })}
+              </Map>
+              
+              {/* 지도 범례 */}
+              <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-[10px] shadow-sm border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded bg-[#EB0000]/30 border border-[#EB0000]" />
+                    <span>선택됨</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded bg-gray-300/50 border border-gray-400" />
+                    <span>선택 가능</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* 존/셀 선택 드롭다운 (지도 아래 또는 지도 숨김 시) */}
           <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className="text-xs text-gray-500">존 선택</label>
@@ -762,7 +875,7 @@ const SellerPopupFormPage = ({
                   className="flex items-center gap-1 text-xs text-[#EB0000] hover:underline disabled:text-gray-400 disabled:hover:no-underline"
                 >
                   <MapIcon className="h-4 w-4" />
-                  {showMap ? '지도 숨기기' : isLocationLocked ? '위치 수정 불가' : '지도 보기'}
+                  {showMap ? '셀 지도 숨기기' : isLocationLocked ? '위치 수정 불가' : '셀 지도 보기'}
                 </button>
               </div>
             </div>
