@@ -7,6 +7,7 @@ import { fetchKakaoMapKey } from './utils/kakaoMapLoader';
 import { ToastProvider } from '@/components/ui/ToastProvider';
 import { LoginPromptProvider } from '@/components/ui/LoginPromptProvider';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
+import SplashScreen from '@/components/pwa/SplashScreen';
 
 // React Query 클라이언트 생성
 const queryClient = new QueryClient({
@@ -18,6 +19,14 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+/**
+ * PWA standalone 모드인지 확인
+ */
+const isPWAMode = () => {
+  return window.matchMedia('(display-mode: standalone)').matches 
+    || window.navigator.standalone === true;
+};
 
 const KakaoLoader = ({ appkey, children }) => {
   const [loading, error] = useKakaoLoader({ 
@@ -47,6 +56,13 @@ const KakaoLoader = ({ appkey, children }) => {
 function App() {
   const [kakaoKey, setKakaoKey] = useState('');
   const [keyError, setKeyError] = useState(null);
+  const [showSplash, setShowSplash] = useState(() => {
+    // PWA 모드이고, 세션에서 이미 본 적 없으면 스플래시 표시
+    if (isPWAMode() && !sessionStorage.getItem('splash_shown')) {
+      return true;
+    }
+    return false;
+  });
 
   // 앱 시작 시 토큰 복원
   const initRef = useRef(false);
@@ -79,6 +95,17 @@ function App() {
       isMounted = false;
     };
   }, []);
+
+  // 스플래시 완료 핸들러
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+    sessionStorage.setItem('splash_shown', 'true');
+  };
+
+  // 스플래시 화면
+  if (showSplash) {
+    return <SplashScreen onComplete={handleSplashComplete} duration={2500} />;
+  }
 
   if (keyError) {
     return (

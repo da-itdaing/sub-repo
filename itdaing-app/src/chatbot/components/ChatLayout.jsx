@@ -99,8 +99,10 @@ const MarketTipBanner = ({ mode, isLoading }) => {
 
 /**
  * 챗봇 공통 레이아웃 컴포넌트
+ * @param {string} mode - 챗봇 모드 ('consumer' | 'seller')
+ * @param {string} guestId - 게스트 ID (비로그인 체험 모드)
  */
-const ChatLayout = ({ mode = 'consumer' }) => {
+const ChatLayout = ({ mode = 'consumer', guestId = null }) => {
   const {
     messages,
     isLoading,
@@ -109,7 +111,7 @@ const ChatLayout = ({ mode = 'consumer' }) => {
     recommendations,
     sendMessage,
     resetSession,
-  } = useChatSession({ mode });
+  } = useChatSession({ mode, userId: guestId });
 
   const [showQuickQuestions, setShowQuickQuestions] = useState(true);
   const config = MODE_CONFIG[mode] || MODE_CONFIG.consumer;

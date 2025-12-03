@@ -454,7 +454,7 @@ const SellerChatbotPage = ({ hideHeader = false, guestId = null }) => {
     recommendations,
     sendMessage,
     resetSession,
-  } = useChatSession({ mode: 'seller' });
+  } = useChatSession({ mode: 'seller', userId: guestId });
 
   const [showQuickQuestions, setShowQuickQuestions] = useState(true);
   const [highlightId, setHighlightId] = useState(null);

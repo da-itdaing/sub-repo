@@ -8,9 +8,14 @@ const CHATBOT_BASE_PATH = '/ai/api/chat';
 
 /**
  * API 요청 본문 생성
+ * @param {Object} params
+ * @param {string} params.message - 사용자 메시지
+ * @param {string} params.sessionId - 세션 ID
+ * @param {string} params.threadId - 스레드 ID
+ * @param {string} params.userId - 사용자 ID (로그인 또는 게스트)
  */
-const buildRequestBody = ({ message, sessionId, threadId }) => ({
-  user_id: 'web-guest',
+const buildRequestBody = ({ message, sessionId, threadId, userId }) => ({
+  user_id: userId || 'web-guest',
   session_id: sessionId ?? null,
   message,
   thread_id: threadId ?? null,
@@ -24,6 +29,7 @@ const buildRequestBody = ({ message, sessionId, threadId }) => ({
  * @param {string} params.message - 사용자 메시지
  * @param {string} params.sessionId - 세션 ID
  * @param {string} params.threadId - 스레드 ID (멀티턴 대화용)
+ * @param {string} params.userId - 사용자 ID (로그인 또는 게스트)
  * @param {AbortSignal} params.signal - 요청 취소용 시그널
  * @param {Function} params.onDelta - 스트리밍 delta 콜백
  */
@@ -32,6 +38,7 @@ export async function streamChatMessage({
   message,
   sessionId,
   threadId,
+  userId,
   signal,
   onDelta,
 }) {
@@ -47,7 +54,7 @@ export async function streamChatMessage({
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(buildRequestBody({ message, sessionId, threadId })),
+    body: JSON.stringify(buildRequestBody({ message, sessionId, threadId, userId })),
     signal, // AbortController signal 전달
   });
 

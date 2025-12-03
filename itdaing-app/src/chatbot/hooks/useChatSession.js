@@ -256,8 +256,9 @@ const sanitizeDelta = (delta) => {
  * 챗봇 세션 관리 훅
  * - 메시지 상태, 스트리밍, 추천 결과 등을 통합 관리
  * - mode: 'consumer' | 'seller'
+ * - userId: 로그인 사용자 ID 또는 게스트 ID
  */
-const useChatSession = ({ mode = 'consumer' } = {}) => {
+const useChatSession = ({ mode = 'consumer', userId = null } = {}) => {
   // 초기 봇 메시지
   const initialMessage = useMemo(
     () => ({
@@ -408,6 +409,7 @@ const useChatSession = ({ mode = 'consumer' } = {}) => {
           message: text,
           sessionId: effectiveSessionId,
           threadId: threadIdRef.current,
+          userId: userId || 'web-guest',
           signal: controller.signal,
           onDelta: ({ delta, thread_id, recommendations: incomingRecs }) => {
             // 스레드 ID 업데이트
