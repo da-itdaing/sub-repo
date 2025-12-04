@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, X, ChevronRight, ExternalLink } from 'lucide-react';
+import { Download, X, ChevronRight } from 'lucide-react';
 
 /**
  * 커스텀 아이콘 컴포넌트들
@@ -26,12 +26,6 @@ const SamsungIcon = ({ className }) => (
   </svg>
 );
 
-const AndroidIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.85 1.23 12.95 1 12 1c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31C6.97 3.26 6 5.01 6 7h12c0-1.99-.97-3.75-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/>
-  </svg>
-);
-
 /**
  * 앱 설치 안내 모달
  */
@@ -50,7 +44,6 @@ const InstallGuideModal = ({ isOpen, onClose }) => {
         '3. "홈 화면에 추가" 선택',
         '4. "추가" 버튼 탭',
       ],
-      link: 'https://support.apple.com/ko-kr/HT207122',
     },
     {
       id: 'chrome',
@@ -58,25 +51,9 @@ const InstallGuideModal = ({ isOpen, onClose }) => {
       icon: <ChromeIcon className="h-5 w-5" />,
       color: 'bg-gradient-to-br from-red-500 via-yellow-500 to-green-500',
       steps: [
-        '1. Chrome 브라우저로 접속',
-        '2. 우측 상단 메뉴(⋮) 또는 주소창 설치 아이콘 클릭',
-        '3. "앱 설치" 또는 "홈 화면에 추가" 선택',
-        '4. "설치" 버튼 클릭',
+        '• PC: 주소창 우측 "앱에서 열기" 버튼 클릭',
+        '• Android: 우측 상단 메뉴(⋮) → "홈 화면에 추가"',
       ],
-      link: 'https://support.google.com/chrome/answer/9658361?hl=ko',
-    },
-    {
-      id: 'android',
-      name: 'Android 기본 브라우저',
-      icon: <AndroidIcon className="h-5 w-5" />,
-      color: 'bg-green-600',
-      steps: [
-        '1. 기본 브라우저로 접속',
-        '2. 메뉴(⋮ 또는 ≡) 탭',
-        '3. "홈 화면에 추가" 선택',
-        '4. "추가" 버튼 탭',
-      ],
-      link: 'https://developer.android.com/guide/webapps/webview',
     },
     {
       id: 'samsung',
@@ -84,12 +61,9 @@ const InstallGuideModal = ({ isOpen, onClose }) => {
       icon: <SamsungIcon className="h-5 w-5" />,
       color: 'bg-purple-600',
       steps: [
-        '1. Samsung Internet으로 접속',
-        '2. 하단 메뉴(≡) 탭',
-        '3. "현재 페이지 추가" → "홈 화면" 선택',
-        '4. "추가" 버튼 탭',
+        '1. 검색창(상단 또는 하단)에서 다운로드(↓) 아이콘 탭',
+        '2. "추가" 버튼 탭',
       ],
-      link: 'https://www.samsung.com/sec/support/mobile-devices/how-do-i-add-shortcuts-to-my-galaxy-smartphone-home-screen/',
     },
   ];
 
@@ -126,7 +100,7 @@ const InstallGuideModal = ({ isOpen, onClose }) => {
         {/* 안내 문구 */}
         <div className="px-5 py-3 bg-rose-50 border-b border-rose-100">
           <p className="text-sm text-rose-700">
-            <span className="font-medium">다잇다잉</span>은 PWA(Progressive Web App)로, 
+            <span className="font-medium">다잇다잉</span>은 PWA로, 
             앱스토어 없이 바로 설치할 수 있어요!
           </p>
         </div>
@@ -143,22 +117,13 @@ const InstallGuideModal = ({ isOpen, onClose }) => {
                 <ChevronRight className="h-5 w-5 text-gray-400 group-open:rotate-90 transition-transform" />
               </summary>
               <div className="px-4 pb-4">
-                <ol className="space-y-2 mb-3">
+                <ol className="space-y-2">
                   {guide.steps.map((step, idx) => (
                     <li key={idx} className="text-sm text-gray-600 pl-2">
                       {step}
                     </li>
                   ))}
                 </ol>
-                <a
-                  href={guide.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-rose-500 hover:text-rose-600 font-medium"
-                >
-                  공식 가이드 보기
-                  <ExternalLink className="h-3 w-3" />
-                </a>
               </div>
             </details>
           ))}
