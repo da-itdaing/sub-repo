@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronRight, ChevronDown, ChevronUp, Map, X, Store, Users, DollarSign, Percent } from 'lucide-react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronRight, ChevronDown, ChevronUp, Map, X, Store, Users, DollarSign, Percent, Search } from 'lucide-react';
 import KakaoMap from '@/components/map/KakaoMap';
 import { ROUTES } from '@/routes/paths';
+import apiClient from '@/api/client';
 
 const toNumber = (value) => {
   const num = Number(value);
@@ -13,14 +14,70 @@ const resolveItemId = (item = {}) =>
   item.market_id || item.metadata?.market_id || item.zone_id || item.name || 'unknown';
 
 /**
- * 추천 결과 패널 - v16
- * - 소비자 모드: 팝업 상세 링크
+ * 문자열 유사도 계산 (간단한 포함 검사 + 정규화)
+ */
+const normalizeString = (str) => 
+  str?.toLowerCase().replace(/[\s\-_]/g, '').replace(/플리마켓|마켓|팝업|스토어/g, '') || '';
+
+const isSimilar = (a, b) => {
+  const normA = normalizeString(a);
+  const normB = normalizeString(b);
+  return normA.includes(normB) || normB.includes(normA) || normA === normB;
+};
+
+/**
+ * 추천 결과 패널 - v17
+ * - 소비자 모드: 팝업 상세 링크 (DB 자동 매칭)
  * - 판매자 모드: 상권 정보 + 셀 가용성 + 팝업 등록 링크
  */
 const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
+  const navigate = useNavigate();
   const [highlightId, setHighlightId] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  
+  // 실제 DB popup과 매칭된 ID 맵 { 추천이름: 실제popupId }
+  const [popupIdMap, setPopupIdMap] = useState({});
+  const [isLoadingPopups, setIsLoadingPopups] = useState(false);
+
+  // 추천 결과가 변경되면 실제 DB에서 popup 찾기 (소비자 모드만)
+  useEffect(() => {
+    if (mode !== 'consumer' || items.length === 0) return;
+    
+    const fetchAndMatchPopups = async () => {
+      setIsLoadingPopups(true);
+      try {
+        // 전체 popup 목록 가져오기 (캐싱 고려 필요)
+        const response = await apiClient.get('/popups', { params: { page: 0, size: 200 } });
+        const popups = response?.data || response || [];
+        
+        // 추천 결과와 실제 popup 매칭
+        const idMap = {};
+        items.forEach((item) => {
+          const recName = item.name || item.metadata?.name;
+          if (!recName) return;
+          
+          // 이름으로 매칭 시도
+          const matched = popups.find((popup) => 
+            isSimilar(popup.title, recName) || 
+            isSimilar(popup.locationName, recName)
+          );
+          
+          if (matched) {
+            idMap[recName] = matched.id;
+          }
+        });
+        
+        setPopupIdMap(idMap);
+      } catch (error) {
+        console.warn('[RecommendationPanel] Failed to fetch popups:', error);
+      } finally {
+        setIsLoadingPopups(false);
+      }
+    };
+    
+    fetchAndMatchPopups();
+  }, [items, mode]);
 
   // 새 추천이 오면 펼친 상태로 시작
   useEffect(() => {
@@ -56,8 +113,16 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
   const centerMarker = markers.find((m) => m.id === highlightId) || markers[0];
   const hasValidMarkers = markers.length > 0;
 
-  // 소비자: 팝업 상세 링크
-  const getConsumerDetailLink = (item) => {
+  // 소비자: 팝업 상세 링크 (DB 자동 매칭)
+  const getConsumerDetailLink = useCallback((item) => {
+    const recName = item.name || item.metadata?.name;
+    
+    // 1. DB 매칭된 ID가 있으면 사용
+    if (recName && popupIdMap[recName]) {
+      return ROUTES.popupDetail(popupIdMap[recName]);
+    }
+    
+    // 2. 기존 market_id가 숫자면 사용
     const popupId = item.market_id || item.metadata?.market_id;
     if (popupId) {
       const numericId = popupId.toString().replace(/^(popup-|M0*)/, '');
@@ -67,10 +132,15 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
       if (/^\d+$/.test(popupId.toString())) {
         return ROUTES.popupDetail(parseInt(popupId, 10));
       }
-      return ROUTES.popupDetail(popupId);
     }
+    
+    // 3. 매칭 실패 시 검색 페이지로
+    if (recName) {
+      return `/search?q=${encodeURIComponent(recName)}`;
+    }
+    
     return null;
-  };
+  }, [popupIdMap]);
 
   // 판매자: 팝업 등록 링크
   const getSellerRegisterLink = (item) => {
@@ -171,8 +241,17 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
                       className={`flex-shrink-0 flex items-center gap-0.5 px-2.5 py-1.5 text-[10px] font-medium bg-white rounded-lg border ${btnColor} transition-all`}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      상세
-                      <ChevronRight className="h-3 w-3" />
+                      {consumerLink.startsWith('/search') ? (
+                        <>
+                          검색
+                          <Search className="h-3 w-3" />
+                        </>
+                      ) : (
+                        <>
+                          상세
+                          <ChevronRight className="h-3 w-3" />
+                        </>
+                      )}
                     </Link>
                   )}
                   {mode === 'seller' && sellerLink && item.available_cells > 0 && (
@@ -264,7 +343,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
                         className={`flex-shrink-0 px-2 py-1 text-[10px] bg-white rounded border ${btnColor}`}
                         onClick={(e) => e.stopPropagation()}
                       >
-                        상세
+                        {consumerLink.startsWith('/search') ? '검색' : '상세'}
                       </Link>
                     )}
                     {mode === 'seller' && sellerLink && item.available_cells > 0 && (
