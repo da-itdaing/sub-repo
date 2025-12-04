@@ -29,7 +29,7 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
   const addFavorite = useFavoriteStore((state) => state.addFavorite);
   const removeFavorite = useFavoriteStore((state) => state.removeFavorite);
   
-  const thumbnailUrl = getImageUrl(popup.thumbnail || popup.thumbnailImageUrl, '/placeholder-popup.svg');
+  const thumbnailUrl = getImageUrl(popup.thumbnail || popup.thumbnailImageUrl, '/placeholder-popup.png');
   const start = popup.startDate ? new Date(popup.startDate) : null;
   const end = popup.endDate ? new Date(popup.endDate) : null;
   const dateLabel = start && end
@@ -154,8 +154,8 @@ const EventCard = ({ popup, variant = 'default', onCardClick }) => {
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             onError={(e) => {
-              if (e.currentTarget.src.endsWith('/placeholder-popup.svg')) return; // Loop prevention
-              e.currentTarget.src = '/placeholder-popup.svg';
+              if (e.currentTarget.src.endsWith('/placeholder-popup.png')) return; // Loop prevention
+              e.currentTarget.src = '/placeholder-popup.png';
               e.currentTarget.onerror = null; // Final safeguard
             }}
           />
