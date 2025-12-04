@@ -113,25 +113,24 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
   const centerMarker = markers.find((m) => m.id === highlightId) || markers[0];
   const hasValidMarkers = markers.length > 0;
 
-  // 소비자: 팝업 상세 링크 (DB 자동 매칭)
+  // 소비자: 팝업 상세 링크 (RAG 결과의 market_id 우선 사용)
   const getConsumerDetailLink = useCallback((item) => {
-    const recName = item.name || item.metadata?.name;
-    
-    // 1. DB 매칭된 ID가 있으면 사용
-    if (recName && popupIdMap[recName]) {
-      return ROUTES.popupDetail(popupIdMap[recName]);
-    }
-    
-    // 2. 기존 market_id가 숫자면 사용
-    const popupId = item.market_id || item.metadata?.market_id;
-    if (popupId) {
-      const numericId = popupId.toString().replace(/^(popup-|M0*)/, '');
+    // 1. RAG 결과의 market_id가 숫자면 바로 사용 (최우선)
+    const marketId = item.market_id || item.metadata?.market_id;
+    if (marketId) {
+      const numericId = marketId.toString().replace(/^(popup-|M0*)/, '');
       if (numericId && /^\d+$/.test(numericId)) {
         return ROUTES.popupDetail(parseInt(numericId, 10));
       }
-      if (/^\d+$/.test(popupId.toString())) {
-        return ROUTES.popupDetail(parseInt(popupId, 10));
+      if (/^\d+$/.test(marketId.toString())) {
+        return ROUTES.popupDetail(parseInt(marketId, 10));
       }
+    }
+    
+    // 2. DB 매칭된 ID가 있으면 사용 (fallback)
+    const recName = item.name || item.metadata?.name;
+    if (recName && popupIdMap[recName]) {
+      return ROUTES.popupDetail(popupIdMap[recName]);
     }
     
     // 3. 매칭 실패 시 검색 페이지로

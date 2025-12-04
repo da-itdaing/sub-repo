@@ -28,6 +28,7 @@ import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.domain.user.repository.UserRepository;
 import com.da.itdaing.global.error.ErrorCode;
 import com.da.itdaing.global.error.exception.BusinessException;
+import com.da.itdaing.global.infra.ChatbotSyncClient;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -58,6 +59,7 @@ public class PopupCommandService {
     private final FeatureRepository featureRepository;
     private final StyleRepository styleRepository;
     private final DefaultImageProvider defaultImageProvider;
+    private final ChatbotSyncClient chatbotSyncClient;
 
     @Transactional
     public Long createPopup(Long sellerId, PopupCreateRequest request) {
@@ -97,6 +99,9 @@ public class PopupCommandService {
         persistStyles(popup, request.styleIds());
         persistImages(popup, request.thumbnailImage(), request.images());
 
+        // PGVector 동기화 (비동기) - 생성 시
+        chatbotSyncClient.syncPopup(popup.getId());
+
         return popup.getId();
     }
 
@@ -135,6 +140,9 @@ public class PopupCommandService {
         persistStyles(popup, request.styleIds());
         persistImages(popup, request.thumbnailImage(), request.images());
 
+        // PGVector 동기화 (비동기) - 수정 시
+        chatbotSyncClient.syncPopup(popup.getId());
+
         return popup.getId();
     }
 
@@ -152,6 +160,9 @@ public class PopupCommandService {
         popupImageRepository.deleteByPopup(popup);
 
         popupRepository.delete(popup);
+
+        // PGVector 임베딩 삭제 (비동기)
+        chatbotSyncClient.deletePopup(popupId);
     }
 
 

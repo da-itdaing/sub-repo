@@ -12,6 +12,12 @@ external:
     kakao:
         map-app-key: ${KAKAO_MAP_APP_KEY:}
 
+# Chatbot 동기화 설정
+chatbot:
+    sync:
+        base-url: ${CHATBOT_SYNC_URL:http://localhost:9000}
+        enabled: ${CHATBOT_SYNC_ENABLED:true}
+
 ---
 
 # 여기부터는 prod 프로필에서만 적용
