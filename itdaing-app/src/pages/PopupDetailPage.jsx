@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Heart, Eye } from 'lucide-react';
+import { ArrowLeft, Heart, Eye, Pencil } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import PopupEditModal from '@/components/popup/PopupEditModal';
 
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -29,8 +30,12 @@ const PopupDetailPage = () => {
 
   const { isAuthenticated } = useAuthStore();
   const role = useAuthStore((state) => state.role);
+  const user = useAuthStore((state) => state.user);
 
   const { addToast } = useToast();
+  
+  // 수정 모달 상태
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { openLoginPrompt } = useLoginPrompt();
 
   const hydrated = useFavoriteStore((state) => state.hydrated);
@@ -48,6 +53,16 @@ const PopupDetailPage = () => {
   // 📌 데이터 페칭
   const { data: popup, isLoading } = usePopupById(id, { refetchOnMount: 'always' });
   const { data: reviews = [] } = usePopupReviews(id);
+
+  // 📝 수정 권한 확인
+  // ADMIN: 모든 팝업 수정 가능
+  // SELLER: 본인 소유 팝업만 수정 가능
+  const canEdit = useMemo(() => {
+    if (!popup || !isAuthenticated) return false;
+    if (role === 'ADMIN') return true;
+    if (role === 'SELLER' && popup.sellerId && user?.id && popup.sellerId === user.id) return true;
+    return false;
+  }, [popup, isAuthenticated, role, user?.id]);
 
   // 📌 초기 Count 세팅
   useEffect(() => {
@@ -230,6 +245,19 @@ const PopupDetailPage = () => {
           </button>
 
           <div className="flex items-center gap-2">
+            {/* 수정 버튼 (ADMIN 또는 SELLER 본인) */}
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(true)}
+                className="inline-flex items-center justify-center p-1.5 bg-white/90 rounded-full border border-gray-200 shadow-md hover:bg-gray-50 transition-colors"
+                aria-label="팝업 수정"
+                title="팝업 수정"
+              >
+                <Pencil className="h-4 w-4 text-gray-600" />
+              </button>
+            )}
+
             {/* 관심 버튼 (EventCard 스타일과 동일, 숫자 제거) */}
             <button
               type="button"
@@ -289,6 +317,18 @@ const PopupDetailPage = () => {
 
       <Footer />
       <BottomNav />
+
+      {/* 팝업 수정 모달 */}
+      {isEditModalOpen && (
+        <PopupEditModal
+          popupId={popup.id}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['popup', id] });
+            setIsEditModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };

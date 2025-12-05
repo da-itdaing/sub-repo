@@ -106,16 +106,25 @@ public class PopupCommandService {
     }
 
     @Transactional
-    public Long updatePopup(Long sellerId, Long popupId, PopupCreateRequest request) {
+    public Long updatePopup(Long userId, Long popupId, PopupCreateRequest request) {
+        Users user = userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         Popup popup = popupRepository.findById(popupId)
             .orElseThrow(() -> new BusinessException(ErrorCode.POPUP_NOT_FOUND));
-        if (!Objects.equals(popup.getSeller().getId(), sellerId)) {
+        
+        // ADMIN이 아니면 소유자 체크
+        boolean isAdmin = user.getRole() == UserRole.ADMIN;
+        if (!isAdmin && !Objects.equals(popup.getSeller().getId(), userId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED, "본인 소유 팝업만 수정할 수 있습니다.");
         }
 
         ZoneCell zoneCell = zoneCellRepository.findById(request.zoneCellId())
             .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND, "선택한 셀을 찾을 수 없습니다."));
-        validateZoneCellOwnership(zoneCell, sellerId);
+        
+        // ADMIN은 셀 소유권 검증도 건너뛰기
+        if (!isAdmin) {
+            validateZoneCellOwnership(zoneCell, userId);
+        }
         validateZoneCellStatus(zoneCell);
         validatePeriod(request.startDate(), request.endDate());
 

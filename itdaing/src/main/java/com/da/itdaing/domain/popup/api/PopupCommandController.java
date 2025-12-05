@@ -168,16 +168,16 @@ public class PopupCommandController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
-    @PreAuthorize("hasRole('SELLER')")
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @Operation(
         summary = "팝업 수정",
         description = """
-            판매자가 자신의 팝업 정보를 수정합니다.
+            판매자 또는 관리자가 팝업 정보를 수정합니다.
             
             팝업 ID를 경로 파라미터로 받아 해당 팝업의 정보를 수정합니다.
             수정된 팝업은 관리자 재승인이 필요할 수 있습니다.
-            이 API는 JWT 토큰 인증이 필요하며, SELLER 역할을 가진 사용자만 접근할 수 있습니다.
-            자신이 등록한 팝업만 수정할 수 있습니다.
+            이 API는 JWT 토큰 인증이 필요하며, SELLER 또는 ADMIN 역할을 가진 사용자만 접근할 수 있습니다.
+            SELLER는 자신이 등록한 팝업만, ADMIN은 모든 팝업을 수정할 수 있습니다.
             """,
         security = @SecurityRequirement(name = "bearerAuth"),
         parameters = {
