@@ -187,7 +187,10 @@ public class WishlistService {
                 null,               // reviewSummary (원하면 ReviewRepository 써서 추가 가능)
                 true,               // isFavorite
                 createdAt,
-                updatedAt
+                updatedAt,
+                p.getHomepageUrl(),
+                p.getSnsUrl(),
+                p.getHashtags()
             );
         });
     }
