@@ -16,7 +16,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   // 팝업 목록 조회
   const { data: popups = [], isLoading, error } = usePopups();
-  const { regions: masterRegions } = useMasterData();
+  const { regions: masterRegions, categories: masterCategories } = useMasterData();
 
   const gwangjuRegions = useMemo(() => {
     const DISTRICTS = ['동구', '서구', '남구', '북구', '광산구'];
@@ -41,21 +41,31 @@ const HomePage = () => {
       if (!address) {
         primaryRegion = '기타';
       }
-      // 카테고리 결정: styleTags는 스타일 태그이므로 카테고리에서 제외
-      // category, categoryTag, homeDisplay.categoryTag 순으로 우선
-      const categoryTag =
-        normalized.category?.name ||  // 카테고리 객체인 경우 name 사용
-        normalized.category ||
-        normalized.categoryTag ||
-        normalized.homeDisplay?.categoryTag ||
-        '전체';
+      // 카테고리 결정: categoryIds를 사용해서 카테고리 이름 찾기
+      // categoryIds[0]을 사용해 마스터 데이터에서 카테고리 이름 조회
+      let categoryTag = '전체';
+      if (normalized.categoryIds?.length > 0 && masterCategories.length > 0) {
+        const categoryId = normalized.categoryIds[0];
+        const foundCategory = masterCategories.find(c => c.id === categoryId);
+        if (foundCategory) {
+          categoryTag = foundCategory.name;
+        }
+      } else if (normalized.category?.name) {
+        categoryTag = normalized.category.name;
+      } else if (normalized.category) {
+        categoryTag = normalized.category;
+      } else if (normalized.categoryTag) {
+        categoryTag = normalized.categoryTag;
+      } else if (normalized.homeDisplay?.categoryTag) {
+        categoryTag = normalized.homeDisplay.categoryTag;
+      }
       return {
         ...normalized,
         primaryRegion,
         categoryTag,
       };
     });
-  }, [gwangjuRegions, popups]);
+  }, [gwangjuRegions, popups, masterCategories]);
 
   const heroItems = useMemo(() => {
     // 캐러셀 설정에서 지정된 팝업이 있으면 해당 팝업 사용
@@ -123,7 +133,7 @@ const HomePage = () => {
       <main className="flex-1 w-full max-w-[540px] md:max-w-[1200px] mx-auto bg-white pt-14 md:pt-20 ">
         {/* Hero Carousel - 헤더 바로 아래 배치 */}
         <div className="px-5 md:px-8 pt-2">
-          <HeroCarousel items={heroItems} isLoading={isLoading} onSelect={handlePopupNavigate} />
+        <HeroCarousel items={heroItems} isLoading={isLoading} onSelect={handlePopupNavigate} />
         </div>
 
         {/* Event Banner */}

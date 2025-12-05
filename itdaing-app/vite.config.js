@@ -23,7 +23,7 @@ export default defineConfig({
         manualChunks: (id) => {
           // node_modules 청크 분리
           if (id.includes('node_modules')) {
-            // React 코어
+          // React 코어
             if (id.includes('react') && !id.includes('react-router') && !id.includes('react-kakao')) {
               return 'react-vendor';
             }
@@ -35,11 +35,11 @@ export default defineConfig({
             if (id.includes('zustand')) {
               return 'state-vendor';
             }
-            // 데이터 페칭
+          // 데이터 페칭
             if (id.includes('@tanstack/react-query') || id.includes('axios')) {
               return 'query-vendor';
             }
-            // 카카오맵
+          // 카카오맵
             if (id.includes('react-kakao-maps-sdk') || id.includes('kakao')) {
               return 'kakao-vendor';
             }

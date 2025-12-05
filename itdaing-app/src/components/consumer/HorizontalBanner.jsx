@@ -165,11 +165,11 @@ const HorizontalBanner = ({ onClick }) => {
 
   return (
     <>
-      <button
-        type="button"
+    <button
+      type="button"
         onClick={handleClick}
         className="group relative w-full overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-r from-gray-50 to-white shadow-sm hover:shadow-md transition-all focus:outline-none"
-      >
+    >
         {/* 콘텐츠 */}
         <div className="relative flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -182,17 +182,17 @@ const HorizontalBanner = ({ onClick }) => {
             <div className="text-left">
               <h2 className="text-sm font-semibold text-gray-800">
                 다잇다잉 앱 설치하기
-              </h2>
+        </h2>
               <p className="text-xs text-gray-500 mt-0.5">
                 홈 화면에 추가하고 더 빠르게 이용하세요
               </p>
-            </div>
-          </div>
-          
+        </div>
+      </div>
+      
           {/* 화살표 */}
           <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-rose-500 group-hover:translate-x-0.5 transition-all" />
         </div>
-      </button>
+    </button>
 
       {/* 설치 가이드 모달 */}
       <InstallGuideModal 
