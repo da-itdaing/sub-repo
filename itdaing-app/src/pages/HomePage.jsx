@@ -10,7 +10,7 @@ import { useMasterData } from '@/hooks/useMasterData';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
 import { normalizePopup, isPopupActive } from '@/utils/popupUtils';
-import { filterByWhitelist } from '@/config/homePopupConfig';
+import { filterByWhitelist, getCarouselPopups } from '@/config/homePopupConfig';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -58,6 +58,12 @@ const HomePage = () => {
   }, [gwangjuRegions, popups]);
 
   const heroItems = useMemo(() => {
+    // 캐러셀 설정에서 지정된 팝업이 있으면 해당 팝업 사용
+    const carouselPopups = getCarouselPopups(normalizedPopups);
+    if (carouselPopups.length > 0) {
+      return carouselPopups;
+    }
+    // 폴백: 활성 팝업 또는 전체 팝업 상위 7개
     const activePopups = normalizedPopups.filter(isPopupActive);
     if (activePopups.length > 0) {
       return activePopups.slice(0, 7);
@@ -141,7 +147,7 @@ const HomePage = () => {
             <EventSection
               title={
                 <>
-                  곧 오픈한다잉! <span className="text-primary">11월</span>
+                  곧 오픈한다잉! <span className="text-primary">12월</span>
                 </>
               }
               popups={openingSoonPopups}
