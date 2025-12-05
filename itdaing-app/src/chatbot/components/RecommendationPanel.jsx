@@ -14,6 +14,15 @@ const resolveItemId = (item = {}) =>
   item.market_id || item.metadata?.market_id || item.zone_id || item.name || 'unknown';
 
 /**
+ * 아이템의 좌표 정보 추출
+ */
+const extractCoordinates = (item) => {
+  const lat = toNumber(item.lat ?? item.metadata?.lat ?? item.metadata?.latitude);
+  const lng = toNumber(item.lon ?? item.lng ?? item.metadata?.lon ?? item.metadata?.lng ?? item.metadata?.longitude);
+  return { lat, lng, hasCoords: lat != null && lng != null };
+};
+
+/**
  * 문자열 유사도 계산 (간단한 포함 검사 + 정규화)
  */
 const normalizeString = (str) => 
@@ -26,9 +35,10 @@ const isSimilar = (a, b) => {
 };
 
 /**
- * 추천 결과 패널 - v17
+ * 추천 결과 패널 - v18
  * - 소비자 모드: 팝업 상세 링크 (DB 자동 매칭)
  * - 판매자 모드: 상권 정보 + 셀 가용성 + 팝업 등록 링크
+ * - 좌표가 있는 항목만 표시하여 지도와 일관성 유지
  */
 const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
   const navigate = useNavigate();
@@ -40,9 +50,15 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
   const [popupIdMap, setPopupIdMap] = useState({});
   const [isLoadingPopups, setIsLoadingPopups] = useState(false);
 
+  // 좌표가 있는 항목만 필터링 (지도와 목록 일관성 유지)
+  const validItems = useMemo(
+    () => items.filter((item) => extractCoordinates(item).hasCoords),
+    [items]
+  );
+
   // 추천 결과가 변경되면 실제 DB에서 popup 찾기 (소비자 모드만)
   useEffect(() => {
-    if (mode !== 'consumer' || items.length === 0) return;
+    if (mode !== 'consumer' || validItems.length === 0) return;
     
     const fetchAndMatchPopups = async () => {
       setIsLoadingPopups(true);
@@ -53,7 +69,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
         
         // 추천 결과와 실제 popup 매칭
         const idMap = {};
-        items.forEach((item) => {
+        validItems.forEach((item) => {
           const recName = item.name || item.metadata?.name;
           if (!recName) return;
           
@@ -77,38 +93,35 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
     };
     
     fetchAndMatchPopups();
-  }, [items, mode]);
+  }, [validItems, mode]);
 
   // 새 추천이 오면 펼친 상태로 시작
   useEffect(() => {
-    if (items.length > 0) {
-      setHighlightId(resolveItemId(items[0]));
+    if (validItems.length > 0) {
+      setHighlightId(resolveItemId(validItems[0]));
       setIsExpanded(true);
       setShowMap(false);
     }
-  }, [items]);
+  }, [validItems]);
 
   const markers = useMemo(
     () =>
-      items
-        .map((item) => {
-          const lat = toNumber(item.lat ?? item.metadata?.lat ?? item.metadata?.latitude);
-          const lng = toNumber(item.lon ?? item.lng ?? item.metadata?.lon ?? item.metadata?.lng ?? item.metadata?.longitude);
-          if (lat == null || lng == null) return null;
-          return {
-            id: resolveItemId(item),
-            lat,
-            lng,
-            label: item.name,
-            content: item.name,
-            onClick: () => setHighlightId(resolveItemId(item)),
-          };
-        })
-        .filter(Boolean),
-    [items],
+      validItems.map((item) => {
+        const { lat, lng } = extractCoordinates(item);
+        return {
+          id: resolveItemId(item),
+          lat,
+          lng,
+          label: item.name,
+          content: item.name,
+          onClick: () => setHighlightId(resolveItemId(item)),
+        };
+      }),
+    [validItems],
   );
 
-  if (!items.length) return null;
+  // 좌표가 있는 항목이 없으면 패널 숨김
+  if (!validItems.length) return null;
 
   const centerMarker = markers.find((m) => m.id === highlightId) || markers[0];
   const hasValidMarkers = markers.length > 0;
@@ -169,7 +182,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700"
           >
-            📍 {mode === 'seller' ? '추천 존' : '추천'} {items.length}곳
+            📍 {mode === 'seller' ? '추천 존' : '추천'} {validItems.length}곳
             {isExpanded ? (
               <ChevronUp className="h-3.5 w-3.5 text-gray-400" />
             ) : (
@@ -193,7 +206,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
         {/* 카드 리스트 - 세로 리스트 */}
         {isExpanded && (
           <div className="px-3 pb-2 space-y-1.5 max-h-[180px] overflow-y-auto">
-            {items.map((item, index) => {
+            {validItems.map((item, index) => {
               const id = resolveItemId(item);
               const isActive = id === highlightId;
               const consumerLink = mode === 'consumer' ? getConsumerDetailLink(item) : null;
@@ -292,7 +305,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
             <div className="h-[250px]">
               <KakaoMap
                 height="100%"
-                level={items.length === 1 ? 4 : 6}
+                level={validItems.length === 1 ? 4 : 6}
                 center={centerMarker ? { lat: centerMarker.lat, lng: centerMarker.lng } : undefined}
                 markers={markers}
                 selectedMarkerId={highlightId}
@@ -301,7 +314,7 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
 
             {/* 마커 리스트 */}
             <div className="max-h-[150px] overflow-y-auto p-3 space-y-1.5">
-              {items.map((item, index) => {
+              {validItems.map((item, index) => {
                 const id = resolveItemId(item);
                 const isActive = id === highlightId;
                 const consumerLink = mode === 'consumer' ? getConsumerDetailLink(item) : null;
