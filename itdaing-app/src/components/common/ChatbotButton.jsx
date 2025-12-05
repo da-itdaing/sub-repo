@@ -50,11 +50,11 @@ const ChatbotButton = ({ mode = 'floating', onClickOverride }) => {
               </button>
             </div>
 
-            <div className="px-5 py-4 space-y-3 text-sm text-gray-700">
-              <p>• 오늘 열리는 팝업 알려줘</p>
-              <p>• 내 팝업 노출 통계 보여줘</p>
-              <p>• 팝업 등록 가이드 알려줘</p>
-            </div>
+              <div className="px-5 py-4 space-y-3 text-sm text-gray-700">
+                <p>• 오늘 열리는 마켓 뭐 있어?</p>
+                <p>• 내 팝업 조회수 보여줘</p>
+                <p>• 등록은 어떻게 해?</p>
+              </div>
 
             <div className="px-5 pb-5">
               <button
@@ -97,9 +97,9 @@ const ChatbotButton = ({ mode = 'floating', onClickOverride }) => {
               </div>
 
               <div className="px-5 py-4 space-y-3 text-sm text-gray-700">
-                <p>• 이번 주말 플리마켓 추천해줘</p>
-                <p>• 충장로 근처 플리마켓 알려줘</p>
-                <p>• 야시장 추천해줘</p>
+                <p>• 주말에 갈만한 플리마켓 있어?</p>
+                <p>• 충장로쪽 마켓 뭐 있어?</p>
+                <p>• 야시장 가고 싶은데</p>
               </div>
 
               <div className="px-5 pb-5">
