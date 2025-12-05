@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
 import { MapPin, Calendar, Clock, Map as MapIcon, ChevronDown, Trash2, X, ArrowLeft, Users, TrendingUp, Store, ChevronRight } from 'lucide-react';
@@ -130,6 +130,17 @@ const SellerPopupFormPage = ({
   const { addToast } = useToast();
   const queryClient = useQueryClient();
   const { categories, features, styles } = useMasterData();
+  
+  // 카테고리 중복 제거 (DB에 중복 데이터가 있을 경우 대비)
+  const uniqueCategories = useMemo(() => {
+    const seen = new Set();
+    return (categories || []).filter(cat => {
+      if (seen.has(cat.name)) return false;
+      seen.add(cat.name);
+      return true;
+    });
+  }, [categories]);
+  
   const isLocationLocked = isEditMode;
   
   // URL 쿼리 파라미터에서 zoneId 읽기 (챗봇에서 이동 시 사용)
@@ -1484,7 +1495,7 @@ const SellerPopupFormPage = ({
             <span className="text-[#EB0000] ml-[3px]">*</span>
           </label>
           <div className="flex flex-wrap gap-2">
-            {categories?.map((cat) => (
+            {uniqueCategories.map((cat) => (
               <button
                 key={cat.id}
                 type="button"

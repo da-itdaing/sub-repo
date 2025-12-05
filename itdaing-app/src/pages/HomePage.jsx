@@ -10,6 +10,7 @@ import { useMasterData } from '@/hooks/useMasterData';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
 import { normalizePopup, isPopupActive } from '@/utils/popupUtils';
+import { filterByWhitelist } from '@/config/homePopupConfig';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -30,15 +31,20 @@ const HomePage = () => {
   // };
 
   const normalizedPopups = useMemo(() => {
-    return (popups ?? []).map((popup) => {
+    // 화이트리스트 필터 적용 (설정 파일에서 WHITELIST_ENABLED가 true일 때만 동작)
+    const filteredPopups = filterByWhitelist(popups ?? []);
+    
+    return filteredPopups.map((popup) => {
       const normalized = normalizePopup(popup);
       const address = `${normalized.address || ''} ${normalized.locationName || ''}`.trim();
       let primaryRegion = gwangjuRegions.find((region) => address.includes(region)) || '기타';
       if (!address) {
         primaryRegion = '기타';
       }
+      // 카테고리 결정: styleTags는 스타일 태그이므로 카테고리에서 제외
+      // category, categoryTag, homeDisplay.categoryTag 순으로 우선
       const categoryTag =
-        normalized.styleTags?.[0] ||
+        normalized.category?.name ||  // 카테고리 객체인 경우 name 사용
         normalized.category ||
         normalized.categoryTag ||
         normalized.homeDisplay?.categoryTag ||
