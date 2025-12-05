@@ -88,9 +88,9 @@ const THEME_COLORS = {
 };
 
 /**
- * 플리마켓 팁 메시지 (로테이션)
+ * 플리마켓 팁 메시지 (로테이션) - 클릭 시 질문 전송
  */
-const MarketTipBanner = ({ mode, isLoading }) => {
+const MarketTipBanner = ({ mode, isLoading, onTipClick }) => {
   const tips = MARKET_TIPS[mode] || MARKET_TIPS.consumer;
   const theme = THEME_COLORS[mode] || THEME_COLORS.consumer;
   const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * tips.length));
@@ -110,13 +110,28 @@ const MarketTipBanner = ({ mode, isLoading }) => {
 
   const tip = tips[tipIndex];
 
+  // 팁 텍스트에서 따옴표 안의 질문 추출
+  const extractQuestion = (text) => {
+    const match = text.match(/"([^"]+)"/);
+    return match ? match[1] : text;
+  };
+
+  const handleClick = () => {
+    if (onTipClick) {
+      const question = extractQuestion(tip.text);
+      onTipClick(question);
+    }
+  };
+
   // 로딩 중이 아닐 때만 표시
   if (isLoading) return null;
 
   return (
     <div className="px-4 pb-2">
-      <div 
-        className={`flex items-center justify-center gap-2 py-2 px-3 bg-gradient-to-r ${theme.tipBg} rounded-xl border ${theme.tipBorder} transition-all duration-200 ${
+      <button 
+        type="button"
+        onClick={handleClick}
+        className={`w-full flex items-center justify-center gap-2 py-2 px-3 bg-gradient-to-r ${theme.tipBg} rounded-xl border ${theme.tipBorder} transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
         }`}
       >
@@ -125,7 +140,7 @@ const MarketTipBanner = ({ mode, isLoading }) => {
           <span className="text-base mr-1">{tip.emoji}</span>
           {tip.text}
         </span>
-      </div>
+      </button>
     </div>
   );
 };
@@ -251,8 +266,8 @@ const ChatLayout = ({ mode = 'consumer', guestId = null }) => {
         </aside>
       )}
 
-      {/* 팁 메시지 - 입력창 위에 항상 표시 (로딩 중 아닐 때) */}
-      <MarketTipBanner mode={mode} isLoading={isLoading} />
+      {/* 팁 메시지 - 입력창 위에 항상 표시 (클릭 시 질문 전송) */}
+      <MarketTipBanner mode={mode} isLoading={isLoading} onTipClick={handleSendMessage} />
 
       {/* 입력 영역 - 항상 보이게 */}
       <footer className="shrink-0 border-t border-gray-100 bg-white">
