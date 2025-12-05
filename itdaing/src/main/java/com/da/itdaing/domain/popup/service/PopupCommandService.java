@@ -121,11 +121,11 @@ public class PopupCommandService {
         ZoneCell zoneCell = zoneCellRepository.findById(request.zoneCellId())
             .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND, "선택한 셀을 찾을 수 없습니다."));
         
-        // ADMIN은 셀 소유권 검증도 건너뛰기
+        // ADMIN은 셀 소유권 및 상태 검증 건너뛰기
         if (!isAdmin) {
             validateZoneCellOwnership(zoneCell, userId);
+            validateZoneCellStatus(zoneCell);
         }
-        validateZoneCellStatus(zoneCell);
         validatePeriod(request.startDate(), request.endDate());
 
         popup.update(zoneCell,
