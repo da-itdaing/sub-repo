@@ -50,13 +50,11 @@ const RecommendationPanel = ({ items = [], mode = 'consumer' }) => {
   const [popupIdMap, setPopupIdMap] = useState({});
   const [isLoadingPopups, setIsLoadingPopups] = useState(false);
 
-  // 좌표가 있는 항목만 필터링 + 소비자 모드는 2개로 제한
-  const validItems = useMemo(() => {
-    const filtered = items.filter((item) => extractCoordinates(item).hasCoords);
-    // 소비자 모드: 최대 2개, 판매자 모드: 최대 3개
-    const maxItems = mode === 'consumer' ? 2 : 3;
-    return filtered.slice(0, maxItems);
-  }, [items, mode]);
+  // 좌표가 있는 항목만 필터링 (지도와 목록 일관성 유지)
+  const validItems = useMemo(
+    () => items.filter((item) => extractCoordinates(item).hasCoords),
+    [items]
+  );
 
   // 추천 결과가 변경되면 실제 DB에서 popup 찾기 (소비자 모드만)
   useEffect(() => {
