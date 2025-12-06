@@ -26,18 +26,29 @@ export const POPUP_WHITELIST = [
  * - 빈 배열이면 기존 로직대로 인기 팝업 표시
  * 
  * 아래 ID를 수정하여 캐러셀에 표시할 팝업을 선택하세요:
- * - 대인예술시장 만원의 행복: 1934
- * - 남도달밤야시장 시즌3탄: 1935
- * - 주말은 청춘: 1936
- * - 아트&플리마켓: 1937
  * - 완전럭키비키잖아: 1938
- * - 지구농장터: 1939
- * - 충장로 플리마켓: 1959
+ * - VERT Market: 1944
+ * - 남도달밤야시장 시즌3탄: 1935
+ * - INFORE MARKET: 1958
  * - 동명동 예술골목 플리마켓: 1961
- * - 송정역시장 플리마켓: 1955
- * - 아시아 컬처마켓: 1954
  */
-export const CAROUSEL_IDS = [1934, 1935, 1936, 1937, 1938];
+export const CAROUSEL_IDS = [1938, 1944, 1935, 1958, 1961];
+
+/**
+ * 리스트 셔플 (랜덤 정렬)
+ * 메인 홈의 팝업 순서를 랜덤하게 섞기 위한 유틸리티
+ */
+export const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+// 홈페이지 리스트 랜덤화 활성화 (캐러셀 제외)
+export const SHUFFLE_HOME_LIST = true;
 
 /**
  * 캐러셀 필터 함수

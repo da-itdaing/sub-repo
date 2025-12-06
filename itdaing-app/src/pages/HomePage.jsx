@@ -10,7 +10,7 @@ import { useMasterData } from '@/hooks/useMasterData';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/paths';
 import { normalizePopup, isPopupActive } from '@/utils/popupUtils';
-import { filterByWhitelist, getCarouselPopups } from '@/config/homePopupConfig';
+import { filterByWhitelist, getCarouselPopups, shuffleArray, SHUFFLE_HOME_LIST } from '@/config/homePopupConfig';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -90,14 +90,16 @@ const HomePage = () => {
     const filtered = normalizedPopups.filter(
       (popup) => isPopupActive(popup) && gwangjuRegions.includes(popup.primaryRegion)
     );
-    return filtered.length > 0 ? filtered : [];
+    // 랜덤 셔플 적용 (설정에서 활성화된 경우)
+    return filtered.length > 0 ? (SHUFFLE_HOME_LIST ? shuffleArray(filtered) : filtered) : [];
   }, [gwangjuRegions, normalizedPopups]);
 
   const categoryPopups = useMemo(() => {
     const filtered = normalizedPopups.filter(
       (popup) => isPopupActive(popup) && popup.categoryTag && popup.categoryTag !== '전체'
     );
-    return filtered.length > 0 ? filtered : [];
+    // 랜덤 셔플 적용 (설정에서 활성화된 경우)
+    return filtered.length > 0 ? (SHUFFLE_HOME_LIST ? shuffleArray(filtered) : filtered) : [];
   }, [normalizedPopups]);
 
   const handlePopupNavigate = (popupId) => {
