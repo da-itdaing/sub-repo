@@ -110,10 +110,17 @@ const sanitizeMarkdown = (text) => {
   result = result.replace(/([가-힣]+(축제|마켓|페스타|박람회|전시회|야시장))\s*-\s*([가-힣]+):/g, '$1\n- $3:');
   
   // 10. **bold** 제목 앞에 줄바꿈이 없으면 추가 (단, 문장 끝에서만)
-  // 예: "좋아요.**소상공인 플리마켓**" → "좋아요.\n\n**소상공인 플리마켓**"
   result = result.replace(/([.!?])(\*\*[가-힣a-zA-Z0-9\s]+\*\*)/g, '$1\n\n$2');
   
-  // 11. 마지막 정리 - 연속된 줄바꿈 정리
+  // 11. 마켓/입장 뒤에 바로 지역명이 오면 줄바꿈 추가
+  // 예: "예술 마켓동명동" → "예술 마켓\n\n동명동"
+  const locationNames = ['동명동', '충장로', '양림동', '대인동', '금남로', '송정역', '상무', '첨단', '수완', '유스퀘어', '전일빌딩'];
+  for (const loc of locationNames) {
+    const regex = new RegExp(`(마켓|입장|야시장|페스타|축제)\\s*(${loc})`, 'g');
+    result = result.replace(regex, '$1\n\n$2');
+  }
+  
+  // 12. 마지막 정리 - 연속된 줄바꿈 정리
   result = result.replace(/\n{4,}/g, '\n\n');
   
   return result.trim();
