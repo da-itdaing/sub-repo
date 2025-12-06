@@ -97,9 +97,9 @@ const ChatbotButton = ({ mode = 'floating', onClickOverride }) => {
               </div>
 
               <div className="px-5 py-4 space-y-3 text-sm text-gray-700">
-                <p>• 주말에 갈만한 플리마켓 있어?</p>
-                <p>• 충장로쪽 마켓 뭐 있어?</p>
-                <p>• 야시장 가고 싶은데</p>
+                <p>• 수공예품 파는 곳 없어?</p>
+                <p>• 동구 쪽에 갈만한 곳 없으려나?</p>
+                <p>• 강아지 데려갈 수 있는 곳!</p>
               </div>
 
               <div className="px-5 pb-5">
