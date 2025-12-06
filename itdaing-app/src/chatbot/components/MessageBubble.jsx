@@ -109,22 +109,24 @@ const sanitizeMarkdown = (text) => {
   // 9. 제목 뒤 바로 리스트가 오면 줄바꿈 추가
   result = result.replace(/([가-힣]+(축제|마켓|페스타|박람회|전시회|야시장))\s*-\s*([가-힣]+):/g, '$1\n- $3:');
   
-  // 10. **bold** 제목 앞에 줄바꿈이 없으면 추가
-  // 예: "예술 마켓**소상공인 플리마켓**" → "예술 마켓\n\n**소상공인 플리마켓**"
-  result = result.replace(/([^*\n])(\*\*[가-힣a-zA-Z0-9\s]+\*\*)/g, '$1\n\n$2');
+  // 10. **bold** 제목 앞에 줄바꿈이 없으면 추가 (단, 문장 끝에서만)
+  // 예: "좋아요.**소상공인 플리마켓**" → "좋아요.\n\n**소상공인 플리마켓**"
+  result = result.replace(/([.!?])(\*\*[가-힣a-zA-Z0-9\s]+\*\*)/g, '$1\n\n$2');
   
-  // 11. 마켓/플리마켓/팝업 이름 뒤에 새로운 마켓 이름이 오면 줄바꿈 추가
-  // 예: "예술 마켓소상공인 플리마켓" → "예술 마켓\n\n소상공인 플리마켓"
-  result = result.replace(/(마켓|페스타|야시장|전시회|박람회)\s*([가-힣]{2,})\s*(플리마켓|마켓|팝업|축제)/g, '$1\n\n$2 $3');
-  
-  // 12. "입장" 뒤에 한글 제목이 바로 오면 줄바꿈 추가 (리스트 항목 종료 후 새 섹션)
-  // 예: "무료입장소상공인" → "무료입장\n\n소상공인"
-  result = result.replace(/(무료입장|입장|예약)\s*([가-힣]{3,})/g, '$1\n\n$2');
-  
-  // 13. 마지막 정리 - 연속된 줄바꿈 정리
+  // 11. 마지막 정리 - 연속된 줄바꿈 정리
   result = result.replace(/\n{4,}/g, '\n\n');
   
   return result.trim();
+};
+
+/**
+ * HTML 특수문자 이스케이프
+ */
+const escapeHtml = (text) => {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 };
 
 /**
@@ -139,15 +141,18 @@ const parseMarkdown = (text, theme) => {
   const parsed = [];
 
   for (let line of lines) {
+    // HTML 특수문자 이스케이프 (마크다운 처리 전)
+    let safeLine = escapeHtml(line);
+    
     // **bold**
-    line = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-800">$1</strong>');
+    safeLine = safeLine.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-800">$1</strong>');
     // `code`
-    line = line.replace(/`([^`]+)`/g, `<code class="px-1.5 py-0.5 ${theme.codeBg} rounded text-[13px] font-mono">$1</code>`);
+    safeLine = safeLine.replace(/`([^`]+)`/g, `<code class="px-1.5 py-0.5 ${theme.codeBg} rounded text-[13px] font-mono">$1</code>`);
     // [링크](url)
-    line = line.replace(/\[([^\]]+)\]\(([^)]+)\)/g, `<a href="$2" target="_blank" class="${theme.link} underline underline-offset-2 transition-colors">$1</a>`);
+    safeLine = safeLine.replace(/\[([^\]]+)\]\(([^)]+)\)/g, `<a href="$2" target="_blank" class="${theme.link} underline underline-offset-2 transition-colors">$1</a>`);
 
     // 리스트 처리 (- 또는 숫자. 로 시작)
-    const listMatch = line.match(/^(\s*)([\d]+\.|-)\s+(.+)$/);
+    const listMatch = safeLine.match(/^(\s*)([\d]+\.|-)\s+(.+)$/);
     if (listMatch) {
       const [, , marker, content] = listMatch;
       const isOrdered = /^\d+\./.test(marker);
@@ -155,8 +160,8 @@ const parseMarkdown = (text, theme) => {
         ? `<span class="${theme.listNumber} font-medium">${marker}</span>` 
         : `<span class="${theme.listBullet}">•</span>`;
       parsed.push(`<div class="flex gap-2.5 py-0.5"><span class="shrink-0 w-4 text-right">${bullet}</span><span class="text-gray-600 leading-relaxed">${content}</span></div>`);
-    } else if (line.trim()) {
-      parsed.push(`<p class="leading-relaxed text-gray-600">${line}</p>`);
+    } else if (safeLine.trim()) {
+      parsed.push(`<p class="leading-relaxed text-gray-600">${safeLine}</p>`);
     } else {
       parsed.push('<div class="h-2"></div>');
     }
