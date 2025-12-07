@@ -87,27 +87,27 @@ const ZoneCardCompact = ({ item, index, isActive, onSelect }) => {
 
   return (
     <div
-      className={`shrink-0 w-[160px] p-3 rounded-xl cursor-pointer transition-all snap-start ${
+      className={`shrink-0 w-[140px] p-2.5 rounded-xl cursor-pointer transition-all snap-start ${
         isActive 
           ? 'bg-blue-50 ring-2 ring-blue-400 shadow-md' 
           : 'bg-white hover:bg-gray-50 shadow-sm border border-gray-200'
       }`}
       onClick={onSelect}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <span className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className={`flex-shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[9px] font-bold ${
           index === 0 
             ? 'bg-blue-500 text-white' 
             : 'bg-gray-200 text-gray-600'
         }`}>
           {index + 1}
         </span>
-        <p className="text-xs font-semibold text-gray-800 truncate flex-1">
+        <p className="text-[11px] font-semibold text-gray-800 truncate flex-1">
           {item.name || '존 이름 미정'}
         </p>
       </div>
       
-      <div className="text-[10px] text-gray-500 space-y-0.5">
+      <div className="text-[9px] text-gray-500 space-y-0.5">
         {item.district && <p>{item.district}</p>}
         {item.available_cells !== undefined && (
           <p className={item.available_cells > 0 ? 'text-green-600 font-medium' : ''}>
@@ -646,10 +646,10 @@ const SellerChatbotPage = ({ hideHeader = false, guestId = null }) => {
             />
           </main>
 
-          {/* 모바일 추천 존 카드 (가로 스크롤) */}
+          {/* 모바일 추천 존 카드 (가로 스크롤) - 최대 높이 제한 */}
           {hasRecommendations && (
-            <div className="lg:hidden shrink-0 bg-gray-50 border-t border-gray-200 py-3 px-4">
-              <div className="flex items-center justify-between mb-2">
+            <div className="lg:hidden shrink-0 bg-gray-50 border-t border-gray-200 py-2 px-4 max-h-[120px]">
+              <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-medium text-gray-600">추천 존 {recommendations.length}곳</span>
                 <button
                   type="button"
@@ -659,7 +659,7 @@ const SellerChatbotPage = ({ hideHeader = false, guestId = null }) => {
                   지도 보기
                 </button>
               </div>
-              <div className="flex gap-3 overflow-x-auto pb-2 snap-x scrollbar-hide">
+              <div className="flex gap-2 overflow-x-auto pb-1 snap-x scrollbar-hide">
                 {recommendations.map((item, index) => (
                   <ZoneCardCompact
                     key={resolveZoneId(item)}
@@ -699,8 +699,8 @@ const SellerChatbotPage = ({ hideHeader = false, guestId = null }) => {
             </div>
           )}
 
-          {/* 팁 배너 */}
-          <TipBanner isLoading={isLoading} />
+          {/* 팁 배너 - 추천 결과가 없을 때만 표시 */}
+          {!hasRecommendations && <TipBanner isLoading={isLoading} />}
 
           {/* 입력 영역 */}
           <footer className="shrink-0">
@@ -718,8 +718,8 @@ const SellerChatbotPage = ({ hideHeader = false, guestId = null }) => {
         </div>
       </div>
 
-      {/* 안내 */}
-      <p className="shrink-0 py-2 text-xs text-gray-400 text-center bg-white border-t border-gray-200">
+      {/* 안내 - 컴팩트 */}
+      <p className="shrink-0 py-1.5 text-[10px] text-gray-400 text-center bg-white border-t border-gray-200">
         AI 답변은 참고용이며, 실제 정책과 다를 수 있습니다.
       </p>
 
