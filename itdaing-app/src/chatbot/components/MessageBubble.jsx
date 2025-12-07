@@ -169,9 +169,9 @@ const parseMarkdown = (text, theme) => {
       const bullet = isOrdered 
         ? `<span class="${theme.listNumber} font-medium">${marker}</span>` 
         : `<span class="${theme.listBullet}">•</span>`;
-      parsed.push(`<div class="flex gap-2.5 py-0.5"><span class="shrink-0 w-4 text-right">${bullet}</span><span class="text-gray-600 leading-relaxed">${content}</span></div>`);
+      parsed.push(`<div class="flex gap-2.5 py-0.5"><span class="shrink-0 w-4 text-right">${bullet}</span><span class="flex-1 min-w-0 text-gray-600 leading-relaxed break-words">${content}</span></div>`);
     } else if (safeLine.trim()) {
-      parsed.push(`<p class="leading-relaxed text-gray-600">${safeLine}</p>`);
+      parsed.push(`<p class="leading-relaxed text-gray-600 break-words">${safeLine}</p>`);
     } else {
       parsed.push('<div class="h-2"></div>');
     }
@@ -210,19 +210,19 @@ const MessageBubble = ({ message, showCursor = false, mode = 'consumer' }) => {
       {/* 말풍선 */}
       <div
         className={clsx(
-          'max-w-[80%] text-[14px] leading-[1.6]',
+          'max-w-[80%] text-[14px] leading-[1.6] break-words overflow-hidden',
           isBot
             ? 'bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm ring-1 ring-gray-100'
             : `bg-gradient-to-br ${theme.userBg} text-white rounded-2xl rounded-tr-sm px-4 py-3 shadow-md ${theme.userShadow}`,
         )}
       >
         {isBot ? (
-          <div className="space-y-1">
-            <span dangerouslySetInnerHTML={{ __html: htmlContent }} />
+          <div className="space-y-1 break-words">
+            <span className="break-words" dangerouslySetInnerHTML={{ __html: htmlContent }} />
             {showCursor && <StreamingCursor color={theme.cursor} />}
           </div>
         ) : (
-          <div className="whitespace-pre-wrap font-medium">{message.text}</div>
+          <div className="whitespace-pre-wrap font-medium break-words">{message.text}</div>
         )}
       </div>
     </div>
