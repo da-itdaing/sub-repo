@@ -117,6 +117,13 @@ public class WishlistService {
             Long cellId = zoneCell != null ? zoneCell.getId() : null;
             String cellName = zoneCell != null ? zoneCell.getLabel() : null;
             String address = zoneCell != null ? zoneCell.getDetailedAddress() : null;
+            
+            // 행정구역 정보 (Region)
+            Long regionId = (zoneArea != null && zoneArea.getRegion() != null) 
+                ? zoneArea.getRegion().getId() : null;
+            String regionName = (zoneArea != null && zoneArea.getRegion() != null) 
+                ? zoneArea.getRegion().getName() : null;
+            
             Double lat = null;
             Double lng = null;
 
@@ -169,6 +176,8 @@ public class WishlistService {
                 cellName,
                 locationName,
                 address,
+                regionId,           // 행정구역 ID
+                regionName,         // 행정구역 이름 (동구, 서구 등)
                 lat,
                 lng,
                 status,
