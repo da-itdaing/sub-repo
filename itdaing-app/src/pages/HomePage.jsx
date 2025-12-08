@@ -36,11 +36,24 @@ const HomePage = () => {
     
     return filteredPopups.map((popup) => {
       const normalized = normalizePopup(popup);
-      const address = `${normalized.address || ''} ${normalized.locationName || ''}`.trim();
-      let primaryRegion = gwangjuRegions.find((region) => address.includes(region)) || '기타';
-      if (!address) {
-        primaryRegion = '기타';
+      
+      // 구역 결정: 백엔드에서 제공하는 regionName 우선 사용
+      // regionName이 없으면 address/locationName에서 추출 (폴백)
+      let primaryRegion = '기타';
+      if (normalized.regionName && gwangjuRegions.includes(normalized.regionName)) {
+        // 백엔드에서 제공하는 regionName이 광주 5개구에 포함되면 사용
+        primaryRegion = normalized.regionName;
+      } else {
+        // 폴백: address + locationName에서 구 이름 추출
+        const address = `${normalized.address || ''} ${normalized.locationName || ''}`.trim();
+        if (address) {
+          const foundRegion = gwangjuRegions.find((region) => address.includes(region));
+          if (foundRegion) {
+            primaryRegion = foundRegion;
+          }
+        }
       }
+      
       // 카테고리 결정: categoryIds를 사용해서 카테고리 이름 찾기
       // categoryIds[0]을 사용해 마스터 데이터에서 카테고리 이름 조회
       let categoryTag = '전체';

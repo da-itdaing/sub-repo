@@ -269,6 +269,8 @@ public class PopupQueryService {
         String updatedAt = formatDateTime(popup.getUpdatedAt());
         String locationName = popup.getZoneCell().getZoneArea().getName();
         String address = popup.getZoneCell().getDetailedAddress();
+        Long regionId = popup.getZoneCell().getZoneArea().getRegion().getId();
+        String regionName = popup.getZoneCell().getZoneArea().getRegion().getName();
 
         Double latitude = null;
         Double longitude = null;
@@ -293,6 +295,8 @@ public class PopupQueryService {
             popup.getZoneCell().getLabel(),
             locationName,
             address,
+            regionId,
+            regionName,
             latitude,
             longitude,
             popup.getApprovalStatus().name(),

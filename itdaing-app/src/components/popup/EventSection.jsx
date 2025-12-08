@@ -32,18 +32,19 @@ const EventSection = ({
     if (!filterType || popups.length === 0) return [];
     
     const raw = popups.map((popup) => {
-        if (filterType === 'region') {
-        // 광주 5개구 필터링
-        const region = popup.primaryRegion || popup.regionTag || popup.location?.split?.(' ')?.[0];
-        if (['동구', '서구', '남구', '북구', '광산구', '광주'].some(r => region?.includes(r))) {
+      if (filterType === 'region') {
+        // primaryRegion 또는 regionName 사용 (백엔드에서 제공)
+        const region = popup.primaryRegion || popup.regionName || popup.regionTag;
+        // 광주 5개구만 필터링
+        if (['동구', '서구', '남구', '북구', '광산구'].includes(region)) {
           return region;
         }
         return null;
-        }
-        if (filterType === 'category') {
-          return popup.categoryTag || popup.categories?.[0];
-        }
-        return null;
+      }
+      if (filterType === 'category') {
+        return popup.categoryTag || popup.categories?.[0];
+      }
+      return null;
     }).filter(Boolean);
 
     const unique = Array.from(new Set(raw));
@@ -61,20 +62,22 @@ const EventSection = ({
 
     // 2. 선택된 필터 적용
     if (selectedFilter !== '전체') {
-    if (filterType === 'region') {
+      if (filterType === 'region') {
         result = result.filter((popup) => {
-        const region = popup.primaryRegion || popup.regionTag || popup.location?.split?.(' ')?.[0];
-        return region === selectedFilter;
-      });
+          // primaryRegion을 우선 사용 (HomePage에서 설정됨)
+          // regionName은 백엔드에서 직접 제공하는 행정구역 이름
+          const region = popup.primaryRegion || popup.regionName || popup.regionTag;
+          return region === selectedFilter;
+        });
       } else if (filterType === 'category') {
         result = result.filter((popup) => {
-        if (popup.categoryTag) return popup.categoryTag === selectedFilter;
-        if (Array.isArray(popup.categories)) {
-          return popup.categories.some((cat) => cat === selectedFilter);
-        }
-        return false;
-      });
-    }
+          if (popup.categoryTag) return popup.categoryTag === selectedFilter;
+          if (Array.isArray(popup.categories)) {
+            return popup.categories.some((cat) => cat === selectedFilter);
+          }
+          return false;
+        });
+      }
     }
 
     return result;

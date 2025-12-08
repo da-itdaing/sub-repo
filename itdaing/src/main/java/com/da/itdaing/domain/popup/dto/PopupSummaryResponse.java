@@ -13,6 +13,8 @@ public record PopupSummaryResponse(
     String cellName,
     String locationName,
     String address,
+    Long regionId,
+    String regionName,
     Double latitude,
     Double longitude,
     String status,
