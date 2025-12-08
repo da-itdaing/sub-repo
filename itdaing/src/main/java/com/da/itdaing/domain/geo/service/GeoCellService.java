@@ -10,6 +10,7 @@ import com.da.itdaing.domain.geo.repository.ZoneAreaRepository;
 import com.da.itdaing.domain.geo.repository.ZoneCellRepository;
 import com.da.itdaing.domain.user.entity.Users;
 import com.da.itdaing.domain.user.repository.UserRepository;
+import com.da.itdaing.global.infra.ChatbotSyncClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class GeoCellService {
     private final ZoneCellRepository cellRepo;
     private final ZoneAreaRepository areaRepo;
     private final UserRepository userRepo;
+    private final ChatbotSyncClient chatbotSyncClient;
 
     /** 관리자: 셀 생성 */
     public CellResponse createCell(CreateCellRequest req) {
@@ -73,6 +75,10 @@ public class GeoCellService {
             .build();
 
         cellRepo.save(cell);
+
+        // 셀이 추가되면 해당 존의 정보를 갱신 (판매자 챗봇용)
+        chatbotSyncClient.syncZone(area.getId());
+
         return toDto(cell);
     }
 
@@ -133,6 +139,10 @@ public class GeoCellService {
         );
 
         cellRepo.save(existingCell);
+
+        // 셀이 수정되면 해당 존의 정보를 갱신 (판매자 챗봇용)
+        chatbotSyncClient.syncZone(area.getId());
+
         return toDto(existingCell);
     }
 
@@ -141,10 +151,15 @@ public class GeoCellService {
         ZoneCell cell = cellRepo.findById(cellId)
             .orElseThrow(() -> new IllegalArgumentException("셀을 찾을 수 없습니다: " + cellId));
 
+        Long zoneAreaId = cell.getZoneArea().getId();
+
         // 연관된 팝업이 있는지 확인 (선택사항: 경고만 표시하거나 삭제 방지)
         // 여기서는 삭제를 허용하되, 데이터베이스 외래키 제약조건에 의해 팝업이 있으면 삭제 실패
 
         cellRepo.delete(cell);
+
+        // 셀이 삭제되면 해당 존의 정보를 갱신 (판매자 챗봇용)
+        chatbotSyncClient.syncZone(zoneAreaId);
     }
 
     /** 관리자: 셀 목록 조회 (필터링 지원) */

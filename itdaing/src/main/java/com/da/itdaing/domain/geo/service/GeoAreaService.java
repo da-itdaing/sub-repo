@@ -7,6 +7,7 @@ import com.da.itdaing.domain.geo.entity.*;
 import com.da.itdaing.domain.geo.repository.*;
 import com.da.itdaing.domain.master.entity.Region;
 import com.da.itdaing.domain.master.repository.RegionRepository;
+import com.da.itdaing.global.infra.ChatbotSyncClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class GeoAreaService {
 
     private final ZoneAreaRepository areaRepo;
     private final RegionRepository regionRepo;
+    private final ChatbotSyncClient chatbotSyncClient;
 
     public AreaResponse createArea(CreateAreaRequest req) {
         Region region = null;
@@ -37,6 +39,9 @@ public class GeoAreaService {
             .build();
 
         areaRepo.save(area);
+
+        // PGVector 동기화 (비동기) - 판매자 챗봇용
+        chatbotSyncClient.syncZone(area.getId());
 
         return AreaResponse.builder()
             .id(Objects.requireNonNull(area.getId()))
@@ -101,6 +106,9 @@ public class GeoAreaService {
 
         areaRepo.save(area);
 
+        // PGVector 동기화 (비동기) - 판매자 챗봇용
+        chatbotSyncClient.syncZone(area.getId());
+
         return AreaResponse.builder()
             .id(Objects.requireNonNull(area.getId()))
             .name(area.getName())
@@ -123,6 +131,9 @@ public class GeoAreaService {
         // 여기서는 삭제를 허용하되, 데이터베이스 외래키 제약조건에 의해 셀이 있으면 삭제 실패
         
         areaRepo.delete(area);
+
+        // PGVector 임베딩 삭제 (비동기) - 판매자 챗봇용
+        chatbotSyncClient.deleteZone(areaId);
     }
 
     /** 관리자: 구역 상세 조회 */

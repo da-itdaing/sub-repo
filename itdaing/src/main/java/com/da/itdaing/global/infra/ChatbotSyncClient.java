@@ -87,6 +87,58 @@ public class ChatbotSyncClient {
     }
 
     /**
+     * Zone 생성/수정 시 임베딩 동기화 (판매자 챗봇용)
+     *
+     * @param zoneId 동기화할 zone_area ID
+     */
+    @Async
+    public void syncZone(Long zoneId) {
+        if (!syncEnabled) {
+            log.debug("[ChatbotSync] 동기화 비활성화 상태, zone={} 스킵", zoneId);
+            return;
+        }
+
+        try {
+            String url = chatbotBaseUrl + "/api/sync/zone";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            Map<String, Object> body = Map.of("zone_id", zoneId);
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+            restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+            log.info("[ChatbotSync] Zone {} 동기화 완료", zoneId);
+
+        } catch (Exception e) {
+            log.warn("[ChatbotSync] Zone {} 동기화 실패: {}", zoneId, e.getMessage());
+            // 동기화 실패해도 메인 로직에 영향 없음
+        }
+    }
+
+    /**
+     * Zone 삭제 시 임베딩 제거 (판매자 챗봇용)
+     *
+     * @param zoneId 삭제할 zone_area ID
+     */
+    @Async
+    public void deleteZone(Long zoneId) {
+        if (!syncEnabled) {
+            log.debug("[ChatbotSync] 동기화 비활성화 상태, zone={} 삭제 스킵", zoneId);
+            return;
+        }
+
+        try {
+            String url = chatbotBaseUrl + "/api/sync/zone/" + zoneId;
+            restTemplate.delete(url);
+            log.info("[ChatbotSync] Zone {} 임베딩 삭제 완료", zoneId);
+
+        } catch (Exception e) {
+            log.warn("[ChatbotSync] Zone {} 임베딩 삭제 실패: {}", zoneId, e.getMessage());
+            // 삭제 실패해도 메인 로직에 영향 없음
+        }
+    }
+
+    /**
      * 동기화 상태 확인 (Health check용)
      *
      * @return 동기화 서비스 상태
