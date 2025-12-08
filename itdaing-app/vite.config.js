@@ -73,7 +73,8 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        // Spring Boot 백엔드: 로컬이면 localhost:8080, 원격이면 Test Backend EC2
+        target: process.env.VITE_API_TARGET || 'http://10.0.139.232:8080',
         changeOrigin: true,
         secure: false,
       },
