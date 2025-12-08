@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+
 @RestController
 @RequestMapping("/api/geo/cells")
 @RequiredArgsConstructor
@@ -22,7 +24,12 @@ public class GeoCellController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "셀 생성 (관리자)")
     @PostMapping
-    public ApiResponse<CellResponse> createCell(@RequestBody CreateCellRequest req) {
+    public ApiResponse<CellResponse> createCell(Principal principal,
+                                                @RequestBody CreateCellRequest req) {
+        // ownerId가 없으면 인증된 사용자(관리자) ID 사용
+        if (req.getOwnerId() == null && principal != null) {
+            req.setOwnerId(Long.valueOf(principal.getName()));
+        }
         return ApiResponse.success(cellService.createCell(req));
     }
 
