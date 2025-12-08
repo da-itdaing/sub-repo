@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Map, Polygon, MapMarker, CustomOverlayMap } from "react-kakao-maps-sdk";
 import { useToast } from "@/hooks/useToast";
+import { useAuthStore } from "@/store/authStore";
 import {
   createArea,
   listAreas,
@@ -96,6 +97,7 @@ const parseCellGeometry = (geometryData) => {
 const AdminZoneCreatePage = () => {
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const user = useAuthStore((state) => state.user);
 
   // 폼 상태
   const [zoneName, setZoneName] = useState("");
@@ -376,7 +378,7 @@ const AdminZoneCreatePage = () => {
     try {
       await createCell({
         areaId: selectedArea.id,
-        ownerId: 1, // TODO: 실제 운영 시 로그인 사용자 ID로 대체
+        ownerId: user?.id || 1,
         label,
         detailedAddress: "",
         geometryData: cellGeoJson,

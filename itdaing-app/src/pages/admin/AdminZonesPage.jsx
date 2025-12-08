@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import { ROUTES } from '@/routes/paths';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/useToast';
+import { useAuthStore } from '@/store/authStore';
 import {
   listAreas,
   listCells,
@@ -81,6 +82,7 @@ const AdminZonesPage = () => {
   const location = useLocation();
   const queryClient = useQueryClient();
   const { addToast } = useToast();
+  const user = useAuthStore((state) => state.user);
 
   // 대시보드에서 전달된 초기 선택 상태
   const initialDistrictId = location.state?.selectedDistrictId;
@@ -345,6 +347,7 @@ const AdminZonesPage = () => {
 
     createCellMutation.mutate({
       areaId: selectedArea.id,
+      ownerId: user?.id || 1,
       label: newCellForm.label.trim(),
       detailedAddress: newCellForm.detailedAddress.trim() || null,
       geometryData,

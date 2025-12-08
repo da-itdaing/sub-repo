@@ -608,6 +608,15 @@ const SellerPopupFormPage = ({
   // 셀 선택
   const handleSelectCell = (cell) => {
     if (isLocationLocked) return;
+    // APPROVED 상태의 셀만 선택 가능
+    if (cell?.status !== 'APPROVED') {
+      addToast({
+        title: '선택할 수 없는 셀입니다.',
+        description: '승인된 셀만 선택할 수 있습니다.',
+        variant: 'error',
+      });
+      return;
+    }
     setSelectedCell(cell);
   };
 
@@ -1256,9 +1265,11 @@ const SellerPopupFormPage = ({
                           : '셀을 선택하세요'
                         : '먼저 존을 선택하세요'}
                   </option>
-                  {cells.map((cell) => (
+                  {cells
+                    .filter((cell) => cell.status === 'APPROVED')
+                    .map((cell) => (
                     <option key={cell.id} value={cell.id}>
-                      {cell.label} {cell.status !== 'APPROVED' && `(${cell.status})`}
+                      {cell.label}
                     </option>
                   ))}
                 </select>

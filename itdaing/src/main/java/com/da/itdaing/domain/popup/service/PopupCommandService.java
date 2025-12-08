@@ -176,6 +176,12 @@ public class PopupCommandService {
 
 
     private void validateZoneCellOwnership(ZoneCell zoneCell, Long sellerId) {
+        // 승인된 셀(APPROVED)은 모든 판매자가 사용 가능
+        // 이를 통해 관리자가 생성한 공용 셀도 판매자가 선택할 수 있음
+        if (zoneCell.getStatus() == ZoneStatus.APPROVED) {
+            return;
+        }
+        // 승인되지 않은 셀은 소유자만 사용 가능
         if (!Objects.equals(zoneCell.getOwner().getId(), sellerId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED, "선택한 셀에 대한 권한이 없습니다.");
         }
