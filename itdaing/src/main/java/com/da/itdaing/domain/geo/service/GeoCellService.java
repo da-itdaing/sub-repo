@@ -258,7 +258,13 @@ public class GeoCellService {
 
         GeometryFactory gf = new GeometryFactory();
 
-        if ("Polygon".equalsIgnoreCase(type)) {
+        if ("Point".equalsIgnoreCase(type)) {
+            // Point: coordinates = [lng, lat]
+            JsonNode coords = root.get("coordinates");
+            double lng = coords.get(0).asDouble();
+            double lat = coords.get(1).asDouble();
+            return gf.createPoint(new Coordinate(lng, lat));
+        } else if ("Polygon".equalsIgnoreCase(type)) {
             return polygonFromCoords(gf, root.get("coordinates"));
         } else if ("MultiPolygon".equalsIgnoreCase(type)) {
             return multiPolygonFromCoords(gf, root.get("coordinates"));
