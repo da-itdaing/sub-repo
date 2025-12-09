@@ -44,25 +44,27 @@ const createMarkerSvg = (status) => {
 
   // 승인: 초록색 체크 마커, 대기: 주황색 시계 마커, 거절: 빨간색 X 마커
   const bgColor = isApproved ? '#10B981' : isPending ? '#F59E0B' : '#EF4444';
+  
+  // 아이콘 - 마커 중심(20, 18) 기준으로 좌표 조정
   const icon = isApproved
-    ? '<path d="M15 22l-4-4 1.4-1.4 2.6 2.6 6.6-6.6L23 14z" fill="white"/>' // 체크 마크
+    ? '<path d="M15 18l3 3 7-7" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' // 체크 마크
     : isPending
-      ? '<circle cx="18" cy="18" r="5" fill="none" stroke="white" stroke-width="1.5"/><path d="M18 15v4l2 1" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"/>' // 시계
-      : '<path d="M16 16l4 4m0-4l-4 4" stroke="white" stroke-width="2" stroke-linecap="round"/>'; // X
+      ? '<circle cx="20" cy="18" r="5" fill="none" stroke="white" stroke-width="1.5"/><path d="M20 15v4l2.5 1.5" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"/>' // 시계
+      : '<path d="M16 14l8 8M24 14l-8 8" stroke="white" stroke-width="2.5" stroke-linecap="round"/>'; // X
 
   const statusText = isApproved ? '승인' : isPending ? '대기' : '거절';
 
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">
       <defs>
-        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+        <filter id="shadow-${status}" x="-20%" y="-20%" width="140%" height="140%">
           <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
         </filter>
       </defs>
       <path d="M20 48 C20 48, 5 30, 5 18 C5 9.7 11.7 3 20 3 C28.3 3 35 9.7 35 18 C35 30, 20 48, 20 48Z" 
-            fill="${bgColor}" filter="url(#shadow)"/>
+            fill="${bgColor}" filter="url(#shadow-${status})"/>
       <circle cx="20" cy="18" r="10" fill="white" opacity="0.2"/>
-      <g transform="translate(2, 0)">${icon}</g>
+      ${icon}
       <text x="20" y="32" text-anchor="middle" fill="white" font-size="6" font-weight="bold">${statusText}</text>
     </svg>
   `;
