@@ -37,6 +37,7 @@ public class GeoDtos {
         private String district;    // 구 이름 (예: "동구") - 프론트엔드 호환용
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
+        private ZoneCommercialInfoResponse commercialInfo;  // 상권 정보
     }
 
     @Getter @Builder @AllArgsConstructor @NoArgsConstructor

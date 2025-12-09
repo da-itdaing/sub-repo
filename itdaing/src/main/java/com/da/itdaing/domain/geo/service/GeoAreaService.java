@@ -3,6 +3,7 @@ package com.da.itdaing.domain.geo.service;
 
 import com.da.itdaing.domain.common.enums.AreaStatus;
 import com.da.itdaing.domain.geo.dto.GeoDtos.*;
+import com.da.itdaing.domain.geo.dto.ZoneCommercialInfoResponse;
 import com.da.itdaing.domain.geo.entity.*;
 import com.da.itdaing.domain.geo.repository.*;
 import com.da.itdaing.domain.master.entity.Region;
@@ -12,7 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +24,7 @@ public class GeoAreaService {
 
     private final ZoneAreaRepository areaRepo;
     private final RegionRepository regionRepo;
+    private final ZoneCommercialInfoRepository commercialInfoRepo;
     private final ChatbotSyncClient chatbotSyncClient;
 
     public AreaResponse createArea(CreateAreaRequest req) {
@@ -53,8 +57,14 @@ public class GeoAreaService {
             ? areaRepo.findAll(pageable)
             : areaRepo.findByNameContainingIgnoreCase(keyword, pageable);
 
+        // 상권 정보 일괄 조회
+        List<Long> areaIds = data.getContent().stream().map(ZoneArea::getId).toList();
+        Map<Long, ZoneCommercialInfo> commercialInfoMap = loadCommercialInfoByZone(areaIds);
+
         return AreaListResponse.builder()
-            .items(data.getContent().stream().map(this::toAreaResponse).toList())
+            .items(data.getContent().stream()
+                .map(area -> toAreaResponse(area, commercialInfoMap.get(area.getId())))
+                .toList())
             .totalElements(data.getTotalElements())
             .totalPages(data.getTotalPages())
             .page(page)
@@ -63,9 +73,25 @@ public class GeoAreaService {
     }
     
     /**
-     * ZoneArea → AreaResponse 변환 (regionName, district 포함)
+     * 여러 zone ID에 대한 상권 정보를 일괄 조회
      */
-    private AreaResponse toAreaResponse(ZoneArea area) {
+    private Map<Long, ZoneCommercialInfo> loadCommercialInfoByZone(Collection<Long> zoneIds) {
+        if (zoneIds == null || zoneIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return commercialInfoRepo.findByZoneIdIn(zoneIds)
+            .stream()
+            .collect(Collectors.toMap(
+                ZoneCommercialInfo::getZoneId,
+                Function.identity(),
+                (existing, replacement) -> existing
+            ));
+    }
+    
+    /**
+     * ZoneArea → AreaResponse 변환 (regionName, district, commercialInfo 포함)
+     */
+    private AreaResponse toAreaResponse(ZoneArea area, ZoneCommercialInfo commercialInfo) {
         String regionName = null;
         String district = null;
         
@@ -87,7 +113,16 @@ public class GeoAreaService {
             .district(district)
             .createdAt(area.getCreatedAt())
             .updatedAt(area.getUpdatedAt())
+            .commercialInfo(ZoneCommercialInfoResponse.from(commercialInfo))
             .build();
+    }
+    
+    /**
+     * ZoneArea → AreaResponse 변환 (상권 정보 없이 - 단일 조회용)
+     */
+    private AreaResponse toAreaResponse(ZoneArea area) {
+        ZoneCommercialInfo info = commercialInfoRepo.findByZoneId(area.getId()).orElse(null);
+        return toAreaResponse(area, info);
     }
     
     /**
