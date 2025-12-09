@@ -246,9 +246,30 @@ const SellerPopupFormPage = ({
     const matchedDistrict = districts.find(d => districtName.includes(d));
     
     if (matchedDistrict && commercialData.districts?.[matchedDistrict]) {
+      const districtData = commercialData.districts[matchedDistrict];
+      
+      // 동(neighborhood) 이름 매칭 시도
+      // 존 이름이나 district에서 동 이름 추출 (예: "동명동", "충장동", "금남로")
+      let matchedNeighborhood = null;
+      let neighborhoodData = null;
+      
+      if (districtData.neighborhoods) {
+        const neighborhoodNames = Object.keys(districtData.neighborhoods);
+        // 존 이름에서 동 이름 찾기
+        matchedNeighborhood = neighborhoodNames.find(dong => 
+          selectedArea.name?.includes(dong) || districtName.includes(dong)
+        );
+        
+        if (matchedNeighborhood) {
+          neighborhoodData = districtData.neighborhoods[matchedNeighborhood];
+        }
+      }
+      
       return {
         district: matchedDistrict,
-        data: commercialData.districts[matchedDistrict]
+        data: districtData,
+        neighborhood: matchedNeighborhood,
+        neighborhoodData: neighborhoodData
       };
     }
     return null;
@@ -1091,67 +1112,160 @@ const SellerPopupFormPage = ({
                           <div className="flex items-center gap-1.5 mb-2">
                             <Store className="h-3.5 w-3.5 text-blue-600" />
                             <h5 className="text-[11px] font-semibold text-gray-800">
-                              {commercialInfo.district} 상권
+                              {commercialInfo.neighborhood ? `${commercialInfo.neighborhood} 상권` : `${commercialInfo.district} 상권`}
                             </h5>
                           </div>
                           
-                          <div className="space-y-1.5 text-[10px]">
-                            {/* 인구 + 주요상권 */}
-                            <div className="flex gap-1.5">
-                              {commercialInfo.data.total_population && (
-                                <div className="flex-1 bg-white rounded px-2 py-1.5 border border-blue-100">
-                                  <span className="text-gray-400 text-[9px]">거주</span>
-                                  <p className="font-semibold text-gray-700">
-                                    {(commercialInfo.data.total_population / 1000).toFixed(0)}천명
+                          {/* 동(neighborhood) 상세 정보가 있는 경우 - 우선 표시 */}
+                          {commercialInfo.neighborhoodData ? (
+                            <div className="space-y-1.5 text-[10px]">
+                              {/* 유동인구 정보 */}
+                              <div className="flex gap-1.5">
+                                {commercialInfo.neighborhoodData.population && (
+                                  <div className="flex-1 bg-white rounded px-2 py-1.5 border border-blue-100">
+                                    <span className="text-gray-400 text-[9px]">거주</span>
+                                    <p className="font-semibold text-gray-700">
+                                      {commercialInfo.neighborhoodData.population.toLocaleString()}명
+                                    </p>
+                                  </div>
+                                )}
+                                {commercialInfo.neighborhoodData.floating_population && (
+                                  <div className="flex-[2] bg-white rounded px-2 py-1.5 border border-blue-100">
+                                    <span className="text-gray-400 text-[9px]">유동인구 (주말)</span>
+                                    <p className="font-semibold text-gray-700">
+                                      {(commercialInfo.neighborhoodData.floating_population.weekend_avg / 1000).toFixed(0)}천명
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* 피크 시간대 */}
+                              {commercialInfo.neighborhoodData.floating_population?.peak_hours && (
+                                <div className="bg-white rounded px-2 py-1.5 border border-blue-100">
+                                  <span className="text-gray-400 text-[9px]">⏰ 피크 시간</span>
+                                  <p className="font-medium text-gray-700">
+                                    {commercialInfo.neighborhoodData.floating_population.peak_hours.join(', ')}
                                   </p>
                                 </div>
                               )}
-                              {commercialInfo.data.main_commercial_areas && (
-                                <div className="flex-[2] bg-white rounded px-2 py-1.5 border border-blue-100">
-                                  <span className="text-gray-400 text-[9px]">주요 상권</span>
-                                  <p className="font-medium text-gray-700 truncate">
-                                    {commercialInfo.data.main_commercial_areas.slice(0, 2).join(', ')}
+                              
+                              {/* 지역 특성 */}
+                              {commercialInfo.neighborhoodData.characteristics && (
+                                <div className="flex flex-wrap gap-1">
+                                  {commercialInfo.neighborhoodData.characteristics.slice(0, 4).map((char, i) => (
+                                    <span key={i} className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[9px]">
+                                      {char}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {/* 추천 업종 (동 레벨) */}
+                              {commercialInfo.neighborhoodData.commercial_info?.recommended_business && (
+                                <div className="mt-2 p-2 bg-green-50 rounded border border-green-100">
+                                  <div className="text-green-600 text-[9px] font-medium mb-1">
+                                    💡 추천 업종
+                                  </div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {commercialInfo.neighborhoodData.commercial_info.recommended_business.slice(0, 4).map((biz, i) => (
+                                      <span key={i} className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-[9px]">
+                                        {biz}
+                                      </span>
+                                    ))}
+                                  </div>
+                                  {commercialInfo.neighborhoodData.commercial_info.avg_rent_per_pyeong && (
+                                    <p className="mt-1 text-[9px] text-gray-500">
+                                      임대료: {commercialInfo.neighborhoodData.commercial_info.avg_rent_per_pyeong.toLocaleString()}원/평
+                                    </p>
+                                  )}
+                                  {commercialInfo.neighborhoodData.commercial_info.competition_level && (
+                                    <p className="text-[9px] text-gray-500">
+                                      경쟁도: {commercialInfo.neighborhoodData.commercial_info.competition_level}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {/* 주변 시설 */}
+                              {commercialInfo.neighborhoodData.nearby_facilities && (
+                                <div className="mt-1.5 p-2 bg-gray-50 rounded border border-gray-100">
+                                  <span className="text-gray-500 text-[9px]">🏢 주변 시설</span>
+                                  <p className="text-[10px] text-gray-600 mt-0.5">
+                                    {commercialInfo.neighborhoodData.nearby_facilities.slice(0, 3).join(', ')}
+                                  </p>
+                                </div>
+                              )}
+                              
+                              {/* 지역 이벤트 */}
+                              {commercialInfo.neighborhoodData.events && (
+                                <div className="mt-1.5 p-2 bg-purple-50 rounded border border-purple-100">
+                                  <span className="text-purple-600 text-[9px]">🎉 지역 이벤트</span>
+                                  <p className="text-[10px] text-purple-700 mt-0.5">
+                                    {commercialInfo.neighborhoodData.events.slice(0, 2).join(', ')}
                                   </p>
                                 </div>
                               )}
                             </div>
-                            
-                            {/* 지역 특성 */}
-                            {commercialInfo.data.characteristics && (
-                              <div className="flex flex-wrap gap-1">
-                                {commercialInfo.data.characteristics.slice(0, 3).map((char, i) => (
-                                  <span key={i} className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[9px]">
-                                    {char}
-                                  </span>
-                                ))}
+                          ) : (
+                            /* 구(district) 레벨 정보만 있는 경우 - 기존 로직 */
+                            <div className="space-y-1.5 text-[10px]">
+                              {/* 인구 + 주요상권 */}
+                              <div className="flex gap-1.5">
+                                {commercialInfo.data.total_population && (
+                                  <div className="flex-1 bg-white rounded px-2 py-1.5 border border-blue-100">
+                                    <span className="text-gray-400 text-[9px]">거주</span>
+                                    <p className="font-semibold text-gray-700">
+                                      {(commercialInfo.data.total_population / 1000).toFixed(0)}천명
+                                    </p>
+                                  </div>
+                                )}
+                                {commercialInfo.data.main_commercial_areas && (
+                                  <div className="flex-[2] bg-white rounded px-2 py-1.5 border border-blue-100">
+                                    <span className="text-gray-400 text-[9px]">주요 상권</span>
+                                    <p className="font-medium text-gray-700 truncate">
+                                      {commercialInfo.data.main_commercial_areas.slice(0, 2).join(', ')}
+                                    </p>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          
-                          {/* 추천 업종 */}
-                          {commercialInfo.data.neighborhoods && Object.keys(commercialInfo.data.neighborhoods).length > 0 && (() => {
-                            const firstNeighborhood = Object.values(commercialInfo.data.neighborhoods)[0];
-                            const commercialDetail = firstNeighborhood?.commercial_info;
-                            return commercialDetail?.recommended_business ? (
-                              <div className="mt-2 p-2 bg-green-50 rounded border border-green-100">
-                                <div className="text-green-600 text-[9px] font-medium mb-1">
-                                  💡 추천 업종
-                                </div>
+                              
+                              {/* 지역 특성 */}
+                              {commercialInfo.data.characteristics && (
                                 <div className="flex flex-wrap gap-1">
-                                  {commercialDetail.recommended_business.slice(0, 4).map((biz, i) => (
-                                    <span key={i} className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-[9px]">
-                                      {biz}
+                                  {commercialInfo.data.characteristics.slice(0, 3).map((char, i) => (
+                                    <span key={i} className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[9px]">
+                                      {char}
                                     </span>
                                   ))}
                                 </div>
-                                {commercialDetail.avg_rent_per_pyeong && (
-                                  <p className="mt-1 text-[9px] text-gray-500">
-                                    임대료: {commercialDetail.avg_rent_per_pyeong.toLocaleString()}원/평
-                                  </p>
-                                )}
-                              </div>
-                            ) : null;
-                          })()}
+                              )}
+                              
+                              {/* 추천 업종 (구 레벨) */}
+                              {commercialInfo.data.neighborhoods && Object.keys(commercialInfo.data.neighborhoods).length > 0 && (() => {
+                                const firstNeighborhood = Object.values(commercialInfo.data.neighborhoods)[0];
+                                const commercialDetail = firstNeighborhood?.commercial_info;
+                                return commercialDetail?.recommended_business ? (
+                                  <div className="mt-2 p-2 bg-green-50 rounded border border-green-100">
+                                    <div className="text-green-600 text-[9px] font-medium mb-1">
+                                      💡 추천 업종
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                      {commercialDetail.recommended_business.slice(0, 4).map((biz, i) => (
+                                        <span key={i} className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-[9px]">
+                                          {biz}
+                                        </span>
+                                      ))}
+                                    </div>
+                                    {commercialDetail.avg_rent_per_pyeong && (
+                                      <p className="mt-1 text-[9px] text-gray-500">
+                                        임대료: {commercialDetail.avg_rent_per_pyeong.toLocaleString()}원/평
+                                      </p>
+                                    )}
+                                  </div>
+                                ) : null;
+                              })()}
+                            </div>
+                          )}
                         </div>
                       )}
                     
