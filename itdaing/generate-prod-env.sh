@@ -64,6 +64,34 @@ S3_BASE_DIR=$(get_param "/itdaing/prod/storage/s3/base-dir")
 JWT_SECRET=$(get_secret_field "jwt_secret")
 KAKAO_MAP_APP_KEY=$(get_secret_field "kakao_map_app_key")
 
+# Chatbot sync URL (같은 VPC 내부에서 접근)
+# chatbot-tg Target Group에 등록된 인스턴스의 private IP를 동적으로 가져옴
+get_chatbot_url() {
+  local tg_arn
+  tg_arn=$(aws elbv2 describe-target-groups --region "$REGION" --names chatbot-tg --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || echo "")
+  
+  if [[ -n "$tg_arn" && "$tg_arn" != "None" ]]; then
+    local instance_id
+    instance_id=$(aws elbv2 describe-target-health --region "$REGION" --target-group-arn "$tg_arn" --query 'TargetHealthDescriptions[0].Target.Id' --output text 2>/dev/null || echo "")
+    
+    if [[ -n "$instance_id" && "$instance_id" != "None" ]]; then
+      local private_ip
+      private_ip=$(aws ec2 describe-instances --region "$REGION" --instance-ids "$instance_id" --query 'Reservations[0].Instances[0].PrivateIpAddress' --output text 2>/dev/null || echo "")
+      
+      if [[ -n "$private_ip" && "$private_ip" != "None" ]]; then
+        echo "http://${private_ip}:9000"
+        return 0
+      fi
+    fi
+  fi
+  
+  # 폴백: 기본 URL
+  echo "http://localhost:9000"
+}
+
+CHATBOT_SYNC_URL="${CHATBOT_SYNC_URL:-$(get_chatbot_url)}"
+log "Chatbot sync URL: $CHATBOT_SYNC_URL"
+
 log "Writing environment file to $ENV_FILE_PATH"
 cat > "$ENV_FILE_PATH" <<EOF2
 SPRING_PROFILES_ACTIVE=prod
@@ -86,6 +114,10 @@ STORAGE_S3_REGION=${S3_REGION}
 STORAGE_S3_BASE_DIR=${S3_BASE_DIR}
 
 KAKAO_MAP_APP_KEY=${KAKAO_MAP_APP_KEY}
+
+# Chatbot sync settings
+CHATBOT_SYNC_URL=${CHATBOT_SYNC_URL}
+CHATBOT_SYNC_ENABLED=true
 EOF2
 
 chmod 600 "$ENV_FILE_PATH"
