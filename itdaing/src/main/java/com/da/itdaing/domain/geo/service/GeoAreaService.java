@@ -43,17 +43,7 @@ public class GeoAreaService {
         // PGVector 동기화 (비동기) - 판매자 챗봇용
         chatbotSyncClient.syncZone(area.getId());
 
-        return AreaResponse.builder()
-            .id(Objects.requireNonNull(area.getId()))
-            .name(area.getName())
-            .polygonGeoJson(area.getPolygonGeoJson())
-            .status(area.getStatus())
-            .maxCapacity(area.getMaxCapacity())
-            .notice(area.getNotice())
-            .regionId(area.getRegion() != null ? Objects.requireNonNull(area.getRegion().getId()) : null)
-            .createdAt(area.getCreatedAt())
-            .updatedAt(area.getUpdatedAt())
-            .build();
+        return toAreaResponse(area);
     }
 
     @Transactional(readOnly = true)
@@ -64,22 +54,58 @@ public class GeoAreaService {
             : areaRepo.findByNameContainingIgnoreCase(keyword, pageable);
 
         return AreaListResponse.builder()
-            .items(data.getContent().stream().map(a -> AreaResponse.builder()
-                .id(a.getId())
-                .name(a.getName())
-                .polygonGeoJson(a.getPolygonGeoJson())
-                .status(a.getStatus())
-                .maxCapacity(a.getMaxCapacity())
-                .notice(a.getNotice())
-                .regionId(a.getRegion() != null ? a.getRegion().getId() : null)
-                .createdAt(a.getCreatedAt())
-                .updatedAt(a.getUpdatedAt())
-                .build()).toList())
+            .items(data.getContent().stream().map(this::toAreaResponse).toList())
             .totalElements(data.getTotalElements())
             .totalPages(data.getTotalPages())
             .page(page)
             .size(size)
             .build();
+    }
+    
+    /**
+     * ZoneArea → AreaResponse 변환 (regionName, district 포함)
+     */
+    private AreaResponse toAreaResponse(ZoneArea area) {
+        String regionName = null;
+        String district = null;
+        
+        if (area.getRegion() != null) {
+            regionName = area.getRegion().getName();
+            // district 추출: "광주 동구" → "동구", "동구" → "동구"
+            district = extractDistrict(regionName);
+        }
+        
+        return AreaResponse.builder()
+            .id(area.getId())
+            .name(area.getName())
+            .polygonGeoJson(area.getPolygonGeoJson())
+            .status(area.getStatus())
+            .maxCapacity(area.getMaxCapacity())
+            .notice(area.getNotice())
+            .regionId(area.getRegion() != null ? area.getRegion().getId() : null)
+            .regionName(regionName)
+            .district(district)
+            .createdAt(area.getCreatedAt())
+            .updatedAt(area.getUpdatedAt())
+            .build();
+    }
+    
+    /**
+     * 지역명에서 구 이름 추출
+     * - "광주 동구" → "동구"
+     * - "동구" → "동구"
+     * - "광주 광산구" → "광산구"
+     */
+    private String extractDistrict(String regionName) {
+        if (regionName == null) return null;
+        
+        String[] districts = {"동구", "서구", "남구", "북구", "광산구"};
+        for (String d : districts) {
+            if (regionName.contains(d)) {
+                return d;
+            }
+        }
+        return regionName; // 매칭 안되면 원본 반환
     }
 
     /** 관리자: 구역 수정 */
@@ -109,17 +135,7 @@ public class GeoAreaService {
         // PGVector 동기화 (비동기) - 판매자 챗봇용
         chatbotSyncClient.syncZone(area.getId());
 
-        return AreaResponse.builder()
-            .id(Objects.requireNonNull(area.getId()))
-            .name(area.getName())
-            .polygonGeoJson(area.getPolygonGeoJson())
-            .status(area.getStatus())
-            .maxCapacity(area.getMaxCapacity())
-            .notice(area.getNotice())
-            .regionId(area.getRegion() != null ? Objects.requireNonNull(area.getRegion().getId()) : null)
-            .createdAt(area.getCreatedAt())
-            .updatedAt(area.getUpdatedAt())
-            .build();
+        return toAreaResponse(area);
     }
 
     /** 관리자: 구역 삭제 */
@@ -142,16 +158,6 @@ public class GeoAreaService {
         ZoneArea area = areaRepo.findById(areaId)
             .orElseThrow(() -> new IllegalArgumentException("구역을 찾을 수 없습니다: " + areaId));
         
-        return AreaResponse.builder()
-            .id(Objects.requireNonNull(area.getId()))
-            .name(area.getName())
-            .polygonGeoJson(area.getPolygonGeoJson())
-            .status(area.getStatus())
-            .maxCapacity(area.getMaxCapacity())
-            .notice(area.getNotice())
-            .regionId(area.getRegion() != null ? Objects.requireNonNull(area.getRegion().getId()) : null)
-            .createdAt(area.getCreatedAt())
-            .updatedAt(area.getUpdatedAt())
-            .build();
+        return toAreaResponse(area);
     }
 }
