@@ -83,6 +83,8 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/api/popups/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/sellers/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/zones/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/geo/areas/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/geo/cells/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/config/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/inquiries/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/dev/**").permitAll()
