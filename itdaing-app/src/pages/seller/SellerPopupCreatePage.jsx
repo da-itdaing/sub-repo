@@ -1106,7 +1106,78 @@ const SellerPopupFormPage = ({
                         )}
                       </div>
                     
-                      {/* 상권 정보 (commercialData에서 가져옴) */}
+                      {/* 존별 상권 정보 (백엔드 API에서 가져옴) */}
+                      {selectedArea.commercialInfo && (
+                        <div className="p-3 bg-emerald-50/50 border-b border-emerald-100">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
+                            <h5 className="text-[11px] font-semibold text-gray-800">
+                              존 상권 정보
+                            </h5>
+                            {selectedArea.commercialInfo.commercialGrade && (
+                              <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                selectedArea.commercialInfo.commercialGrade === 'A' ? 'bg-emerald-100 text-emerald-700' :
+                                selectedArea.commercialInfo.commercialGrade === 'B' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {selectedArea.commercialInfo.commercialGrade}등급
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="space-y-1.5 text-[10px]">
+                            {/* 유동인구 점수 + 대여료 */}
+                            <div className="flex gap-1.5">
+                              {selectedArea.commercialInfo.trafficScore && (
+                                <div className="flex-1 bg-white rounded px-2 py-1.5 border border-emerald-100">
+                                  <span className="text-gray-400 text-[9px]">유동인구</span>
+                                  <p className="font-semibold text-emerald-700">
+                                    {selectedArea.commercialInfo.trafficScore}/100
+                                  </p>
+                                </div>
+                              )}
+                              {selectedArea.commercialInfo.rentPerDay && (
+                                <div className="flex-1 bg-white rounded px-2 py-1.5 border border-emerald-100">
+                                  <span className="text-gray-400 text-[9px]">대여료</span>
+                                  <p className="font-semibold text-emerald-700">
+                                    {selectedArea.commercialInfo.rentPerDay.toLocaleString()}원/일
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* 평일/주말 유동인구 */}
+                            {(selectedArea.commercialInfo.weekdayTraffic || selectedArea.commercialInfo.weekendTraffic) && (
+                              <div className="bg-white rounded px-2 py-1.5 border border-emerald-100">
+                                <span className="text-gray-400 text-[9px]">유동인구 특성</span>
+                                <p className="font-medium text-gray-700 text-[9px]">
+                                  {selectedArea.commercialInfo.weekdayTraffic && `평일: ${selectedArea.commercialInfo.weekdayTraffic}`}
+                                  {selectedArea.commercialInfo.weekdayTraffic && selectedArea.commercialInfo.weekendTraffic && ' / '}
+                                  {selectedArea.commercialInfo.weekendTraffic && `주말: ${selectedArea.commercialInfo.weekendTraffic}`}
+                                </p>
+                              </div>
+                            )}
+                            
+                            {/* 추천 상품 */}
+                            {selectedArea.commercialInfo.bestProducts && (
+                              <div className="mt-1.5 p-2 bg-emerald-50 rounded border border-emerald-100">
+                                <div className="text-emerald-600 text-[9px] font-medium mb-1">
+                                  🎯 추천 상품
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {selectedArea.commercialInfo.bestProducts.split(',').slice(0, 5).map((product, i) => (
+                                    <span key={i} className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[9px]">
+                                      {product.trim()}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* 지역(구/동) 상권 정보 (정적 JSON에서 가져옴) */}
                       {commercialInfo && (
                         <div className="p-3 bg-blue-50/50">
                           <div className="flex items-center gap-1.5 mb-2">
