@@ -737,6 +737,9 @@ const AdminZonesPage = () => {
                           draggable={cellLocationEditMode}
                           zoomable={cellLocationEditMode}
                           onClick={cellLocationEditMode ? (_map, mouseEvent) => {
+                            // mouseEvent가 없으면 무시
+                            if (!mouseEvent?.latLng) return;
+                            
                             const latlng = mouseEvent.latLng;
                             const lat = latlng.getLat();
                             const lng = latlng.getLng();
@@ -1018,6 +1021,9 @@ const AdminZonesPage = () => {
                   style={{ width: '100%', height: '100%' }}
                   level={4}
                   onClick={(_map, mouseEvent) => {
+                    // mouseEvent가 없으면 무시
+                    if (!mouseEvent?.latLng) return;
+                    
                     const latlng = mouseEvent.latLng;
                     const lat = latlng.getLat();
                     const lng = latlng.getLng();
@@ -1026,7 +1032,7 @@ const AdminZonesPage = () => {
                     setNewCellForm(prev => ({ ...prev, lat: lat.toFixed(6), lng: lng.toFixed(6) }));
 
                     // 카카오 주소 검색 API로 도로명 주소 조회
-                    if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
+                    if (window.kakao?.maps?.services) {
                       const geocoder = new window.kakao.maps.services.Geocoder();
                       geocoder.coord2Address(lng, lat, (result, status) => {
                         if (status === window.kakao.maps.services.Status.OK && result[0]) {
@@ -1039,10 +1045,33 @@ const AdminZonesPage = () => {
                     }
                   }}
                 >
-                  {/* 선택된 존 폴리곤 표시 */}
+                  {/* 선택된 존 폴리곤 표시 - 클릭 시 Map onClick으로 전파 */}
                   {selectedArea && (() => {
                     const coords = parseGeoJsonPolygon(selectedArea.polygonGeoJson);
                     if (coords.length >= 3) {
+                      // 폴리곤 클릭 핸들러 (Map onClick과 동일한 로직)
+                      const handlePolygonClick = (_polygon, mouseEvent) => {
+                        if (!mouseEvent?.latLng) return;
+                        
+                        const latlng = mouseEvent.latLng;
+                        const lat = latlng.getLat();
+                        const lng = latlng.getLng();
+
+                        setNewCellForm(prev => ({ ...prev, lat: lat.toFixed(6), lng: lng.toFixed(6) }));
+
+                        if (window.kakao?.maps?.services) {
+                          const geocoder = new window.kakao.maps.services.Geocoder();
+                          geocoder.coord2Address(lng, lat, (result, status) => {
+                            if (status === window.kakao.maps.services.Status.OK && result[0]) {
+                              const address = result[0].road_address
+                                ? result[0].road_address.address_name
+                                : result[0].address.address_name;
+                              setNewCellForm(prev => ({ ...prev, detailedAddress: address }));
+                            }
+                          });
+                        }
+                      };
+                      
                       return (
                         <Polygon
                           path={coords}
@@ -1051,6 +1080,7 @@ const AdminZonesPage = () => {
                           strokeOpacity={0.6}
                           fillColor="#eb0000"
                           fillOpacity={0.1}
+                          onClick={handlePolygonClick}
                         />
                       );
                     }
