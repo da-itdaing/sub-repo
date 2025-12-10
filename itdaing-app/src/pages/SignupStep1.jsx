@@ -7,7 +7,22 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { ROUTES } from '@/routes/paths';
 import SignupStepHeader from '@/components/signup/SignupStepHeader';
-import { signupSeller } from '@/services/authService';
+import { signupSeller, getKakaoLoginUrl } from '@/services/authService';
+
+// 카카오 회원가입 버튼
+const KakaoSignupButton = ({ onClick, disabled }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    className="w-full h-[52px] rounded-2xl bg-[#FEE500] hover:bg-[#FDD835] flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fillRule="evenodd" clipRule="evenodd" d="M12 4C7.029 4 3 7.163 3 11.097C3 13.616 4.675 15.833 7.225 17.14L6.3 20.588C6.244 20.788 6.47 20.951 6.641 20.833L10.7 18.091C11.125 18.134 11.558 18.156 12 18.156C16.971 18.156 21 14.993 21 11.059C21 7.163 16.971 4 12 4Z" fill="#191919"/>
+    </svg>
+    <span className="text-[#191919] font-medium text-[16px]">카카오로 간편 가입</span>
+  </button>
+);
 
 // Zod 검증 스키마
 const signupStep1Schema = z.object({
@@ -25,6 +40,8 @@ const signupStep1Schema = z.object({
 const SignupStep1 = () => {
   const navigate = useNavigate();
   const [userType, setUserType] = useState('consumer'); // consumer or seller
+  const [isKakaoLoading, setIsKakaoLoading] = useState(false);
+  const [kakaoError, setKakaoError] = useState('');
 
   const {
     register,
@@ -33,6 +50,22 @@ const SignupStep1 = () => {
   } = useForm({
     resolver: zodResolver(signupStep1Schema),
   });
+
+  // 카카오 회원가입 핸들러
+  const handleKakaoSignup = async () => {
+    try {
+      setIsKakaoLoading(true);
+      setKakaoError('');
+      const response = await getKakaoLoginUrl(userType);
+      if (response.authUrl) {
+        window.location.href = response.authUrl;
+      }
+    } catch (err) {
+      console.error('Kakao signup error:', err);
+      setKakaoError('카카오 연동을 시작할 수 없습니다.');
+      setIsKakaoLoading(false);
+    }
+  };
 
   const onSubmit = async (data) => {
     // 소비자는 2단계로, 판매자는 바로 가입 처리
@@ -112,8 +145,23 @@ const SignupStep1 = () => {
               </div>
             </div>
 
+            {/* 카카오 회원가입 */}
+            <div className="mt-8">
+              <KakaoSignupButton onClick={handleKakaoSignup} disabled={isKakaoLoading} />
+              {kakaoError && (
+                <p className="text-xs text-red-500 mt-2 text-center">{kakaoError}</p>
+              )}
+            </div>
+
+            {/* 구분선 */}
+            <div className="flex items-center gap-4 my-6">
+              <div className="flex-1 h-[1px] bg-gray-200" />
+              <span className="text-xs text-gray-400">또는 이메일로 가입</span>
+              <div className="flex-1 h-[1px] bg-gray-200" />
+            </div>
+
             {/* Form */}
-            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4">
               <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">이메일</label>
