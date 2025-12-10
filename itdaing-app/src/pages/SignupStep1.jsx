@@ -50,6 +50,7 @@ const SignupStep1 = () => {
           loginId: data.loginId,
           name: data.name,
           nickname: data.nickname,
+          activityRegion: '광주', // 기본 활동 지역
         };
         
         await signupSeller(requestData);
