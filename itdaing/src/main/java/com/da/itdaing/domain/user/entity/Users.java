@@ -69,10 +69,18 @@ public class Users extends BaseTimeEntity {
     @Column(name = "profile_image_key", length = 255)
     private String profileImageKey;
 
+    // 소셜 로그인 관련 필드
+    @Column(name = "provider", length = 20)
+    private String provider;  // LOCAL, KAKAO
+
+    @Column(name = "provider_id", length = 100)
+    private String providerId;  // 카카오 사용자 ID
+
     @Builder
     public Users(String loginId, Integer ageGroup, String password, String name, String nickname,
                  String email, String mbti, UserRole role,
-                 String profileImageUrl, String profileImageKey, UserStatus status) {
+                 String profileImageUrl, String profileImageKey, UserStatus status,
+                 String provider, String providerId) {
         this.loginId = loginId;
         this.ageGroup = ageGroup;
         this.password = password;
@@ -84,6 +92,8 @@ public class Users extends BaseTimeEntity {
         this.profileImageUrl = profileImageUrl;
         this.profileImageKey = profileImageKey;
         this.status = status != null ? status : UserStatus.ACTIVE;
+        this.provider = provider != null ? provider : "LOCAL";
+        this.providerId = providerId;
     }
 
     /**

@@ -61,6 +61,37 @@ public class PreferenceService {
         }
     }
 
+    /**
+     * 소비자 선호 정보 업데이트 (카카오 회원가입용)
+     */
+    @Transactional
+    public void updateConsumerPreferences(
+        Long userId,
+        List<Long> categoryIds,
+        List<Long> styleIds,
+        List<Long> regionIds,
+        List<Long> featureIds
+    ) {
+        Users user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
+
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            replaceCategories(user, dedup(categoryIds));
+        }
+
+        if (styleIds != null && !styleIds.isEmpty()) {
+            replaceStyles(user, dedup(styleIds));
+        }
+
+        if (regionIds != null && !regionIds.isEmpty()) {
+            replaceRegions(user, dedup(regionIds));
+        }
+
+        if (featureIds != null && !featureIds.isEmpty()) {
+            replaceFeatures(user, dedup(featureIds));
+        }
+    }
+
     @Transactional(readOnly = true)
     public PreferenceResponse getMyPreferences(Long userId) {
         Users user = userRepository.findById(userId)

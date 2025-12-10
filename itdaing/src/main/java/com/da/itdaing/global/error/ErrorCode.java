@@ -33,6 +33,7 @@ public enum ErrorCode {
     REFRESH_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH-405", "리프레시 토큰이 존재하지 않거나 만료/삭제되었습니다"),
     REFRESH_REVOKED(HttpStatus.UNAUTHORIZED, "AUTH-406", "이미 철회된 리프레시 토큰입니다"),
     REFRESH_REUSED(HttpStatus.UNAUTHORIZED, "AUTH-407", "재사용된 리프레시 토큰입니다"),
+    OAUTH_FAILED(HttpStatus.UNAUTHORIZED, "AUTH-408", "소셜 로그인에 실패했습니다"),
 
     // 403 Forbidden
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUTH-405", "접근 권한이 없습니다"),

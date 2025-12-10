@@ -36,5 +36,10 @@ public interface UserRepository extends JpaRepository<Users, Long> {
     Page<Users> findByRole(UserRole role, Pageable pageable);
 
     Page<Users> findByRoleAndStatus(UserRole role, UserStatus status, Pageable pageable);
+
+    /**
+     * 소셜 로그인 provider와 providerId로 사용자 조회
+     */
+    Optional<Users> findByProviderAndProviderId(String provider, String providerId);
 }
 
