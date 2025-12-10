@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { ROUTES } from '@/routes/paths';
 import SignupStepHeader from '@/components/signup/SignupStepHeader';
+import { signupSeller } from '@/services/authService';
 
 // Zod 검증 스키마
 const signupStep1Schema = z.object({
@@ -34,15 +35,32 @@ const SignupStep1 = () => {
   });
 
   const onSubmit = async (data) => {
-    // 데이터를 state로 전달하거나 localStorage에 임시 저장
-    localStorage.setItem('signupData', JSON.stringify({ ...data, userType }));
-    
     // 소비자는 2단계로, 판매자는 바로 가입 처리
     if (userType === 'consumer') {
+      // 데이터를 localStorage에 임시 저장하고 2단계로 이동
+      localStorage.setItem('signupData', JSON.stringify({ ...data, userType }));
       navigate(ROUTES.signupStep2);
     } else {
-      // 판매자 회원가입 처리 (추후 구현)
-      alert('판매자 회원가입은 추후 구현 예정입니다');
+      // 판매자 회원가입 처리
+      try {
+        const requestData = {
+          email: data.email,
+          password: data.password,
+          passwordConfirm: data.passwordConfirm,
+          loginId: data.loginId,
+          name: data.name,
+          nickname: data.nickname,
+        };
+        
+        await signupSeller(requestData);
+        
+        // 회원가입 성공
+        alert('판매자 회원가입이 완료되었습니다!');
+        navigate(ROUTES.login);
+      } catch (error) {
+        console.error('Seller signup error:', error);
+        alert(error.message || '판매자 회원가입에 실패했습니다.');
+      }
     }
   };
 
