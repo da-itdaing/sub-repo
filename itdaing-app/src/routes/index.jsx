@@ -7,6 +7,11 @@ import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/LoginPage';
 import SignupStep1 from '@/pages/SignupStep1';
 import SignupStep2 from '@/pages/SignupStep2';
+
+// Kakao OAuth Pages
+import KakaoCallbackPage from '@/pages/auth/KakaoCallbackPage';
+import KakaoSignupConsumerPage from '@/pages/auth/KakaoSignupConsumerPage';
+import KakaoSignupSellerPage from '@/pages/auth/KakaoSignupSellerPage';
 import PopupDetailPage from '@/pages/PopupDetailPage';
 import NearbyExplorePage from '@/pages/NearbyExplorePage';
 import SearchPage from '@/pages/SearchPage';
@@ -77,6 +82,19 @@ const router = createBrowserRouter([
   {
     path: ROUTES.signupStep2,
     element: <SignupStep2 />,
+  },
+  // 카카오 OAuth 라우트
+  {
+    path: '/api/auth/kakao/callback',
+    element: <KakaoCallbackPage />,
+  },
+  {
+    path: '/signup/kakao/consumer',
+    element: <KakaoSignupConsumerPage />,
+  },
+  {
+    path: '/signup/kakao/seller',
+    element: <KakaoSignupSellerPage />,
   },
   {
     path: ROUTES.popupDetailPattern,

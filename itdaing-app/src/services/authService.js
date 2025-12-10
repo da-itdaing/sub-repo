@@ -118,3 +118,50 @@ export const changePassword = async (payload) => {
   const response = await apiClient.post('/auth/password/change', payload);
   return response;
 };
+
+// ============ 카카오 OAuth ============
+
+/**
+ * 카카오 로그인 URL 조회
+ * GET /api/auth/kakao/login-url
+ * @param {string} role - consumer 또는 seller
+ * @returns {Promise<{authUrl: string}>}
+ */
+export const getKakaoLoginUrl = async (role = 'consumer') => {
+  const response = await apiClient.get(`/auth/kakao/login-url?role=${role}`);
+  return response;
+};
+
+/**
+ * 카카오 로그인 처리
+ * POST /api/auth/kakao/login
+ * @param {string} code - 카카오 인가 코드
+ * @param {string} role - consumer 또는 seller
+ * @returns {Promise<{isNewUser: boolean, tempToken?: string, accessToken?: string, ...}>}
+ */
+export const kakaoLogin = async (code, role) => {
+  const response = await apiClient.post('/auth/kakao/login', { code, role });
+  return response;
+};
+
+/**
+ * 카카오 소비자 회원가입 완료
+ * POST /api/auth/kakao/complete/consumer
+ * @param {Object} data - tempToken, ageGroup, interestCategoryIds, styleIds, regionIds, featureIds
+ * @returns {Promise<{accessToken: string, refreshToken: string, ...}>}
+ */
+export const completeKakaoConsumer = async (data) => {
+  const response = await apiClient.post('/auth/kakao/complete/consumer', data);
+  return response;
+};
+
+/**
+ * 카카오 판매자 회원가입 완료
+ * POST /api/auth/kakao/complete/seller
+ * @param {Object} data - tempToken, activityRegion, snsUrl?, introduction?
+ * @returns {Promise<{accessToken: string, refreshToken: string, ...}>}
+ */
+export const completeKakaoSeller = async (data) => {
+  const response = await apiClient.post('/auth/kakao/complete/seller', data);
+  return response;
+};

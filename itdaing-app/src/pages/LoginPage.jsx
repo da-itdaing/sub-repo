@@ -5,8 +5,23 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
-import { login as loginApi, getMyProfile } from '@/services/authService';
+import { login as loginApi, getMyProfile, getKakaoLoginUrl } from '@/services/authService';
 import { ROUTES } from '@/routes/paths';
+
+// 카카오 로그인 버튼 SVG
+const KakaoLoginButton = ({ onClick, disabled }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    className="w-full h-[52px] rounded-[12px] bg-[#FEE500] hover:bg-[#FDD835] flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fillRule="evenodd" clipRule="evenodd" d="M12 4C7.029 4 3 7.163 3 11.097C3 13.616 4.675 15.833 7.225 17.14L6.3 20.588C6.244 20.788 6.47 20.951 6.641 20.833L10.7 18.091C11.125 18.134 11.558 18.156 12 18.156C16.971 18.156 21 14.993 21 11.059C21 7.163 16.971 4 12 4Z" fill="#191919"/>
+    </svg>
+    <span className="text-[#191919] font-medium text-[16px]">카카오 로그인</span>
+  </button>
+);
 
 // Zod 검증 스키마
 const loginSchema = z.object({
@@ -19,6 +34,7 @@ const LoginPage = () => {
   const { login: loginStore, setUser } = useAuthStore();
   const [userType, setUserType] = useState('consumer'); // consumer or seller
   const [error, setError] = useState('');
+  const [isKakaoLoading, setIsKakaoLoading] = useState(false);
 
   const {
     register,
@@ -65,6 +81,22 @@ const LoginPage = () => {
       console.error('Login error:', err);
       const errorMessage = err?.response?.data?.error?.message || err?.message || '로그인에 실패했습니다. 다시 시도해주세요.';
       setError(errorMessage);
+    }
+  };
+
+  // 카카오 로그인 핸들러
+  const handleKakaoLogin = async () => {
+    try {
+      setIsKakaoLoading(true);
+      setError('');
+      const response = await getKakaoLoginUrl(userType);
+      if (response.authUrl) {
+        window.location.href = response.authUrl;
+      }
+    } catch (err) {
+      console.error('Kakao login error:', err);
+      setError('카카오 로그인을 시작할 수 없습니다.');
+      setIsKakaoLoading(false);
     }
   };
 
@@ -154,7 +186,7 @@ const LoginPage = () => {
           </button>
 
           {/* Links */}
-          <div className="flex justify-center items-center gap-2 text-[12px] text-gray-600">
+          <div className="flex justify-center items-center gap-2 text-[12px] text-gray-600 mb-6">
             <button 
               type="button"
               onClick={() => navigate(ROUTES.signupStep1)}
@@ -163,6 +195,16 @@ const LoginPage = () => {
               회원가입
             </button>
           </div>
+
+          {/* 소셜 로그인 구분선 */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="flex-1 h-[1px] bg-gray-200" />
+            <span className="text-[12px] text-gray-400">또는</span>
+            <div className="flex-1 h-[1px] bg-gray-200" />
+          </div>
+
+          {/* 카카오 로그인 버튼 */}
+          <KakaoLoginButton onClick={handleKakaoLogin} disabled={isKakaoLoading} />
         </form>
 
         
