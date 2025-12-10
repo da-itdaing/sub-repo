@@ -125,11 +125,12 @@ export const changePassword = async (payload) => {
  * 카카오 로그인 URL 조회
  * GET /api/auth/kakao/login-url
  * @param {string} role - consumer 또는 seller
- * @returns {Promise<{data: {authUrl: string}}>}
+ * @returns {Promise<{authUrl: string}>}
  */
 export const getKakaoLoginUrl = async (role = 'consumer') => {
+  // apiClient가 이미 response.data.data를 반환하므로 그대로 반환
   const response = await apiClient.get(`/auth/kakao/login-url?role=${role}`);
-  return response.data;
+  return response;
 };
 
 /**
@@ -140,8 +141,9 @@ export const getKakaoLoginUrl = async (role = 'consumer') => {
  * @returns {Promise<{isNewUser: boolean, tempToken?: string, accessToken?: string, ...}>}
  */
 export const kakaoLogin = async (code, role) => {
+  // apiClient가 이미 response.data.data를 반환
   const response = await apiClient.post('/auth/kakao/login', { code, role });
-  return response.data || response;
+  return response;
 };
 
 /**
@@ -151,8 +153,9 @@ export const kakaoLogin = async (code, role) => {
  * @returns {Promise<{accessToken: string, refreshToken: string, ...}>}
  */
 export const completeKakaoConsumer = async (data) => {
+  // apiClient가 이미 response.data.data를 반환
   const response = await apiClient.post('/auth/kakao/complete/consumer', data);
-  return response.data || response;
+  return response;
 };
 
 /**
@@ -162,6 +165,7 @@ export const completeKakaoConsumer = async (data) => {
  * @returns {Promise<{accessToken: string, refreshToken: string, ...}>}
  */
 export const completeKakaoSeller = async (data) => {
+  // apiClient가 이미 response.data.data를 반환
   const response = await apiClient.post('/auth/kakao/complete/seller', data);
-  return response.data || response;
+  return response;
 };
