@@ -125,11 +125,11 @@ export const changePassword = async (payload) => {
  * 카카오 로그인 URL 조회
  * GET /api/auth/kakao/login-url
  * @param {string} role - consumer 또는 seller
- * @returns {Promise<{authUrl: string}>}
+ * @returns {Promise<{data: {authUrl: string}}>}
  */
 export const getKakaoLoginUrl = async (role = 'consumer') => {
   const response = await apiClient.get(`/auth/kakao/login-url?role=${role}`);
-  return response;
+  return response.data;
 };
 
 /**
@@ -141,7 +141,7 @@ export const getKakaoLoginUrl = async (role = 'consumer') => {
  */
 export const kakaoLogin = async (code, role) => {
   const response = await apiClient.post('/auth/kakao/login', { code, role });
-  return response;
+  return response.data || response;
 };
 
 /**
@@ -152,7 +152,7 @@ export const kakaoLogin = async (code, role) => {
  */
 export const completeKakaoConsumer = async (data) => {
   const response = await apiClient.post('/auth/kakao/complete/consumer', data);
-  return response;
+  return response.data || response;
 };
 
 /**
@@ -163,5 +163,5 @@ export const completeKakaoConsumer = async (data) => {
  */
 export const completeKakaoSeller = async (data) => {
   const response = await apiClient.post('/auth/kakao/complete/seller', data);
-  return response;
+  return response.data || response;
 };
