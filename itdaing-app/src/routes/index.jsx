@@ -10,6 +10,7 @@ import SignupStep2 from '@/pages/SignupStep2';
 
 // Kakao OAuth Pages
 import KakaoCallbackPage from '@/pages/auth/KakaoCallbackPage';
+import KakaoCompletePage from '@/pages/auth/KakaoCompletePage';
 import KakaoSignupConsumerPage from '@/pages/auth/KakaoSignupConsumerPage';
 import KakaoSignupSellerPage from '@/pages/auth/KakaoSignupSellerPage';
 import PopupDetailPage from '@/pages/PopupDetailPage';
@@ -87,6 +88,10 @@ const router = createBrowserRouter([
   {
     path: '/api/auth/kakao/callback',
     element: <KakaoCallbackPage />,
+  },
+  {
+    path: '/auth/kakao/complete',
+    element: <KakaoCompletePage />,
   },
   {
     path: '/signup/kakao/consumer',

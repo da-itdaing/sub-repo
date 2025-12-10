@@ -144,6 +144,21 @@ const LoginPage = () => {
           </div>
         </div>
 
+        {/* 카카오 간편 로그인 (상단 배치) */}
+        <div className="mb-8">
+          <KakaoLoginButton onClick={handleKakaoLogin} disabled={isKakaoLoading} />
+          <p className="text-center text-[12px] text-gray-500 mt-2">
+            카카오로 3초만에 시작하기
+          </p>
+        </div>
+
+        {/* 일반 로그인 구분선 */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="flex-1 h-[1px] bg-gray-200" />
+          <span className="text-[12px] text-gray-400">또는 아이디로 로그인</span>
+          <div className="flex-1 h-[1px] bg-gray-200" />
+        </div>
+
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* ID/Password Inputs */}
@@ -186,25 +201,15 @@ const LoginPage = () => {
           </button>
 
           {/* Links */}
-          <div className="flex justify-center items-center gap-2 text-[12px] text-gray-600 mb-6">
+          <div className="flex justify-center items-center gap-2 text-[12px] text-gray-600">
             <button 
               type="button"
               onClick={() => navigate(ROUTES.signupStep1)}
               className="hover:text-primary transition-colors"
             >
-              회원가입
+              일반 회원가입
             </button>
           </div>
-
-          {/* 소셜 로그인 구분선 */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1 h-[1px] bg-gray-200" />
-            <span className="text-[12px] text-gray-400">또는</span>
-            <div className="flex-1 h-[1px] bg-gray-200" />
-          </div>
-
-          {/* 카카오 로그인 버튼 */}
-          <KakaoLoginButton onClick={handleKakaoLogin} disabled={isKakaoLoading} />
         </form>
 
         

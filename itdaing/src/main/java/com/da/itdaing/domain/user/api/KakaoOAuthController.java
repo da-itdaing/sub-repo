@@ -46,20 +46,54 @@ public class KakaoOAuthController {
     @Operation(
         summary = "카카오 로그인 콜백",
         description = """
-            카카오 인증 후 콜백을 처리합니다.
+            카카오 인증 후 콜백을 처리하고 프론트엔드로 리다이렉트합니다.
             
-            - 기존 사용자: JWT 토큰 발급
-            - 신규 사용자: 임시 토큰 발급 (추가 정보 입력 필요)
+            - 기존 사용자: 토큰과 함께 홈으로 리다이렉트
+            - 신규 사용자: 추가 정보 입력 페이지로 리다이렉트
             """
     )
     @GetMapping("/callback")
-    public ResponseEntity<ApiResponse<KakaoOAuthDto.KakaoLoginResponse>> kakaoCallback(
+    public ResponseEntity<Void> kakaoCallback(
         @Parameter(description = "카카오 인가 코드") @RequestParam String code,
         @Parameter(description = "사용자 역할") @RequestParam(required = false, defaultValue = "consumer") String state
     ) {
         log.info("카카오 로그인 콜백: code={}, state={}", code.substring(0, Math.min(10, code.length())) + "...", state);
-        KakaoOAuthDto.KakaoLoginResponse response = kakaoOAuthService.processKakaoLogin(code, state);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        
+        try {
+            KakaoOAuthDto.KakaoLoginResponse response = kakaoOAuthService.processKakaoLogin(code, state);
+            
+            // 프론트엔드 URL
+            String frontendUrl = "https://aischool.daitdaing.com";
+            String redirectUrl;
+            
+            if (response.isNewUser()) {
+                // 신규 사용자: 추가 정보 입력 페이지로 리다이렉트
+                String signupPath = "seller".equals(state) ? "/signup/kakao/seller" : "/signup/kakao/consumer";
+                redirectUrl = frontendUrl + signupPath 
+                    + "?tempToken=" + response.getTempToken()
+                    + "&email=" + java.net.URLEncoder.encode(response.getEmail() != null ? response.getEmail() : "", java.nio.charset.StandardCharsets.UTF_8)
+                    + "&nickname=" + java.net.URLEncoder.encode(response.getNickname() != null ? response.getNickname() : "", java.nio.charset.StandardCharsets.UTF_8);
+            } else {
+                // 기존 사용자: 토큰과 함께 콜백 완료 페이지로 리다이렉트
+                String rolePath = "SELLER".equals(response.getRole()) ? "/seller/dashboard" : "/";
+                redirectUrl = frontendUrl + "/auth/kakao/complete"
+                    + "?accessToken=" + response.getAccessToken()
+                    + "&refreshToken=" + response.getRefreshToken()
+                    + "&role=" + response.getRole()
+                    + "&redirect=" + java.net.URLEncoder.encode(rolePath, java.nio.charset.StandardCharsets.UTF_8);
+            }
+            
+            return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(redirectUrl))
+                .build();
+        } catch (Exception e) {
+            log.error("카카오 콜백 처리 실패", e);
+            String errorUrl = "https://aischool.daitdaing.com/login?error=" 
+                + java.net.URLEncoder.encode("카카오 로그인에 실패했습니다.", java.nio.charset.StandardCharsets.UTF_8);
+            return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(errorUrl))
+                .build();
+        }
     }
 
     @Operation(

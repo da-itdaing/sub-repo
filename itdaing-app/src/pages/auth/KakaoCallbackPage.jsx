@@ -38,7 +38,8 @@ const KakaoCallbackPage = () => {
         // 백엔드로 인가 코드 전송
         const response = await kakaoLogin(code, state);
 
-        if (response.isNewUser) {
+        // 백엔드 응답: newUser (not isNewUser)
+        if (response.newUser) {
           // 신규 사용자: 추가 정보 입력 페이지로 이동
           // tempToken과 기본 정보를 localStorage에 저장
           localStorage.setItem('kakaoTempData', JSON.stringify({

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { completeKakaoConsumer, getMyProfile } from '@/services/authService';
 import { useMasterData } from '@/hooks/useMasterData';
@@ -8,9 +8,13 @@ import { ROUTES } from '@/routes/paths';
 /**
  * 카카오 소비자 회원가입 완료 페이지
  * 추가 정보 입력: 연령대, 관심 카테고리, 스타일, 선호 지역
+ * 
+ * URL 쿼리 파라미터 또는 localStorage에서 데이터 로드:
+ * /signup/kakao/consumer?tempToken=xxx&email=xxx&nickname=xxx
  */
 const KakaoSignupConsumerPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login: loginStore, setUser } = useAuthStore();
   const { categories, styles, regions, features, isLoading: masterLoading } = useMasterData();
 
@@ -25,8 +29,24 @@ const KakaoSignupConsumerPage = () => {
   const [selectedRegions, setSelectedRegions] = useState([]);
   const [selectedFeatures, setSelectedFeatures] = useState([]);
 
-  // localStorage에서 임시 데이터 로드
+  // URL 쿼리 파라미터 또는 localStorage에서 임시 데이터 로드
   useEffect(() => {
+    // 1. URL 쿼리 파라미터에서 먼저 확인
+    const tempToken = searchParams.get('tempToken');
+    if (tempToken) {
+      const data = {
+        tempToken,
+        email: searchParams.get('email') || '',
+        nickname: searchParams.get('nickname') || '',
+        role: 'consumer',
+      };
+      setTempData(data);
+      // localStorage에도 저장 (새로고침 시 사용)
+      localStorage.setItem('kakaoTempData', JSON.stringify(data));
+      return;
+    }
+
+    // 2. localStorage에서 확인
     const stored = localStorage.getItem('kakaoTempData');
     if (!stored) {
       navigate(ROUTES.login, { replace: true });
@@ -42,7 +62,7 @@ const KakaoSignupConsumerPage = () => {
     } catch (e) {
       navigate(ROUTES.login, { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   // 제출 핸들러
   const handleSubmit = async (e) => {

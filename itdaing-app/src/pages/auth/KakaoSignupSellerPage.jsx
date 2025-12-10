@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { completeKakaoSeller, getMyProfile } from '@/services/authService';
 import { ROUTES } from '@/routes/paths';
@@ -10,6 +10,7 @@ import { ROUTES } from '@/routes/paths';
  */
 const KakaoSignupSellerPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login: loginStore, setUser } = useAuthStore();
 
   const [tempData, setTempData] = useState(null);
@@ -21,8 +22,24 @@ const KakaoSignupSellerPage = () => {
   const [snsUrl, setSnsUrl] = useState('');
   const [introduction, setIntroduction] = useState('');
 
-  // localStorage에서 임시 데이터 로드
+  // URL 쿼리 파라미터 또는 localStorage에서 임시 데이터 로드
   useEffect(() => {
+    // 1. URL 쿼리 파라미터에서 먼저 확인
+    const tempToken = searchParams.get('tempToken');
+    if (tempToken) {
+      const data = {
+        tempToken,
+        email: searchParams.get('email') || '',
+        nickname: searchParams.get('nickname') || '',
+        role: 'seller',
+      };
+      setTempData(data);
+      // localStorage에도 저장 (새로고침 시 사용)
+      localStorage.setItem('kakaoTempData', JSON.stringify(data));
+      return;
+    }
+
+    // 2. localStorage에서 확인
     const stored = localStorage.getItem('kakaoTempData');
     if (!stored) {
       navigate(ROUTES.login, { replace: true });
@@ -38,7 +55,7 @@ const KakaoSignupSellerPage = () => {
     } catch (e) {
       navigate(ROUTES.login, { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   // 제출 핸들러
   const handleSubmit = async (e) => {
