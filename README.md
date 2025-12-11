@@ -57,20 +57,6 @@
       <sub>Backend</sub><br/>
       <sub>팀원</sub>
     </td>
-    <td align="center">
-      <a href="https://github.com/Jongha611">
-        <img src="https://github.com/Jongha611.png" width="80" /><br/>
-        <sub><b>김종하</b></sub>
-      </a><br/>
-      <sub>AI</sub><br/>
-      <sub>팀원</sub>
-    </td>
-    <td align="center">
-      <img src="https://cdn-icons-png.flaticon.com/512/5968/5968705.png" width="80"/><br/>
-      <sub><b>정현희</b></sub><br/>
-      <sub>UI/UX Design</sub><br/>
-      <sub>팀원</sub>
-    </td>
   </tr>
 </table>
 </div>
